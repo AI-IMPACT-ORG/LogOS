@@ -1,0 +1,84 @@
+<!--
+LogOS: an Agda Library for foundational logic architecture
+Copyright (C) 2025 AI.IMPACT GmbH
+SPDX-License-Identifier: GPL-3.0-only
+-->
+
+Universal IR (Standard Library)
+===============================
+
+This directory is a small, self-contained “universal translation machine” library:
+multiple concrete backends compile into a common carrier (`UCode`), can be executed
+via the shared small-step interpreter (`stepU`/`simulate`) for a chosen step budget,
+and are then lowered to a
+canonical IR branch and decoded to an answer.
+
+The recommended, representation-agnostic execution interface is **scheme-indexed**:
+use `ScaleOps` to interpret a scale/grade as a step budget and run via `Sch.run≤`
+or `Cat.run≤` (see `LogOS/Domain/UniversalIR/Schemes.agda`). The schedule-based
+`Sch.run` (where the schedule is the scheme’s `fuel`) remains for literature
+alignment and as a convenience wrapper.
+
+Backends
+--------
+- `LogOS/Domain/UniversalIR/Languages/Minsky.agda` — 4-register Minsky machine (Turing complete)
+- `LogOS/Domain/UniversalIR/Languages/Lambda.agda` — untyped λ-calculus (normal-order β-step; Church numerals)
+- `LogOS/Domain/UniversalIR/Languages/Ethereum.agda` — EVM-like unbounded stack/memory machine (jumps + memory; `MUL`)
+- `LogOS/Domain/UniversalIR/Languages/QuantumOracle.agda` — minimal oracle-with-classical-control model (oracle tape / measurement instruction)
+- `LogOS/Domain/UniversalIR/Languages/QuantumCircuit.agda` — explicit basis-state circuit syntax (X/CNOT/TOFF + deterministic measurement)
+
+The concrete small-step semantics for each paradigm live in `LogOS/Domain/UniversalIR/Core.agda`.
+
+Entry points
+------------
+- **Recommended stable surface:** `LogOS/Models/UniversalIR/Core.agda` (curated, no demos)
+- **Pack skeleton (Assumptions/Claim/Pack/mkPack):** `LogOS/Domain/UniversalIR/Pack.agda`
+  (curated re-export: `LogOS/Models/UniversalIR/Pack.agda`)
+- `LogOS/Domain/UniversalIR/Std.agda` — tiny shared lemma pack (“mini stdlib”)
+- `LogOS/Computation/Scheme.agda` — shared scheme interface (`run≤`, fuel-free `ComputesTo`/`ComputesWithin`)
+- `LogOS/Domain/UniversalIR/Walkthrough.lagda.md` — narrative walkthrough
+- `LogOS/Domain/UniversalIR/Examples/Addition.agda` — addition across all backends
+- `LogOS/Domain/UniversalIR/Examples/Multiplication.agda` — multiplication across all backends
+- `LogOS/Domain/UniversalIR/Examples/Convincing.agda` — theorem-backed agreement (Minsky ≡ EVM) for all tasks
+- `LogOS/Domain/UniversalIR/Examples/LambdaShowcase.agda` — raw vs certified λ compilation metrics + five-paradigm output snapshot
+- `LogOS/Domain/UniversalIR/Theorems.agda` — non-trivial correctness lemmas (e.g. certified Minsky multiplication)
+- `LogOS/Domain/UniversalIR/While/Language.agda` — small 2-variable While language (`whileNZ`, `mulAB`, factorial)
+- `LogOS/Domain/UniversalIR/While/Theorems.agda` — theorem-backed factorial correctness (Minsky, all inputs)
+- `LogOS/Domain/UniversalIR/While/Examples/Factorial.agda` — non-trivial concrete agreement (factorial 5 = 120)
+- `LogOS/Domain/UniversalIR/While/Examples/CertifiedTranspile.agda` — certified decompile/transpile + “decompile twice”
+
+Proof status
+------------
+- **Proved for all inputs (in this PA fragment):** Minsky (`minsky-correct`), λ-calculus (`lambda-correct`), EVM (`ethereum-correct`), Oracle (`oracle-correct`), and Circuit (`circuit-correct`) in `LogOS/Domain/UniversalIR/Theorems.agda`
+- **Skeptic-facing corollary:** `LogOS/Domain/UniversalIR/Examples/Convincing.agda` derives Minsky ≡ EVM agreement for all `PATask`
+- **λ backend note:** `LogOS.Domain.UniversalIR.Languages.Lambda.compileBrand` emits a Church numeral of `eval` (certified by construction); the raw β-reduction compiler remains as `LogOS.Domain.UniversalIR.Languages.Lambda.compileRawBrand` for inspection
+- **While factorial:** Minsky is proved for all `n` (`LogOS/Domain/UniversalIR/While/Theorems.agda`); EVM is shown on `n = 5` by normalization (`LogOS/Domain/UniversalIR/While/Examples/Factorial.agda`)
+
+Extending
+---------
+To add a new backend, implement a compiler into a brand code and provide an injection
+into `UCode` as a `Backend` (`LogOS/Domain/UniversalIR/Backend.agda`). Then use
+`Backend.exec`/`Backend.toIRAt`/`Backend.decodeAt` to execute it with a chosen step budget.
+
+For paradigm-independent semantics (“machines as schemes”), use the fuel-free predicates
+on `Scheme` (`LogOS/Computation/Scheme.agda`), such as `ComputesTo` / `ComputesWithin`,
+and the **grade-indexed** runner `run≤` parameterized by `ScaleOps`.
+The induced equivalence `ObsEq` is the library’s “same computation” notion.
+
+Algorithm vs implementation
+---------------------------
+- **Algorithm**: a machine-independent specification (`Sch.Algorithm`).
+- **Implementation**: a particular scheme plus correctness (`Sch.ImplementsRun` / `Sch.ImplementsRel`).
+- In this directory, `PATask`’s evaluator `eval` is packaged as an algorithm (`PAAlg`)
+  and multiple schemes implement it (`*-implements-PA` in `LogOS/Domain/UniversalIR/Theorems.agda`).
+
+Guardrails (meta theorems)
+--------------------------
+- Representation invariance for grade-indexed execution: `run≤-map` / `run≤-meaning-comm` in `LogOS/Computation/SchemeCategory.agda`.
+- No total observers/deciders under diagonalization: `LogOS/Theorems/Meta/NoOmniscience.agda`.
+- No total certificate oracle within any fixed (or code-indexed) budget: `LogOS/Theorems/Meta/BudgetedSeparationOutput.agda`.
+
+Naming note (Quantum)
+---------------------
+- Use `LogOS/Domain/UniversalIR/Languages/QuantumOracle.agda` and/or `LogOS/Domain/UniversalIR/Languages/QuantumCircuit.agda` explicitly.
+- No `Quantum` alias module is provided; prefer the explicit modules above.

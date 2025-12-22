@@ -1,0 +1,21 @@
+{-
+LogOS: an Agda Library for foundational logic architecture
+Copyright (C) 2025 AI.IMPACT GmbH
+SPDX-License-Identifier: GPL-3.0-only
+-}
+
+{-# OPTIONS --safe #-}
+module LogOS.Kernel.Graded.All where
+
+-- Public graded surface: kernel + endo/hom DSL (no theorems).
+--
+-- Note: keeping `Kernel/*` free of `Theorems/*` imports preserves a clean
+-- layering: `Theorems` depends on `Kernel`, not vice versa. If you want a
+-- “batteries included” graded bundle, import `LogOS.Theorems.Boundary.Graded.All`
+-- explicitly (or via a pack/model entrypoint).
+
+open import LogOS.Kernel.Graded public
+open import LogOS.Kernel.Graded.Boundary public
+open import LogOS.Kernel.Graded.ToKernel public
+open import LogOS.Kernel.Graded.Endo public
+open import LogOS.Kernel.Graded.Hom public

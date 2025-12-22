@@ -1,0 +1,86 @@
+# LogOS: an Agda Library for foundational logic architecture
+# Copyright (C) 2025 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 0"
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Haskell toolchain
+        uses: haskell/actions/setup@v2
+        with:
+          ghc-version: "9.6.6"
+          cabal-version: "3.12.1.0"
+
+      - name: System deps (Agda build)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev zlib1g-dev
+
+      - name: Cache cabal store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cabal/store
+            ~/.cabal/packages
+          key: ${{ runner.os }}-cabal-agda-2.7.0.1
+
+      - name: Install Agda (pinned)
+        run: |
+          cabal update
+          cabal install Agda-2.7.0.1 --installdir="$HOME/.local/bin" --install-method=copy --overwrite-policy=always
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Build + tests
+        run: |
+          make ci
+          make lint
+
+  full-scan:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Haskell toolchain
+        uses: haskell/actions/setup@v2
+        with:
+          ghc-version: "9.6.6"
+          cabal-version: "3.12.1.0"
+
+      - name: System deps (Agda build)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev zlib1g-dev
+
+      - name: Cache cabal store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cabal/store
+            ~/.cabal/packages
+          key: ${{ runner.os }}-cabal-agda-2.7.0.1
+
+      - name: Install Agda (pinned)
+        run: |
+          cabal update
+          cabal install Agda-2.7.0.1 --installdir="$HOME/.local/bin" --install-method=copy --overwrite-policy=always
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Full typecheck + packs
+        run: |
+          make check-all
+          make packs

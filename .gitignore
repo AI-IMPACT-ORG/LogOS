@@ -1,0 +1,40 @@
+# LogOS: an Agda Library for foundational logic architecture
+# Copyright (C) 2025 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Agda build artifacts / caches
+_build/
+*.agdai
+*.agda.err
+
+# Agda local configuration (developer machine)
+.agda/
+local.agda-libraries
+
+# Agda --compile backend output (Haskell)
+MAlonzo/
+*.o
+*.hi
+*.dyn_o
+*.dyn_hi
+
+# Editor / OS
+.DS_Store
+__MACOSX/
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
+*.iml
+
+# Local environment / tooling
+.env
+.env.*
+.direnv/
+result
+result-*
+
+# Local bundles (keep releases out of Git history)
+*.zip
+*.tar.gz

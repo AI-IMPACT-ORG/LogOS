@@ -1,0 +1,21 @@
+# LogOS: an Agda Library for foundational logic architecture
+# Copyright (C) 2025 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+cff-version: 1.2.0
+message: "If you use this library in your work, please cite it."
+title: "LogOS (Agda) — Kernel + Packs"
+type: software
+license: GPL-3.0-only
+authors:
+  - family-names: "Boels"
+    given-names: "Rutger"
+    affiliation: ""
+keywords:
+  - agda
+  - type theory
+  - logic
+  - category theory
+  - kernels
+  - semantics
+  - proof assistant
