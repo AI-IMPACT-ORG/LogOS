@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 
 LogOS is an Agda library for foundational logic architecture that treats foundational logic as modern software. 
 
-The library is espcially usefull using code assistants like Claude Code, Codex, Cursor or similar. An accompanying paper will appear soon on the arxiv.
+The library is especially useful using code assistants like Claude Code, Codex, Cursor or similar. An accompanying paper will appear soon on the arxiv.
 
 It features small, host‑minimal kernel interface for a 3‑tier logic (S/H/G) with a reflective code surface, plus curated application packs (ZFC, complexity, universality/IR, opacity/GRH).
 
