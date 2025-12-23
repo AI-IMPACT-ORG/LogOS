@@ -48,6 +48,10 @@ jobs:
         run: |
           make ci
           make lint
+      
+      - name: Full typecheck with warnings
+        run: |
+          make check-all
 
   full-scan:
     runs-on: ubuntu-latest
