@@ -45,8 +45,8 @@ open import LogOS.API.Minimal
 Start here (literate Agda):
 - Architecture + entrypoints: `docs/Definition.lagda.md`
 - Research-grade spec: `docs/Definition_Spec.lagda.md`
-- ZFC story: `docs/Application_ZFC.lagda.md`, `docs/ZFC_Demo.lagda.md`
-- Complexity story: `docs/Complexity.lagda.md`, `docs/Application_PvsNP.lagda.md`
+- ZFC story: `docs/Application_ZFC.lagda.md`, `docs/DeepDive/ZFC_Demo.lagda.md`
+- Complexity story: `docs/DeepDive/Complexity.lagda.md`, `docs/Application_PvsNP.lagda.md`
 - Universality story: `docs/Application_Universality.lagda.md`
 - Opacity/GRH story: `docs/Application_Opacity.lagda.md`
 
