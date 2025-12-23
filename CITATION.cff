@@ -4,18 +4,22 @@
 
 cff-version: 1.2.0
 message: "If you use this library in your work, please cite it."
-title: "LogOS (Agda) — Kernel + Packs"
+title: "LogOS — Kernel + Packs (Agda)"
 type: software
 license: GPL-3.0-only
 authors:
   - family-names: "Boels"
     given-names: "Rutger"
-    affiliation: ""
+    affiliation: "AI.IMPACT GmbH"
 keywords:
   - agda
-  - type theory
   - logic
+  - model theory
+  - type theory
   - category theory
+  - physics
+  - information theory
   - kernels
   - semantics
   - proof assistant
+  - categorical quantum mechanics
