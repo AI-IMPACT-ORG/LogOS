@@ -52,7 +52,6 @@ Start here (literate Agda):
 
 HTML docs (Agda HTML backend):
 - Build locally: `make html` → `_build/html/index.html`
-- GitHub Pages workflow: `.github/workflows/pages.yml`
 
 ## Entry Points
 
