@@ -43,19 +43,13 @@ module For
       NP-holds : W.InNPG {ℓL = ℓL} Lang
       notP     : ¬ G.InPG {ℓL = ℓL} Lang
 
-  record Claim (ℓL : Level) (Lang : R.Language ℓL)
-    : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓL ⊔ ℓP))) where
-    field
-      NP-holds : W.InNPG {ℓL = ℓL} Lang
-      notP     : ¬ G.InPG {ℓL = ℓL} Lang
+  -- Packaging-only: the claim is definitionally the assumptions.
+  Claim : (ℓL : Level) → R.Language ℓL → Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓL ⊔ ℓP)))
+  Claim = Assumptions
 
   -- This layer is packaging only: assumptions are rewrapped as the claim.
   assumptions→claim : ∀ {ℓL} {Lang : R.Language ℓL} → Assumptions ℓL Lang → Claim ℓL Lang
-  assumptions→claim A =
-    record
-      { NP-holds = Assumptions.NP-holds A
-      ; notP     = Assumptions.notP A
-      }
+  assumptions→claim A = A
 
   record Pack {ℓL} (Lang : R.Language ℓL)
     : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓL ⊔ ℓP))) where

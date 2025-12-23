@@ -32,13 +32,14 @@ cat > "${OUT_DIR}/index.html" <<'EOF'
         <li><a href="docs.Definition.html">Start here: definition</a></li>
         <li><a href="docs.Definition_Spec.html">Specification (records/laws)</a></li>
         <li><a href="docs.Application_ZFC.html">Application: ZFC</a></li>
-        <li><a href="docs.ZFC_Demo.html">ZFC demo</a></li>
-        <li><a href="docs.Complexity.html">Complexity</a></li>
+        <li><a href="docs.DeepDive.ZFC_Demo.html">DeepDive: ZFC demo</a></li>
+        <li><a href="docs.DeepDive.Complexity.html">DeepDive: complexity</a></li>
         <li><a href="docs.Application_Universality.html">Application: universality</a></li>
         <li><a href="docs.Application_Opacity.html">Application: opacity</a></li>
         <li><a href="docs.View_MultiInstitution.html">View: multi-institution</a></li>
         <li><a href="docs.View_HoTT_3Level.html">View: HoTT (3-level)</a></li>
         <li><a href="docs.View_CategoricalLogic.html">View: categorical logic</a></li>
+        <li><a href="docs.View_ObserverSemantics.html">View: observer semantics</a></li>
       </ul>
     </main>
   </body>

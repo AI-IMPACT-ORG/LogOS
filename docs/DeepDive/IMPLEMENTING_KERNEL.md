@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-3.0-only
 
 # Implementing a Kernel (checklist)
 
-This file is kept as an appendix-style checklist.
+This file is kept as a DeepDive appendix-style checklist.
 The maintained entrypoint is `docs/Definition.lagda.md`.
 
 The LogOS design is “hexagonal”: the Kernel is a small interface; everything else

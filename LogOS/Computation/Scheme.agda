@@ -9,7 +9,7 @@ module LogOS.Computation.Scheme where
 
 open import LogOS.Prelude
 
-open import LogOS.Computation.Core using (iterate; Computation)
+open import LogOS.Computation.Core using (iterate; iterate-+; Computation)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPoset)
 open import LogOS.Minimal.ScaleOps using (ScaleOps)
@@ -64,7 +64,7 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
     ; infl       to normalize-infl
     ; idemp-lax  to normalize-idemp-lax
     )
-  open QAdapter Q public using (Scale; _≤s_; _·_; e)
+  open QAdapter Q public using (Scale; _≤s_; _⊔s_; ⊥s; _·_; e)
 
   Comp : Computation Con
   Comp = record { Step = Step ; Halts = λ _ → Topℓ }
@@ -133,6 +133,133 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
   ComputesWithin : Input → Scale → Output → Set (ℓC ⊔ ℓO ⊔ ℓQ)
   ComputesWithin x b y =
     Σ Con (λ c' → NormalizesTo≤ b (compile x) c' × decode (normalize c') ≡ y)
+
+  -- ==========================================================================
+  -- Budget algebra (quantale-facing)
+  --
+  -- These lemmas make the finite-join structure operational for schemes:
+  -- budgets can be weakened along `_≤s_` and combined via join (`_⊔s_`).
+  -- ==========================================================================
+
+  NormalizesTo≤-mono
+    : ∀ {b b' c c'}
+      → b ≤s b'
+      → NormalizesTo≤ b c c'
+      → NormalizesTo≤ b' c c'
+  NormalizesTo≤-mono le (n , (reach , (halt , cost≤))) =
+    n , (reach , (halt , QAdapter.≤s-trans Q cost≤ le))
+
+  ComputesWithin-mono
+    : ∀ {x b b' y}
+      → b ≤s b'
+      → ComputesWithin x b y
+      → ComputesWithin x b' y
+  ComputesWithin-mono le (c' , (norm≤ , out≡)) =
+    c' , (NormalizesTo≤-mono le norm≤ , out≡)
+
+  ComputesWithin-⊔s₁
+    : ∀ {x b b' y}
+      → ComputesWithin x b y
+      → ComputesWithin x (b ⊔s b') y
+  ComputesWithin-⊔s₁ {b = b} {b' = b'} =
+    ComputesWithin-mono (QAdapter.⊔s-ub₁ Q b b')
+
+  ComputesWithin-⊔s₂
+    : ∀ {x b b' y}
+      → ComputesWithin x b' y
+      → ComputesWithin x (b ⊔s b') y
+  ComputesWithin-⊔s₂ {b = b} {b' = b'} =
+    ComputesWithin-mono (QAdapter.⊔s-ub₂ Q b b')
+
+  ComputesWithin-⊔s
+    : ∀ {x b b' y}
+      → (ComputesWithin x b y) ⊎ (ComputesWithin x b' y)
+      → ComputesWithin x (b ⊔s b') y
+  ComputesWithin-⊔s (inj₁ p) = ComputesWithin-⊔s₁ p
+  ComputesWithin-⊔s (inj₂ p) = ComputesWithin-⊔s₂ p
+
+  -- ==========================================================================
+  -- Cost decomposition (sequential composition)
+  --
+  -- This is a purely algebraic fact about `costExec` as a monoid fold.
+  -- It does not assume any monotonicity of `_·_` w.r.t. `_≤s_`.
+  -- ==========================================================================
+
+  costExec-+
+    : ∀ m n c
+      → costExec (m + n) c
+        ≡ (costExec m c · costExec n (iterate Comp m c))
+  costExec-+ zero    n c =
+    sym (QAdapter.·-idl Q (costExec n c))
+  costExec-+ (suc m) n c =
+    let
+      a = stepCost c
+      b = costExec m (Step c)
+      d = costExec n (iterate Comp m (Step c))
+    in
+    LogOS.Prelude.trans
+      (cong (λ z → a · z) (costExec-+ m n (Step c)))
+      (sym (QAdapter.·-assoc Q a b d))
+
+  -- ==========================================================================
+  -- Quantale-graded execution (new: uses `·-mono`)
+  --
+  -- The key new capability after upgrading `QAdapter` with monotone
+  -- multiplication: budgeted executions compose.
+  -- ==========================================================================
+
+  ExecWithin : ℕ → Con → Scale → Con → Set (ℓC ⊔ ℓQ)
+  ExecWithin n c b c' = iterate Comp n c ≡ c' × costExec n c ≤s b
+
+  ExecWithin-mono
+    : ∀ {n c b b' c'}
+      → b ≤s b'
+      → ExecWithin n c b c'
+      → ExecWithin n c b' c'
+  ExecWithin-mono le (reach , cost≤) =
+    reach , QAdapter.≤s-trans Q cost≤ le
+
+  costExec-+≤
+    : ∀ {m n c b d}
+      → costExec m c ≤s b
+      → costExec n (iterate Comp m c) ≤s d
+      → costExec (m + n) c ≤s (b · d)
+  costExec-+≤ {m = m} {n = n} {c = c} {b = b} {d = d} costm costn =
+    subst (λ z → z ≤s (b · d)) (sym (costExec-+ m n c))
+      (QAdapter.·-mono Q costm costn)
+
+  ExecWithin-+
+    : ∀ {m n c c₁ c₂ b d}
+      → ExecWithin m c b c₁
+      → ExecWithin n c₁ d c₂
+      → ExecWithin (m + n) c (b · d) c₂
+  ExecWithin-+ {m = m} {n = n} {c = c} {c₁ = c₁} {c₂ = c₂} {b = b} {d = d}
+               (reach₁ , cost₁) (reach₂ , cost₂) =
+    reach , costExec-+≤ {m = m} {n = n} {c = c} {b = b} {d = d} cost₁ cost₂'
+    where
+      reach : iterate Comp (m + n) c ≡ c₂
+      reach =
+        LogOS.Prelude.trans
+          (iterate-+ Comp m n c)
+          (LogOS.Prelude.trans (cong (iterate Comp n) reach₁) reach₂)
+
+      cost₂' : costExec n (iterate Comp m c) ≤s d
+      cost₂' =
+        subst (λ z → costExec n z ≤s d) (sym reach₁) cost₂
+
+  ReachesWithin : Con → Scale → Con → Set (ℓC ⊔ ℓQ)
+  ReachesWithin c b c' = Σ ℕ (λ n → ExecWithin n c b c')
+
+  ReachesWithin-refl : ∀ c → ReachesWithin c e c
+  ReachesWithin-refl c = zero , (LogOS.Prelude.refl , QAdapter.≤s-refl Q)
+
+  ReachesWithin-trans
+    : ∀ {c c₁ c₂ b d}
+      → ReachesWithin c b c₁
+      → ReachesWithin c₁ d c₂
+      → ReachesWithin c (b · d) c₂
+  ReachesWithin-trans (m , ew₁) (n , ew₂) =
+    (m + n) , ExecWithin-+ {m = m} {n = n} ew₁ ew₂
 
 -- ==========================================================================
 -- Observational equivalence (semantics is the set of possible outputs)

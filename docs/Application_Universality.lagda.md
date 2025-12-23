@@ -40,9 +40,10 @@ The goal is to present computation *inside LogOS* as a **universal process**
 with multiple paradigm instantiations (Turing/Minsky, λ-calculus, quantum,
 Ethereum/EVM-like), all connected by explicit translations and a shared IR.
 
-In the “scheme” view, the library literally defines **what computation is**:
+In the “scheme” view, the library defines a canonical notion of **what computation is (in LogOS)**:
 as a fuel-free normalization relation (`Sch.Scheme.ComputesTo`) and its induced
-observational equivalence (`Sch.ObsEq`), rather than as a particular machine.
+observational equivalence (`Sch.ObsEq`), plus an explicit operational budget
+layer (`Sch.ExecWithin` / `Sch.ReachesWithin`), rather than as a particular machine.
 
 It also cleanly separates **algorithms** from **implementations**:
 - an algorithm is a specification (`Sch.Algorithm`),
@@ -57,16 +58,16 @@ story fails to build.
 
 This library separates three increasingly strong claims:
 
-1. **Substrate universality (by construction):**
-   the shared carrier `UCode` contains a standard Turing-complete model
-   (a 4-register Minsky machine), hence the *process substrate* can host
-   classical universal computation.
+1. **Substrate universality (by inclusion):**
+   the shared carrier `UCode` includes a standard universal machine model
+   (a 4-register Minsky machine). The library does not re-prove Turing-completeness here,
+   but uses this model as the universal substrate for translations and examples.
 
 2. **Translation universality (proved for fragments):**
    for a chosen fragment/language `Input`, provide
    - explicit compilers into multiple paradigms,
    - a single shared stepper (`stepU` on `UCode`),
-   - a canonical normaliser (`lowerToIR`),
+   - a canonical lowering/projection (`lowerToIR`),
    and then prove “same computation” as agreement after lowering/decoding.
 
 3. **Paradigm universality (conditional / future work):**
@@ -81,7 +82,8 @@ This library separates three increasingly strong claims:
 - Each paradigm is a small-step semantics on a concrete code type.
 - A single unified carrier (`UCode`) packages those codes.
 - “Same computation” means: compile/decompile/translate between paradigms and
-  prove agreement via the common IR semantics.
+  prove agreement via the common observation function `observe : UCode → ℕ`
+  (defined as `decode ∘ lowerToIR` in `LogOS/Domain/UniversalIR/IR.agda`).
 
 The diagram the code enforces (via `Process`/`Choice` and `ProcessHom`) is:
 
@@ -95,7 +97,7 @@ Input (e.g. PATask)
 
 Each of these “machine schemes” factors through the same semantic center:
 
-Input ──Choice.compile──▶ state ──Step^(steps(budget g))──▶ state ──Norm──▶ state ──decode──▶ ℕ
+Input ──Choice.compile──▶ state ──Step^(steps(budget g))──▶ state ──lowerToIR──▶ state ──decode──▶ ℕ
            │                         (scheme index g)             │
            └────────────────── ProcessHom ────────────┘
 ```
@@ -161,13 +163,27 @@ Notable example:
   small runnable gate-level examples (`LogOS/Domain/UniversalIR/Examples/QuantumCircuit.agda`).
 - **Costs have “physics bite”:** all UniversalIR schemes use a two-axis quantale
   cost (`LogOS/Adapters/QNat2.agda`) where costs are pairs `(unitaryWork , measurementEvents)`;
+  costs are built via `work`/`meas` (and join-composed budgets `budget₂`);
   quantum `MEASURE`/`QMEASURE` steps contribute on the second axis
-  (`LogOS/Domain/UniversalIR/Schemes.agda`).
+  (`LogOS/Domain/UniversalIR/Schemes.agda`). The same file also exposes a single
+  per-step envelope `stepBudgetᵁ = budget₂ 3 1` with `stepCostᵁ≤stepBudgetᵁ`,
+  so the whole coproduct `UCode` has an explicit, join-shaped cost cap per step.
 - **Schemes are grade-indexed (ScaleOps):** a “scheme index” is a grade `g : Scale`,
   interpreted as a step budget via `ScaleOps` (see `Sch.run≤` and `Cat.run≤`);
   the schedule-based `Sch.run` (where the schedule is the scheme’s `fuel`) is a
-  special case at grade `τ (fuel t)`
+  special case at grade `work (fuel t)` (i.e. `τ (fuel t)` on `QNat2`)
   (`run≤-fuel≡run-*` in `LogOS/Domain/UniversalIR/Schemes.agda`).
+- **Time vs observation are independent:** `ScaleOps` reads only the work axis.
+  Concretely, `run≤ᵁ (budget₂ k m) ≡ run≤ᵁ (work k)` (`run≤ᵁ-budget₂≡work`), while
+  measurement cannot be “paid for” by a work-only budget (`meas1≰work` / `work1≰meas`)
+  (`LogOS/Domain/UniversalIR/Schemes.agda`).
+- **Operational budget transport (process morphisms):** reachability and cost
+  bounds transport across representations via
+  `LogOS.Computation.SchemeCategory.Semantics.ExecWithin-natural` and
+  `LogOS.Computation.SchemeCategory.Semantics.ReachesWithin-natural`. This is
+  used in `LogOS/Domain/UniversalIR/Examples/SchemeChoices.agda` to exhibit
+  explicit budgeted Minsky executions and factor them through the universal
+  coproduct process.
 - **One-stroke Minsky variants:** any alternate resource accounting for the same
   Minsky small-step semantics can be wrapped as a `Process` and still factors
   through the universal semantic center (`MinskyProcessWith`, `Minsky→U-With` in
@@ -205,6 +221,9 @@ on any particular paradigm:
 
 - **Representation invariance:** `LogOS/Computation/SchemeCategory.agda`
   (`run≤-map`, `run≤-meaning-comm`).
+- **Axis-independence (ScaleOps):** `LogOS/Computation/SchemeCategory.agda`
+  (`Semantics.Exec≤-stepsEq`), with a concrete `QNat2` specialization
+  `run≤ᵁ-budget₂≡work` in `LogOS/Domain/UniversalIR/Schemes.agda`.
 - **Semantics is functorial (category façade):** `LogOS/Computation/SchemeCategory.agda`
   (`ProcessCategory`, `Semantics`).
 - **Relational ↔ schedule semantics bridge:** `LogOS/Computation/Scheme.agda`

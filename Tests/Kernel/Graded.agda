@@ -26,18 +26,7 @@ CP =
     }
 
 Q : QAdapter lzero
-Q =
-  record
-    { Scale = ⊤
-    ; _≤s_  = λ _ _ → ⊤
-    ; _·_   = λ _ _ → tt
-    ; e     = tt
-    ; _≤p_  = λ _ _ → ⊤
-    ; Time  = ⊤
-    ; _+_   = λ _ _ → tt
-    ; zero  = tt
-    ; τ     = λ _ → tt
-    }
+Q = trivialQAdapter
 
 G : GradedClosure Q CP
 G =

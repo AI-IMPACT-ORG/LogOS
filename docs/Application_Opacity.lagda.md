@@ -110,6 +110,8 @@ Both meta modules now include generalized forms where budgets live in an abstrac
 carrier `B` with an order. In particular, when working with `GradedKernel`, you
 can take `B` to be `QAdapter.Scale Q` and the budget order to be `_≤s_`, so
 “observable within budget” aligns with the kernel’s quantale-grade resource model.
+Because `Scale` is a (finite‑join) quantale, you can also combine budget policies
+via `_⊔s_` (alternative allowances) and model sequential composition via `_·_`.
 
 ### Recommended graded instantiation (snippet)
 
@@ -145,7 +147,9 @@ This is the precise statement behind:
 
 > a fully explicit, total “spectral certificate oracle” for the global object is blocked
 
-in any setting admitting a Tarski-style truth diagonal (`TruthDiagonal`).
+more precisely: given a decode-extensional oracle surface (`SpectralSeparationOutput`) and a
+Tarski-style truth diagonal (`TruthDiagonal`), diagonalization forces an explicit code where the
+oracle must return `undefined`. In particular, no such oracle can be total.
 
 ## Curated import (namespaced)
 

@@ -37,6 +37,15 @@ open import LogOS.Domain.UniversalIR.Schemes using
   ; ethereumScheme
   ; oracleScheme
   ; quantumCircuitScheme
+  ; budget₂
+  ; Budget
+  ; three·
+  ; choiceScheme-cost≤budget₂3n,n
+  ; minskyChoice
+  ; lambdaChoice
+  ; ethereumChoice
+  ; oracleChoice
+  ; quantumCircuitChoice
   )
 import LogOS.Computation.Scheme as Sch
 open import LogOS.Computation.Core using (Computation; iterate)
@@ -601,6 +610,11 @@ circuitMachine-correct t = trans (circuitMachine≡run t) (circuit-correct t)
 -- These schemes share the same universal process (`UProcess`) and differ only
 -- by representation choice (compiler + schedule/fuel).
 
+fuelBudgetFor
+  : (S : Sch.Scheme {ℓI = lzero} {ℓO = lzero} {ℓC = lzero} {ℓQ = lzero} PATask ℕ)
+  → PATask → Budget
+fuelBudgetFor S t = budget₂ (three· (Sch.Scheme.fuel S t)) (Sch.Scheme.fuel S t)
+
 record ChoiceSchemesCorrect (t : PATask) : Set where
   field
     minsky   : Sch.run minskyScheme t ≡ eval t
@@ -608,6 +622,14 @@ record ChoiceSchemesCorrect (t : PATask) : Set where
     ethereum : Sch.run ethereumScheme t ≡ eval t
     oracle   : Sch.run oracleScheme t ≡ eval t
     circuit  : Sch.run quantumCircuitScheme t ≡ eval t
+
+record ChoiceSchemesCostBound (t : PATask) : Set where
+  field
+    minsky   : Sch.Scheme._≤s_ minskyScheme (Sch.cost minskyScheme t) (fuelBudgetFor minskyScheme t)
+    lambda   : Sch.Scheme._≤s_ lambdaScheme (Sch.cost lambdaScheme t) (fuelBudgetFor lambdaScheme t)
+    ethereum : Sch.Scheme._≤s_ ethereumScheme (Sch.cost ethereumScheme t) (fuelBudgetFor ethereumScheme t)
+    oracle   : Sch.Scheme._≤s_ oracleScheme (Sch.cost oracleScheme t) (fuelBudgetFor oracleScheme t)
+    circuit  : Sch.Scheme._≤s_ quantumCircuitScheme (Sch.cost quantumCircuitScheme t) (fuelBudgetFor quantumCircuitScheme t)
 
 record ChoiceSchemesRunEq : Set where
   field
@@ -624,6 +646,16 @@ patask-choiceSchemes-correct t =
     ; ethereum = trans (ethereumChoiceScheme≡run t) (ethereum-correct t)
     ; oracle   = trans (oracleChoiceScheme≡run t) (oracle-correct t)
     ; circuit  = trans (circuitChoiceScheme≡run t) (circuit-correct t)
+    }
+
+patask-choiceSchemes-costBound : ∀ t → ChoiceSchemesCostBound t
+patask-choiceSchemes-costBound t =
+  record
+    { minsky   = choiceScheme-cost≤budget₂3n,n minskyChoice t
+    ; lambda   = choiceScheme-cost≤budget₂3n,n lambdaChoice t
+    ; ethereum = choiceScheme-cost≤budget₂3n,n ethereumChoice t
+    ; oracle   = choiceScheme-cost≤budget₂3n,n oracleChoice t
+    ; circuit  = choiceScheme-cost≤budget₂3n,n quantumCircuitChoice t
     }
 
 patask-choiceSchemes-runEq : ChoiceSchemesRunEq
@@ -771,6 +803,14 @@ record Claim (_ : Assumptions) : Set₁ where
     oracle   : Sch.ImplementsRun Alg oracleScheme
     circuit  : Sch.ImplementsRun Alg quantumCircuitScheme
 
+    -- Cost honesty: each representation runs within the universal (3n,n) envelope
+    -- induced by its chosen fuel bound.
+    minskyCost   : ∀ t → Sch.Scheme._≤s_ minskyScheme (Sch.cost minskyScheme t) (fuelBudgetFor minskyScheme t)
+    lambdaCost   : ∀ t → Sch.Scheme._≤s_ lambdaScheme (Sch.cost lambdaScheme t) (fuelBudgetFor lambdaScheme t)
+    ethereumCost : ∀ t → Sch.Scheme._≤s_ ethereumScheme (Sch.cost ethereumScheme t) (fuelBudgetFor ethereumScheme t)
+    oracleCost   : ∀ t → Sch.Scheme._≤s_ oracleScheme (Sch.cost oracleScheme t) (fuelBudgetFor oracleScheme t)
+    circuitCost  : ∀ t → Sch.Scheme._≤s_ quantumCircuitScheme (Sch.cost quantumCircuitScheme t) (fuelBudgetFor quantumCircuitScheme t)
+
     -- Meaning agreement across schemes.
     minsky≈lambda   : Sch.RunEq minskyScheme lambdaScheme
     lambda≈ethereum : Sch.RunEq lambdaScheme ethereumScheme
@@ -791,6 +831,11 @@ mkPack _ =
         ; ethereum       = ethereum-implements-PA
         ; oracle         = oracle-implements-PA
         ; circuit        = circuit-implements-PA
+        ; minskyCost     = λ t → ChoiceSchemesCostBound.minsky (patask-choiceSchemes-costBound t)
+        ; lambdaCost     = λ t → ChoiceSchemesCostBound.lambda (patask-choiceSchemes-costBound t)
+        ; ethereumCost   = λ t → ChoiceSchemesCostBound.ethereum (patask-choiceSchemes-costBound t)
+        ; oracleCost     = λ t → ChoiceSchemesCostBound.oracle (patask-choiceSchemes-costBound t)
+        ; circuitCost    = λ t → ChoiceSchemesCostBound.circuit (patask-choiceSchemes-costBound t)
         ; minsky≈lambda   = ChoiceSchemesRunEq.minsky≈lambda patask-choiceSchemes-runEq
         ; lambda≈ethereum = ChoiceSchemesRunEq.lambda≈ethereum patask-choiceSchemes-runEq
         ; ethereum≈oracle = ChoiceSchemesRunEq.ethereum≈oracle patask-choiceSchemes-runEq

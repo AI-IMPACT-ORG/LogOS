@@ -217,17 +217,7 @@ module _ {ℓ : Level}
     }
 
   Q : QAdapter ℓ
-  Q = record
-    { Scale = Topℓ {ℓ}
-    ; _≤s_  = λ _ _ → Topℓ {ℓ}
-    ; _·_   = λ _ _ → ttℓ
-    ; e     = ttℓ
-    ; _≤p_  = λ _ _ → Topℓ {ℓ}
-    ; Time  = Topℓ {ℓ}
-    ; _+_   = λ _ _ → ttℓ
-    ; zero  = ttℓ
-    ; τ     = λ _ → ttℓ
-    }
+  Q = trivialQAdapter
 
   module W = Worlds Sig
 

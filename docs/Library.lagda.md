@@ -25,7 +25,7 @@ Stable import surfaces:
 - Curated core theorems: `LogOS/Theorems/Core.agda`
 
 Major storylines:
-- ZFC: `docs/Application_ZFC.lagda.md` (demo: `docs/ZFC_Demo.lagda.md`)
-- Complexity: `docs/Complexity.lagda.md` (P vs NP note: `docs/Application_PvsNP.lagda.md`)
+- ZFC: `docs/Application_ZFC.lagda.md` (demo: `docs/DeepDive/ZFC_Demo.lagda.md`)
+- Complexity: `docs/DeepDive/Complexity.lagda.md` (P vs NP note: `docs/Application_PvsNP.lagda.md`)
 - Universality: `docs/Application_Universality.lagda.md`
 - Opacity / GRH application: `docs/Application_Opacity.lagda.md`

@@ -16,7 +16,8 @@ open import LogOS.Domain.UniversalIR.Task using (PATask; mkTask; Add)
 open import LogOS.Domain.UniversalIR.Languages.QuantumCircuit as QC using (compilePrepBrand; fuelPrep)
 import LogOS.Computation.Scheme as Sch
 import LogOS.Computation.SchemeCategory as Cat
-open import LogOS.Domain.UniversalIR.Schemes using (QuantumCircuitProcess)
+open import LogOS.Domain.UniversalIR.Schemes using (QuantumCircuitProcess; meas; meas-zero; meas-+; budget₂; meas≤budget₂; QSteps)
+open import LogOS.Minimal.Adapter using (QAdapter)
 
 open import Data.List using (List; []; _∷_)
 open import Data.Bool using (Bool; true; false)
@@ -68,8 +69,34 @@ qTOFF-runs-to-7 = decodeChurch-church 7
 qMeasure : QuantumCircuitCode
 qMeasure = mkQC 0 1 (true ∷ []) (QMEASURE 0 0 1 ∷ QCHALT ∷ [])
 
-qMeasure-cost : Sch.cost qcScheme qMeasure ≡ (0 , 1)
+qMeasure-cost : Sch.cost qcScheme qMeasure ≡ meas 1
 qMeasure-cost = refl
+
+qMeasure-cost≤budget : QAdapter._≤s_ QSteps (Sch.cost qcScheme qMeasure) (budget₂ 0 1)
+qMeasure-cost≤budget rewrite qMeasure-cost = meas≤budget₂ 0 1
+
+-- Using `meas-zero`: 0 steps costs exactly 0 measurements.
+qMeasure-costAt0 : Sch.costAt qcScheme 0 qMeasure ≡ meas 0
+qMeasure-costAt0 = sym meas-zero
+
+-- Using `meas-+`: sequential measurements add along the second quantale axis.
+
+qcChoice2 : Cat.Choice QuantumCircuitCode QuantumCircuitProcess
+qcChoice2 = record { compile = (λ q → q) ; fuel = (λ _ → 2) }
+
+qcScheme2 : Sch.Scheme QuantumCircuitCode ℕ
+qcScheme2 = Cat.schemeFromChoice QuantumCircuitProcess qcChoice2
+
+qMeasure2 : QuantumCircuitCode
+qMeasure2 = mkQC 0 1 (true ∷ []) (QMEASURE 0 0 1 ∷ QMEASURE 0 0 1 ∷ QCHALT ∷ [])
+
+qMeasure2-cost : Sch.cost qcScheme2 qMeasure2 ≡ meas 2
+qMeasure2-cost = refl
+
+qMeasure2-cost-factor
+  : Sch.cost qcScheme2 qMeasure2 ≡ QAdapter._·_ QSteps (meas 1) (meas 1)
+qMeasure2-cost-factor =
+  trans qMeasure2-cost (meas-+ 1 1)
 
 -- 4) State-preparation compiler artifact (basis-state “circuit compilation”)
 

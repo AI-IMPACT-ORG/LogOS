@@ -212,6 +212,54 @@ record GradedKernelHomWithGrade {ℓ : Level}
   _≈Code_ : Code₁ → Code₁ → Set ℓ
   _≈Code_ γ δ = decode₁ γ ≡ decode₁ δ
 
+-- Identity and composition for GradedKernelHomWithGrade.
+--
+-- These are the “portable” morphisms: they ignore model-specific flow
+-- preservation and only transport the kernel’s structural ports (constraints,
+-- code, and grade scale).
+
+idGradedKernelHomWithGrade
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : GradedKernel Sig Q)
+  → GradedKernelHomWithGrade K K
+idGradedKernelHomWithGrade K =
+  record
+    { con-hom   = idHom≡ (conAlgOf K)
+    ; mapCode   = λ γ → γ
+    ; map-encode = λ _ → refl
+    ; map-decode = λ _ → refl
+    ; grade-hom  = Truth.GuardedCore.idGradeHom
+    }
+
+composeGradedKernelHomWithGrade
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q₁ Q₂ Q₃ : QAdapter ℓ}
+    {K₁ : GradedKernel Sig Q₁} {K₂ : GradedKernel Sig Q₂} {K₃ : GradedKernel Sig Q₃}
+  → GradedKernelHomWithGrade K₁ K₂
+  → GradedKernelHomWithGrade K₂ K₃
+  → GradedKernelHomWithGrade K₁ K₃
+composeGradedKernelHomWithGrade h₁ h₂ =
+  record
+    { con-hom    = composeHom≡ (GradedKernelHomWithGrade.con-hom h₁)
+                               (GradedKernelHomWithGrade.con-hom h₂)
+    ; mapCode    = λ γ → GradedKernelHomWithGrade.mapCode h₂
+                        (GradedKernelHomWithGrade.mapCode h₁ γ)
+    ; map-encode = λ c →
+        trans
+          (cong (GradedKernelHomWithGrade.mapCode h₂)
+                (GradedKernelHomWithGrade.map-encode h₁ c))
+          (GradedKernelHomWithGrade.map-encode h₂
+            (ConAlgHom≡.map∂ (GradedKernelHomWithGrade.con-hom h₁) c))
+    ; map-decode = λ γ →
+        trans
+          (GradedKernelHomWithGrade.map-decode h₂
+            (GradedKernelHomWithGrade.mapCode h₁ γ))
+          (cong (ConAlgHom≡.map∂ (GradedKernelHomWithGrade.con-hom h₂))
+                (GradedKernelHomWithGrade.map-decode h₁ γ))
+    ; grade-hom  = Truth.GuardedCore.composeGradeHom
+                    (GradedKernelHomWithGrade.grade-hom h₁)
+                    (GradedKernelHomWithGrade.grade-hom h₂)
+    }
+
 record GradedKernelHomFlowWithGrade {ℓ : Level}
                                     {Sig : LogOSSignature ℓ}
                                     {Q₁ Q₂ : QAdapter ℓ}

@@ -86,8 +86,10 @@ $$
 $$
 and the reflective coherence law:
 $$
-  \mathrm{decode}(\mathrm{Guard}(\gamma)) = \mathrm{Flow}(\mathrm{decode}(\gamma)).
+  \mathrm{decode}(\mathrm{Guard}(\gamma)) \;\equiv\; \mathrm{Flow}(\mathrm{decode}(\gamma)).
 $$
+where $\equiv$ should be read as the library’s propositional equality (Agda’s `_≡_`),
+not a definitional equality.
 
 ### S-institution: strict formulas
 
@@ -97,6 +99,10 @@ Define an institution $\mathcal{I}_S(K)$ (“S-tier”) by:
 - $\mathrm{Sen}_S(\Sigma) := \mathrm{Fml}$,
 - $\mathrm{Mod}_S(\Sigma) :=$ the discrete category on the set $\mathrm{World}$,
 - satisfaction: $w \models_S \varphi$ iff $\mathrm{Sat}_S(w,\varphi)$.
+
+**Remark.** One can strengthen $\mathrm{Mod}_S$ and $\mathrm{Mod}_H$ to preorder categories using the kernel’s
+world order (`WorldH._≤ctx_`) and rely on monotonicity of satisfaction. This note keeps models discrete to
+stay maximally conservative.
 
 ### H-institution: boundary constraints
 
@@ -168,7 +174,9 @@ $$
 $$
 with $\mathrm{decode}\circ \mathrm{encode} = \mathrm{id}$ and the key coherence law:
 $$
-  \mathrm{decode}(\mathrm{Guard}(\gamma)) = \mathrm{Flow}(\mathrm{decode}(\gamma)).
+  \mathrm{decode}(\mathrm{encode}(c)) \;\equiv\; c,
+  \qquad
+  \mathrm{decode}(\mathrm{Guard}(\gamma)) \;\equiv\; \mathrm{Flow}(\mathrm{decode}(\gamma)).
 $$
 
 This can be read as: the G-tier closure operator is **internalized** by a single admissible

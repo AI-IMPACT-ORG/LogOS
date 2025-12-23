@@ -22,6 +22,7 @@ open import LogOS.Domain.Opacity.Applications.GRH.HPGRHLimit public
 open import LogOS.Domain.Opacity.Applications.GRH.HPGRHLimitOmegaSup public
 
 open import LogOS.Domain.Opacity.Applications.GRH.ZetaBridge public
+open import LogOS.Domain.Opacity.Applications.GRH.ZetaHPIdentification public
 open import LogOS.Domain.Opacity.Applications.GRH.DiagonalToHPBridge public
 open import LogOS.Domain.Opacity.Applications.GRH.DiagonalAdapter public
 open import LogOS.Domain.Opacity.Applications.GRH.DiagonalNTemplate public

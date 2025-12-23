@@ -30,12 +30,11 @@ module For {ℓQ : Level}
            (Q  : QAdapter ℓQ)
            (gradeBound : ℕ → QAdapter.Scale Q)
            (monoGradeBound : ∀ {m n} → m ≤ℕ n → QAdapter._≤s_ Q (gradeBound m) (gradeBound n))
-           (trans≤ : ∀ {a b c} → QAdapter._≤s_ Q a b → QAdapter._≤s_ Q b c → QAdapter._≤s_ Q a c)
            where
 
   module C = PCWCG.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} {ℓQ = ℓQ} SAT.CNF SAT.cnfSize Pℕ Q gradeBound
-  module B = PBWCG.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} {ℓQ = ℓQ} SAT.CNF SAT.cnfSize Pℕ Q gradeBound trans≤
-  module P = Pipe.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} {ℓQ = ℓQ} SAT.CNF SAT.cnfSize Pℕ Q gradeBound trans≤
+  module B = PBWCG.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} {ℓQ = ℓQ} SAT.CNF SAT.cnfSize Pℕ Q gradeBound
+  module P = Pipe.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} {ℓQ = ℓQ} SAT.CNF SAT.cnfSize Pℕ Q gradeBound
 
   SATL : C.Language
   SATL = SAT.SAT

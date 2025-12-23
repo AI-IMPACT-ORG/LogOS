@@ -22,3 +22,7 @@ module ClassicalPvsNP = ClassicalPvsNPₜ
 
 import LogOS.Domain.Complexity.PvsNPFromInfo_Grade_Only as PvsNPFromInfo_Grade_Onlyₜ
 module PvsNPFromInfo_Grade_Only = PvsNPFromInfo_Grade_Onlyₜ
+
+-- Proof-search opacity spine (shared machinery with the GRH/opacity stack).
+import LogOS.Domain.Complexity.ProofSearchOpacitySpine as ProofSearchOpacitySpineₜ
+module ProofSearchOpacitySpine = ProofSearchOpacitySpineₜ

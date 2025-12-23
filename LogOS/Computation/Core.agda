@@ -21,3 +21,12 @@ open Computation public
 iterate : ∀ {ℓ Code} → Computation {ℓ} Code → ℕ → Code → Code
 iterate C zero    c = c
 iterate C (suc n) c = iterate C n (Computation.Step C c)
+
+iterate-+
+  : ∀ {ℓ Code}
+    (C : Computation {ℓ} Code)
+    (m n : ℕ)
+    (c : Code)
+  → iterate C (m + n) c ≡ iterate C n (iterate C m c)
+iterate-+ C zero    n c = refl
+iterate-+ C (suc m) n c = iterate-+ C m n (Computation.Step C c)

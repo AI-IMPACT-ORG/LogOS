@@ -96,6 +96,12 @@ Observer semantics reading:
 This reframes many “no-go” arguments (diagonal/Rice/Tarski style) as **observer-limited**
 statements: a fully total oracle would exceed the allowed physical/observational regime.
 
+Quantitative note: in the production kernel, “resource” lives in the adapter `QAdapter` as a
+finite‑join unital quantale `Scale`. Sequential composition is modeled by quantale
+multiplication (`_·_`), alternative allowances by join (`_⊔s_`), and `⊥s` is the minimal budget.
+UniversalIR’s default cost model (`QNat2`) is a two-axis quantale (unitary work vs measurement
+events), making “measurement has a counted cost” a first-class notion.
+
 ## 4) CQM alignment: what is already present vs what is an extension
 
 What is already structurally present in the production library:

@@ -41,8 +41,8 @@ docs: doc-reference-check
 	$(AGDA) $(AGDA_FLAGS) docs/View_MultiInstitution.lagda.md
 	$(AGDA) $(AGDA_FLAGS) docs/View_ObserverSemantics.lagda.md
 	$(AGDA) $(AGDA_FLAGS) docs/Application_ZFC.lagda.md
-	$(AGDA) $(AGDA_FLAGS) docs/ZFC_Demo.lagda.md
-	$(AGDA) $(AGDA_FLAGS) docs/Complexity.lagda.md
+	$(AGDA) $(AGDA_FLAGS) docs/DeepDive/ZFC_Demo.lagda.md
+	$(AGDA) $(AGDA_FLAGS) docs/DeepDive/Complexity.lagda.md
 	$(AGDA) $(AGDA_FLAGS) docs/Application_Opacity.lagda.md
 	$(AGDA) $(AGDA_FLAGS) docs/Application_PvsNP.lagda.md
 	$(AGDA) $(AGDA_FLAGS) docs/Application_Universality.lagda.md
@@ -154,8 +154,8 @@ html: doc-reference-check
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/View_MultiInstitution.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/View_ObserverSemantics.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Application_ZFC.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/ZFC_Demo.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Complexity.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/DeepDive/ZFC_Demo.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/DeepDive/Complexity.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Application_Opacity.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Application_PvsNP.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Application_Universality.lagda.md

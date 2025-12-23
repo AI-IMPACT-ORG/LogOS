@@ -30,7 +30,6 @@ module For {ℓI ℓW ℓ ℓQ : Level}
            (Pℕ    : PolyPred)
            (Q     : QAdapter ℓQ)
            (gradeBound : ℕ → QAdapter.Scale Q)
-           (trans≤ : ∀ {a b c} → QAdapter._≤s_ Q a b → QAdapter._≤s_ Q b c → QAdapter._≤s_ Q a c)
            where
 
   open QAdapter Q renaming (Scale to Grade; _≤s_ to _≤g_)
@@ -70,7 +69,7 @@ module For {ℓI ℓW ℓ ℓQ : Level}
     let ex = ProofLowerBound.superPolyMerges PLB PD in
     let x  = proj₁ ex in
     x , λ cost≤ →
-          proj₂ ex (trans≤ (MergeMeasure.merges≤cost MM PD x) cost≤)
+          proj₂ ex (QAdapter.≤s-trans Q (MergeMeasure.merges≤cost MM PD x) cost≤)
 
 -- Kernel-native proof bridge (TruthRoute-based).
 

@@ -11,6 +11,7 @@ open import LogOS.Prelude
 
 import LogOS.Computation.Scheme as Sch
 import LogOS.Computation.SchemeCategory as Cat
+open import LogOS.Computation.Core using (iterate)
 
 open import LogOS.Domain.UniversalIR.Task using (PATask; mkTask; Add; Mul; eval)
 open import LogOS.Domain.UniversalIR.Core.Minsky using (MinskyCode)
@@ -19,6 +20,15 @@ open import LogOS.Domain.UniversalIR.Schemes using
   ( UProcess
   ; minskyScheme
   ; ethereumScheme
+  ; Budget
+  ; work
+  ; budget₂
+  ; work≤budget₂
+  ; three·
+  ; QSteps
+  ; minskyChoice
+  ; choiceScheme-execWithinAt≤budget₂3n,n
+  ; choiceScheme-execWithinSplit≤budget₂3n,n
   ; minskyMachineScheme
   ; ethereumMachineScheme
   ; minskyMachineChoice
@@ -39,6 +49,8 @@ open import LogOS.Domain.UniversalIR.Schemes using
   ; Minsky→U-With
   )
 import LogOS.Domain.UniversalIR.Theorems as Thm
+open import LogOS.Minimal.Adapter using (QAdapter)
+open QAdapter QSteps using (_·_)
 
 -- EXAMPLE (argument): scheme-centric view (“machines as schemes”) and factorization lemmas.
 
@@ -103,6 +115,21 @@ circuitCostFactorsThroughU
         ≡ Sch.cost quantumCircuitMachineScheme t
 circuitCostFactorsThroughU t = Cat.cost-comm Circuit→UCost quantumCircuitMachineChoice t
 
+-- Operational budget transport: the whole “executed within budget” witness is
+-- preserved when factoring a machine scheme through the universal process.
+
+minskyExecWithinFactorsThroughU
+  : ∀ n m b m'
+  → Sch.ExecWithin minskyMachineScheme n m b m'
+  → Sch.ExecWithin
+      (Cat.schemeFromChoice UProcess (Cat.mapChoice Minsky→U minskyMachineChoice))
+      n
+      (Cat.ProcessHom.map Minsky→U m)
+      b
+      (Cat.ProcessHom.map Minsky→U m')
+minskyExecWithinFactorsThroughU n m b m' ew =
+  Cat.ExecWithin-map Minsky→UCost minskyMachineChoice n m b m' ew
+
 -- --------------------------------------------------------------------------
 -- One concrete “same meaning, wildly different cost profile” example.
 
@@ -121,17 +148,75 @@ minsky23-ok = trans (Thm.minskyMachine-correct task23) answer23≡6
 ethereum23-ok : Sch.run ethereumScheme task23 ≡ 6
 ethereum23-ok = trans (Thm.ethereumMachine-correct task23) answer23≡6
 
-minsky23-cost : Sch.cost minskyScheme task23 ≡ (37 , 0)
+minsky23-cost : Sch.cost minskyScheme task23 ≡ work 37
 minsky23-cost = refl
 
-ethereum23-cost : Sch.cost ethereumScheme task23 ≡ (4 , 0)
+ethereum23-cost : Sch.cost ethereumScheme task23 ≡ work 4
 ethereum23-cost = refl
+
+minsky23-cost≤budget : QAdapter._≤s_ QSteps (Sch.cost minskyScheme task23) (budget₂ 37 0)
+minsky23-cost≤budget rewrite minsky23-cost = work≤budget₂ 37 0
+
+-- Same example, but in the operational “execute within budget” form:
+-- the universal cost envelope yields a concrete `ExecWithin` witness.
+
+minsky23-execWithinBudget :
+  Sch.ExecWithin
+    minskyScheme
+    (Sch.fuel minskyScheme task23)
+    (Sch.compile minskyScheme task23)
+    (budget₂ (three· (Sch.fuel minskyScheme task23)) (Sch.fuel minskyScheme task23))
+    (Sch.exec minskyScheme (Sch.fuel minskyScheme task23) task23)
+minsky23-execWithinBudget =
+  choiceScheme-execWithinAt≤budget₂3n,n minskyChoice task23
+
+-- And budgeted executions compose under quantale multiplication (split example).
+
+minsky23-execWithinBudgetSplit :
+  Sch.ExecWithin
+    minskyScheme
+    (10 + 27)
+    (Sch.compile minskyScheme task23)
+    (budget₂ (three· 10) 10 · budget₂ (three· 27) 27)
+    (iterate (Sch.Scheme.Comp minskyScheme) 27
+      (iterate (Sch.Scheme.Comp minskyScheme) 10 (Sch.compile minskyScheme task23)))
+minsky23-execWithinBudgetSplit =
+  choiceScheme-execWithinSplit≤budget₂3n,n minskyChoice 10 27 (Sch.compile minskyScheme task23)
+
+-- Machine-level (Minsky state space) run, and its transport into the universal
+-- semantic center via `Minsky→UCost`.
+
+minskyMachine23-execWithinFuel :
+  Sch.ExecWithin
+    minskyMachineScheme
+    (Sch.fuel minskyMachineScheme task23)
+    (Sch.compile minskyMachineScheme task23)
+    (Sch.cost minskyMachineScheme task23)
+    (Sch.exec minskyMachineScheme (Sch.fuel minskyMachineScheme task23) task23)
+minskyMachine23-execWithinFuel =
+  LogOS.Prelude.refl , QAdapter.≤s-refl QSteps
+
+minskyMachine23-execWithinFuelThroughU :
+  Sch.ExecWithin
+    (Cat.schemeFromChoice UProcess (Cat.mapChoice Minsky→U minskyMachineChoice))
+    (Sch.fuel minskyMachineScheme task23)
+    (Cat.ProcessHom.map Minsky→U (Sch.compile minskyMachineScheme task23))
+    (Sch.cost minskyMachineScheme task23)
+    (Cat.ProcessHom.map Minsky→U
+      (Sch.exec minskyMachineScheme (Sch.fuel minskyMachineScheme task23) task23))
+minskyMachine23-execWithinFuelThroughU =
+  minskyExecWithinFactorsThroughU
+    (Sch.fuel minskyMachineScheme task23)
+    (Sch.compile minskyMachineScheme task23)
+    (Sch.cost minskyMachineScheme task23)
+    (Sch.exec minskyMachineScheme (Sch.fuel minskyMachineScheme task23) task23)
+    minskyMachine23-execWithinFuel
 
 -- --------------------------------------------------------------------------
 -- One-stroke “Minsky variants”: different resource accounting, same semantics.
 
-flatCost : MinskyCode → (ℕ × ℕ)
-flatCost _ = (0 , 0)
+flatCost : MinskyCode → Budget
+flatCost _ = QAdapter.⊥s (Sch.Scheme.Q minskyMachineScheme)
 
 minskyVariantScheme : Sch.Scheme PATask ℕ
 minskyVariantScheme =

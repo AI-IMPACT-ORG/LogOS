@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 % Complexity — LogOS (Verification vs Search)
 
 ```agda
-module docs.Complexity where
+module docs.DeepDive.Complexity where
 
 -- Sync guard: these imports anchor the module paths this document references.
 -- If they drift, the docs build fails.
@@ -26,6 +26,7 @@ import LogOS.Domain.Complexity.ResourceSchemaG
 import LogOS.Domain.Complexity.ResourceSchemaGraded
 import LogOS.Domain.Complexity.ObservabilityBudgetG
 import LogOS.Domain.Complexity.ObservabilityBudgetGraded
+import LogOS.Domain.Complexity.ProofSearchOpacitySpine
 import LogOS.Domain.Complexity.InfoBottleneckAdaptersG
 import LogOS.Domain.Complexity.InfoBottleneckAdaptersGraded
 import LogOS.Domain.Complexity.ProofSearchCapstoneGraded
@@ -65,6 +66,17 @@ LogOS internalises the split:
 
 This is packaged as the `ProofSearch*` family under `LogOS/Domain/Complexity/*` (with recommended wrappers under `LogOS/Models/Complexity/*`).
 
+## Core ledger (GRH-aligned, proof-search first)
+
+The strongest LogOS-native separation story is *proof-search opacity*:
+
+- `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (partial proof-search oracle + budgeted opacity barrier).
+- Ledger-style assumptions mirror GRH/opacity: diagonalization (`TruthDiagonalC`), decode-extensional oracle,
+  decode-extensional budget (`BudgetBy`), a physical cost model (`BudgetedSeparationOutput.WitnessCost` with `GeneralB`),
+  and an explicit non-vacuity guard (`VacuityGuards`).
+- This yields a direct internal separation between proof search and verification as algorithms,
+  without asserting classical P != NP.
+
 ## P vs NP surfaces (four tiers)
 
 The library intentionally provides four increasingly “classical” interfaces:
@@ -100,6 +112,10 @@ Canonical conditional route (kernel-native, minimal axioms):
 The “strong-by-default” packaged claim object is:
 
 - `LogOS/Domain/Complexity/PvsNP.agda` (packaging of `InNP` + `¬ InP`, no derivation)
+
+Non-deterministic spine (shared with GRH/opacity):
+- `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (proof-search oracle + budgeted opacity barrier)
+  - General budgets: `ProofSearchOpacitySpine.For.Budgeted.GeneralB` (swap in any budget carrier).
 
 Other routes:
 - `TruthRoute_Grade_Only` (grade-only) is the canonical kernel-native story.
@@ -180,5 +196,5 @@ Safe P/NP-only import (curated to avoid generic/compat surfaces):
 ## Audit build (one command)
 
 ```csh
-agda --no-libraries -i . docs/Complexity.lagda.md
+agda --no-libraries -i . docs/DeepDive/Complexity.lagda.md
 ```

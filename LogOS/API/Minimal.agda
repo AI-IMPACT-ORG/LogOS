@@ -89,10 +89,13 @@ open import LogOS.Boundary.Semantics  public
 --   sig : LogOSSignature ℓ
 --   sig = record { ... }
 --   
---   -- Choose a Quantale+Time adapter
+--   -- Choose a Quantale+Time adapter (finite-join quantale + time monoid embedding).
+--   -- Ready-made instances:
+--   --   `LogOS.Adapters.QNat.QNat`    (steps/time as ℕ, with max/join)
+--   --   `LogOS.Adapters.QNat2.QNat2`  (two-axis budgets: unitary + measurement)
+--   --   `LogOS.Adapters.QNatTop.QNatTop` (ℕ with an explicit top grade ω)
 --   Q : QAdapter ℓ
---   Q = record { Scale = ... ; _≤s_ = ... ; _·_ = ... ; e = ...
---              ; _≤p_ = ... ; Time = ... ; _+_ = ... ; zero = ... ; τ = ... }
+--   Q = LogOS.Adapters.QNat.QNat
 --   
 --   -- Provide a single integrated kernel (S/H/G + Code) instance
 --   kernel : Kernel sig Q

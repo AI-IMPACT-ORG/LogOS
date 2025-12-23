@@ -25,6 +25,7 @@ import LogOS.Domain.Complexity.InfoHardnessBridge
 import LogOS.Domain.Complexity.PvsNPFromInfo_Grade_Only
 import LogOS.Domain.Complexity.PolyGrade
 import LogOS.Domain.Complexity.Poly
+import LogOS.Domain.Complexity.ProofSearchOpacitySpine
 import LogOS.Domain.Complexity.InfoBottleneckAdaptersG
 import LogOS.Domain.Complexity.InfoBottleneckAdaptersGraded
 import LogOS.Domain.Complexity.Examples.InfoRouteChain
@@ -65,6 +66,13 @@ classical P≠NP in ZFC. What it *does* provide is a clean pipeline:
 The `PvsNP` language-relative pack is a **wrapper**: its `Assumptions` already
 contain `InNP L` and `¬ InP L`, and `mkPack` only rewraps that data.
 
+Proof-search opacity spine (GRH/opacity core, reused here):
+- `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda`
+- This re-exports the spectral/budgeted separation machinery and applies it to
+  proof-search oracles, keeping the hardness story non-deterministic.
+- Budgets are first-class: use `ProofSearchOpacitySpine.For.Budgeted.GeneralB` to
+  swap in any budget carrier (ℕ, quantale scales, physical cost models).
+
 ## Two layers: “proof-search separation” and “classical-looking P/NP”
 
 1) **Foundational layer (centerpiece):** verification vs unbounded search under
@@ -90,131 +98,75 @@ For the minimal info-theory route (kernel-native, conditional), use:
 
 - `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda` (namespaced as `LogOS.Models.Complexity.Core.PvsNPFromInfo_Grade_Only`)
 
-## Assumption ledger (one screen)
+## The strongest explicit axiom ledger (GRH-aligned style)
 
-| Claim | Depends on | Type strength | Where used |
-|---|---|---|---|
-| `PhysSeparationPipelineWCostGuardsGraded.Claim L` | `PhysNPwCostGuards` witness system, `MergeMeasure`, `ProofLowerBound` | Conditional lower-bound schema (physics/model-supplied) | Grade-native core: `LogOS/Domain/Complexity/PhysSeparationPipelineWCostGuardsGraded.agda` (`Assumptions`, `mkPack`); kernel route: `LogOS/Domain/Complexity/PhysSeparationPipelineWCostGuardsGraded.agda` (module Kernel) |
-| `PvsNP.Claim L` | `InNP L` + `¬ InP L` | Language-relative + correctness (`InNP` / `¬ InP`) | `LogOS/Domain/Complexity/PvsNP.agda` (`mkPack`) |
-| `PvsNPPackG` | `PolyWitnessedTotalVerificationG` + `SuperPolyHardnessG` | P/NP-shaped graded-flow interface (not language-relative) | `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda` (`mkPvsNPG`) |
-| `SuperPolyHardnessG` | `DetBottleneck` + `InfoHardness` | Minimal info-theory route | `LogOS/Domain/Complexity/InfoHardnessBridge.agda` (`detSuperPolyFromInfo`) |
-| `PvsNPClaimG` (info route) | `Assumptions` (NP witness + bottleneck + hardness) | Minimal conditional pack (no circularity) | `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda` (`Assumptions`, `mkPack`) |
+You can package the PvsNP-style claim without assuming P != NP by making the
+following explicit assumptions in a record (ledger):
 
-## Pipeline sketch (generic → TruthRoute → physical)
+1) Diagonalization (metalogical, GRH-style)
+   - `TruthDiagonalC Code (WithinBudgetBy ...)`
+   - This is the same metalogical assumption used in GRH/opacity; it is explicit.
+2) Proof-search oracle (partial, decode-extensional)
+   - `ProofSearchOpacitySpine.For.ProofSearchOracle`
+   - This does not assume totality.
+3) Budget function is decode-extensional
+   - `ProofSearchOpacitySpine.For.BudgetBy` (budget + extensionality)
+   - Keeps budget discipline aligned with the kernel's decode-equality.
+4) Witness cost / physical budget
+   - `BudgetedSeparationOutput.WitnessCost`
+   - plus a budget function or carrier (via `GeneralB`)
+   - This is where "physics-aligned" lives: choose cost = info/energy/irreversible events.
+5) Non-vacuity guard (no "all undefined" oracle)
+   - `ProofSearchOpacitySpine.For.VacuityGuards` (some code is within budget)
+6) Verification is poly-bounded
+   - If you want "verification in P", add a polynomial check bound (e.g. via
+     `ProofSearchGraded` or `LanguageWitnessW`), and the standard non-degeneracy
+     guardrails from `LogOS/Domain/Complexity/StandardCMLaws.agda`.
+7) Classical alignment (literature-aligned)
+   - Use `LogOS/Domain/Complexity/ClassicalPvsNP.agda` with `QNat` and `gradeBound = τ`
+   - This is the explicit alignment bridge to standard time-bound P/NP definitions (cost := time).
 
-```mermaid
-flowchart TD
-  A[Generic graded-flow interface<br/>DetPolyTimeBoundedG / PolyWitnessedTotalVerificationG]
-  B[P/NP-shaped claim pack<br/>PvsNPPackG]
-  C[Physical assumptions<br/>MergeMeasure + ProofLowerBound + PhysNPwCostGuards]
-  D[PhysNPwCostGuards != PhysPCostGuards]
-  E[Bridge (grade reindexing)]
-  F[PvsNP.Claim<br/>InNP / not InP]
+All of these are already present as explicit record fields in the codebase; no
+hidden postulates.
 
-  A --> B
-  C --> D --> E --> F
-  B --> D
-```
+## What you can actually prove (strongest direct result)
 
-Canonical high-assurance story: the info‑hardness route (`DetBottleneck` + `InfoHardness`)
-is the default; the merge‑count physical route is optional and clearly labeled as such.
+Claim (non-deterministic, LogOS-native):
 
-## Minimal physical axioms (info-theory aligned)
+- Under the ledger above, no proof-search oracle can be total within any
+  polynomial budget, while verification remains polynomially checkable.
+- This is an internal separation between proof search and proof verification as
+  algorithmic tasks, not an outright P != NP claim.
 
-The LogOS-native minimal assumption is the *DetBottleneck* interface:
-any run within a bound `t` cannot exceed a budgeted amount of classical
-information (with a single constant `κ`).
+## Guardrails (non-vacuity)
 
-- Interface: `LogOS/Domain/Complexity/InfoHardnessBridge.agda` (`DetBottleneck`, `InfoHardness`)
-- Physically aligned split axioms (density/volume reading):
-  `MinInfoDensity` + `SuperPolyResolution`, with
-  `infoHardnessFromDensityAxioms` in the same module.
-- Canonical LOB adapter (grade-native): `LogOS/Domain/Complexity/InfoBottleneckAdaptersG.agda` (`FromLOB`)
-- Compatibility adapter (graded, ℕ-bound): `LogOS/Domain/Complexity/InfoBottleneckAdaptersGraded.agda` (`FromLOB`)
-
-LOB is a standard source of such a bottleneck (grade-native `LOB` or compat `LOBG`),
-but it is not the only one.
-Any axiom pack that yields a `DetBottleneck` can plug into the same pipeline.
-
-No circularity: `InfoHardness` is an *input* axiom. `SuperPolyHardness` and the
-P≠NP‑shaped claims are derived from it, not assumed.
-
-Grade-native assumption packs are available via `PvsNPFromInfo_Grade_Only.For.WithAcc.Assumptions`
-(using `PolyGrade` / `PolyPredG`) and the graded interface under `PvsNPFromInfo_Grade_Only.For.G`.
-To reuse an ℕ polynomial predicate, use `PvsNPFromInfo_Grade_Only.FromNat` (via `PolyGrade.FromNat`).
-
-Non-degeneracy / I/O realism (explicit guardrails):
 - `LogOS/Domain/Complexity/StandardCMLaws.agda` (`EncodingsInDomain`, `ReasonableSize`)
-- `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda` (`NonDegenerate`: size-to-grade budget covers input)
-- `LogOS/Domain/Complexity/Examples/GoldenPathMinsky.agda` (`SizeBudget`, `cost≤budget` via `ScaleOps`)
-Core operationalization of grades: `LogOS/Minimal/ScaleOps.agda` (Scale → Time → steps).
+- `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda` (`NonDegenerate`)
+- `LogOS/Domain/Complexity/Examples/GoldenPathMinsky.agda` (`SizeBudget`, `cost≤budget`)
+- `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (`VacuityGuards`)
 
-## End-to-end alignment to standard P/NP
+These keep the ledger honest by ruling out degenerate encodings and vacuous
+resource bounds.
 
-The most LogOS-aligned chain goes straight through the kernel:
+## Optional routes and instantiations (tucked away)
 
-1. Kernel-native bounds: `TruthRoute_Grade_Only` (graded Flow on decoded runs).
-2. Minimal physics: `DetBottleneck` + `InfoHardness`.
-3. Conditional separation: `PvsNPFromInfo_Grade_Only` (builds `PvsNPPackG` / `PvsNPClaimG`).
-4. Language-relative claims: `PvsNP`.
-5. Literature alignment: `ClassicalPvsNP.FromTruthRoute`.
-
-See also the tiny end-to-end skeleton in:
-
-- `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda`
-- `LogOS/Domain/Complexity/Examples/InfoRouteChainIR.agda` (example UniversalIR instantiation shell)
-- `LogOS/Domain/Complexity/Examples/GoldenPath.agda` (grade-native → bridge → classical alignment)
-- `LogOS/Domain/Complexity/Examples/GoldenPathMinsky.agda` (concrete Minsky scheme instantiation)
-
-Concrete Minsky route (kernel closed, decode = id; Flow g = simulate (budget g)):
-
-```agda
-module _ (Pℕ : LogOS.Domain.Complexity.Poly.PolyPred) where
-  open LogOS.Domain.Complexity.Examples.GoldenPathMinsky.Concrete Pℕ public
-```
-
-Witness sizes for UniversalIR are now nontrivial: `LogOS/Domain/UniversalIR/Size.agda`
-defines `ucodeSize`, and `UniversalIRCM` uses it as `wsize`.
-
-## The compositional bridge: an explicit information bottleneck interface
-
-To maximize payoff without touching the Kernel, the library factors the
-“Det-superpoly” assumption into an information-theoretic interface that composes
-with existing throughput/capacity packs:
-
-- Info hardness ⇒ superpoly hardness bridge:
-  - `LogOS/Domain/Complexity/InfoHardnessBridge.agda`
-- Wrapper: derive the existing PvsNP claim from NP witness + info bottleneck:
-- `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda` (grade-native)
-- Concrete adapters from measurement/capacity packs:
-  - `LogOS/Domain/Complexity/InfoBottleneckAdaptersG.agda` (grade-native)
-  - `LogOS/Domain/Complexity/InfoBottleneckAdaptersGraded.agda` (`FromLOBGradePG`, `FromLOBGradeG`, `FromLOB`)
-
-## Physical axiom packs (where locality/causality/unitarity live)
-
-The physics vocabulary is kept as small, opt‑in packs under `LogOS/Domain/Universality/*`,
-so the “physics ⇒ separation” theorem remains auditable:
-
-- Locality/causality/local unitarity → Landauer-style bottleneck:
-  - `LogOS/Domain/Universality/LCUToLandauer.agda`
-- Measurement / non-unitary capacity pivots:
-  - `LogOS/Domain/Universality/MeasurementCapacity.agda`
-  - `LogOS/Domain/Universality/NonUnitaryCapacity.agda`
-  - `LogOS/Domain/Universality/InfoProcessingBounds.agda`
-
-## Universal computation surface
-
-To avoid baking in one machine model, the intended computation substrate is the
-UniversalIR “one process, many paradigms” surface:
-
-- UniversalIR core: `LogOS/Domain/UniversalIR/` (Minsky, Lambda, Ethereum, Quantum, Circuit)
-- Schemes interface: `LogOS/Domain/UniversalIR/Schemes.agda`
-- Namespaced wrapper: `LogOS/Models/UniversalIR/Core.agda`
-
-## Targets (SAT)
-
-- SAT physical separation (nontrivial check-cost, witness-size aligned):
-  - Grade-native core: `LogOS/Domain/Complexity/Targets/SATPhysicalSeparationCostGuardsGraded.agda`
+- Info‑hardness route (DetBottleneck + InfoHardness):
+  `LogOS/Domain/Complexity/InfoHardnessBridge.agda`,
+  `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda`
+- Physical axiom packs:
+  `LogOS/Domain/Universality/LCUToLandauer.agda`,
+  `LogOS/Domain/Universality/MeasurementCapacity.agda`,
+  `LogOS/Domain/Universality/NonUnitaryCapacity.agda`,
+  `LogOS/Domain/Universality/InfoProcessingBounds.agda`
+- Classical alignment pipeline:
+  `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda` →
+  `LogOS/Domain/Complexity/ClassicalPvsNP.agda`
+- UniversalIR substrate and examples:
+  `LogOS/Domain/UniversalIR/`,
+  `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda`,
+  `LogOS/Domain/Complexity/Examples/GoldenPath.agda`
+- Target example (SAT):
+  `LogOS/Domain/Complexity/Targets/SATPhysicalSeparationCostGuardsGraded.agda`
   - Kernel route: `LogOS/Domain/Complexity/Targets/SATPhysicalSeparationCostGuardsGraded.agda` (module Kernel)
 - SAT as proof search (proofs = assignments): `LogOS/Domain/Complexity/Targets/SATProofSearch.agda`
 

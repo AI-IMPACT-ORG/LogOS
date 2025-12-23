@@ -70,7 +70,7 @@ Two distinct layers are used throughout the library:
 - Curated pack entrypoint:
   - `LogOS/Packs/ZFC/All.agda`
   - WFGraph pack quartets: `LogOS/Packs/ZFC/WFGraph.agda`
-  - Minimal typechecked demo: `docs/ZFC_Demo.lagda.md`
+  - Minimal typechecked demo: `docs/DeepDive/ZFC_Demo.lagda.md`
 
 ## Quick import (namespaced)
 

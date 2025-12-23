@@ -15,7 +15,12 @@ LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 cd "${LIB_ROOT}"
 
-DOCS=(docs/*.lagda.md README.md CHANGELOG.md CONTRIBUTING.md)
+DOCS=(README.md CHANGELOG.md CONTRIBUTING.md)
+
+while IFS= read -r -d '' f; do
+  DOCS+=("$f")
+done < <(find docs -type f \( -name '*.lagda.md' -o -name '*.md' \) -print0 2>/dev/null || true)
+
 while IFS= read -r -d '' f; do
   DOCS+=("$f")
 done < <(find LogOS -type f -name '*.md' -print0 2>/dev/null || true)

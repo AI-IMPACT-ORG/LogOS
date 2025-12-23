@@ -10,7 +10,7 @@ Complexity Layout
 Publication-facing entrypoint
 -----------------------------
 
-- Narrative spine: `docs/Complexity.lagda.md`
+- Narrative spine: `docs/DeepDive/Complexity.lagda.md`
 - Namespaced wrapper (safe surface): `LogOS/Models/Complexity/Core.agda`
 
 Main modules (this directory)
@@ -19,6 +19,10 @@ Main modules (this directory)
 - Narrative-first aggregator: `LogOS/Domain/Complexity/ProofSearchSeparation.agda`
 - Minimal proof-system interface: `LogOS/Domain/Complexity/ProofSystem.agda`
 - Proof-search boundary (verification vs bounded search vs unbounded search): `LogOS/Domain/Complexity/ProofSearchBoundary.agda`
+- Proof-search opacity spine (shared with GRH/opacity machinery): `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda`
+  (general budgets via `ProofSearchOpacitySpine.For.Budgeted.GeneralB`;
+   decode-ext budgets via `ProofSearchOpacitySpine.For.BudgetBy`;
+   non-vacuity guard via `ProofSearchOpacitySpine.For.VacuityGuards`)
 - Capstone (grade-native): `LogOS/Domain/Complexity/ProofSearchCapstoneGraded.agda`
 - One-entry theorem (grade-native): `LogOS/Domain/Complexity/Targets/ProofSearchChainedTheoremGraded.agda`
 - DetWithin route (kernel-friendly abstraction): `ProofSearchCapstoneGraded.DetWithinRoute`

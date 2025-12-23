@@ -19,12 +19,17 @@ Core
 - Recommended stable surface: `LogOS/Models/Complexity/Core.agda` (namespace `PvsNP` / `PvsNPFromInfo_Grade_Only` / `ClassicalPvsNP`).
   Safe P/NP-only surface: `LogOS/Models/Complexity/PvsNP/Public.agda`.
   The core bundle lives under `LogOS/Domain/Complexity/*`:
+  - `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` — core GRH‑aligned ledger for proof‑search vs verification.
   - `LogOS/Domain/Complexity/Model.agda` — standard complexity model scaffold.
   - `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda` — canonical minimal route (DetBottleneck + InfoHardness → PvsNPClaim).
     ℕ predicates can be lifted via `PvsNPFromInfo_Grade_Only.FromNat` / `PolyGrade.FromNat`.
   - `LogOS/Domain/Complexity/PvsNP.agda` — language-relative P vs NP claim pack; `mkPack` rewraps `InNP` + `¬ InP` (no derivation).
   - `LogOS/Domain/Complexity/ClassicalPvsNP.agda` — literature-aligned P/NP interface (cost = time) with a bridge from `TruthRoute`.
   - `LogOS/Domain/Complexity/PvsNP_Grade_Only.agda` — grade-native P/NP-shaped interface (canonical).
+  - `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` — proof-search opacity spine (shared core with GRH/opacity);
+    general budgets via `ProofSearchOpacitySpine.For.Budgeted.GeneralB`,
+    decode-ext budgets via `ProofSearchOpacitySpine.For.BudgetBy`,
+    non-vacuity guard via `ProofSearchOpacitySpine.For.VacuityGuards`.
 - Concrete polynomial/time plumbing lives under `LogOS/Domain/Complexity/Poly.agda`
   (grade-native predicate: `LogOS/Domain/Complexity/PolyGrade.agda`;
   arithmetic helpers in `LogOS/Domain/Complexity/Arithmetic.agda`).

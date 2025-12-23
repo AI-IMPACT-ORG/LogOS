@@ -56,6 +56,21 @@ which exposes:
 - monoidal structures on bulk and boundary, and
 - a lax monoidal adjunction `ext ⊣ bnd`.
 
+Quantale enrichment (resource-aware categories)
+----------------------------------------------
+
+The quantitative adapter `QAdapter` is a **finite‑join unital quantale** (`Scale`, i.e. a join‑semilattice
+with bottom and a monoid multiplication distributing over join) with a
+time embedding `τ : Time → Scale`. This supplies the generic “budget algebra” used across
+universality, complexity, and opacity.
+
+Categorically:
+- `WorldH` equips strict worlds with a `WFlow : WorldS → WorldS → Scale` satisfying lax unit/associativity,
+  i.e. a category enriched over the **monoidal preorder** underlying `Scale` (using `_·_`, `e`, and `_≤s_`).
+  The Kripke-style context order `_≤ctx_` is a separate preorder used for satisfaction monotonicity.
+- The graded kernel (`LogOS/Kernel/Graded.agda`) indexes the boundary flow by grades `g : Scale`,
+  enabling resource-aware closure/normalisation arguments.
+
 Category of kernels (morphisms up to decode)
 --------------------------------------------
 

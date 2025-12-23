@@ -161,6 +161,21 @@ run≤
 run≤ P Ops g c =
   iterStep P (ScaleOps.steps Ops (ScaleOps.budget Ops g)) c
 
+-- If two grades induce the same step budget, they induce the same execution.
+--
+-- This is the precise form of “time and additional resource axes are
+-- independent”: any component of `Scale` that is *not read* by `ScaleOps`
+-- cannot affect the execution trace (only the cost bounds).
+run≤-stepsEq
+  : ∀ {ℓO ℓC ℓQ} {Output : Set ℓO}
+    (P : Process {ℓO} {ℓC} {ℓQ} Output)
+    (Ops : ScaleOps (Process.Q P))
+  → ∀ {g g'} c
+  → ScaleOps.steps Ops (ScaleOps.budget Ops g)
+    ≡ ScaleOps.steps Ops (ScaleOps.budget Ops g')
+  → run≤ P Ops g c ≡ run≤ P Ops g' c
+run≤-stepsEq P Ops c eq = cong (λ n → iterStep P n c) eq
+
 iterStep-map
   : ∀ {ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂} {Output : Set ℓO}
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ₁} Output}
@@ -268,6 +283,114 @@ costExecP-map {P₁ = P₁} {P₂ = P₂}
             (cong (costExecP P₂ n) (sym (ProcessHom.step-comm h c)))
             (go n (Process.Step P₁ c))))
 
+-- ==========================================================================
+-- Budgeted execution transport (new: operational, “machines are schemes”)
+--
+-- `ComputesWithin-map` transports a full normalize+decode story.
+-- Here we expose the lower-level operational layer:
+-- - reachability after n steps, and
+-- - the accumulated cost of those n steps within a budget.
+--
+-- This is the minimal abstraction needed to make “budgets are compositional”
+-- visible across different presentations of the same process.
+-- ==========================================================================
+
+ExecWithin-map
+  : ∀ {ℓI ℓO ℓC₁ ℓC₂ ℓQ}
+    {Input : Set ℓI} {Output : Set ℓO}
+    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
+    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
+    (hc : ProcessHomCost P₁ P₂)
+    (C  : Choice Input P₁)
+  → ∀ n c (b : QAdapter.Scale (Process.Q P₁)) c'
+  → Sch.ExecWithin (schemeFromChoice P₁ C) n c b c'
+  → Sch.ExecWithin
+      (schemeFromChoice P₂ (mapChoice (ProcessHomCost.hom hc) C))
+      n
+      (ProcessHom.map (ProcessHomCost.hom hc) c)
+      (subst (λ Q → QAdapter.Scale Q) (sym (ProcessHomCost.Q-comm hc)) b)
+      (ProcessHom.map (ProcessHomCost.hom hc) c')
+ExecWithin-map {P₁ = P₁} {P₂ = P₂}
+  (record { hom = h ; Q-comm = refl ; stepCost-comm = stepCostComm })
+  C n c b c' (reach , cost≤) =
+  reach₂ , cost≤₂
+  where
+    S₁ = schemeFromChoice P₁ C
+    S₂ = schemeFromChoice P₂ (mapChoice h C)
+
+    map = ProcessHom.map h
+    step₁ = Sch.Scheme.Step S₁
+    step₂ = Sch.Scheme.Step S₂
+
+    iter-map
+      : ∀ n c
+      → map (iterate (Sch.Scheme.Comp S₁) n c)
+        ≡ iterate (Sch.Scheme.Comp S₂) n (map c)
+    iter-map zero    _ = refl
+    iter-map (suc n) c =
+      LogOS.Prelude.trans
+        (iter-map n (step₁ c))
+        (cong (iterate (Sch.Scheme.Comp S₂) n) (ProcessHom.step-comm h c))
+
+    reach₂ : iterate (Sch.Scheme.Comp S₂) n (map c) ≡ map c'
+    reach₂ =
+      LogOS.Prelude.trans
+        (sym (iter-map n c))
+        (cong map reach)
+
+    costExec-map
+      : ∀ n c
+      → Sch.Scheme.costExec S₂ n (map c)
+        ≡ Sch.Scheme.costExec S₁ n c
+    costExec-map zero    _ = refl
+    costExec-map (suc n) c =
+      LogOS.Prelude.trans
+        (cong
+          (λ sc →
+            QAdapter._·_
+              (Sch.Scheme.Q S₁)
+              sc
+              (Sch.Scheme.costExec S₂ n (step₂ (map c))))
+          (stepCostComm c))
+        (cong
+          (λ z →
+            QAdapter._·_
+              (Sch.Scheme.Q S₁)
+              (Sch.Scheme.stepCost S₁ c)
+              z)
+          (LogOS.Prelude.trans
+            (cong (Sch.Scheme.costExec S₂ n) (sym (ProcessHom.step-comm h c)))
+            (costExec-map n (step₁ c))))
+
+    costEq : Sch.Scheme.costExec S₂ n (map c) ≡ Sch.Scheme.costExec S₁ n c
+    costEq = costExec-map n c
+
+    cost≤₂ : QAdapter._≤s_ (Sch.Scheme.Q S₂) (Sch.Scheme.costExec S₂ n (map c)) b
+    cost≤₂ =
+      subst
+        (λ z → QAdapter._≤s_ (Sch.Scheme.Q S₂) z b)
+        (sym costEq)
+        cost≤
+
+ReachesWithin-map
+  : ∀ {ℓI ℓO ℓC₁ ℓC₂ ℓQ}
+    {Input : Set ℓI} {Output : Set ℓO}
+    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
+    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
+    (hc : ProcessHomCost P₁ P₂)
+    (C  : Choice Input P₁)
+  → ∀ c (b : QAdapter.Scale (Process.Q P₁)) c'
+  → Sch.ReachesWithin (schemeFromChoice P₁ C) c b c'
+  → Sch.ReachesWithin
+      (schemeFromChoice P₂ (mapChoice (ProcessHomCost.hom hc) C))
+      (ProcessHom.map (ProcessHomCost.hom hc) c)
+      (subst (λ Q → QAdapter.Scale Q) (sym (ProcessHomCost.Q-comm hc)) b)
+      (ProcessHom.map (ProcessHomCost.hom hc) c')
+ReachesWithin-map {P₁ = P₁} {P₂ = P₂}
+  hc@(record { hom = h ; Q-comm = refl ; stepCost-comm = _ })
+  C c b c' (n , ew) =
+  n , ExecWithin-map hc C n c b c' ew
+
 -- Cost commutation for mapped choices (analogue of `run-comm`).
 --
 -- This is the easiest way to make “budget transport” explicit without needing
@@ -339,16 +462,12 @@ ComputesWithin-map
       (subst (λ Q → QAdapter.Scale Q) (sym (ProcessHomCost.Q-comm hc)) b)
       y
 ComputesWithin-map {P₁ = P₁} {P₂ = P₂}
-  (record { hom = h ; Q-comm = refl ; stepCost-comm = stepCostComm })
+  hc@(record { hom = h ; Q-comm = refl ; stepCost-comm = stepCostComm })
   C x b y proof =
   go proof
   where
     S₁ = schemeFromChoice P₁ C
     S₂ = schemeFromChoice P₂ (mapChoice h C)
-
-    exec-map
-      : ∀ n x → ProcessHom.map h (Sch.exec S₁ n x) ≡ Sch.exec S₂ n x
-    exec-map n x = iterStep-map h n (Sch.Scheme.compile S₁ x)
 
     go
       : Sch.Scheme.ComputesWithin S₁ x b y
@@ -358,49 +477,22 @@ ComputesWithin-map {P₁ = P₁} {P₂ = P₂}
       where
         c₂ = ProcessHom.map h c'
 
+        reach₂-cost≤₂
+          : Sch.ExecWithin S₂ n (Sch.Scheme.compile S₂ x) b c₂
+        reach₂-cost≤₂ =
+          ExecWithin-map hc C n (Sch.Scheme.compile S₁ x) b c' (reach , cost≤)
+
         reach₂ : Sch.exec S₂ n x ≡ c₂
-        reach₂ =
-          trans
-            (sym (exec-map n x))
-            (cong (ProcessHom.map h) reach)
+        reach₂ = fst reach₂-cost≤₂
+
+        cost≤₂ : QAdapter._≤s_ (Sch.Scheme.Q S₂) (Sch.Scheme.costAt S₂ n x) b
+        cost≤₂ = snd reach₂-cost≤₂
 
         halt₂ : Sch.Scheme.Step S₂ c₂ ≡ c₂
         halt₂ =
           trans
             (sym (ProcessHom.step-comm h c'))
             (cong (ProcessHom.map h) halt₁)
-
-        costExec-map
-          : ∀ n c → Sch.Scheme.costExec S₂ n (ProcessHom.map h c) ≡ Sch.Scheme.costExec S₁ n c
-        costExec-map zero    _ = refl
-        costExec-map (suc n) c =
-          trans
-            (cong
-              (λ sc →
-                QAdapter._·_
-                  (Sch.Scheme.Q S₁)
-                  sc
-                  (Sch.Scheme.costExec S₂ n (Sch.Scheme.Step S₂ (ProcessHom.map h c))))
-              (stepCostComm c))
-            (cong
-              (λ z →
-                QAdapter._·_
-                  (Sch.Scheme.Q S₁)
-                  (Sch.Scheme.stepCost S₁ c)
-                  z)
-              (trans
-                (cong (Sch.Scheme.costExec S₂ n) (sym (ProcessHom.step-comm h c)))
-                (costExec-map n (Sch.Scheme.Step S₁ c))))
-
-        costEq : Sch.Scheme.costAt S₂ n x ≡ Sch.Scheme.costAt S₁ n x
-        costEq = costExec-map n (Sch.Scheme.compile S₁ x)
-
-        cost≤₂ : QAdapter._≤s_ (Sch.Scheme.Q S₂) (Sch.Scheme.costAt S₂ n x) b
-        cost≤₂ =
-          subst
-            (λ z → QAdapter._≤s_ (Sch.Scheme.Q S₂) z b)
-            (sym costEq)
-            cost≤
 
         outEq₂ : Sch.Scheme.decode S₂ (Sch.Scheme.normalize S₂ c₂) ≡ y
         outEq₂ =
@@ -529,8 +621,12 @@ module ProcessCategory where
 module Semantics where
   Exec≤ = run≤
   Exec≤-natural = run≤-map
+  Exec≤-stepsEq = run≤-stepsEq
 
   Meaning≤-natural = run≤-meaning-comm
+
+  ExecWithin-natural = ExecWithin-map
+  ReachesWithin-natural = ReachesWithin-map
 
   ComputesTo-natural = ComputesTo-map
   ComputesWithin-natural = ComputesWithin-map

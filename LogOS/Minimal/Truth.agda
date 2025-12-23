@@ -117,6 +117,126 @@ module GuardedCore {ℓ : Level} where
       mono     : ∀ {g g'} → Q1._≤s_ g g' → Q2._≤s_ (map g) (map g')
       unit-lax : Q2._≤s_ Q2.e (map Q1.e)
       mul-lax  : ∀ g g' → Q2._≤s_ (Q2._·_ (map g) (map g')) (map (Q1._·_ g g'))
+      -- Lax finite-join preservation (quantale “additive” structure).
+      --
+      -- The inequality direction is chosen to match the library’s “upper envelope”
+      -- reading of joins: mapping a combined budget should be at least as large
+      -- as combining mapped budgets.
+      join-lax : ∀ g g' → Q2._≤s_ (Q2._⊔s_ (map g) (map g')) (map (Q1._⊔s_ g g'))
+      bot-lax  : Q2._≤s_ Q2.⊥s (map Q1.⊥s)
+
+  -- Small builder: extend a monoid-lax grade map to a lax quantale hom by
+  -- deriving the join/bottom laws from monotonicity + finite joins.
+  mkGradeHom
+    : ∀ {Q₁ Q₂ : QAdapter ℓ}
+      (map : QAdapter.Scale Q₁ → QAdapter.Scale Q₂)
+      (mono : ∀ {g g'} → QAdapter._≤s_ Q₁ g g' → QAdapter._≤s_ Q₂ (map g) (map g'))
+      (unit-lax : QAdapter._≤s_ Q₂ (QAdapter.e Q₂) (map (QAdapter.e Q₁)))
+      (mul-lax  : ∀ g g' →
+                  QAdapter._≤s_ Q₂
+                    (QAdapter._·_ Q₂ (map g) (map g'))
+                    (map (QAdapter._·_ Q₁ g g')))
+      → GradeHom Q₁ Q₂
+  mkGradeHom {Q₁ = Q₁} {Q₂ = Q₂} map mono unit-lax mul-lax =
+    record
+      { map = map
+      ; mono = mono
+      ; unit-lax = unit-lax
+      ; mul-lax = mul-lax
+      ; join-lax = joinLax
+      ; bot-lax  = QAdapter.⊥s-least Q₂ (map (QAdapter.⊥s Q₁))
+      }
+    where
+      joinLax
+        : ∀ g g'
+          → QAdapter._≤s_ Q₂
+              (QAdapter._⊔s_ Q₂ (map g) (map g'))
+              (map (QAdapter._⊔s_ Q₁ g g'))
+      joinLax g g' =
+        QAdapter.⊔s-least Q₂
+          (mono (QAdapter.⊔s-ub₁ Q₁ g g'))
+          (mono (QAdapter.⊔s-ub₂ Q₁ g g'))
+
+  -- Identity and composition for grade morphisms.
+  --
+  -- These live in the minimal core so higher layers (kernel morphisms, bridges)
+  -- can compose grade maps without re-proving quantale/monoid coherence.
+
+  idGradeHom : ∀ {Q : QAdapter ℓ} → GradeHom Q Q
+  idGradeHom {Q} =
+    mkGradeHom (λ g → g) (λ le → le)
+      (QAdapter.≤s-refl Q)
+      (λ _ _ → QAdapter.≤s-refl Q)
+
+  composeGradeHom
+    : ∀ {Q₁ Q₂ Q₃ : QAdapter ℓ}
+      → GradeHom Q₁ Q₂
+      → GradeHom Q₂ Q₃
+      → GradeHom Q₁ Q₃
+  composeGradeHom {Q₁ = Q₁} {Q₂ = Q₂} {Q₃ = Q₃} φ ψ =
+    record
+      { map      = mapComp
+      ; mono     = monoComp
+      ; unit-lax = unitComp
+      ; mul-lax  = mulComp
+      ; join-lax = joinComp
+      ; bot-lax  = botComp
+      }
+    where
+      open GradeHom φ renaming
+        ( map      to map₁
+        ; mono     to mono₁
+        ; unit-lax to unit₁
+        ; mul-lax  to mul₁
+        ; join-lax to join₁
+        ; bot-lax  to bot₁
+        )
+      open GradeHom ψ renaming
+        ( map      to map₂
+        ; mono     to mono₂
+        ; unit-lax to unit₂
+        ; mul-lax  to mul₂
+        ; join-lax to join₂
+        ; bot-lax  to bot₂
+        )
+
+      mapComp : QAdapter.Scale Q₁ → QAdapter.Scale Q₃
+      mapComp g = map₂ (map₁ g)
+
+      monoComp : ∀ {g g'} → QAdapter._≤s_ Q₁ g g' → QAdapter._≤s_ Q₃ (mapComp g) (mapComp g')
+      monoComp le = mono₂ (mono₁ le)
+
+      unitComp : QAdapter._≤s_ Q₃ (QAdapter.e Q₃) (mapComp (QAdapter.e Q₁))
+      unitComp =
+        QAdapter.≤s-trans Q₃
+          unit₂
+          (mono₂ unit₁)
+
+      mulComp
+        : ∀ g g'
+          → QAdapter._≤s_ Q₃
+              (QAdapter._·_ Q₃ (mapComp g) (mapComp g'))
+              (mapComp (QAdapter._·_ Q₁ g g'))
+      mulComp g g' =
+        QAdapter.≤s-trans Q₃
+          (mul₂ (map₁ g) (map₁ g'))
+          (mono₂ (mul₁ g g'))
+
+      joinComp
+        : ∀ g g'
+          → QAdapter._≤s_ Q₃
+              (QAdapter._⊔s_ Q₃ (mapComp g) (mapComp g'))
+              (mapComp (QAdapter._⊔s_ Q₁ g g'))
+      joinComp g g' =
+        QAdapter.≤s-trans Q₃
+          (join₂ (map₁ g) (map₁ g'))
+          (mono₂ (join₁ g g'))
+
+      botComp : QAdapter._≤s_ Q₃ (QAdapter.⊥s Q₃) (mapComp (QAdapter.⊥s Q₁))
+      botComp =
+        QAdapter.≤s-trans Q₃
+          bot₂
+          (mono₂ bot₁)
 
   -- Graded flow homomorphism (same grade carrier).
   record GradedFlowHom {Q : QAdapter ℓ}

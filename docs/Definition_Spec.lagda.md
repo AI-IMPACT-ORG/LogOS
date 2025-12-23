@@ -80,8 +80,13 @@ We do not re‑define them here; the actual fields are:
 
 Adapter and Worlds (S/H/G)
 --------------------------
-Quantitative/time structure is kept minimal in `QAdapter`, with fields:
-`Scale`, `_≤s_`, `_·_`, `e`, `_≤p_`, `Time`, `_+_`, `zero`, `τ`.
+Quantitative/time structure is packaged in `QAdapter` as a **finite‑join unital quantale**
+plus a time monoid embedded into that quantale:
+`Scale`, `_≤s_`, `_⊔s_`, `⊥s`, `_·_`, `e`, distributivity of `_·_` over `_⊔s_`,
+and `Time`, `_+_`, `zero`, `τ` with `τ (t + u) ≡ τ t · τ u`.
+The optional preorder `_≤p_` can be used as a “proof/derivability” order (and may coincide with `_≤s_`).
+No *arbitrary* joins/suprema are assumed on `Scale`; completeness lives separately (and explicitly) at the
+boundary poset level via `OmegaCPO`/`FiniteFirst` when needed.
 Worlds are tiered (`LogOS.Minimal.World`):
 - `WorldS = Cosp`
 - `WorldH Q` with fields `_≤ctx_`, `WFlow`, `wflow-refl`, `wflow-trans` (internally renaming
@@ -108,7 +113,8 @@ Strict layer (S), homotypical layer (H), and guarded layer (G) are packaged as r
 - Optional graded guarded layer: `GuardedCore.GradedClosure` with grade‑indexed
   `Flow`, grade monotonicity `mono-grade`, lax composition `comp-lax`, a saturation
   grade `sat` (with `sat-top`, `infl-sat`, `idemp-sat`), and fixed point `Th*`.
-  Transport interfaces live in `GuardedCore.GradeHom`, `GradedFlowHom`, and
+  Transport interfaces live in `GuardedCore.GradeHom` (a **lax quantale hom**:
+  monotone with `unit-lax`, `mul-lax`, `join-lax`, `bot-lax`), `GradedFlowHom`, and
   `GradedFlowHomWithGrade`.
 - Optional structure: `GuardedTruth.OmegaCPO` with `⊥`, `isBot`, `supω`, `ub`, `least`, and
   `GuardedTruth.FiniteFirst` with `approx0`, `approxS`, `base`, `step`, `Th⋆-as-sup`, `cont-ω`
@@ -203,7 +209,7 @@ boundary. This is provided by the optional ω‑CPO/finite‑first layer in
 - `cont-ω` is the necessary continuity axiom: it asserts that `Flow` is (lax)
   compatible with the chosen ω‑suprema.
 - Textbook names: `cont-ω` is Scott/ω‑continuity of `Flow`; `Th⋆-as-sup` is the
-  Kleene approximation theorem (least fixed point as ω‑supremum of approximants).
+  Kleene approximation theorem (in preorder form: `Th⋆` is the ω‑supremum of approximants up to mutual refinement).
 
 This should be read as “provide the continuity data you need”, not as the set‑theoretic
 Axiom of Choice. It is an explicit, model‑local assumption used exactly where the
@@ -376,7 +382,8 @@ Reusable, conservative libraries live under `LogOS/Domain/*` and `LogOS/Algebra/
 - `LogOS/Domain/SetTheory/*` — ZF/ZFC adapters (cumulative hierarchy + adapter; AC is a separate statement)
 Testing: `Tests/All.agda` aggregates these modules for typechecking.
 Guideline: keep adapters thin. Domains import only what they need, and `LogOS/Models/*` provides recommended wrappers over `LogOS/Domain/*`.
-This 1.0 snapshot ships no demo modules; narrative examples live in `docs/` and regression coverage in `Tests/`.
+This 1.0 snapshot ships no separate Demo/Toy/Sketch trees; checked examples live under `LogOS/Domain/*/Examples/*`,
+the narrative is in `docs/`, and regression coverage is in `Tests/`.
 
 Honesty and Scope
 -----------------
@@ -392,8 +399,10 @@ At a high level, the core behaves like a disciplined “regularize → renormali
  - Flow as time‑step regularizer
   - The guarded closure step is `GuardedTruth.GuardedClosure.Flow : Con → Con`:
     an inflationary, idempotent‑lax endomap (a closure step).
-  - Iteration `Th*` is the ω‑limit of regularization steps. With `OmegaCPO` + `FiniteFirst.cont-ω`,
-    this is a canonical least fixed point in the preorder sense.
+  - The kernel exposes a distinguished (preorder) fixed point witness `Th*` via `Th*-fixed`.
+    When a model also supplies `OmegaCPO` + `FiniteFirst`, it provides explicit finite approximants
+    `approxS` and a characterization `Th⋆-as-sup` stating that `Th*` (renamed `Th⋆` in that record)
+    is the ω‑supremum of the approximants, up to mutual refinement (Kleene approximation in preorder form).
 
 - Projectors (nuclei) as renormalization
   - `LogOS.Theorems.Projective.Projector` packages closure operators (nuclei) on constraint posets.
@@ -411,8 +420,8 @@ At a high level, the core behaves like a disciplined “regularize → renormali
     fixedness to a limit fixedness, then discharge a spectral clause at the limit.
 
 - Why this matters for GRH‑style reasoning
-  - Operator bridge: postulate “zeros ⇒ Op‑fixed” and “Op‑fixed ⇒ OnLine”; Flow transports stability.
-  - Categorical bridge (operator‑free): pick a nucleus/projector P; postulate “zeros ⇒ P‑fixed” and
+  - Operator bridge: assume “zeros ⇒ Op‑fixed” and “Op‑fixed ⇒ OnLine”; Flow transports stability.
+  - Categorical bridge (operator‑free): pick a nucleus/projector P; assume “zeros ⇒ P‑fixed” and
     “P‑fixed ⇒ OnLine”. Both patterns are regularization‑first, renormalization‑as‑fixed‑points.
 
 This perspective is strictly internal: the Minimal/Kernel core proves only closure/fixed‑point theorems from
@@ -511,9 +520,10 @@ Local vs Global Truth — Fixed‑Point Strengthening (with ω‑sups)
 - In preorder form, the guarded fixed‑point laws are given as inequalities
   (`Th*‑fixed : Th* ⊑ Flow Th* × Flow Th* ⊑ Th*`). This is intentional: the core only
   assumes preorders, not antisymmetry.
-- When a model supplies ω‑completeness and continuity (via `GuardedTruth.OmegaCPO`
-  and `GuardedTruth.FiniteFirst.cont‑ω`), μ‑induction and continuity theorems hold
-  (`LogOS.Theorems.Boundary.Mu`, `LogOS.Theorems.Boundary.Continuity`). If in addition the boundary
+- When a model supplies ω‑completeness (`GuardedTruth.OmegaCPO`) and a finite‑first presentation
+  (`GuardedTruth.FiniteFirst`, i.e. approximants + `Th⋆-as-sup` + `cont‑ω`), μ‑induction and continuity
+  theorems hold (`LogOS.Theorems.Boundary.Mu`, `LogOS.Theorems.Boundary.Continuity`). (μ‑induction uses the
+  approximant characterization; the continuity theorem uses `cont‑ω`.) If in addition the boundary
   preorder is upgraded to a partial order (antisymmetry), these inequalities identify
   a genuine least fixed point.
 - Optional ω‑sup selection: models supply ω‑chain suprema explicitly via `LogOS.Axioms.OmegaSup.Interface` and `omegaCPO-from-chainSup`.
@@ -692,13 +702,14 @@ Assumption ledger (one screen)
   (ℕ-bound adapter: `PvsNPFromInfo_Grade_Only.FromNat`).
 
 Further reading: `docs/Application_PvsNP.lagda.md` (physics-aligned sufficient conditions for separation)
-and `docs/Complexity.lagda.md` (verification vs search boundary).
+and `docs/DeepDive/Complexity.lagda.md` (verification vs search boundary).
 Golden-path scaffold: `LogOS/Domain/Complexity/Examples/GoldenPath.agda`.
 
 LogOS-native refinements (still conditional)
 --------------------------------------------
 The “native” route avoids committing to Turing-machine internals early. It phrases complexity
-as resource interfaces over the kernel’s endo-DSL (graph rewriting), and keeps reversible/unitary
+as resource interfaces over the kernel’s endo-DSL (monotone boundary endomaps; graph rewriting is one instantiation),
+and keeps reversible/unitary
 computation alive by charging only *irreversible* events (merges/measurements).
 
 - Proof-theory interface (Cook–Reckhow): `LogOS/Domain/Complexity/CookReckhow.agda`

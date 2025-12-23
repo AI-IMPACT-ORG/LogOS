@@ -38,9 +38,9 @@ scan_files() {
 bad=""
 while IFS= read -r -d '' f; do
   head="$(sed -n '1,40p' "$f")"
-  echo "$head" | grep -Fq "$TITLE_LINE" || bad+="${f}: missing title header"$'\n'
-  echo "$head" | grep -Fq "$COPY_LINE" || bad+="${f}: missing copyright header"$'\n'
-  echo "$head" | grep -Fq "$SPDX_LINE" || bad+="${f}: missing SPDX identifier"$'\n'
+  grep -Fq "$TITLE_LINE" <<<"$head" || bad+="${f}: missing title header"$'\n'
+  grep -Fq "$COPY_LINE" <<<"$head" || bad+="${f}: missing copyright header"$'\n'
+  grep -Fq "$SPDX_LINE" <<<"$head" || bad+="${f}: missing SPDX identifier"$'\n'
 done < <(scan_files)
 
 if [[ -n "$bad" ]]; then
@@ -48,4 +48,3 @@ if [[ -n "$bad" ]]; then
 fi
 
 echo "license-headers-check: OK"
-

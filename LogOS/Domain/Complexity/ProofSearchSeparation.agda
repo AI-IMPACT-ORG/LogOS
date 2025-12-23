@@ -22,6 +22,7 @@ import LogOS.Domain.Complexity.Targets.ProofSearchQuantumPivotGraded as ProofSea
 import LogOS.Domain.Complexity.Targets.ProofSearchGraded as ProofSearchGradedₜ
 import LogOS.Domain.Complexity.Targets.StablePProofSearchReflectionBarrier as StablePProofSearchReflectionBarrierₜ
 import LogOS.Domain.Complexity.PhysToTruthRouteBridge as PhysToTruthRouteBridgeₜ
+import LogOS.Domain.Complexity.ProofSearchOpacitySpine as ProofSearchOpacitySpineₜ
 
 module ResourceSchemaG = ResourceSchemaGₜ
 module ResourceSchemaGraded = ResourceSchemaGradedₜ
@@ -34,3 +35,4 @@ module ProofSearchQuantumPivotGraded = ProofSearchQuantumPivotGradedₜ
 module ProofSearchGraded = ProofSearchGradedₜ
 module StablePProofSearchReflectionBarrier = StablePProofSearchReflectionBarrierₜ
 module PhysToTruthRouteBridge = PhysToTruthRouteBridgeₜ
+module ProofSearchOpacitySpine = ProofSearchOpacitySpineₜ

@@ -29,10 +29,9 @@ module For {ℓI ℓ ℓQ : Level}
            (Pℕ    : PolyPred)
            (Q     : QAdapter ℓQ)
            (gradeBound : ℕ → QAdapter.Scale Q)
-           (trans≤ : ∀ {a b c} → QAdapter._≤s_ Q a b → QAdapter._≤s_ Q b c → QAdapter._≤s_ Q a c)
            where
 
-  module L = PS.For {ℓI = ℓI} {ℓ = ℓ} {ℓQ = ℓQ} Input size Pℕ Q gradeBound trans≤
+  module L = PS.For {ℓI = ℓI} {ℓ = ℓ} {ℓQ = ℓQ} Input size Pℕ Q gradeBound
   module Q = QTB.For {ℓI = ℓI} {ℓ = ℓ} {ℓQ = ℓQ} Input size Pℕ Q gradeBound
   module O = OB.For {ℓI = ℓI} {ℓ = ℓ} {ℓQ = ℓQ} Input size Pℕ Q gradeBound
 

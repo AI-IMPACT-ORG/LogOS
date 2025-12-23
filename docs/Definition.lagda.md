@@ -68,6 +68,12 @@ See `scripts/host_surface_check.sh` for the enforced allowlist:
 
 Kernel in One Page
 ------------------
+Technically, the kernel is parameterized by:
+- a signature `Sig : LogOSSignature ℓ` (cospan‑shaped world/boundary carriers + operations), and
+- a quantitative adapter `Q : QAdapter ℓ`, where `Scale` is a finite‑join unital quantale
+  (budgets/grades) and `Time` embeds into `Scale` via `τ`.
+The optional graded kernel (`LogOS/Kernel/Graded.agda`) indexes the guarded flow as `Flow : Scale → Con∂ → Con∂`.
+
 The Kernel is the *integrated* model interface: it combines (i) your signature,
 (ii) constraint semantics (a boundary logic), (iii) a 3‑tier truth structure, and
 (iv) a reflective code interface.
@@ -135,7 +141,7 @@ the kernel.
 - Pack bundle: `LogOS/Packs/Universality/All.agda` (re-exports both)
 
 ### Complexity (verification vs search; physical bottlenecks)
-- Narrative: `docs/Complexity.lagda.md`
+- Narrative: `docs/DeepDive/Complexity.lagda.md`
 - Stable surface: `LogOS/Models/Complexity/Core.agda`
 - Physical separation story: `docs/Application_PvsNP.lagda.md`
 - P vs NP claim pack (correctness-carrying, packaging only): `LogOS/Domain/Complexity/PvsNP.agda`
@@ -158,7 +164,7 @@ physics-aligned reading:
 - **Categorical logic view:** `docs/View_CategoricalLogic.lagda.md`
 - **Observer semantics (physics-aligned view):** `docs/View_ObserverSemantics.lagda.md`
 
-Both are documentation artefacts; the implementation truth is always the Agda
+Both are documentation artefacts; the authoritative source of truth is the Agda
 code under `LogOS/*` (including `LogOS/Domain/*`), plus the host surface wrappers in `Data/*`.
 
 Where to Find the Exact Definitions

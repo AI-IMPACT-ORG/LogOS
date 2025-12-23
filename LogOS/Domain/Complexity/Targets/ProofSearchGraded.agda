@@ -33,11 +33,10 @@ module For {ℓI ℓ ℓQ : Level}
            (Pℕ    : PolyPred)
            (Q     : QAdapter ℓQ)
            (gradeBound : ℕ → QAdapter.Scale Q)
-           (trans≤ : ∀ {a b c} → QAdapter._≤s_ Q a b → QAdapter._≤s_ Q b c → QAdapter._≤s_ Q a c)
            where
 
   module C = PCW.For {ℓI = ℓI} {ℓW = ℓ} {ℓ = ℓ} {ℓQ = ℓQ} Input size Pℕ Q gradeBound
-  module B = PBW.For {ℓI = ℓI} {ℓW = ℓ} {ℓ = ℓ} {ℓQ = ℓQ} Input size Pℕ Q gradeBound trans≤
+  module B = PBW.For {ℓI = ℓI} {ℓW = ℓ} {ℓ = ℓ} {ℓQ = ℓQ} Input size Pℕ Q gradeBound
 
   Language = C.Language
 

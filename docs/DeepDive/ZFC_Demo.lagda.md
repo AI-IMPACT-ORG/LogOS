@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 
 ```agda
 {-# OPTIONS --safe #-}
-module docs.ZFC_Demo where
+module docs.DeepDive.ZFC_Demo where
 
 open import LogOS.Prelude
 
