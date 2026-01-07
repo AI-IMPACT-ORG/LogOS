@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -23,7 +23,7 @@ open import LogOS.Domain.Universality.Lemmas as UL
 
 open import LogOS.Theorems.Meta.Full as F
 open import LogOS.Theorems.Meta.Base using (NonTrivialC; DeciderC)
-open import LogOS.ReachTheorems.BodyEquivParam as BodyEq
+open import LogOS.Theorems.Meta.BodyEquivParam as BodyEq
 open import LogOS.Prelude as Eq using (_≡_; refl; sym; subst)
 
 -- Target kernel with decode = id on ToyUCode

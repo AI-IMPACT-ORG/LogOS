@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -9,20 +9,21 @@ module LogOS.Domain.ZFC.WFGraph.Surface where
 
 open import LogOS.Prelude
 
-open import LogOS.Domain.SetTheory.ChoiceAxiom as AC using (AxiomOfChoice)
-open import LogOS.Domain.SetTheory.Dsl using (ZFDsl)
-open import LogOS.Domain.SetTheory.FormulaFromDefinable as FromDef using (toZFAxiomsᶠ)
-open import LogOS.Domain.SetTheory.FormulaPack using (ZFAxiomsᶠ; ZFCAxiomsᶠ)
-open import LogOS.Domain.SetTheory.FromZFAxioms using (toCumulativeHierarchy)
-open import LogOS.Domain.SetTheory.FullUpgradeFromDefinable as FullUpg
+open import LogOS.Domain.ZFC.SetTheory.ChoiceAxiom as AC using (AxiomOfChoice)
+open import LogOS.Domain.ZFC.SetTheory.Dsl using (ZFDsl)
+open import LogOS.Domain.ZFC.SetTheory.FormulaFromDefinable as FromDef using (toZFAxiomsᶠ)
+open import LogOS.Domain.ZFC.SetTheory.FormulaPack using (ZFAxiomsᶠ; ZFCAxiomsᶠ)
+open import LogOS.Domain.ZFC.SetTheory.FromZFAxioms using (toCumulativeHierarchy)
+open import LogOS.Domain.ZFC.SetTheory.FullUpgradeFromDefinable as FullUpg
   using (PredicateRepresentable; FunctionGraphRepresentable)
-open import LogOS.Domain.SetTheory.LimitPack using (CumulativeHierarchy)
-open import LogOS.Domain.SetTheory.Pack using (ZFAxioms; ZFCAxioms)
-open import LogOS.Domain.SetTheory.StageToCHFromHierarchy using (StageToCH-fromCH)
-open import LogOS.Domain.SetTheory.CumulativeSurface using (stageToSurface)
+open import LogOS.Domain.ZFC.SetTheory.LimitPack using (CumulativeHierarchy)
+open import LogOS.Domain.ZFC.SetTheory.Pack using (ZFAxioms; ZFCAxioms)
+open import LogOS.Domain.ZFC.SetTheory.StageToCHFromHierarchy using (StageToCH-fromCH)
+open import LogOS.Domain.ZFC.SetTheory.CumulativeSurface using (stageToSurface)
 
 open import LogOS.Domain.ZFC.WFGraph.Structure using (WFGraphStructure)
 import LogOS.Domain.ZFC.WFGraph.ZFC as ZFC
+import LogOS.Domain.ZFC.WFGraph.FormulaPack as Formula
 
 -- Single entrypoint for “WF-graph sets inside LogOS”.
 --
@@ -99,3 +100,17 @@ module Full
     -- Formula-pack ZFC view (same Choice witness, but with coded schemata).
     zfcᶠ : ZFCAxiomsᶠ K
     zfcᶠ = record { zf = zfᶠ ; AC = choice }
+
+-- Formula-coded ZF(+Infinity) surface: schemata range over genuine first-order
+-- formulas (with explicit parameters encoded in the code) and `decode` maps
+-- those formulas to their extensions in the WFGraph universe.
+
+module FormulaCoded
+  {ℓ : Level}
+  (W : WFGraphStructure ℓ)
+  where
+
+  open WFGraphStructure W
+  module Base = Formula.ForZFC G S Ext P Fnd
+
+  open Base public using (Sig; Q; K; zfᶠ)

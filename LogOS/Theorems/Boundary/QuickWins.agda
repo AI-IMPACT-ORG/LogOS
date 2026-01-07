@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -96,8 +96,8 @@ Sat_H_bnd-mono-Con
     (w : LogOSSignature.Cosp Sig)
     {c c' : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K))}
   → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K)) c c'
-  → Kernel.Sat_H_bnd K (LogOSSignature.bnd Sig w) c
-  → Kernel.Sat_H_bnd K (LogOSSignature.bnd Sig w) c'
+  → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
+  → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c'
 Sat_H_bnd-mono-Con Sig Q K w le sat =
   let
     module HT = Truth.HomotypicalTruth Sig Q (Kernel.HWorld K)
@@ -121,8 +121,8 @@ Sat_H_bnd-mono-ctx
     {w w' : LogOSSignature.Cosp Sig}
     {c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K))}
   → Worlds.WorldH._≤ctx_ (Kernel.HWorld K) w w'
-  → Kernel.Sat_H_bnd K (LogOSSignature.bnd Sig w) c
-  → Kernel.Sat_H_bnd K (LogOSSignature.bnd Sig w') c
+  → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
+  → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w') c
 Sat_H_bnd-mono-ctx Sig Q K le sat =
   let
     module HT = Truth.HomotypicalTruth Sig Q (Kernel.HWorld K)

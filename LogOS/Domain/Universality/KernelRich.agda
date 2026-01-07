@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -29,7 +29,7 @@ Sig : LogOSSignature lzero
 Sig = record
   { sorts = record { Iface = ⊤ ; Cosp = ⊤ ; ∂Cosp = ⊤ }
   ; cospanOps = record { src = λ _ → tt ; tgt = λ _ → tt ; idC = λ _ → tt ; _∘C_ = λ _ _ → tt ; _⊕C_ = λ _ _ → tt ; _⊗C_ = λ _ _ → tt }
-  ; boundaryOps = record { src∂ = λ _ → tt ; tgt∂ = λ _ → tt ; id∂ = λ _ → tt ; _∘∂_ = λ _ _ → tt ; _⊕∂_ = λ _ _ → tt ; _⊗∂_ = λ _ _ → tt ; ext = λ _ → tt ; bnd = λ _ → tt }
+  ; boundaryOps = record { src∂ = λ _ → tt ; tgt∂ = λ _ → tt ; id∂ = λ _ → tt ; _∘∂_ = λ _ _ → tt ; _⊕∂_ = λ _ _ → tt ; _⊗∂_ = λ _ _ → tt ; from∂ = λ _ → tt ; to∂ = λ _ → tt }
   }
 
 Q : QAdapter lzero
@@ -117,11 +117,34 @@ GTruth = record
 -- Kernel with Code = ToyUCode and decode = id
 UKR : Kernel Sig Q
 UKR = record
-  { HWorld = HWorld ; BB = BB ; MBulk = MBulk ; MBnd = MBnd ; Holo = Holo
-  ; HTruth = HTruth ; HInv = HInv ; Sat_H_bnd = λ _ _ → ⊤ ; sat-coh = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
-  ; Fml = ⊤ ; Strict = record { Sat_S = λ _ _ → ⊤ ; _⊢S_ = λ _ _ → ⊤ } ; TransH = λ _ → ToyT (mkT 0 0) ; coh-LH = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
+  { shape = record
+      { HWorld = HWorld
+      ; BB = BB
+      ; MBulk = MBulk
+      ; MBnd = MBnd
+      ; Holo = Holo
+      ; HTruth = HTruth
+      ; HInv = HInv
+      ; Sat_H_bnd = λ _ _ → ⊤
+      ; sat-coh = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
+      ; Fml = ⊤
+      ; Strict = record { Sat_S = λ _ _ → ⊤ }
+      ; TransH = λ _ → ToyT (mkT 0 0)
+      ; coh-LH = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
+      ; Code = ToyUCode
+      ; encode = λ γ → γ
+      ; decode = λ γ → γ
+      ; decode∘encode = λ _ → refl
+      ; Guard = canon
+      ; Body = λ γ → γ
+      ; γ* = ToyT (mkT 0 0)
+      ; γ*-guard = (refl , refl)
+      ; reify = λ γ → γ
+      ; reify-decode = λ _ → refl
+      ; Body∂ = λ c → c
+      ; body-decode = λ _ → refl
+      }
   ; GTruth = GTruth
-  ; Code = ToyUCode ; encode = λ γ → γ ; decode = λ γ → γ ; decode∘encode = λ _ → refl
-  ; Guard = canon ; Body = λ γ → γ ; guard-decode = λ _ → refl
-  ; γ* = ToyT (mkT 0 0) ; γ*-guard = (refl , refl) ; decode-γ* = refl
-  ; reify = λ γ → γ ; reify-decode = λ _ → refl ; Body∂ = λ c → c ; body-decode = λ _ → refl }
+  ; guard-decode = λ _ → refl
+  ; decode-γ* = refl
+  }

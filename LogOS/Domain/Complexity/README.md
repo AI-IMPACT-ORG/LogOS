@@ -1,6 +1,6 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
@@ -11,7 +11,7 @@ Publication-facing entrypoint
 -----------------------------
 
 - Narrative spine: `docs/DeepDive/Complexity.lagda.md`
-- Namespaced wrapper (safe surface): `LogOS/Models/Complexity/Core.agda`
+- Namespaced wrapper (safe surface): `LogOS/Packs/Complexity/Core.agda`
 
 Main modules (this directory)
 -----------------------------
@@ -36,25 +36,40 @@ Pack conventions
 P/NP interfaces and bridges
 ---------------------------
 
+These modules do **not** provide a ZFC proof of classical `P ≠ NP`. All separation
+claims are explicitly conditional on the stated assumptions in each pack.
+
+- Recommended stable surface: `LogOS/Packs/Complexity/Core.agda`
+- Safe P/NP-only surface: `LogOS/Packs/Complexity/PvsNP/Public.agda`
+- Meta note: `LogOS/Theorems/Meta/SpectralSeparationOutput.agda`
+
 - Conditional P/NP-shaped pack (grade-native interface): `LogOS/Domain/Complexity/PvsNP_Grade_Only.agda`
 - Canonical minimal route (info-theory): `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda`
   (`Assumptions`, `mkPack`)
 - ℕ polynomial predicates can be lifted via `PvsNPFromInfo_Grade_Only.FromNat` (`PolyGrade.FromNat`).
-- P/NP pack (language-relative, packaging only): `LogOS/Domain/Complexity/PvsNP.agda`
+- Legacy P/NP pack (language-relative, packaging only): `LogOS/Domain/Complexity/Legacy/PvsNP.agda`
 - Classical P/NP interface (literature-aligned, ℕ-bound): `LogOS/Domain/Complexity/ClassicalPvsNP.agda`
-- Truth-route family: `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda` (grade-only, canonical),
-  `LogOS/Domain/Complexity/TruthRoute.agda` (ℕ-bound via `gradeBound`, deprecated compat; includes witness-size refinement under `TruthRoute.For.WithWitnessSize`)
+- Truth-route family: `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda` (grade-only, canonical).
+  ℕ-bounded interfaces live in `TruthRoute_Grade_Only.ForNat` (witness-size refinement in `TruthRoute_Grade_Only.ForNat.WithWitnessSize`).
 - Optional non-degeneracy laws: `LogOS/Domain/Complexity/StandardCMLaws.agda`
 
 Information/physics routes
 --------------------------
+
+- Physics-of-information axiom packs:
+  `LogOS/Domain/Complexity/LCUToLandauer.agda`,
+  `LogOS/Domain/Complexity/SecondLaw.agda`,
+  `LogOS/Domain/Complexity/MeasurementCapacity.agda`,
+  `LogOS/Domain/Complexity/NonUnitaryCapacity.agda`,
+  `LogOS/Domain/Complexity/DataProcessingInequality.agda`,
+  `LogOS/Domain/Complexity/InfoProcessingBounds.agda`
+  (curated surface: `LogOS/Packs/Complexity/PhysicsOfInformation.agda`)
 
 - Polynomial predicate + arithmetic helpers:
   `LogOS/Domain/Complexity/Poly.agda`, `LogOS/Domain/Complexity/PolyGrade.agda`,
   `LogOS/Domain/Complexity/Arithmetic.agda`
 - Info bottleneck adapters and hardness bridge:
   `LogOS/Domain/Complexity/InfoBottleneckAdaptersG.agda` (grade-native `FromLOB`),
-  `LogOS/Domain/Complexity/InfoBottleneckAdaptersGraded.agda` (grade-bound `FromLOBGradePG`, compat `FromLOB`),
   `LogOS/Domain/Complexity/InfoHardnessBridge.agda`
 - Convenience pack: `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda`
 - Grade-native resource schema and LOB packs:

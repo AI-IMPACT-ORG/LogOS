@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -18,7 +18,6 @@ open import LogOS.Kernel.Graded
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
 import LogOS.Domain.Complexity.PolyGrade as PG
 import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TRG
-import LogOS.Domain.Complexity.TruthRoute as TR
 import LogOS.Domain.Complexity.InfoBottleneckAdaptersG as IBG
 import LogOS.Domain.Complexity.ObservabilityBudgetG as OB
 import LogOS.Domain.Complexity.PvsNPFromInfo_Grade_Only as PFI
@@ -96,7 +95,7 @@ module For
     (polyOk : ∀ {p : ℕ → ℕ} → IsPoly p → PolyPred.isPoly Pℕ p)
     where
 
-    module Rℕ = TR.For K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+    module Rℕ = TRG.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
     module Wℕ = Rℕ.WithWitnessSize WSize
 
     module CS = CP.FromTruthRoute

@@ -1,12 +1,13 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
 % View — Observer Semantics (Physical Reading of LogOS)
 
 ```agda
+{-# OPTIONS --safe #-}
 module docs.View_ObserverSemantics where
 
 open import LogOS.Docs.Views.View_ObserverSemantics public
@@ -25,6 +26,16 @@ semantics that aligns with:
 This is a documentation view: it does **not** claim that the library derives the laws
 of physics. Instead it shows where to *plug in* physically meaningful axioms/packs,
 and what generic theorems LogOS then provides.
+
+Signature maps as coarse-graining (optional)
+--------------------------------------------
+In many physical readings, changing the “interface signature” corresponds to renaming observables
+or forgetting measurement structure (a coarse-graining). LogOS supports this in two complementary
+directions:
+
+- **Models (contravariant):** pull back kernels along signature maps via `reindexKernel` / `reindexLogicKernel`.
+- **Programs/sentences (covariant, optional):** translate a signature-indexed constraint/program language along
+  `SigHom` via `LogOS/Free/ConstraintsOverSig.agda` (`rename∂`).
 
 ## 1) The central move: replace “truth” by “what an observer can stably communicate”
 
@@ -48,6 +59,55 @@ This matches a common physics posture:
 In the library, this is exactly why fixed-point structure is kept in preorder form: it’s
 an *observational* notion by default, and equality is an optional upgrade.
 
+Canonical instance (code)
+-------------------------
+The generic observer-semantics core (`LogOS/Theorems/Meta/ObserverCore.agda`) can be instantiated
+uniformly from any CHL-facing `LogicKernel`, using the kernel’s own `FlowCode` step:
+
+- `LogOS/Theorems/Meta/ObserverFromLogicKernel.agda`
+
+Minimal vocabulary (formal)
+---------------------------
+The following “physics words” are not metaphors: they are names for concrete, reusable interfaces.
+
+- **System**: a `LogicKernel Sig Q` (shared S/H/code shape plus a parameterised guarded tier).
+- **State of knowledge at the boundary**: a boundary constraint `c : Con` in the boundary preorder.
+- **Decoded meaning of code**: `decode : Code → Con` from the kernel.
+- **Observer step / admissible interaction**: the derived operational step on code
+  `FlowCode : Code → Code` (defined as `Guard ∘ Body`).
+- **Truth predicate** (choice): any `TruthK : Code → Set` (e.g. “true at world w” below).
+- **Observable / communicable fragment** (canonical from a `TruthK`): the *largest admissible* predicate
+  `Observable⋆ TruthK` (largest w.r.t. `_≤Pred_` (pointwise implication) among predicates that are decode‑extensional,
+  step‑stable, and sound into `TruthK`), obtained by the generic
+  `ObserverCore.Pred⋆` construction (see `ObserverCore.Pred⋆-admissible` and `ObserverCore.Pred⋆-largest`),
+  instantiated via `ObserverFromLogicKernel.For.Observable⋆`.
+- **Universe-level tradeoff** (important for pack APIs): `Pred⋆`/`Observable⋆` is defined as a `Σ` over observer
+  predicates `P : Code → Set ℓP`, so it necessarily lives one universe higher (in `Set … ⊔ lsuc ℓP`).
+  Instantiating at `ℓP = lsuc ℓ` allows witness-carrying observers (e.g. traces/certificates), but yields
+  pack-level predicates like `Code → Set (lsuc (lsuc ℓ))`. Instantiating at `ℓP = ℓ` tightens the types, but
+  restricts observers to propositional ones (no large witnesses).
+- **Truth at a world** (canonical example of a `TruthK`): `TruthAt w γ := Sat_H_bnd (to∂ w) (decode γ)`
+  (see `ObserverFromLogicKernel.For.TruthAt`).
+- **Refinement preserves truth** (alignment with the 2-category): if `f ⇒ g` as 2-cells of kernel morphisms,
+  then `TruthAt w (mapCode f γ) → TruthAt w (mapCode g γ)` (see
+  `ObserverFromLogicKernel.RefinementPreservesTruthAt` and `Meta/RefinementSoundness`).
+
+```agda
+  -- Anchor: `TruthAt` expands to `Sat_H_bnd (to∂ w) (decode γ)` by unfolding the definition (proof is `refl`).
+open import LogOS.Prelude
+open import LogOS.Base.Signature using (LogOSSignature)
+open import LogOS.Minimal.Adapter using (QAdapter)
+import LogOS.Kernel.LogicKernel as LK
+import LogOS.Theorems.Meta.ObserverFromLogicKernel as ObsLK
+
+module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : LK.LogicKernel Sig Q) where
+  module O = ObsLK.For {Sig = Sig} {Q = Q} K
+  TruthAt-explicit
+    : ∀ (w : LogOSSignature.Cosp Sig) (γ : LK.LogicKernel.Code K)
+    → O.TruthAt w γ ≡ LK.LogicKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) (LK.LogicKernel.decode K γ)
+  TruthAt-explicit _ _ = refl
+```
+
 ## 2) Observers as processes: the Endo DSL and tensor
 
 LogOS exposes a conservative process DSL on boundary constraints:
@@ -63,11 +123,21 @@ Physical reading:
 
 - an **observer** is a process that maps “what is asserted at the boundary” to an updated boundary assertion,
 - composition is sequential interaction,
-- tensor/whiskering is independent or parallel composition (side-by-side systems).
+- tensor/whiskering is a monoidal “side-by-side” composition; it can be read as independence/parallelism
+  once a model interprets the tensor that way.
 
-This is already the core shape of CQM: a (symmetric) monoidal setting of processes with
+Crucially, the process calculus is **ordered**: endomaps are compared by pointwise refinement (`_≤₂_`),
+so “being at least as informative / at least as strong” is part of the structure, not a derived notion.
+This is the same order that appears as 2-cells in the kernel refinement 2-category:
+
+- `LogOS/Kernel/LogicKernel/Hom2Cat.agda`
+- `LogOS/Theorems/CategoryTheory/WrapperCore.agda`
+- `LogOS/Theorems/CategoryTheory/Kernel2Cat.agda`
+- `LogOS/Theorems/CategoryTheory/Kernel2CatGraded.agda`
+
+This is already the core shape of CQM: a monoidal setting of processes with
 parallel and sequential composition, where “systems” are the objects and “processes”
-are the morphisms.
+are the morphisms. Symmetry/braiding is optional and lives in explicit algebra packs.
 
 LogOS differs in emphasis: it does not start by postulating a dagger compact category;
 it starts by postulating only what the kernel needs (preorders + laxness), and then
@@ -82,9 +152,9 @@ A typical physics/quantum split is:
 
 LogOS already has a natural landing pad for exactly this split:
 
-- `LogOS/Domain/Universality/NonUnitaryCapacity.agda` (count non-unitary events, bound info per event),
-- `LogOS/Domain/Universality/DataProcessingInequality.agda` (admissible post-processing cannot increase information),
-- `LogOS/Domain/Complexity/ObservabilityBudget.agda` (bundle time + non-unitary + information capacities).
+- `LogOS/Domain/Complexity/NonUnitaryCapacity.agda` (count non-unitary events, bound info per event),
+- `LogOS/Domain/Complexity/DataProcessingInequality.agda` (DPI interface/axiom pack: channels + an information measure monotone under post-processing),
+- `LogOS/Domain/Complexity/ObservabilityBudgetGraded.agda` (bundle time + non-unitary + information capacities).
 
 Observer semantics reading:
 
@@ -108,7 +178,7 @@ What is already structurally present in the production library:
 
 - **Monoidal process shape**: sequential composition + tensor/whiskering at the boundary (`TensorEndo` view).
 - **Dagger-shaped hooks**: there is a dedicated meta development around dagger-like structure and positivity
-  used by GRH packs (see `LogOS/Theorems/Meta/Dagger.agda` and related GRH ledgers).
+  used by spectral/opacity packs (see `LogOS/Theorems/Meta/Dagger.agda` and related ledgers).
 - **Explicit circuit syntax**: UniversalIR includes an explicit circuit language and examples:
   `LogOS/Domain/UniversalIR/Core/QuantumCircuit.agda` and `LogOS/Domain/UniversalIR/Examples/QuantumCircuit.agda`.
 
@@ -139,7 +209,7 @@ The minimal upgrade that makes the physics story explicit (without changing the 
    - local unitarity: a reversible sublanguage/process class, separated from global non-unitary events.
 
 4. **Resource bridge**:
-   - connect observer operations to `ObservabilityBudget` (time + non-unitary + information),
+   - connect observer operations to `ObservabilityBudgetGraded` (time + non-unitary + information),
    - use existing complexity bridges to turn those axioms into “no total oracle / no poly decider” theorems.
 
 This pack would be “less canonical” because it chooses a *physics interpretation* of
@@ -159,8 +229,8 @@ Pointers (where to connect)
 ---------------------------
 - Kernel closure/reflection: `LogOS/Kernel.agda`
 - Endomap/tensor DSL: `LogOS/Kernel/TensorDSL.agda`
-- Physical budgets: `LogOS/Domain/Complexity/ObservabilityBudget.agda`
-- Non-unitary/info axioms: `LogOS/Domain/Universality/NonUnitaryCapacity.agda`,
-  `LogOS/Domain/Universality/DataProcessingInequality.agda`
-- P vs NP physical story: `docs/Application_PvsNP.lagda.md`
+- Physical budgets: `LogOS/Domain/Complexity/ObservabilityBudgetGraded.agda`
+- Non-unitary/info axioms: `LogOS/Domain/Complexity/NonUnitaryCapacity.agda`,
+  `LogOS/Domain/Complexity/DataProcessingInequality.agda`
+- Complexity physical story: `docs/Application_Complexity.lagda.md`
 - Circuit surface: `LogOS/Domain/UniversalIR/Core/QuantumCircuit.agda`

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -13,8 +13,17 @@ open import LogOS.Syntax.Prop using (¬_)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
-open import LogOS.Theorems.Meta.Assumptions.Core public using (Provability; ProvabilityOps; HBLClassic)
-open import LogOS.Theorems.Meta.Assumptions.Diagonal public using (Diagonalization)
+open import LogOS.Theorems.Meta.Assumptions.Core public using (Provability; ProvabilityOps; ImpRules; HBLClassic)
+open import LogOS.Theorems.Meta.Assumptions.Diagonal public using
+  ( Diagonalization
+  ; InternalHomWitness
+  ; QuoteSubst
+  ; DecodeImp⊑
+  ; DecodeImp
+  ; Diagonalization-from-InternalHom
+  ; Diagonalization-from-QuoteSubst
+  )
+import LogOS.Theorems.Meta.LobCore as Core
 
 -- Packaging for Löb’s theorem (assumption‑based, schematic):
 -- We intentionally do not fix a concrete syntax or evaluator. Instead, models
@@ -57,6 +66,101 @@ record LoebFromHBL {ℓ}
                    : Set (lsuc ℓ) where
   field
     asLoeb : LoebAxiom K Pr Op
+
+-- Textbook corollary:
+-- Under HBLClassic + Diagonalization (already packaged), and assuming `ImpRules`,
+-- we can construct `LoebAxiom`. The proof itself is factored out in `Meta/LobCore`.
+
+loebAxiom-from-HBL
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K  : Kernel Sig Q)
+    (Pr : Provability K)
+    (Op : ProvabilityOps K)
+    (Ir : ImpRules K Pr Op)
+    (Hb : HBLClassic K Pr Op)
+    (Dl : Diagonalization K Pr Op)
+  → LoebAxiom K Pr Op
+loebAxiom-from-HBL K Pr Op Ir Hb Dl =
+  let
+    open Kernel K
+    open Provability Pr renaming (Prov to ⊢)
+
+    coreOp : Core.ProvabilityOpsC Code
+    coreOp = record
+      { Imp = ProvabilityOps.Imp Op
+      ; Box = ProvabilityOps.Box Op
+      }
+
+    coreIr : Core.ImpRulesC ⊢ coreOp
+    coreIr = record
+      { mp   = ImpRules.mp Ir
+      ; impI = ImpRules.impI Ir
+      }
+
+    coreHb : Core.HBLClassicC ⊢ coreOp
+    coreHb = record
+      { Necessitation = HBLClassic.Necessitation Hb
+      ; Kdist         = HBLClassic.Kdist Hb
+      ; Four          = HBLClassic.Four Hb
+      }
+
+    coreDl : Core.DiagonalizationC ⊢ coreOp
+    coreDl = record
+      { diag  = Diagonalization.diag Dl
+      ; diag→ = Diagonalization.diag→ Dl
+      ; →diag = Diagonalization.→diag Dl
+      }
+
+    Lc : Core.LoebAxiomC ⊢ coreOp
+    Lc = Core.loebAxiom-from-HBL ⊢ coreOp coreIr coreHb coreDl
+  in
+  record { loeb = Core.LoebAxiomC.loeb Lc }
+
+-- ----------------------------------------------------------------------------
+-- Preferred: Löb from LogOS primitives.
+--
+-- `InternalHomWitness` + `DecodeImp⊑` gives diagonalisation (Lawvere-style), then
+-- combine with HBLClassic + ImpRules to obtain the Löb schema.
+
+loebAxiom-from-InternalHom
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K  : Kernel Sig Q)
+    (Pr : Provability K)
+    (Op : ProvabilityOps K)
+    (Ir : ImpRules K Pr Op)
+    (Hb : HBLClassic K Pr Op)
+    (IH : InternalHomWitness K)
+    (DI : DecodeImp⊑ K Pr Op)
+  → LoebAxiom K Pr Op
+loebAxiom-from-InternalHom K Pr Op Ir Hb IH DI =
+  loebAxiom-from-HBL K Pr Op Ir Hb
+    (Diagonalization-from-InternalHom K Pr Op IH DI)
+
+loebAxiom-from-QuoteSubst
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K  : Kernel Sig Q)
+    (Pr : Provability K)
+    (Op : ProvabilityOps K)
+    (Ir : ImpRules K Pr Op)
+    (Hb : HBLClassic K Pr Op)
+    (QS : QuoteSubst K)
+    (DI : DecodeImp K Pr Op)
+  → LoebAxiom K Pr Op
+loebAxiom-from-QuoteSubst K Pr Op Ir Hb QS DI =
+  loebAxiom-from-HBL K Pr Op Ir Hb
+    (Diagonalization-from-QuoteSubst K Pr Op QS DI)
+
+loebFromHBL
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K  : Kernel Sig Q)
+    (Pr : Provability K)
+    (Op : ProvabilityOps K)
+    (Hb : HBLClassic K Pr Op)
+    (Dl : Diagonalization K Pr Op)
+    (Ir : ImpRules K Pr Op)
+  → LoebFromHBL K Pr Op Hb Dl
+loebFromHBL K Pr Op Hb Dl Ir =
+  record { asLoeb = loebAxiom-from-HBL K Pr Op Ir Hb Dl }
 
 -- Gödel 2 (conditional): If Con ≡ (□⊥ → ⊥) and the model is consistent (¬ Prov ⊥),
 -- then Con is not provable. This uses loeb and equality transport only.

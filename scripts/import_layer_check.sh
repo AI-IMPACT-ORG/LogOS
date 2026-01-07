@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# LogOS: an Agda Library for foundational logic architecture
-# Copyright (C) 2025 AI.IMPACT GmbH
+# LogOS: an Agda research library for foundational logic system architecture.
+# Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
 set -euo pipefail
@@ -71,7 +71,8 @@ check_no_imports() {
 IMPORT_LINE='^[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+'
 
 # 1) Core layers must not depend on application layers or doc scaffolding.
-CORE_FORBIDDEN="${IMPORT_LINE}LogOS\\.(Domain|Models|Packs|Docs)(\\.|$)"
+# Object-level logic developments are also treated as non-core.
+CORE_FORBIDDEN="${IMPORT_LINE}LogOS\\.(Domain|Packs|Docs|ObjectLogic)(\\.|$)"
 CORE_DIRS=(
   LogOS/Base
   LogOS/Syntax
@@ -88,17 +89,15 @@ CORE_DIRS=(
 )
 
 for d in "${CORE_DIRS[@]}"; do
-  check_no_imports "core must not import Domain/Models/Packs/Docs" "$d" "$CORE_FORBIDDEN"
+  check_no_imports "core must not import Domain/Packs/Docs/ObjectLogic" "$d" "$CORE_FORBIDDEN"
 done
 
-# 2) Domain packs must not depend on curated surfaces or docs.
-DOMAIN_FORBIDDEN="${IMPORT_LINE}LogOS\\.(Models|Packs|Docs)(\\.|$)"
-check_no_imports "Domain must not import Models/Packs/Docs" "LogOS/Domain" "$DOMAIN_FORBIDDEN"
+# 2) Domain packs must not depend on curated pack surfaces or docs.
+DOMAIN_FORBIDDEN="${IMPORT_LINE}LogOS\\.(Packs|Docs)(\\.|$)"
+check_no_imports "Domain must not import Packs/Docs" "LogOS/Domain" "$DOMAIN_FORBIDDEN"
 
-# 3) Curated surfaces must not depend on docs.
+# 3) Curated pack surfaces must not depend on docs.
 DOCS_FORBIDDEN="${IMPORT_LINE}LogOS\\.Docs(\\.|$)"
-check_no_imports "Models must not import Docs" "LogOS/Models" "$DOCS_FORBIDDEN"
 check_no_imports "Packs must not import Docs" "LogOS/Packs" "$DOCS_FORBIDDEN"
 
 echo "import-layer-check: OK"
-

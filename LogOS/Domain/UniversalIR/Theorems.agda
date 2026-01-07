@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -49,6 +49,7 @@ open import LogOS.Domain.UniversalIR.Schemes using
   )
 import LogOS.Computation.Scheme as Sch
 open import LogOS.Computation.Core using (Computation; iterate)
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 -- --------------------------------------------------------------------------
 -- Shared lemmas are provided by `LogOS.Domain.UniversalIR.Std`.
@@ -648,6 +649,260 @@ patask-choiceSchemes-correct t =
     ; circuit  = trans (circuitChoiceScheme≡run t) (circuit-correct t)
     }
 
+-- --------------------------------------------------------------------------
+-- Fuel reaches a fixed point (FuelHalts) and budget-existence corollaries.
+--
+-- This is where the “fuel-free” (`ComputesTo`) story becomes concrete for the
+-- UniversalIR schemes: the chosen fuel schedule really reaches a fixed point of
+-- the small-step dynamics, so:
+--   - `run` is sound w.r.t. `ComputesTo` (and `ComputesTo` collapses to `run`),
+--   - and “unbudgeted = ∃ budgeted” gives an explicit `ComputesWithin` witness.
+
+UM-injective : ∀ {m m'} → UM m ≡ UM m' → m ≡ m'
+UM-injective refl = refl
+
+-- Minsky choice scheme: halts because the compiled programs end in `HALT`.
+minskyScheme-fuelHalts : Sch.FuelHalts minskyScheme
+minskyScheme-fuelHalts (mkTask Add a b) =
+  trans
+    (cong stepU (exec≡simulate (Sch.fuel minskyScheme (mkTask Add a b)) (Minsky.compile (mkTask Add a b))))
+    (trans
+      (trans
+        (cong stepU (addSim a b))
+        (trans refl (sym (addSim a b))))
+      (sym (exec≡simulate (Sch.fuel minskyScheme (mkTask Add a b)) (Minsky.compile (mkTask Add a b)))))
+minskyScheme-fuelHalts (mkTask Mul a b) =
+  trans
+    (cong stepU (exec≡simulate (Sch.fuel minskyScheme (mkTask Mul a b)) (Minsky.compile (mkTask Mul a b))))
+    (trans
+      (trans
+        (cong stepU (mulSim 0 a b))
+        (trans refl (sym (mulSim 0 a b))))
+      (sym (exec≡simulate (Sch.fuel minskyScheme (mkTask Mul a b)) (Minsky.compile (mkTask Mul a b)))))
+
+-- Lambda choice scheme: the compiler emits a Church numeral in normal form.
+lambdaScheme-fuelHalts : Sch.FuelHalts lambdaScheme
+lambdaScheme-fuelHalts t
+  = trans
+      (cong stepU (exec≡simulate (Sch.fuel lambdaScheme t) (Lambda.compile t)))
+      (trans
+        (trans
+          (cong stepU (simulateUL-church (Sch.fuel lambdaScheme t) (eval t)))
+          (trans
+            (cong UL (stepLC-church (eval t)))
+            (sym (simulateUL-church (Sch.fuel lambdaScheme t) (eval t)))))
+        (sym (exec≡simulate (Sch.fuel lambdaScheme t) (Lambda.compile t))))
+
+-- Ethereum choice scheme: straight-line programs reach the `STOP` instruction.
+ethereumScheme-fuelHalts : Sch.FuelHalts ethereumScheme
+ethereumScheme-fuelHalts t with PATask.op t
+... | Add
+  rewrite exec≡simulate (Sch.fuel ethereumScheme t) (Ether.compile t)
+  = refl
+... | Mul
+  rewrite exec≡simulate (Sch.fuel ethereumScheme t) (Ether.compile t)
+  = refl
+
+-- Circuit choice scheme: fuel = 0 and the compiled code starts at `QCHALT`.
+quantumCircuitScheme-fuelHalts : Sch.FuelHalts quantumCircuitScheme
+quantumCircuitScheme-fuelHalts t
+  rewrite exec≡simulate (Sch.fuel quantumCircuitScheme t) (Circuit.compile t)
+  = refl
+
+-- Oracle choice scheme: derived by erasure to the Minsky halting proof,
+-- using the “no measurement” invariant of the compiled programs.
+
+NoMeasure-eraseHALT→QHALT
+  : ∀ instr → NoMeasure instr → eraseQInstr instr ≡ HALT → instr ≡ QHALT
+NoMeasure-eraseHALT→QHALT QHALT _ _ = refl
+NoMeasure-eraseHALT→QHALT (QINC _ _) _ ()
+NoMeasure-eraseHALT→QHALT (QDECJZ _ _ _) _ ()
+NoMeasure-eraseHALT→QHALT (MEASURE _ _ _) () _
+
+AllNoMeasure-iterStepQ
+  : ∀ n q → AllNoMeasure (QuantumCode.prog q) → AllNoMeasure (QuantumCode.prog (iter stepQ n q))
+AllNoMeasure-iterStepQ zero    q nm = nm
+AllNoMeasure-iterStepQ (suc n) q nm =
+  AllNoMeasure-iterStepQ n (stepQ q) (AllNoMeasure-stepQ q nm)
+
+oracleHaltsAtFuel
+  : ∀ t → stepU (simulate (Oracle.fuel t) (Oracle.compile t)) ≡ simulate (Oracle.fuel t) (Oracle.compile t)
+oracleHaltsAtFuel (mkTask Add a b) =
+  let
+    t  = mkTask Add a b
+    n  = Oracle.fuel t
+    q0 = Oracle.compileBrand t
+    qn = iter stepQ n q0
+
+    nm0 : AllNoMeasure (QuantumCode.prog q0)
+    nm0 = allNoMeasure-compileBrand t
+
+    nmn : AllNoMeasure (QuantumCode.prog qn)
+    nmn = AllNoMeasure-iterStepQ n q0 nm0
+
+    instrQ : QInstr
+    instrQ = lookupDefault QHALT (QuantumCode.prog qn) (QuantumCode.pc qn)
+
+    nmInstr : NoMeasure instrQ
+    nmInstr = lookupNoMeasure (QuantumCode.prog qn) (QuantumCode.pc qn) nmn
+
+    -- Erasing the quantum run yields the corresponding Minsky run, which ends in HALT.
+    eraseSim≡HALT
+      : eraseU (simulate n (UQ q0)) ≡ UM (mkM 2 (a + b) 0 0 0 Minsky.progAdd)
+    eraseSim≡HALT =
+      trans
+        (eraseU-simulateQ n q0 nm0)
+        (trans
+          (cong (λ u → simulate n u) (cong UM (erase-compileBrand t)))
+          (trans
+            (cong (λ k → simulate k (UM (Minsky.compileBrand t))) (fuel≡ t))
+            (addSim a b)))
+
+    eraseQn≡HALT : eraseQ qn ≡ mkM 2 (a + b) 0 0 0 Minsky.progAdd
+    eraseQn≡HALT =
+      UM-injective
+        (trans
+          (sym (cong eraseU (simulateUQ n q0)))
+          eraseSim≡HALT)
+
+    -- The looked-up instruction erases to HALT, hence is QHALT (since no MEASURE occurs).
+    instrErasesToHALT : eraseQInstr instrQ ≡ HALT
+    instrErasesToHALT =
+      trans
+        (sym (lookupDefault-map eraseQInstr QHALT (QuantumCode.prog qn) (QuantumCode.pc qn)))
+        (cong
+          (λ m → lookupDefault HALT (MinskyCode.prog m) (MinskyCode.pc m))
+          eraseQn≡HALT)
+
+    instr≡QHALT : instrQ ≡ QHALT
+    instr≡QHALT = NoMeasure-eraseHALT→QHALT instrQ nmInstr instrErasesToHALT
+
+    stepQn≡ : stepQ qn ≡ qn
+    stepQn≡ =
+      subst (λ i → stepQInstr i qn ≡ qn) (sym instr≡QHALT) refl
+  in
+  -- Reduce to the quantum code fixed-point statement.
+  trans
+    (cong stepU (simulateUQ n q0))
+    (trans
+      (cong UQ stepQn≡)
+      (sym (simulateUQ n q0)))
+oracleHaltsAtFuel (mkTask Mul a b) =
+  let
+    t  = mkTask Mul a b
+    n  = Oracle.fuel t
+    q0 = Oracle.compileBrand t
+    qn = iter stepQ n q0
+
+    nm0 : AllNoMeasure (QuantumCode.prog q0)
+    nm0 = allNoMeasure-compileBrand t
+
+    nmn : AllNoMeasure (QuantumCode.prog qn)
+    nmn = AllNoMeasure-iterStepQ n q0 nm0
+
+    instrQ : QInstr
+    instrQ = lookupDefault QHALT (QuantumCode.prog qn) (QuantumCode.pc qn)
+
+    nmInstr : NoMeasure instrQ
+    nmInstr = lookupNoMeasure (QuantumCode.prog qn) (QuantumCode.pc qn) nmn
+
+    eraseSim≡HALT
+      : eraseU (simulate n (UQ q0)) ≡ UM (mkM 6 (0 + (a * b)) 0 b 0 Minsky.progMul)
+    eraseSim≡HALT =
+      trans
+        (eraseU-simulateQ n q0 nm0)
+        (trans
+          (cong (λ u → simulate n u) (cong UM (erase-compileBrand t)))
+          (trans
+            (cong (λ k → simulate k (UM (Minsky.compileBrand t))) (fuel≡ t))
+            (mulSim 0 a b)))
+
+    eraseQn≡HALT : eraseQ qn ≡ mkM 6 (0 + (a * b)) 0 b 0 Minsky.progMul
+    eraseQn≡HALT =
+      UM-injective
+        (trans
+          (sym (cong eraseU (simulateUQ n q0)))
+          eraseSim≡HALT)
+
+    instrErasesToHALT : eraseQInstr instrQ ≡ HALT
+    instrErasesToHALT =
+      trans
+        (sym (lookupDefault-map eraseQInstr QHALT (QuantumCode.prog qn) (QuantumCode.pc qn)))
+        (cong
+          (λ m → lookupDefault HALT (MinskyCode.prog m) (MinskyCode.pc m))
+          eraseQn≡HALT)
+
+    instr≡QHALT : instrQ ≡ QHALT
+    instr≡QHALT = NoMeasure-eraseHALT→QHALT instrQ nmInstr instrErasesToHALT
+
+    stepQn≡ : stepQ qn ≡ qn
+    stepQn≡ =
+      subst (λ i → stepQInstr i qn ≡ qn) (sym instr≡QHALT) refl
+  in
+  trans
+    (cong stepU (simulateUQ n q0))
+    (trans
+      (cong UQ stepQn≡)
+      (sym (simulateUQ n q0)))
+
+oracleScheme-fuelHalts : Sch.FuelHalts oracleScheme
+oracleScheme-fuelHalts t
+  = trans
+      (cong stepU (exec≡simulate (Sch.fuel oracleScheme t) (Oracle.compile t)))
+      (trans
+        (oracleHaltsAtFuel t)
+        (sym (exec≡simulate (Sch.fuel oracleScheme t) (Oracle.compile t))))
+
+-- Corollaries: fuel schedule soundness and “∃ budget” witnesses.
+
+module FS-minsky = Sch.FuelSound minskyScheme
+module FS-lambda = Sch.FuelSound lambdaScheme
+module FS-ethereum = Sch.FuelSound ethereumScheme
+module FS-oracle = Sch.FuelSound oracleScheme
+module FS-circuit = Sch.FuelSound quantumCircuitScheme
+
+minskyScheme-runComputesTo : ∀ t → Sch.ComputesTo minskyScheme t (Sch.run minskyScheme t)
+minskyScheme-runComputesTo t = FS-minsky.runIsComputesTo minskyScheme-fuelHalts t
+
+lambdaScheme-runComputesTo : ∀ t → Sch.ComputesTo lambdaScheme t (Sch.run lambdaScheme t)
+lambdaScheme-runComputesTo t = FS-lambda.runIsComputesTo lambdaScheme-fuelHalts t
+
+ethereumScheme-runComputesTo : ∀ t → Sch.ComputesTo ethereumScheme t (Sch.run ethereumScheme t)
+ethereumScheme-runComputesTo t = FS-ethereum.runIsComputesTo ethereumScheme-fuelHalts t
+
+oracleScheme-runComputesTo : ∀ t → Sch.ComputesTo oracleScheme t (Sch.run oracleScheme t)
+oracleScheme-runComputesTo t = FS-oracle.runIsComputesTo oracleScheme-fuelHalts t
+
+quantumCircuitScheme-runComputesTo : ∀ t → Sch.ComputesTo quantumCircuitScheme t (Sch.run quantumCircuitScheme t)
+quantumCircuitScheme-runComputesTo t = FS-circuit.runIsComputesTo quantumCircuitScheme-fuelHalts t
+
+minskyScheme-runComputesWithinSomeBudget
+  : ∀ t → Σ Budget (λ b → Sch.ComputesWithin minskyScheme t b (Sch.run minskyScheme t))
+minskyScheme-runComputesWithinSomeBudget t =
+  Sch.ComputesTo→∃ComputesWithin minskyScheme (minskyScheme-runComputesTo t)
+
+lambdaScheme-runComputesWithinSomeBudget
+  : ∀ t → Σ Budget (λ b → Sch.ComputesWithin lambdaScheme t b (Sch.run lambdaScheme t))
+lambdaScheme-runComputesWithinSomeBudget t =
+  Sch.ComputesTo→∃ComputesWithin lambdaScheme {x = t} {y = Sch.run lambdaScheme t}
+    (lambdaScheme-runComputesTo t)
+
+ethereumScheme-runComputesWithinSomeBudget
+  : ∀ t → Σ Budget (λ b → Sch.ComputesWithin ethereumScheme t b (Sch.run ethereumScheme t))
+ethereumScheme-runComputesWithinSomeBudget t =
+  Sch.ComputesTo→∃ComputesWithin ethereumScheme (ethereumScheme-runComputesTo t)
+
+oracleScheme-runComputesWithinSomeBudget
+  : ∀ t → Σ Budget (λ b → Sch.ComputesWithin oracleScheme t b (Sch.run oracleScheme t))
+oracleScheme-runComputesWithinSomeBudget t =
+  Sch.ComputesTo→∃ComputesWithin oracleScheme (oracleScheme-runComputesTo t)
+
+quantumCircuitScheme-runComputesWithinSomeBudget
+  : ∀ t → Σ Budget (λ b → Sch.ComputesWithin quantumCircuitScheme t b (Sch.run quantumCircuitScheme t))
+quantumCircuitScheme-runComputesWithinSomeBudget t =
+  Sch.ComputesTo→∃ComputesWithin quantumCircuitScheme {x = t} {y = Sch.run quantumCircuitScheme t}
+    (quantumCircuitScheme-runComputesTo t)
+
 patask-choiceSchemes-costBound : ∀ t → ChoiceSchemesCostBound t
 patask-choiceSchemes-costBound t =
   record
@@ -657,6 +912,38 @@ patask-choiceSchemes-costBound t =
     ; oracle   = choiceScheme-cost≤budget₂3n,n oracleChoice t
     ; circuit  = choiceScheme-cost≤budget₂3n,n quantumCircuitChoice t
     }
+
+-- Cost honesty yields explicit budgeted computation witnesses for `run`.
+
+minskyScheme-runComputesWithinFuelBudgetFor
+  : ∀ t → Sch.ComputesWithin minskyScheme t (fuelBudgetFor minskyScheme t) (Sch.run minskyScheme t)
+minskyScheme-runComputesWithinFuelBudgetFor t =
+  FS-minsky.runIsComputesWithin minskyScheme-fuelHalts t (fuelBudgetFor minskyScheme t)
+    (ChoiceSchemesCostBound.minsky (patask-choiceSchemes-costBound t))
+
+lambdaScheme-runComputesWithinFuelBudgetFor
+  : ∀ t → Sch.ComputesWithin lambdaScheme t (fuelBudgetFor lambdaScheme t) (Sch.run lambdaScheme t)
+lambdaScheme-runComputesWithinFuelBudgetFor t =
+  FS-lambda.runIsComputesWithin lambdaScheme-fuelHalts t (fuelBudgetFor lambdaScheme t)
+    (ChoiceSchemesCostBound.lambda (patask-choiceSchemes-costBound t))
+
+ethereumScheme-runComputesWithinFuelBudgetFor
+  : ∀ t → Sch.ComputesWithin ethereumScheme t (fuelBudgetFor ethereumScheme t) (Sch.run ethereumScheme t)
+ethereumScheme-runComputesWithinFuelBudgetFor t =
+  FS-ethereum.runIsComputesWithin ethereumScheme-fuelHalts t (fuelBudgetFor ethereumScheme t)
+    (ChoiceSchemesCostBound.ethereum (patask-choiceSchemes-costBound t))
+
+oracleScheme-runComputesWithinFuelBudgetFor
+  : ∀ t → Sch.ComputesWithin oracleScheme t (fuelBudgetFor oracleScheme t) (Sch.run oracleScheme t)
+oracleScheme-runComputesWithinFuelBudgetFor t =
+  FS-oracle.runIsComputesWithin oracleScheme-fuelHalts t (fuelBudgetFor oracleScheme t)
+    (ChoiceSchemesCostBound.oracle (patask-choiceSchemes-costBound t))
+
+quantumCircuitScheme-runComputesWithinFuelBudgetFor
+  : ∀ t → Sch.ComputesWithin quantumCircuitScheme t (fuelBudgetFor quantumCircuitScheme t) (Sch.run quantumCircuitScheme t)
+quantumCircuitScheme-runComputesWithinFuelBudgetFor t =
+  FS-circuit.runIsComputesWithin quantumCircuitScheme-fuelHalts t (fuelBudgetFor quantumCircuitScheme t)
+    (ChoiceSchemesCostBound.circuit (patask-choiceSchemes-costBound t))
 
 patask-choiceSchemes-runEq : ChoiceSchemesRunEq
 patask-choiceSchemes-runEq =
@@ -703,6 +990,32 @@ oracle-implements-PA = record { correct = λ t → ChoiceSchemesCorrect.oracle (
 
 circuit-implements-PA : Sch.ImplementsRun PAAlg quantumCircuitScheme
 circuit-implements-PA = record { correct = λ t → ChoiceSchemesCorrect.circuit (patask-choiceSchemes-correct t) }
+
+-- Relational correctness: any computed outcome satisfies the algorithm spec.
+--
+-- This is the “fuel-free” semantics surface: a scheme’s chosen fuel schedule is
+-- only one way to reach a stable output. Under `FuelHalts`, all executions agree
+-- with `run`, so schedule-correctness upgrades to relational correctness.
+
+minsky-implementsRel-PA : Sch.ImplementsRel PAAlg minskyScheme
+minsky-implementsRel-PA =
+  Sch.run→rel minskyScheme-fuelHalts minsky-implements-PA
+
+lambda-implementsRel-PA : Sch.ImplementsRel PAAlg lambdaScheme
+lambda-implementsRel-PA =
+  Sch.run→rel lambdaScheme-fuelHalts lambda-implements-PA
+
+ethereum-implementsRel-PA : Sch.ImplementsRel PAAlg ethereumScheme
+ethereum-implementsRel-PA =
+  Sch.run→rel ethereumScheme-fuelHalts ethereum-implements-PA
+
+oracle-implementsRel-PA : Sch.ImplementsRel PAAlg oracleScheme
+oracle-implementsRel-PA =
+  Sch.run→rel oracleScheme-fuelHalts oracle-implements-PA
+
+circuit-implementsRel-PA : Sch.ImplementsRel PAAlg quantumCircuitScheme
+circuit-implementsRel-PA =
+  Sch.run→rel quantumCircuitScheme-fuelHalts circuit-implements-PA
 
 -- ============================================================================
 -- One theorem: “same computation, many representations” (PA fragment)
@@ -817,14 +1130,14 @@ record Claim (_ : Assumptions) : Set₁ where
     ethereum≈oracle : Sch.RunEq ethereumScheme oracleScheme
     oracle≈circuit  : Sch.RunEq oracleScheme quantumCircuitScheme
 
-record Pack (A : Assumptions) : Set₁ where
-  field
-    claim : Claim A
+module Q = Quartet.Make Assumptions Claim
+open Q public using (Pack; assumptionsOf; claimOf)
 
-mkPack : (A : Assumptions) → Pack A
-mkPack _ =
-  record
-    { claim = record
+mkPack : (A : Assumptions) → Pack
+mkPack =
+  Q.mkPack
+    (λ _ →
+      record
         { Alg            = PAAlg
         ; minsky         = minsky-implements-PA
         ; lambda         = lambda-implements-PA
@@ -840,5 +1153,4 @@ mkPack _ =
         ; lambda≈ethereum = ChoiceSchemesRunEq.lambda≈ethereum patask-choiceSchemes-runEq
         ; ethereum≈oracle = ChoiceSchemesRunEq.ethereum≈oracle patask-choiceSchemes-runEq
         ; oracle≈circuit  = ChoiceSchemesRunEq.oracle≈circuit patask-choiceSchemes-runEq
-        }
-    }
+        })

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -34,9 +34,12 @@ record BoundaryIO {ℓ : Level}
   module HT = Truth.HomotypicalTruth Sig Q W
   open BulkBoundary BB
   field
-    -- Program-level boundary projections (I/O wiring)
-    to∂   : Cosp → ∂Cosp     -- external boundary (bnd)
-    from∂ : ∂Cosp → Cosp     -- inclusion back (ext)
+    -- Program-level boundary projections (I/O wiring).
+    --
+    -- These live at the level of contexts/programs. Do not confuse them with the
+    -- constraint-level `ext`/`bnd` maps from `LaxAdjunction` (aka `Kernel.Holo`).
+    to∂   : Cosp → ∂Cosp
+    from∂ : ∂Cosp → Cosp
 
     -- Boundary satisfaction (I/O semantics) with S/H coherence
     Sat∂   : ∂Cosp → Con_bnd → Set ℓ

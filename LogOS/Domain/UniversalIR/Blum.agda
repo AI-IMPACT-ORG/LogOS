@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -16,7 +16,8 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Maybe using (just; nothing)
 
 open import LogOS.Computation.Core using (Computation)
-open import LogOS.Computation.Blum using (Blum)
+open import LogOS.Computation.Blum using (Blum; TimeLeSound; semiDomain)
+import LogOS.Computation.SemiDecider as SD
 
 open import LogOS.Domain.UniversalIR.Core
 
@@ -144,3 +145,12 @@ BlumU = record
   ; total  = totalU
   ; dec    = decTimeLeU
   }
+
+-- Semidecidability of the unbounded halting domain:
+-- `DomainU u` iff some bounded time witness `TimeLeU n u` holds.
+
+soundTimeLeU : TimeLeSound BlumU
+soundTimeLeU = record { sound = λ n u t → n , t }
+
+semiDomainU : SD.SemiDecider UCode DomainU
+semiDomainU = semiDomain BlumU soundTimeLeU

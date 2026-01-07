@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Complexity.Targets.ProofSearchQuantumPivotGraded where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (¬_)
+open import LogOS.Syntax.Prop as Prop using (NoWitness)
 
 open import Data.Nat using (ℕ)
 open import Data.Product using (Σ; _,_)
@@ -18,6 +18,7 @@ open import LogOS.Domain.Complexity.Poly using (PolyPred)
 import LogOS.Domain.Complexity.Targets.ProofSearchGraded as PS
 import LogOS.Domain.Complexity.ResourceSchemaGraded as QTB
 import LogOS.Domain.Complexity.ObservabilityBudgetGraded as OB
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 -- Route B semantic pivot for proof search (grade-native):
 -- swap the missing premise from merge-count lower bounds to throughput+capacity
@@ -38,10 +39,10 @@ module For {ℓI ℓ ℓQ : Level}
   Thm = L.Thm
 
   ClaimP : ∀ {P} (Sys : L.ProofSystem P) → Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
-  ClaimP Sys = ¬ (Σ (Q.QTimeDecider (Thm Sys)) (λ _ → ⊤ {ℓ = lzero}))
+  ClaimP Sys = Prop.NoWitness (Q.QTimeDecider (Thm Sys))
 
   ClaimPG : ∀ {P} (Sys : L.ProofSystem P) → Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
-  ClaimPG Sys = ¬ (Σ (Q.QTimeDeciderG (Thm Sys)) (λ _ → ⊤ {ℓ = lzero}))
+  ClaimPG Sys = Prop.NoWitness (Q.QTimeDeciderG (Thm Sys))
 
   module Base where
     record Assumptions {P : Input → Set ℓ} (Sys : L.ProofSystem P)
@@ -54,23 +55,18 @@ module For {ℓI ℓ ℓQ : Level}
     Claim : ∀ {P} (Sys : L.ProofSystem P) → Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
     Claim = ClaimP
 
-    record Pack {P : Input → Set ℓ} (Sys : L.ProofSystem P) (A : Assumptions Sys)
-      : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
-      field
-        assumptions : Assumptions Sys
-        claim       : Claim Sys
-
-    mkPack
+    derive
       : ∀ {P} {Sys : L.ProofSystem P}
-        → (A : Assumptions Sys)
-        → Pack Sys A
-    mkPack {Sys = Sys} A =
-      record
-        { assumptions = A
-        ; claim = Q.notPolyTime (Assumptions.TH A)
-                                (Assumptions.CP A)
-                                (Assumptions.hard A)
-        }
+      → Assumptions Sys
+      → Claim Sys
+    derive A =
+      Q.notPolyTime (Assumptions.TH A)
+                    (Assumptions.CP A)
+                    (Assumptions.hard A)
+
+    module QPack {P : Input → Set ℓ} {Sys : L.ProofSystem P} =
+      Quartet.MakeConstPack (Assumptions Sys) (Claim Sys) derive
+    open QPack public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module G where
     record Assumptions {P : Input → Set ℓ} (Sys : L.ProofSystem P)
@@ -83,23 +79,18 @@ module For {ℓI ℓ ℓQ : Level}
     Claim : ∀ {P} (Sys : L.ProofSystem P) → Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
     Claim = ClaimPG
 
-    record Pack {P : Input → Set ℓ} (Sys : L.ProofSystem P) (A : Assumptions Sys)
-      : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
-      field
-        assumptions : Assumptions Sys
-        claim       : Claim Sys
-
-    mkPack
+    derive
       : ∀ {P} {Sys : L.ProofSystem P}
-        → (A : Assumptions Sys)
-        → Pack Sys A
-    mkPack {Sys = Sys} A =
-      record
-        { assumptions = A
-        ; claim = Q.notTimeBoundedG (Assumptions.TH A)
-                                    (Assumptions.CP A)
-                                    (Assumptions.hard A)
-        }
+      → Assumptions Sys
+      → Claim Sys
+    derive A =
+      Q.notTimeBoundedG (Assumptions.TH A)
+                        (Assumptions.CP A)
+                        (Assumptions.hard A)
+
+    module QPack {P : Input → Set ℓ} {Sys : L.ProofSystem P} =
+      Quartet.MakeConstPack (Assumptions Sys) (Claim Sys) derive
+    open QPack public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module LOB where
     record Assumptions {P : Input → Set ℓ} (Sys : L.ProofSystem P)
@@ -111,23 +102,18 @@ module For {ℓI ℓ ℓQ : Level}
     Claim : ∀ {P} (Sys : L.ProofSystem P) → Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
     Claim = ClaimP
 
-    record Pack {P : Input → Set ℓ} (Sys : L.ProofSystem P) (A : Assumptions Sys)
-      : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
-      field
-        assumptions : Assumptions Sys
-        claim       : Claim Sys
-
-    mkPack
+    derive
       : ∀ {P} {Sys : L.ProofSystem P}
-        → (A : Assumptions Sys)
-        → Pack Sys A
-    mkPack {Sys = Sys} A =
-      record
-        { assumptions = A
-        ; claim = Q.notPolyTime (O.toThroughput (Assumptions.lob A))
-                                (O.toCapacity (Assumptions.lob A))
-                                (Assumptions.hard A)
-        }
+      → Assumptions Sys
+      → Claim Sys
+    derive A =
+      Q.notPolyTime (O.toThroughput (Assumptions.lob A))
+                    (O.toCapacity (Assumptions.lob A))
+                    (Assumptions.hard A)
+
+    module QPack {P : Input → Set ℓ} {Sys : L.ProofSystem P} =
+      Quartet.MakeConstPack (Assumptions Sys) (Claim Sys) derive
+    open QPack public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module LOBG where
     record Assumptions {P : Input → Set ℓ} (Sys : L.ProofSystem P)
@@ -139,20 +125,15 @@ module For {ℓI ℓ ℓQ : Level}
     Claim : ∀ {P} (Sys : L.ProofSystem P) → Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
     Claim = ClaimPG
 
-    record Pack {P : Input → Set ℓ} (Sys : L.ProofSystem P) (A : Assumptions Sys)
-      : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
-      field
-        assumptions : Assumptions Sys
-        claim       : Claim Sys
-
-    mkPack
+    derive
       : ∀ {P} {Sys : L.ProofSystem P}
-        → (A : Assumptions Sys)
-        → Pack Sys A
-    mkPack {Sys = Sys} A =
-      record
-        { assumptions = A
-        ; claim = Q.notTimeBoundedG (O.toThroughputG (Assumptions.lob A))
-                                    (O.toCapacityG (Assumptions.lob A))
-                                    (Assumptions.hard A)
-        }
+      → Assumptions Sys
+      → Claim Sys
+    derive A =
+      Q.notTimeBoundedG (O.toThroughputG (Assumptions.lob A))
+                        (O.toCapacityG (Assumptions.lob A))
+                        (Assumptions.hard A)
+
+    module QPack {P : Input → Set ℓ} {Sys : L.ProofSystem P} =
+      Quartet.MakeConstPack (Assumptions Sys) (Claim Sys) derive
+    open QPack public using (Pack; assumptionsOf; claimOf; mkPack)

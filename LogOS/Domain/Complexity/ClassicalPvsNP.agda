@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -15,7 +15,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _,_; proj₁)
 open import Data.NatOrder using (_≤ℕ_; ≤ℕ-refl)
 
-open import LogOS.Adapters.QNat using (QNat)
+open import LogOS.QAdapters.QNat using (QNat)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel.Graded
@@ -25,7 +25,7 @@ import LogOS.Domain.Complexity.PhysicsClassesWGraded as PCW
 import LogOS.Domain.Complexity.PhysicsClassesWCostGuardsGraded as PCWCG
 import LogOS.Domain.Complexity.LanguageWitness as LW
 import LogOS.Domain.Complexity.LanguageWitnessW as LWW
-import LogOS.Domain.Complexity.TruthRoute as TR
+import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TR
 
 -- Classical, literature-aligned P/NP interface:
 -- a language is an input predicate, and P/NP are defined via poly-time deciders
@@ -86,7 +86,7 @@ module FromTruthRoute
   (polyOk : ∀ {p : ℕ → ℕ} → IsPoly p → PolyPred.isPoly Pℕ p)
   where
 
-  module R = TR.For K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  module R = TR.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
   module W = R.WithWitnessSize WSize
 
   module ForLanguage {ℓL : Level} (L : R.Language ℓL) where

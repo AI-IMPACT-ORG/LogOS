@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -14,6 +14,7 @@ open import LogOS.Domain.UniversalIR.Core.Lambda using (LambdaCode; stepLC)
 open import LogOS.Domain.UniversalIR.Core.Minsky using (MinskyCode; stepM)
 open import LogOS.Domain.UniversalIR.Core.QuantumCircuit using (QuantumCircuitCode; stepQC)
 open import LogOS.Domain.UniversalIR.Core.QuantumOracle using (QuantumCode; stepQ)
+open import LogOS.Computation.EvolutionOperator public using (EvolOperator)
 
 -- Unified IR carrier ---------------------------------------------------------
 
@@ -34,3 +35,13 @@ stepU (UQC q) = UQC (stepQC q)
 simulate : ℕ → UCode → UCode
 simulate zero    u = u
 simulate (suc n) u = simulate n (stepU u)
+
+-- Canonical evolution-operator instance for the unified IR.
+
+EO-UCode : EvolOperator UCode stepU
+EO-UCode = record
+  { H = UCode
+  ; embed = λ c → c
+  ; Op = stepU
+  ; intertwine = λ _ → refl
+  }

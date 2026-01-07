@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -13,25 +13,44 @@ open import Data.Product using (Σ; _,_; proj₁; proj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Minimal.Con using (ConPoset)
 open import LogOS.Kernel
 
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
 
 -- A minimal preorder and cofinal-map notion (used to state “schedule independence”).
 
+-- Compatibility wrapper: a “preorder on A” is just a `ConPoset` whose carrier is `A`.
+--
+-- This keeps older call sites readable (they can write `Preorder A`), while the
+-- underlying structure is still the shared `ConPoset`.
 record Preorder {ℓ : Level} (A : Set ℓ) : Set (lsuc ℓ) where
-  infix 4 _≤_
   field
-    _≤_   : A → A → Set ℓ
-    ≤-refl  : ∀ {a}     → _≤_ a a
-    ≤-trans : ∀ {a b c} → _≤_ a b → _≤_ b c → _≤_ a c
+    CP : ConPoset ℓ
+    Con≡ : ConPoset.Con CP ≡ A
+
+  open ConPoset CP public
+
+  private
+    toCon : A → ConPoset.Con CP
+    toCon = subst (λ X → X) (sym Con≡)
+
+  infix 4 _≤_
+  _≤_ : A → A → Set ℓ
+  a ≤ b = ConPoset._⊑_ CP (toCon a) (toCon b)
+
+  ≤-refl : ∀ {a} → a ≤ a
+  ≤-refl {a} = ConPoset.refl CP {c = toCon a}
+
+  ≤-trans : ∀ {a b c} → a ≤ b → b ≤ c → a ≤ c
+  ≤-trans ab bc = ConPoset.trans CP ab bc
 
 record Cofinal {ℓA : Level}
                {A : Set ℓA} {B : Set ℓA}
                (PA : Preorder A)
                (u  : B → A)
                : Set (lsuc ℓA) where
-  open Preorder PA using (_≤_)
+  open Preorder PA
   field
     hit : ∀ a → Σ B (λ b → _≤_ a (u b))
 
@@ -47,7 +66,8 @@ LimitTruth Truthᵢ x = ∀ i → Truthᵢ i x
 
 LimitTruth-cofinal
   : ∀ {ℓT ℓA ℓX}
-    {A : Set ℓA} {B : Set ℓA} {X : Set ℓX}
+    {B : Set ℓA} {X : Set ℓX}
+    {A : Set ℓA}
     (PA : Preorder A)
     (u  : B → A)
     (cof : Cofinal PA u)

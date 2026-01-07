@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -41,17 +41,7 @@ eventHorizon
   → TruthDiagonal K (SSO.SpectralSeparationOutput.HasSeparation SS)
   → Σ (Kernel.Code K) (λ γ → SSO.SpectralSeparationOutput.NoSeparation SS γ)
 eventHorizon SS TD =
-  (γ , SSO.SpectralSeparationOutput.¬HasSeparation→NoSeparation SS nh)
-  where
-    open _↔_
-    open TruthDiagonal TD
-
-    liar = liarForDecider (λ _ → ⊤) (λ _ → inj₁ tt)
-    γ    = proj₁ liar
-    eqv  = proj₂ liar
-
-    nh : ¬ SSO.SpectralSeparationOutput.HasSeparation SS γ
-    nh h = to eqv h tt
+  SSO.separation-output-diagonal-witness SS TD
 
 noTotalOracle
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -59,13 +49,8 @@ noTotalOracle
     (SS : SSO.SpectralSeparationOutput K)
   → TruthDiagonal K (SSO.SpectralSeparationOutput.HasSeparation SS)
   → ¬ (∀ γ → SSO.SpectralSeparationOutput.HasSeparation SS γ)
-noTotalOracle SS TD all =
-  let open _↔_ in
-  let open TruthDiagonal TD in
-  let liar = liarForDecider (λ _ → ⊤) (λ _ → inj₁ tt) in
-  let γ    = proj₁ liar in
-  let eqv  = proj₂ liar in
-  to eqv (all γ) tt
+noTotalOracle SS TD =
+  SSO.separation-output-not-total SS TD
 
 noSelfCertifiedTotality
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -76,7 +61,7 @@ noSelfCertifiedTotality
   → SSO.SeparationTotalityClaim.Totality TC
   → ⊥
 noSelfCertifiedTotality SS TC TD t =
-  noTotalOracle SS TD (SSO.SeparationTotalityClaim.reflect TC t)
+  SSO.separation-output-no-self-certification SS TD TC t
 
 -- Deciders are a special case of "omniscient observers": if liars exist for a
 -- truth-like predicate, then there is no total decider for it.

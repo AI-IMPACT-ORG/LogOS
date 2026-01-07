@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -83,3 +83,38 @@ least-prefixed-point-K = park-induction-K
                    (GradedClosure.Th* (GradedKernel.GTruth K)))
                  (GradedClosure.Th* (GradedKernel.GTruth K))
 μ-unfold-right Sig Q K = snd (GradedClosure.Th*-fixed (GradedKernel.GTruth K))
+
+-- ============================================================================
+-- Generic Kleene μ on a boundary ωCPO (independent of `Th*`)
+-- ============================================================================
+
+module Kleene
+  {ℓ}
+  (Sig : LogOSSignature ℓ)
+  (Q   : QAdapter ℓ)
+  (K   : GradedKernel Sig Q)
+  (ωCPO : (let module GT = Truth.GuardedCore in GT.OmegaCPO)
+            (BulkBoundary.bnd (GradedKernel.BB K)))
+  where
+
+  private
+    module GT = Truth.GuardedCore
+    CP = BulkBoundary.bnd (GradedKernel.BB K)
+
+  open ConPoset CP public
+  open GT.OmegaCPO ωCPO public
+
+  module μ = GT.Kleene ωCPO
+
+  -- Re-export the core definitions and theorems specialised to the graded-kernel boundary.
+  iter = μ.iter
+  μF   = μ.μ
+
+  μF-unfold-left = μ.μ-unfold-left
+  μF-induction   = μ.μ-induction
+
+  ScottContinuous = μ.ScottContinuous
+  μF-unfold-right = μ.μ-unfold-right
+
+  iter-mono-chain-infl = μ.iter-mono-chain-infl
+  μF-unfold-right-infl = μ.μ-unfold-right-infl

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -61,6 +61,32 @@ KernelCat-instance Sig Q = record
                            (sym (map-decode g (mapCode h₂ γ))))
   ; congR = λ {A} {B} {C} {h₁} {h₂} g e γ → e (KernelHom.mapCode g γ)
   }
+
+-- Laws for the concrete kernel category instance.
+--
+-- These are definitional for `KernelCat-instance` (composition/identity are
+-- implemented by record-level function composition on `mapCode`), but packaging
+-- them here avoids repeating ad-hoc “composeKernelHom/idKernelHom” lemmas in
+-- downstream category-theoretic developments.
+
+module Laws {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ) where
+  private
+    C : KernelCat Sig Q
+    C = KernelCat-instance Sig Q
+
+  open KernelCat C
+
+  idL : ∀ {A B : Kernel Sig Q} (f : Hom A B) → eqHom (id ∘ f) f
+  idL f γ = refl
+
+  idR : ∀ {A B : Kernel Sig Q} (f : Hom A B) → eqHom (f ∘ id) f
+  idR f γ = refl
+
+  assoc
+    : ∀ {A B C D : Kernel Sig Q}
+      (h : Hom C D) (g : Hom B C) (f : Hom A B)
+    → eqHom ((h ∘ g) ∘ f) (h ∘ (g ∘ f))
+  assoc h g f γ = refl
 
 -- Initiality up to decode equality packaged as a theorem from InitialKernel
 

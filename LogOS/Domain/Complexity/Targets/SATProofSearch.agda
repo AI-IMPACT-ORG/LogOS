@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Complexity.Targets.SATProofSearch where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (_↔_)
+open import LogOS.Syntax.Prop using (_↔_; ↔-refl)
 
 import LogOS.Domain.Complexity.ProofSystem as PS
 import LogOS.Domain.Complexity.Targets.SAT as SAT
@@ -28,4 +28,4 @@ SATProofSearch : SAT.CNF → Set
 SATProofSearch = PS.Prov SATProofSystem
 
 sat↔proofSearch : ∀ φ → SAT.SAT φ ↔ SATProofSearch φ
-sat↔proofSearch _ = record { to = λ pr → pr ; from = λ pr → pr }
+sat↔proofSearch _ = ↔-refl

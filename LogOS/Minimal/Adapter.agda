@@ -1,13 +1,13 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
 {-# OPTIONS --safe #-}
 module LogOS.Minimal.Adapter where
 
-open import Level using (Level; lsuc)
+open import Host.Level using (Level; lsuc)
 open import LogOS.Prelude using (_≡_; refl; ⊤; tt; ttℓ)
 
 -- Quantale + Time adapter as a single parameter.
@@ -57,7 +57,7 @@ record QAdapter (ℓ : Level) : Set (lsuc ℓ) where
     ≤p-refl : ∀ {a} → _≤p_ a a
     ≤p-trans : ∀ {a b c} → _≤p_ a b → _≤p_ b c → _≤p_ a c
 
-    -- Time monoid and embedding into Scale
+    -- Time monoid and a homomorphism into Scale
     Time    : Set ℓ
     _+_     : Time → Time → Time
     zero    : Time

@@ -1,18 +1,18 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-# LogOS (Agda) — a Logic Operating System
+# LogOS: an Agda research library for foundational logic system architecture.
 
-LogOS is an Agda library for foundational logic architecture that treats foundational logic as modern software. 
+LogOS is an Agda library for foundational logic architecture that treats the engineering of quite general logic systems as an application of modern software engineering methods.
 
-The library is especially useful using code assistants like Claude Code, Codex, Cursor or similar. An accompanying paper will appear soon on the arxiv.
+The library is especially useful using code assistants like Claude Code, Codex, Cursor or similar. 
 
-It features small, host‑minimal kernel interface for a 3‑tier logic (S/H/G) with a reflective code surface, plus curated application packs (ZFC, complexity, universality/IR, opacity/GRH).
+It features a small, host‑minimal kernel interface for a 3‑tier logic (S/H/G) with a reflective code surface, plus curated application packs (ZFC, complexity, universality/IR, opacity, agents). The same kernel supports multiple semantic views (multi‑institution, HoTT‑3‑level, categorical, observer semantics) without changing the core.
 
-The main documentation can be found in the /docs folder. Uploading especially Definition_spec.lagda.md to any state-of-the-art reasoning chatbot instantiates a conversational interface to the library by using the chatbot as stochastic interpreter. Ensure memory features are switched off to avoid polluting memory. 
+The main documentation lives in `/docs`. Uploading `docs/Definition_Spec.lagda.md` to a reasoning chatbot instantiates a conversational interface to start exploring the library. This uses the chatbot as an effective stochastic interpreter. Ensure memory features of the chatbot are switched off to avoid polluting cross-conversation chatbot memory. For bonus points: ask the chatbot to use the library to explain why this works based on density of information.
 
 
 ## Quickstart
@@ -45,10 +45,20 @@ open import LogOS.API.Minimal
 Start here (literate Agda):
 - Architecture + entrypoints: `docs/Definition.lagda.md`
 - Research-grade spec: `docs/Definition_Spec.lagda.md`
+
+Kernel views (polymorphicity): 
+- Multi-Institution: `docs/View_MultiInstitution.lagda.md`
+- Three level Homotopy Type Theory: `docs/View_HoTT_3Level.lagda.md`
+- 2-Category view: `docs/View_CategoricalLogic.lagda.md` 
+- Observer semantics: `docs/View_ObserverSemantics.lagda.md`
+
+Applications:
 - ZFC story: `docs/Application_ZFC.lagda.md`, `docs/DeepDive/ZFC_Demo.lagda.md`
-- Complexity story: `docs/DeepDive/Complexity.lagda.md`, `docs/Application_PvsNP.lagda.md`
-- Universality story: `docs/Application_Universality.lagda.md`
-- Opacity/GRH story: `docs/Application_Opacity.lagda.md`
+- Complexity story: `docs/DeepDive/Complexity.lagda.md`, `docs/Application_Complexity.lagda.md`
+- Universality story: `docs/Application_Universality.lagda.md`, `docs/Library.lagda.md`
+- Opacity story: `docs/Application_Opacity.lagda.md`
+- Agents story: `docs/Application_Agents.lagda.md`
+- Conditional applications: see the relevant application notes under `docs/`
 
 HTML docs (Agda HTML backend):
 - Build locally: `make html` → `_build/html/index.html`
@@ -57,11 +67,15 @@ HTML docs (Agda HTML backend):
 
 Recommended import surfaces:
 - Minimal API: `LogOS/API/Minimal.agda`
+- Architecture map (ports/adapters spine): `LogOS/API/Architecture.agda`
+- QAdapter instances: `LogOS/QAdapters/All.agda`
 - Core theorem surface: `LogOS/Theorems/Core.agda`
 - ZFC: `LogOS/Packs/ZFC/All.agda` (WFGraph quartets: `LogOS/Packs/ZFC/WFGraph.agda`)
-- Universality/IR: `LogOS/Models/Universality/Core.agda`, `LogOS/Models/UniversalIR/Core.agda` (bundle: `LogOS/Packs/Universality/All.agda`)
-- Complexity: `LogOS/Models/Complexity/Core.agda`
-- Opacity: `LogOS/Models/Opacity/Core.agda` (GRH application surface: `LogOS/Models/Opacity/Applications/GRH.agda`)
+- UniversalIR: `LogOS/Packs/UniversalIR/Core.agda` (bundle: `LogOS/Packs/Universality/All.agda`)
+- Universality (toy core): `LogOS/Packs/Universality/Core.agda`
+- Complexity: `LogOS/Packs/Complexity/Core.agda`
+- Opacity: `LogOS/Packs/Opacity/Core.agda`
+- Agents: `LogOS/Packs/Agents/All.agda` (meta-language: `LogOS/Packs/Agents/MetaLanguage.agda`)
 
 ## Trust Boundary
 
@@ -70,7 +84,7 @@ Recommended import surfaces:
 
 Host surface (portability):
 - Direct imports from `Agda.Primitive` / `Agda.Builtin.*` are intentionally restricted to a small allowlist:
-  - `Level.agda`
+  - `Host/Level.agda`
   - `Data/Nat.agda`
   - `Data/Bool.agda`
   - `Data/List.agda`

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -24,6 +24,8 @@ import LogOS.Domain.Complexity.ProofSearchBoundary as PBₜ
 import LogOS.Theorems.Meta.SpectralSeparationOutput as SSOₜ
 import LogOS.Theorems.Meta.BudgetedSeparationOutput as BSOₜ
 open import LogOS.Theorems.Meta.Assumptions.Diagonal using (TruthDiagonalC)
+import LogOS.Theorems.Meta.QuartetCore as Quartet
+open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn)
 
 -- Re-export the opacity/GRH core machinery for the PvsNP spine.
 module SpectralSeparationOutput = SSOₜ
@@ -52,7 +54,7 @@ module For {ℓ ℓP : Level}
   ProofCost = WitnessCost ProofIndex
 
   BudgetExt : (Code → ℕ) → Set ℓ
-  BudgetExt Bnd = ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → Bnd γ₁ ≡ Bnd γ₂
+  BudgetExt = DecodeExtensionalFn K
 
   record BudgetBy : Set (lsuc ℓ) where
     field
@@ -63,19 +65,14 @@ module For {ℓ ℓP : Level}
   -- Extensionality is decode-level (matches the GRH/opacity convention).
   record ProofSearchOracle (PS : PB.ProofSystem) : Set (lsuc (lsuc (ℓ ⊔ ℓP))) where
     field
-      infer   : Code → ProofIndex ⊎ ⊤ {ℓ = lzero}
-      ext     : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → infer γ₁ ≡ infer γ₂
-      sound   : ∀ γ n → infer γ ≡ inj₁ n → PB.ProofSystem.Check PS (Lift.lower n) γ
+      oracle : SSOₜ.Oracle K ProofIndex
+      sound  : ∀ γ n →
+        SSOₜ.Oracle.infer oracle γ ≡ inj₁ n → PB.ProofSystem.Check PS (Lift.lower n) γ
+
+    open SSOₜ.Oracle oracle public using (infer; ext)
 
   toSSO : ∀ {PS} → ProofSearchOracle PS → SSOₜ.SpectralSeparationOutput K
-  toSSO O =
-    record
-      { core = record
-          { Witness = ProofIndex
-          ; infer   = ProofSearchOracle.infer O
-          ; ext     = ProofSearchOracle.ext O
-          }
-      }
+  toSSO O = SSOₜ.Oracle.toSSO (ProofSearchOracle.oracle O)
 
   -- Soundness: if the oracle returns a proof code, Prov∞ holds.
   oracle-sound
@@ -85,12 +82,12 @@ module For {ℓ ℓP : Level}
   oracle-sound O γ (n , eq) = Lift.lower n , ProofSearchOracle.sound O γ n eq
 
   module Budgeted {PS} (O : ProofSearchOracle PS) (C : ProofCost) where
-    module B = BSOₜ.For (toSSO O) C
+    module OG = BSOₜ.GeneralB (toSSO O)
     infix 4 _≤B_
     _≤B_ : ProofIndex → ProofIndex → Set ℓ
     _≤B_ x y = Lift ℓ (Lift.lower x ≤ℕ Lift.lower y)
 
-    module G = B.General ProofIndex _≤B_
+    module G = OG.General ProofIndex _≤B_
       (record { costB = λ w → lift (WitnessCost.cost C w) })
 
     WithinBudget : (Code → ℕ) → Code → Set ℓ
@@ -132,7 +129,7 @@ module For {ℓ ℓP : Level}
                     (_≤B_ : Budget → Budget → Set ℓ)
                     (costB : ProofIndex → Budget)
                     where
-      module GB = B.General Budget _≤B_ (record { costB = costB })
+      module GB = OG.General Budget _≤B_ (record { costB = costB })
 
       WithinBudgetB : (Code → Budget) → Code → Set ℓ
       WithinBudgetB = GB.WithinBudget
@@ -240,45 +237,42 @@ module For {ℓ ℓP : Level}
       diagonal : TruthDiagonalC Code (WithinBudgetBy oracle cost budget)
       vacuity  : VacuityGuards PS oracle cost budget
 
-  record Claim
-    (PS : PB.ProofSystem)
-    (O  : ProofSearchOracle PS)
-    (C  : ProofCost)
-    (Bnd : BudgetBy)
-    : Set (lsuc (lsuc (ℓ ⊔ ℓP))) where
+  record Claim (PS : PB.ProofSystem) (A : Assumptions PS) : Set (lsuc (lsuc (ℓ ⊔ ℓP))) where
+    open Assumptions A
     field
-      no-total : ¬ (∀ γ → WithinBudgetBy O C Bnd γ)
-      witness  : Σ Code (λ γ → ¬ WithinBudgetBy O C Bnd γ)
+      no-total : ¬ (∀ γ → WithinBudgetBy oracle cost budget γ)
+      witness  : Σ Code (λ γ → ¬ WithinBudgetBy oracle cost budget γ)
+      nontrivial : NonTrivialWithinBudget oracle cost budget
 
-  record Pack (PS : PB.ProofSystem) (A : Assumptions PS)
-    : Set (lsuc (lsuc (ℓ ⊔ ℓP))) where
-    field
-      assumptions : Assumptions PS
-      claim       : Claim PS (Assumptions.oracle A) (Assumptions.cost A) (Assumptions.budget A)
-      nontrivial  : NonTrivialWithinBudget (Assumptions.oracle A) (Assumptions.cost A) (Assumptions.budget A)
+  module Q {PS : PB.ProofSystem} = Quartet.Make (Assumptions PS) (Claim PS)
+  open Q public using (Pack; assumptionsOf; claimOf)
 
-  mkPack : ∀ {PS} → (A : Assumptions PS) → Pack PS A
-  mkPack {PS} A =
-    let noTotal =
-          no-total-within-budgetBy
-            (Assumptions.oracle A)
-            (Assumptions.cost A)
-            (Assumptions.budget A)
-            (Assumptions.diagonal A)
-        witness =
-          diagonal-witness-within-budgetBy
-            (Assumptions.oracle A)
-            (Assumptions.cost A)
-            (Assumptions.budget A)
-            (Assumptions.diagonal A)
-        claim =
-          record
-            { no-total = noTotal
-            ; witness  = witness
-            }
-    in
-    record
-      { assumptions = A
-      ; claim       = claim
-      ; nontrivial  = VacuityGuards.someWithin (Assumptions.vacuity A) , witness
-      }
+  mkPack : ∀ {PS} → (A : Assumptions PS) → Pack {PS}
+  mkPack A =
+    Q.mkPack
+      (λ A →
+        let
+          noTotal =
+            no-total-within-budgetBy
+              (Assumptions.oracle A)
+              (Assumptions.cost A)
+              (Assumptions.budget A)
+              (Assumptions.diagonal A)
+          witness =
+            diagonal-witness-within-budgetBy
+              (Assumptions.oracle A)
+              (Assumptions.cost A)
+              (Assumptions.budget A)
+              (Assumptions.diagonal A)
+          nontriv : NonTrivialWithinBudget
+                      (Assumptions.oracle A)
+                      (Assumptions.cost A)
+                      (Assumptions.budget A)
+          nontriv = VacuityGuards.someWithin (Assumptions.vacuity A) , witness
+        in
+        record
+          { no-total  = noTotal
+          ; witness   = witness
+          ; nontrivial = nontriv
+          })
+      A

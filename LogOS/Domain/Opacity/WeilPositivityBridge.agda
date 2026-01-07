@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -11,6 +11,7 @@ open import LogOS.Prelude
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 -- Weil criterion route (schematic, explicit-formula positivity):
 -- A “Weil functional” W on a space of test objects is assumed positive
@@ -109,9 +110,8 @@ module QuartetObservable {ℓT ℓW ℓObs : Level} (RS : RiemannSpectral) where
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  record Pack (A : Assumptions) : Set (lsuc (ℓT ⊔ ℓW ⊔ ℓObs)) where
-    field
-      claim : Claim A
+  module Q = Quartet.Make Assumptions Claim
+  open Q public using (Pack; assumptionsOf; claimOf)
 
-  mkPack : (A : Assumptions) → Pack A
-  mkPack A = record { claim = GRH_Without_Vacuity_Guards_from_WeilPositivityObservable RS A }
+  mkPack : (A : Assumptions) → Pack
+  mkPack = Q.mkPack (GRH_Without_Vacuity_Guards_from_WeilPositivityObservable RS)

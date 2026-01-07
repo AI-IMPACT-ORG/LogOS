@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -10,13 +10,17 @@ module LogOS.Theorems.Projective where
 open import LogOS.Prelude
 
 open import LogOS.Minimal.Con
-open import LogOS.Minimal.Adjunction
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.World
 
 -- Generic (lax) projector on a constraint poset.
+--
+-- This module provides the tier-specific *instances* of the shared projector
+-- shape, and reexports the core definitions for backwards compatibility.
+
+open import LogOS.Theorems.Reflection.Projector public
 
 -- Regularization view (module header note):
 -- A Projector (nucleus) is a renormalization step on boundary truth: it is a
@@ -24,45 +28,6 @@ open import LogOS.Minimal.World
 -- stabilized truths. Instances arise from Flow (G-tier) and invariance
 -- (H-tier), offering an operator-free fixed-point semantics complementary to
 -- the HPFlow intertwining.
-
-record Projector {ℓ : Level} (CP : ConPoset ℓ) : Set (lsuc ℓ) where
-  open ConPoset CP
-  field
-    P        : Con → Con
-    infl     : ∀ c → _⊑_ c (P c)
-    idemp-lax : ∀ c → _⊑_ (P (P c)) (P c)
-
--- Fixed points of a projector as a poset (inherit order from CP).
-
-record Fixed {ℓ} {CP : ConPoset ℓ} (Pr : Projector CP) : Set (lsuc ℓ) where
-  infix 4 _⊑ᶠ_
-  open ConPoset CP
-  open Projector Pr
-  field
-    Conᶠ : Set ℓ
-    _⊑ᶠ_ : Conᶠ → Conᶠ → Set ℓ
-    reflᶠ : ∀ {x} → _⊑ᶠ_ x x
-    transᶠ : ∀ {x y z} → _⊑ᶠ_ x y → _⊑ᶠ_ y z → _⊑ᶠ_ x z
-    toCon : Conᶠ → Con
-    fixedL : ∀ (x : Conᶠ) → _⊑_ (P (toCon x)) (toCon x)
-    fixedR : ∀ (x : Conᶠ) → _⊑_ (toCon x) (P (toCon x))
-
--- Build the fixed-point poset by packaging both inequalities as the witness
-
-fixedPoints
-  : ∀ {ℓ} {CP : ConPoset ℓ} (Pr : Projector CP)
-  → Fixed Pr
-fixedPoints {CP = CP} Pr = record
-  { Conᶠ  = Σ (ConPoset.Con CP)
-               (λ c → ConPoset._⊑_ CP (Projector.P Pr c) c
-                      × ConPoset._⊑_ CP c (Projector.P Pr c))
-  ; _⊑ᶠ_   = λ x y → ConPoset._⊑_ CP (proj₁ x) (proj₁ y)
-  ; reflᶠ  = ConPoset.refl CP
-  ; transᶠ = ConPoset.trans CP
-  ; toCon  = proj₁
-  ; fixedL = λ x → fst (proj₂ x)
-  ; fixedR = λ x → snd (proj₂ x)
-  }
 
 -- Instances
 
@@ -102,3 +67,21 @@ module ForH {ℓ}
     ; infl = Invariance.infl Inv
     ; idemp-lax = Invariance.idemp-lax Inv
     }
+
+-- From a graded guarded closure by taking the saturation grade.
+
+module ForGraded {ℓ} {Q : QAdapter ℓ} where
+  module GT = Truth.GuardedCore
+
+  fromGradedSat
+    : ∀ {CP : ConPoset ℓ}
+      (GC : GT.GradedClosure Q CP)
+    → Projector CP
+  fromGradedSat {CP = CP} GC =
+    let open ConPoset CP
+        open GT.GradedClosure GC
+    in record
+         { P = Flow sat
+         ; infl = infl-sat
+         ; idemp-lax = idemp-sat
+         }

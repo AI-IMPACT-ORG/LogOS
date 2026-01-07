@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -32,6 +32,35 @@ open import LogOS.Kernel.Initial
 open import LogOS.Syntax.Eq using (module ForKernel)
 open import LogOS.Syntax.Prop as Prop
 open import LogOS.Algebra.ConAlg using (ConAlgHom≡)
+import LogOS.Theorems.CategoryTheory.KernelCat as KC
+
+Hom
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  → Kernel Sig Q → Kernel Sig Q → Set (lsuc (lsuc ℓ))
+Hom {Sig = Sig} {Q = Q} =
+  KC.KernelCat.Hom (KC.KernelCat-instance Sig Q)
+
+EqHom
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K₁ K₂ : Kernel Sig Q}
+  → Hom K₁ K₂ → Hom K₁ K₂ → Set ℓ
+EqHom {Sig = Sig} {Q = Q} =
+  KC.KernelCat.eqHom (KC.KernelCat-instance Sig Q)
+
+infixr 9 _∘_
+_∘_
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K₁ K₂ K₃ : Kernel Sig Q}
+  → Hom K₂ K₃ → Hom K₁ K₂ → Hom K₁ K₃
+_∘_ {Sig = Sig} {Q = Q} =
+  KC.KernelCat._∘_ (KC.KernelCat-instance Sig Q)
+
+id
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+  → Hom K K
+id {Sig = Sig} {Q = Q} {K = K} =
+  KC.KernelCat.id (KC.KernelCat-instance Sig Q) {A = K}
 
 -- ============================================================================
 -- STEP 1: Decode-Level Equality for Morphisms (LogOS-Native)
@@ -46,9 +75,8 @@ morphism-uniqueness-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (IK : InitialKernel Sig Q)
     (K : Kernel Sig Q)
-    (h : KernelHom (InitialKernel.FreeK IK) K)
-  → (∀ γ → Kernel.decode K (KernelHom.mapCode (InitialKernel.foldK IK K) γ)
-            ≡ Kernel.decode K (KernelHom.mapCode h γ))
+    (h : Hom (InitialKernel.FreeK IK) K)
+  → EqHom (InitialKernel.foldK IK K) h
 morphism-uniqueness-decode IK K h =
   let _ , _ , eq = InitialKernel.unique≃ IK K h in eq
 
@@ -66,22 +94,21 @@ record DecodePreservingProperty {ℓ : Level} {ℓP : Level}
   field
     -- Properties can be transported along morphisms (contravariant)
     transport : ∀ {K₁ K₂ : Kernel Sig Q} 
-               → KernelHom K₁ K₂ → P K₂ → P K₁
+               → Hom K₁ K₂ → P K₂ → P K₁
     
     -- Transport respects identity
     transport-id : ∀ {K : Kernel Sig Q} (p : P K)
-                  → transport (idKernelHom K) p ≡ p
+                  → transport id p ≡ p
     
     -- Transport respects composition
     transport-comp : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
-                    (f : KernelHom K₁ K₂) (g : KernelHom K₂ K₃) (p : P K₃)
-                    → transport (composeKernelHom f g) p ≡ transport f (transport g p)
+                    (f : Hom K₁ K₂) (g : Hom K₂ K₃) (p : P K₃)
+                    → transport (g ∘ f) p ≡ transport f (transport g p)
     
     -- Transport respects decode-level equality of morphisms
     transport-decode : ∀ {K₁ K₂ : Kernel Sig Q}
-                      {h k : KernelHom K₁ K₂}
-                      (eq : ∀ γ → Kernel.decode K₂ (KernelHom.mapCode h γ)
-                                ≡ Kernel.decode K₂ (KernelHom.mapCode k γ))
+                      {h k : Hom K₁ K₂}
+                      (eq : EqHom h k)
                       (p : P K₂)
                       → transport h p ≡ transport k p
 
@@ -98,9 +125,8 @@ yoneda-morphism-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (IK : InitialKernel Sig Q)
     (K : Kernel Sig Q)
-    (h : KernelHom (InitialKernel.FreeK IK) K)
-  → (∀ γ → Kernel.decode K (KernelHom.mapCode (InitialKernel.foldK IK K) γ)
-            ≡ Kernel.decode K (KernelHom.mapCode h γ))
+    (h : Hom (InitialKernel.FreeK IK) K)
+  → EqHom (InitialKernel.foldK IK K) h
 yoneda-morphism-decode IK K h = morphism-uniqueness-decode IK K h
 
 -- ============================================================================
@@ -128,7 +154,7 @@ property-transport-unique
     (K : Kernel Sig Q)
     (P : Kernel Sig Q → Set ℓP)
     (DPP : DecodePreservingProperty P)
-    (h : KernelHom (InitialKernel.FreeK IK) K)
+    (h : Hom (InitialKernel.FreeK IK) K)
     (pK : P K)
   → transport DPP (InitialKernel.foldK IK K) pK ≡ transport DPP h pK
 property-transport-unique IK K P DPP h pK =
@@ -158,7 +184,7 @@ open CodeProperty public
 code-property-transport
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     {K₁ K₂ : Kernel Sig Q}
-    (h : KernelHom K₁ K₂)
+    (h : Hom K₁ K₂)
     (P₂ : Kernel.Code K₂ → Set ℓ)
     (CP₂ : CodeProperty K₂ P₂)
   → (Kernel.Code K₁ → Set ℓ)
@@ -169,7 +195,7 @@ code-property-transport {K₁ = K₁} {K₂ = K₂} h P₂ CP₂ γ₁ =
 code-property-transport-respects-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     {K₁ K₂ : Kernel Sig Q}
-    (h : KernelHom K₁ K₂)
+    (h : Hom K₁ K₂)
     (P₂ : Kernel.Code K₂ → Set ℓ)
     (CP₂ : CodeProperty K₂ P₂)
     {γ₁ γ₂ : Kernel.Code K₁}
@@ -307,7 +333,7 @@ decode-fixedpoint-connection K = Kernel.decode-γ* K
 -- ============================================================================
 -- STEP 8: Representability (Using Decode-Level Equality)
 -- ============================================================================
--- The representable case: KernelHom(FreeK, K) is determined by foldK
+-- The representable case: Hom(FreeK, K) is determined by foldK
 -- up to decode-level equality.
 
 -- Bijection up to decode-level equality
@@ -315,10 +341,10 @@ yoneda-representable-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (IK : InitialKernel Sig Q)
     (K : Kernel Sig Q)
-  → Prop._↔_ (KernelHom (InitialKernel.FreeK IK) K)
-             (KernelHom (InitialKernel.FreeK IK) (InitialKernel.FreeK IK))
+  → Prop._↔_ (Hom (InitialKernel.FreeK IK) K)
+             (Hom (InitialKernel.FreeK IK) (InitialKernel.FreeK IK))
 yoneda-representable-decode IK K = record
-  { to = λ h → idKernelHom (InitialKernel.FreeK IK)
+  { to = λ h → id
   ; from = λ idFree → InitialKernel.foldK IK K
   }
 
@@ -328,16 +354,13 @@ yoneda-representable-roundtrip
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (IK : InitialKernel Sig Q)
     (K : Kernel Sig Q)
-    (h : KernelHom (InitialKernel.FreeK IK) K)
-  → (∀ γ → Kernel.decode K 
-              (KernelHom.mapCode (Prop.from (yoneda-representable-decode IK K) 
-                                            (Prop.to (yoneda-representable-decode IK K) h)) γ)
-            ≡ Kernel.decode K (KernelHom.mapCode h γ))
-yoneda-representable-roundtrip IK K h γ =
-  -- from (to h) = from id = foldK
-  -- We need: decode (foldK γ) ≡ decode (h γ)
-  -- This is exactly yoneda-morphism-decode!
-  yoneda-morphism-decode IK K h γ
+    (h : Hom (InitialKernel.FreeK IK) K)
+  → EqHom (Prop.from (yoneda-representable-decode IK K)
+                     (Prop.to (yoneda-representable-decode IK K) h))
+          h
+yoneda-representable-roundtrip IK K h =
+  -- from (to h) = from id = foldK, so this reduces to yoneda-morphism-decode
+  yoneda-morphism-decode IK K h
 
 -- ============================================================================
 -- STEP 9: Generalization to Arbitrary Objects (Full Yoneda)
@@ -357,22 +380,21 @@ record NaturalTransformation {ℓ ℓP}
                              : Set (lsuc (lsuc ℓ) ⊔ lsuc ℓP) where
   field
     -- Component at each kernel K'
-    component : ∀ (K' : Kernel Sig Q) → KernelHom K' K → P K'
+    component : ∀ (K' : Kernel Sig Q) → Hom K' K → P K'
     
     -- Naturality: for any morphism f : K' → K'', the square commutes
     -- transport f (component K'' h) = component K' (h ∘ f)
     -- Note: This is contravariant naturality (presheaf-like)
-    -- The composition is: composeKernelHom f h : K' → K
+    -- The composition is: h ∘ f : K' → K
     naturality : ∀ {K' K'' : Kernel Sig Q}
-                 (f : KernelHom K' K'')
-                 (h : KernelHom K'' K)
-                 → transport DPP f (component K'' h) ≡ component K' (composeKernelHom f h)
+                 (f : Hom K' K'')
+                 (h : Hom K'' K)
+                 → transport DPP f (component K'' h) ≡ component K' (h ∘ f)
     
     -- Components respect decode-level equality of morphisms
     component-decode : ∀ (K' : Kernel Sig Q)
-                     {h k : KernelHom K' K}
-                     (eq : ∀ γ → Kernel.decode K (KernelHom.mapCode h γ)
-                               ≡ Kernel.decode K (KernelHom.mapCode k γ))
+                     {h k : Hom K' K}
+                     (eq : EqHom h k)
                      → component K' h ≡ component K' k
 
 open NaturalTransformation public
@@ -408,41 +430,7 @@ yoneda-generalized-from
     (DPP : DecodePreservingProperty P)
     (α : NaturalTransformation K P DPP)
   → P K
-yoneda-generalized-from K P DPP α = component α K (idKernelHom K)
-
--- ============================================================================
--- STEP 10: Identity Laws for Kernel Category (LogOS-Native)
--- ============================================================================
--- The identity laws are needed to complete the Yoneda round-trip proof.
--- They show that identity preserves codes and decode-level behavior.
-
--- Right identity: h ∘ id = h (up to decode)
-composeKernelHom-right-id
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {K₁ K₂ : Kernel Sig Q}
-    (h : KernelHom K₁ K₂)
-  → (∀ γ → Kernel.decode K₂ (KernelHom.mapCode (composeKernelHom h (idKernelHom K₂)) γ)
-            ≡ Kernel.decode K₂ (KernelHom.mapCode h γ))
-composeKernelHom-right-id {K₁ = K₁} {K₂ = K₂} h γ =
-  -- composeKernelHom h id has mapCode = λ γ → mapCode id (mapCode h γ)
-  -- Since idKernelHom K₂ has mapCode = λ γ → γ, we get:
-  --   mapCode (composeKernelHom h id) γ = mapCode id (mapCode h γ) = mapCode h γ
-  -- So: decode (mapCode (composeKernelHom h id) γ) = decode (mapCode h γ)
-  refl
-
--- Left identity: id ∘ h = h (up to decode)
-composeKernelHom-left-id
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {K₁ K₂ : Kernel Sig Q}
-    (h : KernelHom K₁ K₂)
-  → (∀ γ → Kernel.decode K₂ (KernelHom.mapCode (composeKernelHom (idKernelHom K₁) h) γ)
-            ≡ Kernel.decode K₂ (KernelHom.mapCode h γ))
-composeKernelHom-left-id {K₁ = K₁} {K₂ = K₂} h γ =
-  -- composeKernelHom id h has mapCode = λ γ → mapCode h (mapCode id γ)
-  -- Since idKernelHom K₁ has mapCode = λ γ → γ, we get:
-  --   mapCode (composeKernelHom id h) γ = mapCode h (mapCode id γ) = mapCode h γ
-  -- So: decode (mapCode (composeKernelHom id h) γ) = decode (mapCode h γ)
-  refl
+yoneda-generalized-from K P DPP α = component α K id
 
 -- Round-trip property 1: from ∘ to = id
 -- Given pK : P(K), we get a natural transformation, then extract component at K with id
@@ -466,65 +454,30 @@ yoneda-generalized-roundtrip-2
     (DPP : DecodePreservingProperty P)
     (α : NaturalTransformation K P DPP)
     (K' : Kernel Sig Q)
-    (h : KernelHom K' K)
+    (h : Hom K' K)
   → component (yoneda-generalized-to K P DPP (yoneda-generalized-from K P DPP α)) K' h
     ≡ component α K' h
-yoneda-generalized-roundtrip-2 K P DPP α K' h =
+yoneda-generalized-roundtrip-2 {Sig = Sig} {Q = Q} K P DPP α K' h =
+  let open KC.Laws Sig Q using (idL) in
   -- component (to (from α)) K' h = transport h (component α K id)
   -- We need: transport h (component α K id) = component α K' h
   -- Step 1: Use naturality: transport h (component α K id) = component α K' (id ∘ h)
-  -- Step 2: Use right identity: id ∘ h = h (up to decode)
+  -- Step 2: Use left identity: id ∘ h = h (up to decode)
   -- Step 3: Use component-decode to show components are equal
-  let pK = component α K (idKernelHom K)
-      -- Step 1: naturality gives us transport h pK = component α K' (h ∘ id)
-      step1 : transport DPP h pK ≡ component α K' (composeKernelHom h (idKernelHom K))
-      step1 = naturality α h (idKernelHom K)
-      -- Step 2: right identity law shows h ∘ id = h (up to decode)
-      step2 : (∀ γ → Kernel.decode K (KernelHom.mapCode (composeKernelHom h (idKernelHom K)) γ)
-                      ≡ Kernel.decode K (KernelHom.mapCode h γ))
-      step2 = composeKernelHom-right-id h
+  let pK = component α K id
+      -- Step 1: naturality gives us transport h pK = component α K' (id ∘ h)
+      step1 : transport DPP h pK ≡ component α K' (id ∘ h)
+      step1 = naturality α h id
+      -- Step 2: left identity law shows id ∘ h = h (up to decode)
+      step2 : EqHom (id ∘ h) h
+      step2 = idL h
       -- Step 3: component-decode shows components are equal when morphisms are decode-equal
-      step3 : component α K' (composeKernelHom h (idKernelHom K)) ≡ component α K' h
+      step3 : component α K' (id ∘ h) ≡ component α K' h
       step3 = component-decode α K' step2
   in trans step1 step3
 
--- ============================================================================
--- Identity Laws: Additional Notes
--- ============================================================================
--- These identity laws are LogOS-native and separately interesting because:
---
--- 1. CODE/REFLECTION LAYER CONNECTION:
---    - They connect the code layer (mapCode) to category structure
---    - idKernelHom has mapCode = λ γ → γ (identity on codes)
---    - The laws show that identity preserves codes AND decode-level behavior
---
--- 2. DECODE-LEVEL EQUALITY:
---    - They use decode-level equality, not strict equality
---    - This is LogOS-native: we care about semantic equality (decode), not syntactic (code)
---    - The laws show that composing with identity doesn't change decode-level semantics
---
--- 3. CATEGORY STRUCTURE COMPLETION:
---    - They're needed to complete the category structure for kernels
---    - KernelCat defines composition and identity, but needs these laws
---    - They're fundamental for any category-theoretic reasoning in LogOS
---
--- 4. REFLECTIVE NATURE:
---    - LogOS is a reflective system (code ↔ decode)
---    - Identity laws show that the reflective structure respects category composition
---    - They connect the syntactic (code) and semantic (decode) layers
---
--- 5. YONEDA COMPLETION:
---    - Needed to complete the full Yoneda lemma (round-trip property 2)
---    - But they're interesting independently, not just as a technical requirement
---
--- The laws are non-trivial in LogOS because:
--- - They require showing that decode-level behavior is preserved
--- - They connect the syntactic code layer to the semantic decode layer
--- - They're fundamental for any category-theoretic reasoning in LogOS
--- - They show that the reflective structure (code/decode) respects category laws
-
--- The round-trip properties would show this is a bijection
--- This requires showing that transport respects composition properly
+-- Note: identity/associativity laws up to `EqHom` are packaged in
+-- `LogOS.Theorems.CategoryTheory.KernelCat.Laws`.
 
 -- ============================================================================
 -- STEP 11: Code self-similarity (notes)

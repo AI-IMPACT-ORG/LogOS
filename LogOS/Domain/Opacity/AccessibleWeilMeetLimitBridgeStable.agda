@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -17,11 +17,14 @@ open import LogOS.Kernel
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
 import LogOS.Theorems.Meta.MathTruth as MT
 import LogOS.Theorems.Meta.LimitPublicisation as LP
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
 
-import LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridge as AWLM
+import LogOS.Domain.Opacity.AccessibleWeilLedger as AWL
+import LogOS.Domain.Opacity.WeilProbeImplication as WPI
+import LogOS.Domain.Opacity.ZetaTruthLedger as Ledger
 
 -- Variant of the meet-limit bridge where the per-regulator “completeness” premise
 -- is reduced to a plain truth fact `Wᵢ i (probe s)`, provided each regulator
@@ -48,33 +51,45 @@ record AccessibleWeilMeetLimitBridgeStable {ℓ ℓW : Level}
 
   field
     -- Weil direction at the limit.
-    WProbe : AWLM.WeilProbeImplication RS (Kernel.Code K) W∞
+    WProbe : WPI.WeilProbeImplication RS (Kernel.Code K) W∞
 
     -- Each regulator predicate is stable/extensional (so it is self-observable).
     Wᵢ-ext : ∀ i → Comm.DecodeExtensional′ K (Wᵢ i)
     Wᵢ-stable : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (FlowCode K γ))
 
     -- Plain finite evidence: at every regulator, the probe test satisfies Wᵢ.
-    holdsᵢ : ∀ i s → NontrivialZero s → Wᵢ i (AWLM.WeilProbeImplication.probe WProbe s)
+    holdsᵢ : ∀ i s → NontrivialZero s → Wᵢ i (WPI.WeilProbeImplication.probe WProbe s)
 
   -- Derived regulator-wise observability from stability/extensionality.
   completeᵢ
     : ∀ i s → NontrivialZero s
-      → Comm.Pr {ℓC = ℓW} K (Wᵢ i) (AWLM.WeilProbeImplication.probe WProbe s)
+      → Comm.Pr {ℓC = ℓW} K (Wᵢ i) (WPI.WeilProbeImplication.probe WProbe s)
   completeᵢ i s nz =
     LP.TruthK→Pr K (Wᵢ i) (Wᵢ-ext i) (Wᵢ-stable i) (holdsᵢ i s nz)
 
-  -- Package into the original meet-limit bridge (at ℓC = ℓW) and conclude GRH.
-  Bridge : AWLM.AccessibleWeilMeetLimitBridge {ℓ = ℓ} {ℓW = ℓW} {ℓC = ℓW} K RS
-  Bridge = record
-    { Reg       = Reg
-    ; WProbe    = WProbe
-    ; completeᵢ = completeᵢ
+  WC∞ : Ledger.ZetaWeilCriterionWeak RS
+          (MT.TruthPositivity-fromPr {ℓC = ℓW} K W∞)
+  WC∞ = record
+    { probe = WPI.WeilProbeImplication.probe WProbe
+    ; probe-pos→OnLine = WPI.WeilProbeImplication.probe-pos→OnLine WProbe
+    }
+
+  complete∞
+    : ∀ s → NontrivialZero s
+      → (∀ i → Comm.Pr {ℓC = ℓW} K (Wᵢ i) (WPI.WeilProbeImplication.probe WProbe s))
+      → Comm.Pr {ℓC = ℓW} K W∞ (WPI.WeilProbeImplication.probe WProbe s)
+  complete∞ s nz all = allObservableᵢ→Observable∞ all
+
+  Ledger∞ : AWL.AccessibleWeilLedgerRS {ℓ = ℓ} {ℓW = ℓW} {ℓC = ℓW} K RS
+  Ledger∞ = record
+    { W-pos    = W∞
+    ; WC       = WC∞
+    ; complete = λ s nz → complete∞ s nz (λ i → completeᵢ i s nz)
     }
 
   GRH_Without_Vacuity_Guards-from-stable-bridge : GRH_Without_Vacuity_Guards RS
   GRH_Without_Vacuity_Guards-from-stable-bridge =
-    AWLM.GRH_Without_Vacuity_Guards_from_AccessibleWeilMeetLimitBridge {ℓC = ℓW} K RS Bridge
+    AWL.GRH_Without_Vacuity_Guards_from_AccessibleWeilLedgerRS {ℓC = ℓW} K RS Ledger∞
 
   -- Cofinal scheduling (“regulator independence”): the meet-limit truth predicate
   -- is unchanged up to pointwise logical equivalence under a cofinal reindexing,
@@ -116,13 +131,10 @@ module QuartetMeetLimitStable
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  record Pack (A : Assumptions) : Set (lsuc (ℓ ⊔ lsuc ℓW)) where
-    field
-      claim : Claim A
+  module Q = Quartet.Make Assumptions Claim
+  open Q public using (Pack; assumptionsOf; claimOf)
 
-  mkPack : (A : Assumptions) → Pack A
-  mkPack A =
-    record
-      { claim =
-          AccessibleWeilMeetLimitBridgeStable.GRH_Without_Vacuity_Guards-from-stable-bridge A
-      }
+  mkPack : (A : Assumptions) → Pack
+  mkPack =
+    Q.mkPack
+      (AccessibleWeilMeetLimitBridgeStable.GRH_Without_Vacuity_Guards-from-stable-bridge {RS = RS})

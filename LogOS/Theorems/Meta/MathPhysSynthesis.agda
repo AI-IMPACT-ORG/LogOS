@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -58,6 +58,11 @@ module Observer
 
   -- “Largest admissible observability” (a la Comm⋆ / Pr):
   -- Obs⋆ γ holds if there exists some admissible Obs that contains γ.
+  --
+  -- Universe note: `Obs⋆` quantifies over predicates `Obs : Code → Set ℓO`, so
+  -- it lives one universe higher (in `… ⊔ lsuc ℓO`). Choosing a larger `ℓO`
+  -- allows witness-carrying observers; choosing a smaller `ℓO` tightens
+  -- pack-facing types but restricts what counts as an “observer”.
   Obs⋆
     : ∀ {ℓO : Level} → Code → Set (ℓCode ⊔ ℓDec ⊔ ℓT ⊔ lsuc ℓO)
   Obs⋆ {ℓO = ℓO} γ =

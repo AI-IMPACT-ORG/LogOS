@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -19,3 +19,5 @@ open import LogOS.Kernel.Graded.Boundary public
 open import LogOS.Kernel.Graded.ToKernel public
 open import LogOS.Kernel.Graded.Endo public
 open import LogOS.Kernel.Graded.Hom public
+open import LogOS.Kernel.Graded.Hom2Cat public
+open import LogOS.Kernel.Graded.Reachability public

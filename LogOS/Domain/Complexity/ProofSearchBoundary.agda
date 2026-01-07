@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,17 +8,20 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Complexity.ProofSearchBoundary where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (¬_; ⊥)
+open import LogOS.Syntax.Prop using (¬_; ⊥; _↔_)
 
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
 open import LogOS.Prelude as Eq using (_≡_; refl; subst; cong; sym)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s)
+open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ)
 
 import LogOS.Domain.Complexity.CookReckhow as CR
 open import LogOS.Domain.Complexity.CookReckhow using (Finℓ; fzero; fsuc; toNat)
 import LogOS.Domain.Complexity.ProofSystem as PSCore
+import LogOS.Computation.SemiDecider as SD
+import LogOS.Theorems.Meta.LimitPublicisation as LP
+open import LogOS.Theorems.Meta.LocalGlobalBoundary as LGB
 
 -- Sharp boundary: proof verification vs proof search.
 --
@@ -36,6 +39,19 @@ module For {ℓI ℓ : Level}
            (Input : Set ℓI)
            (P : Input → Set ℓ)
            where
+
+  NatPreorder : LP.Preorder ℕ
+  NatPreorder =
+    record
+      { CP =
+          record
+            { Con   = ℕ
+            ; _⊑_   = _≤ℕ_
+            ; refl  = ≤ℕ-refl
+            ; trans = trans≤ℕ
+            }
+      ; Con≡ = refl
+      }
 
   -- A proof system presented as a decidable checker on natural proof codes.
   record ProofSystem : Set (lsuc (lsuc (ℓ ⊔ ℓI))) where
@@ -144,9 +160,8 @@ module For {ℓI ℓ : Level}
   toNat-finOfNat≤ (suc n) (s≤s p) = cong suc (toNat-finOfNat≤ n p)
 
   -- Cofinal schedules formalize “infinite resources”: a schedule eventually exceeds any bound.
-  record Cofinal (sched : ℕ → ℕ) : Set where
-    field
-      above : ∀ b → Σ ℕ (λ n → b ≤ℕ sched n)
+  Cofinal : (ℕ → ℕ) → Set
+  Cofinal sched = LGB.Cofinalℕ NatPreorder sched
 
 -- If sched is cofinal, then Prov∞ is the colimit of the bounded approximants Prov≤ (sched n).
 --
@@ -156,7 +171,7 @@ module For {ℓI ℓ : Level}
       → Cofinal sched
       → ∀ x → Prov∞ PS x → Σ ℕ (λ n → Prov≤ PS (sched n) x)
   Prov∞→colim {PS} sched cof x (k , pr) =
-    let ex = Cofinal.above cof k in
+    let ex = cof k in
     let n  = proj₁ ex in
     let k≤ = proj₂ ex in
     let i  = finOfNat≤ k k≤ in
@@ -168,6 +183,29 @@ module For {ℓI ℓ : Level}
     CR.Search.searchFin (suc b)
       (λ i → ProofSystem.Check PS (toNat i) x)
       (λ i → ProofSystem.decCheck PS (toNat i) x)
+
+  -- Unbounded proof search is semi-decidable via its bounded approximants.
+  --
+  -- This packages the “bounded search approximants” structure into a reusable
+  -- interface (`SemiDecider`), making the intended reading explicit.
+
+  semiProv∞ : (PS : ProofSystem) → SD.SemiDecider Input (Prov∞ PS)
+  semiProv∞ PS =
+    SD.mapSemiDecider (joinProv≤↔Prov∞ {PS = PS})
+      (LGB.semiDeciderJoin NatPreorder (λ n → n) cofId (Prov≤ PS) monoProv≤-pre (decProv≤ PS))
+    where
+      joinProv≤↔Prov∞ : ∀ {PS} x → LGB.Join (Prov≤ PS) x ↔ Prov∞ PS x
+      joinProv≤↔Prov∞ {PS} x =
+        record
+          { to   = λ ex → bounded→unbounded {PS = PS} {b = proj₁ ex} {x = x} (proj₂ ex)
+          ; from = unbounded→someBound {PS = PS} {x = x}
+          }
+
+      cofId : LGB.Cofinalℕ NatPreorder (λ n → n)
+      cofId b = b , ≤ℕ-refl
+
+      monoProv≤-pre : ∀ {i j} → LP.Preorder._≤_ NatPreorder i j → ∀ {x} → Prov≤ PS i x → Prov≤ PS j x
+      monoProv≤-pre {i = i} {j = j} i≤j {x} pr = monoProv≤≤ {PS = PS} x i≤j pr
 
   -- Verification is “local”: any *given* candidate can be checked.
   verify : ∀ (PS : ProofSystem) (n : ℕ) (x : Input) → ProofSystem.Check PS n x ⊎ ¬ ProofSystem.Check PS n x

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,14 +8,14 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Complexity.Targets.StablePProofSearchReflectionBarrier where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (¬_)
+open import LogOS.Syntax.Prop using (¬_; _↔_)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 open import LogOS.Kernel.Hom using (KernelHom)
 
-open import LogOS.Theorems.Meta.Base using (DeciderC; mkDeciderC)
+open import LogOS.Theorems.Meta.Base using (DeciderC; mkDeciderC; mapDeciderC)
 open import LogOS.Theorems.Meta.Flow as Flow
 open import LogOS.Theorems.Meta.Full as F
 
@@ -48,13 +48,12 @@ module For {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   Prov∞→StableP
     : ∀ {PS} → B.Complete PS → DeciderC {K = K} (B.Prov∞ PS) → DeciderC {K = K} (Flow.StableP K)
   Prov∞→StableP {PS = PS} C dec =
-    mkDeciderC
-      record
-        { decide = DeciderC.decide dec
-        ; total  = DeciderC.total dec
-        ; sound  = λ γ dγ → B.Prov∞→P PS γ (DeciderC.sound dec γ dγ)
-        ; comp   = λ γ pγ → DeciderC.comp dec γ (B.P→Prov∞ C γ pγ)
-        }
+    mapDeciderC
+      (λ γ → record
+        { to   = B.Prov∞→P PS γ
+        ; from = B.P→Prov∞ C γ
+        })
+      dec
 
   -- Main barrier: provability for any complete stability proof system is undecidable,
   -- because otherwise stability would be decidable, contradicting Flow’s meta theorem.
@@ -90,14 +89,7 @@ module For {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
            ¬ (Σ (S.QTimeDecider (B.Prov∞ PS)) (λ _ → ⊤ {ℓ = lzero})))
   noPolyBudget-Prov∞-StableP size Pℕ gradeBound HW freeNoDecider PS C (qd , _) =
     let dec : DeciderC {K = K} (B.Prov∞ PS)
-        dec =
-          mkDeciderC
-            record
-              { decide = S.QTimeDecider.decide qd
-              ; total  = S.QTimeDecider.total qd
-              ; sound  = S.QTimeDecider.sound qd
-              ; comp   = S.QTimeDecider.comp qd
-              }
+        dec = mkDeciderC (S.toDecider qd)
     in
     noDecider-Prov∞-StableP HW freeNoDecider PS C dec
     where
@@ -116,14 +108,7 @@ module For {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
            ¬ (Σ (S.QTimeDeciderG (B.Prov∞ PS)) (λ _ → ⊤ {ℓ = lzero})))
   noTimeBoundedG-Prov∞-StableP size Pℕ gradeBound HW freeNoDecider PS C (qd , _) =
     let dec : DeciderC {K = K} (B.Prov∞ PS)
-        dec =
-          mkDeciderC
-            record
-              { decide = S.QTimeDeciderG.decide qd
-              ; total  = S.QTimeDeciderG.total qd
-              ; sound  = S.QTimeDeciderG.sound qd
-              ; comp   = S.QTimeDeciderG.comp qd
-              }
+        dec = mkDeciderC (S.toDeciderG qd)
     in
     noDecider-Prov∞-StableP HW freeNoDecider PS C dec
     where

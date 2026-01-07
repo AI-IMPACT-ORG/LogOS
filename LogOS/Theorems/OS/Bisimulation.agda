@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.OS.Bisimulation where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (_↔_)
+open import LogOS.Syntax.Prop as Prop using (_↔_)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -34,17 +34,13 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   Bisim = BR._≈∂_ K
 
   bisim-refl : ∀ γ → Bisim γ γ
-  bisim-refl γ p = record { to = λ x → x ; from = λ x → x }
+  bisim-refl γ p = Prop.↔-refl
 
   bisim-sym : ∀ {γ δ} → Bisim γ δ → Bisim δ γ
-  bisim-sym eq p = record { to = _↔_.from (eq p) ; from = _↔_.to (eq p) }
+  bisim-sym eq p = Prop.↔-sym (eq p)
 
   bisim-trans : ∀ {γ δ ε} → Bisim γ δ → Bisim δ ε → Bisim γ ε
-  bisim-trans gd de p =
-    record
-      { to   = λ s → _↔_.to (de p) (_↔_.to (gd p) s)
-      ; from = λ s → _↔_.from (gd p) (_↔_.from (de p) s)
-      }
+  bisim-trans gd de p = Prop.↔-trans (gd p) (de p)
 
   decode≡→bisim : ∀ {γ δ} → decode γ ≡ decode δ → Bisim γ δ
   decode≡→bisim = BR.decode≡→≈∂ K

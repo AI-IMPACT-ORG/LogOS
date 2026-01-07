@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -16,7 +16,7 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 open import LogOS.Computation.FromKernel
 open import LogOS.Computation.Decider as Dec using (Decider)
-open import LogOS.Syntax.Prop using (¬_)
+open import LogOS.Syntax.Prop using (¬_; _↔_)
 
 -- Computation-based semantics: abstract equivalence on codes.
 
@@ -66,3 +66,13 @@ mkDeciderC
   → Decider (Kernel.Code K) P
   → DeciderC {K = K} P
 mkDeciderC d = record { core = d }
+
+-- Transport a kernel decider across pointwise logical equivalence.
+mapDeciderC
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} {K : Kernel Sig Q}
+    {P P′ : Kernel.Code K → Set ℓ}
+  → (∀ γ → P γ ↔ P′ γ)
+  → DeciderC {K = K} P
+  → DeciderC {K = K} P′
+mapDeciderC eq d =
+  mkDeciderC (Dec.mapDecider eq (DeciderC.toDecider d))

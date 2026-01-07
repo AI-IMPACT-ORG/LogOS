@@ -1,6 +1,12 @@
-# LogOS: an Agda Library for foundational logic architecture
-# Copyright (C) 2025 AI.IMPACT GmbH
+# LogOS: an Agda research library for foundational logic system architecture.
+# Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
+
+# macOS filesystem metadata
+.DS_Store
+
+# Local archives (never commit; use releases/artifacts instead)
+Archive.zip
 
 # Agda build artifacts / caches
 _build/
@@ -17,6 +23,28 @@ MAlonzo/
 *.hi
 *.dyn_o
 *.dyn_hi
+
+# LaTeX build artifacts (paper sources are tracked; outputs are ignored)
+docs/Paper/*.aux
+docs/Paper/*.bbl
+docs/Paper/*.blg
+docs/Paper/*.fdb_latexmk
+docs/Paper/*.fls
+docs/Paper/*.log
+docs/Paper/*.out
+docs/Paper/*.pdf
+docs/Paper/*.synctex.gz
+docs/Paper/*.toc
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
 
 # Editor / OS
 .DS_Store

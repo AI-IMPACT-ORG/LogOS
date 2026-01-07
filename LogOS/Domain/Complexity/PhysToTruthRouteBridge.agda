@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -22,7 +22,6 @@ open import LogOS.Minimal.Truth as Truth
 open import LogOS.Algebra.ConAlg
 open import LogOS.Kernel.Graded
 open import LogOS.Kernel.Graded.Hom
-import LogOS.Domain.Complexity.TruthRoute as TR
 import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TRG
 import LogOS.Domain.Complexity.PolyGrade as PG
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
@@ -59,62 +58,31 @@ module For
                      ≡ VerRunWith₂ x (GradedKernelHomWithGrade.mapCode h w))
   where
 
-  module R₁ = TR.For K₁ Input Size DetRun₁ VerRun₁ VerRunWith₁ IsPoly gradeBound₁
-  module R₂ = TR.For K₂ Input Size DetRun₂ VerRun₂ VerRunWith₂ IsPoly gradeBound₂
+  module R₁ = TRG.ForNat K₁ Input Size DetRun₁ VerRun₁ VerRunWith₁ IsPoly gradeBound₁
+  module R₂ = TRG.ForNat K₂ Input Size DetRun₂ VerRun₂ VerRunWith₂ IsPoly gradeBound₂
 
   private
     open GradedKernelHomWithGrade h
     module GH = Truth.GuardedCore.GradeHom grade-hom
     open GH renaming (map to grade-map)
-    module FlowHom = Truth.GuardedCore.GradedFlowHomWithGrade (GradedKernelHomFlowWithGrade.flow-hom hf)
 
-    CP₂ : ConPoset ℓ
-    CP₂ = BulkBoundary.bnd (GradedKernel.BB K₂)
-
-  -- Acceptance bridge: map Acc across the boundary map and require monotonicity in K₂.
-  record AccBridge {ℓA₁ ℓA₂}
-                   (Acc₁ : R₁.Con → Set ℓA₁)
-                   (Acc₂ : R₂.Con → Set ℓA₂)
-                   : Set (lsuc (ℓ ⊔ ℓA₁ ⊔ ℓA₂)) where
-    field
-      acc-map : ∀ {c} → Acc₁ c → Acc₂ (ConAlgHom≡.map∂ con-hom c)
-      acc-reflect : ∀ {c} → Acc₂ (ConAlgHom≡.map∂ con-hom c) → Acc₁ c
-      acc-mono : R₂.AccMono Acc₂
-      flow-reflect
-        : ∀ g c →
-          ConPoset._⊑_ CP₂
-            (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c))
-            (ConAlgHom≡.map∂ con-hom (R₁.Flow g c))
+  module AT = FlowAccTransportWithGrade K₁ K₂ h hf
+  open AT public using (AccBridge)
 
   -- Transport deterministic “within bound” at a grade.
   mapDetWithinAt
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
       (AB : AccBridge Acc₁ Acc₂)
       → ∀ g x → R₁.DetWithinAt Acc₁ g x → R₂.DetWithinAt Acc₂ (grade-map g) x
-  mapDetWithinAt {Acc₁ = Acc₁} {Acc₂ = Acc₂} AB g x acc =
+  mapDetWithinAt AB g x acc =
     let
-      open AccBridge AB
       c₁ = R₁.decodeK (DetRun₁ x)
-      eqDet : R₂.decodeK (DetRun₂ x) ≡ ConAlgHom≡.map∂ con-hom c₁
+      eqDet : R₂.decodeK (DetRun₂ x) ≡ ConAlgHom≡.map∂ (GradedKernelHomWithGrade.con-hom h) c₁
       eqDet =
         trans (cong R₂.decodeK (sym (det-map x)))
-              (map-decode (DetRun₁ x))
-
-      pres : ConPoset._⊑_ CP₂
-             (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-             (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      pres = FlowHom.preserves-F g c₁
-
-      acc₂ : Acc₂ (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-      acc₂ = acc-map acc
-
-      acc₂' : Acc₂ (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      acc₂' = acc-mono pres acc₂
+              (GradedKernelHomWithGrade.map-decode h (DetRun₁ x))
     in
-    Eq.subst
-      (λ d → Acc₂ (R₂.Flow (grade-map g) d))
-      (Eq.sym eqDet)
-      acc₂'
+    AT.mapFlowAccAt-subst AB g c₁ (R₂.decodeK (DetRun₂ x)) eqDet acc
 
   -- Transport deterministic “within bound” at an ℕ bound.
   mapDetWithin
@@ -131,31 +99,15 @@ module For
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
       (AB : AccBridge Acc₁ Acc₂)
       → ∀ g x → R₂.DetWithinAt Acc₂ (grade-map g) x → R₁.DetWithinAt Acc₁ g x
-  mapDetWithinAt-back {Acc₁ = Acc₁} {Acc₂ = Acc₂} AB g x acc₂ =
+  mapDetWithinAt-back AB g x acc₂ =
     let
-      open AccBridge AB
       c₁ = R₁.decodeK (DetRun₁ x)
-      eqDet : R₂.decodeK (DetRun₂ x) ≡ ConAlgHom≡.map∂ con-hom c₁
+      eqDet : R₂.decodeK (DetRun₂ x) ≡ ConAlgHom≡.map∂ (GradedKernelHomWithGrade.con-hom h) c₁
       eqDet =
         trans (cong R₂.decodeK (sym (det-map x)))
-              (map-decode (DetRun₁ x))
-
-      acc₂' : Acc₂ (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      acc₂' =
-        Eq.subst
-          (λ d → Acc₂ (R₂.Flow (grade-map g) d))
-          eqDet
-          acc₂
-
-      presBack : ConPoset._⊑_ CP₂
-                  (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-                  (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-      presBack = flow-reflect g c₁
-
-      acc₂OnImage : Acc₂ (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-      acc₂OnImage = acc-mono presBack acc₂'
+              (GradedKernelHomWithGrade.map-decode h (DetRun₁ x))
     in
-    acc-reflect acc₂OnImage
+    AT.mapFlowAccAt-back-subst AB g c₁ (R₂.decodeK (DetRun₂ x)) eqDet acc₂
 
   mapDetWithin-back
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
@@ -174,30 +126,16 @@ module For
       (AB : AccBridge Acc₁ Acc₂)
       → ∀ g x w → R₁.VerWithinWithAt Acc₁ g x w →
                   R₂.VerWithinWithAt Acc₂ (grade-map g) x (mapCode w)
-  mapVerWithinWithAt {Acc₁ = Acc₁} {Acc₂ = Acc₂} AB g x w acc =
+  mapVerWithinWithAt AB g x w acc =
     let
-      open AccBridge AB
       c₁ = R₁.decodeK (VerRunWith₁ x w)
-      eqVer : R₂.decodeK (VerRunWith₂ x (mapCode w)) ≡ ConAlgHom≡.map∂ con-hom c₁
+      eqVer : R₂.decodeK (VerRunWith₂ x (mapCode w))
+             ≡ ConAlgHom≡.map∂ (GradedKernelHomWithGrade.con-hom h) c₁
       eqVer =
         trans (cong R₂.decodeK (sym (verw-map x w)))
-              (map-decode (VerRunWith₁ x w))
-
-      pres : ConPoset._⊑_ CP₂
-             (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-             (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      pres = FlowHom.preserves-F g c₁
-
-      acc₂ : Acc₂ (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-      acc₂ = acc-map acc
-
-      acc₂' : Acc₂ (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      acc₂' = acc-mono pres acc₂
+              (GradedKernelHomWithGrade.map-decode h (VerRunWith₁ x w))
     in
-    Eq.subst
-      (λ d → Acc₂ (R₂.Flow (grade-map g) d))
-      (Eq.sym eqVer)
-      acc₂'
+    AT.mapFlowAccAt-subst AB g c₁ (R₂.decodeK (VerRunWith₂ x (mapCode w))) eqVer acc
 
   mapVerWithinWith
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
@@ -301,113 +239,52 @@ module ForG
     open GradedKernelHomWithGrade h
     module GH = Truth.GuardedCore.GradeHom grade-hom
     open GH renaming (map to grade-map)
-    module FlowHom = Truth.GuardedCore.GradedFlowHomWithGrade (GradedKernelHomFlowWithGrade.flow-hom hf)
-
-    CP₂ : ConPoset ℓ
-    CP₂ = BulkBoundary.bnd (GradedKernel.BB K₂)
-
-  record AccBridge {ℓA₁ ℓA₂}
-                   (Acc₁ : R₁.Con → Set ℓA₁)
-                   (Acc₂ : R₂.Con → Set ℓA₂)
-                   : Set (lsuc (ℓ ⊔ ℓA₁ ⊔ ℓA₂)) where
-    field
-      acc-map : ∀ {c} → Acc₁ c → Acc₂ (ConAlgHom≡.map∂ con-hom c)
-      acc-reflect : ∀ {c} → Acc₂ (ConAlgHom≡.map∂ con-hom c) → Acc₁ c
-      acc-mono : R₂.AccMono Acc₂
-      flow-reflect
-        : ∀ g c →
-          ConPoset._⊑_ CP₂
-            (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c))
-            (ConAlgHom≡.map∂ con-hom (R₁.Flow g c))
+  module AT = FlowAccTransportWithGrade K₁ K₂ h hf
+  open AT public using (AccBridge)
 
   mapDetWithinAt
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
       (AB : AccBridge Acc₁ Acc₂)
       → ∀ g x → R₁.DetWithinAt Acc₁ g x → R₂.DetWithinAt Acc₂ (grade-map g) x
-  mapDetWithinAt {Acc₁ = Acc₁} {Acc₂ = Acc₂} AB g x acc =
+  mapDetWithinAt AB g x acc =
     let
-      open AccBridge AB
       c₁ = R₁.decodeK (DetRun₁ x)
-      eqDet : R₂.decodeK (DetRun₂ x) ≡ ConAlgHom≡.map∂ con-hom c₁
+      eqDet : R₂.decodeK (DetRun₂ x) ≡ ConAlgHom≡.map∂ (GradedKernelHomWithGrade.con-hom h) c₁
       eqDet =
         trans (cong R₂.decodeK (sym (det-map x)))
-              (map-decode (DetRun₁ x))
-
-      pres : ConPoset._⊑_ CP₂
-             (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-             (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      pres = FlowHom.preserves-F g c₁
-
-      acc₂ : Acc₂ (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-      acc₂ = acc-map acc
-
-      acc₂' : Acc₂ (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      acc₂' = acc-mono pres acc₂
+              (GradedKernelHomWithGrade.map-decode h (DetRun₁ x))
     in
-    Eq.subst
-      (λ d → Acc₂ (R₂.Flow (grade-map g) d))
-      (Eq.sym eqDet)
-      acc₂'
+    AT.mapFlowAccAt-subst AB g c₁ (R₂.decodeK (DetRun₂ x)) eqDet acc
 
   mapDetWithinAt-back
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
       (AB : AccBridge Acc₁ Acc₂)
       → ∀ g x → R₂.DetWithinAt Acc₂ (grade-map g) x → R₁.DetWithinAt Acc₁ g x
-  mapDetWithinAt-back {Acc₁ = Acc₁} {Acc₂ = Acc₂} AB g x acc₂ =
+  mapDetWithinAt-back AB g x acc₂ =
     let
-      open AccBridge AB
       c₁ = R₁.decodeK (DetRun₁ x)
-      eqDet : R₂.decodeK (DetRun₂ x) ≡ ConAlgHom≡.map∂ con-hom c₁
+      eqDet : R₂.decodeK (DetRun₂ x) ≡ ConAlgHom≡.map∂ (GradedKernelHomWithGrade.con-hom h) c₁
       eqDet =
         trans (cong R₂.decodeK (sym (det-map x)))
-              (map-decode (DetRun₁ x))
-
-      acc₂' : Acc₂ (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      acc₂' =
-        Eq.subst
-          (λ d → Acc₂ (R₂.Flow (grade-map g) d))
-          eqDet
-          acc₂
-
-      presBack : ConPoset._⊑_ CP₂
-                  (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-                  (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-      presBack = flow-reflect g c₁
-
-      acc₂OnImage : Acc₂ (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-      acc₂OnImage = acc-mono presBack acc₂'
+              (GradedKernelHomWithGrade.map-decode h (DetRun₁ x))
     in
-    acc-reflect acc₂OnImage
+    AT.mapFlowAccAt-back-subst AB g c₁ (R₂.decodeK (DetRun₂ x)) eqDet acc₂
 
   mapVerWithinWithAt
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
       (AB : AccBridge Acc₁ Acc₂)
       → ∀ g x w → R₁.VerWithinWithAt Acc₁ g x w →
                   R₂.VerWithinWithAt Acc₂ (grade-map g) x (mapCode w)
-  mapVerWithinWithAt {Acc₁ = Acc₁} {Acc₂ = Acc₂} AB g x w acc =
+  mapVerWithinWithAt AB g x w acc =
     let
-      open AccBridge AB
       c₁ = R₁.decodeK (VerRunWith₁ x w)
-      eqVer : R₂.decodeK (VerRunWith₂ x (mapCode w)) ≡ ConAlgHom≡.map∂ con-hom c₁
+      eqVer : R₂.decodeK (VerRunWith₂ x (mapCode w))
+             ≡ ConAlgHom≡.map∂ (GradedKernelHomWithGrade.con-hom h) c₁
       eqVer =
         trans (cong R₂.decodeK (sym (verw-map x w)))
-              (map-decode (VerRunWith₁ x w))
-
-      pres : ConPoset._⊑_ CP₂
-             (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-             (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      pres = FlowHom.preserves-F g c₁
-
-      acc₂ : Acc₂ (ConAlgHom≡.map∂ con-hom (R₁.Flow g c₁))
-      acc₂ = acc-map acc
-
-      acc₂' : Acc₂ (R₂.Flow (grade-map g) (ConAlgHom≡.map∂ con-hom c₁))
-      acc₂' = acc-mono pres acc₂
+              (GradedKernelHomWithGrade.map-decode h (VerRunWith₁ x w))
     in
-    Eq.subst
-      (λ d → Acc₂ (R₂.Flow (grade-map g) d))
-      (Eq.sym eqVer)
-      acc₂'
+    AT.mapFlowAccAt-subst AB g c₁ (R₂.decodeK (VerRunWith₂ x (mapCode w))) eqVer acc
 
   mapNP
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}

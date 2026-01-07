@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -14,6 +14,7 @@ module LogOS.Theorems.Code.Core where
 open import LogOS.Prelude
 
 open import LogOS.Kernel
+open import LogOS.Kernel.Core as KCore
 open import LogOS.Kernel.Endo
 open import LogOS.Kernel.Hom
 open import LogOS.Minimal.Con
@@ -118,14 +119,13 @@ reify-guard-decode
   → Kernel.decode K (Kernel.reify K (Kernel.Guard K γ))
     ≡ Kernel.decode K (Kernel.Guard K (Kernel.reify K γ))
 reify-guard-decode {Sig = Sig} {Q = Q} K γ =
-  let open Kernel K
-      module GT0 = Truth.GuardedTruth Sig Q
-      F = GT0.GuardedClosure.Flow (Kernel.GTruth K)
+  let
+    F = Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K)
   in
-  trans (Kernel.reify-decode K (Guard γ))
+  trans (Kernel.reify-decode K (Kernel.Guard K γ))
     (trans (Kernel.guard-decode K γ)
       (trans (cong F (sym (Kernel.reify-decode K γ)))
-        (sym (Kernel.guard-decode K (reify γ)))))
+        (sym (Kernel.guard-decode K (Kernel.reify K γ)))))
 
 reify-body-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -134,11 +134,10 @@ reify-body-decode
   → Kernel.decode K (Kernel.reify K (Kernel.Body K γ))
     ≡ Kernel.decode K (Kernel.Body K (Kernel.reify K γ))
 reify-body-decode K γ =
-  let open Kernel K in
-  trans (Kernel.reify-decode K (Body γ))
+  trans (Kernel.reify-decode K (Kernel.Body K γ))
     (trans (Kernel.body-decode K γ)
-      (trans (cong Body∂ (sym (Kernel.reify-decode K γ)))
-        (sym (Kernel.body-decode K (reify γ)))))
+      (trans (cong (Kernel.Body∂ K) (sym (Kernel.reify-decode K γ)))
+        (sym (Kernel.body-decode K (Kernel.reify K γ)))))
 
 -- Factorization at decode-level: prefer Guard ∘ Body on the code layer.
 
@@ -150,9 +149,8 @@ decode-FlowCode-eq
     ≡ Endo.fn (Flow-Endo K)
         (Kernel.Body∂ K (Kernel.decode K γ))
 decode-FlowCode-eq K γ =
-  let open Kernel K in
-  trans (guard-decode (Body γ))
-        (cong (Endo.fn (Flow-Endo K)) (body-decode γ))
+  trans (Kernel.guard-decode K (Kernel.Body K γ))
+        (cong (Endo.fn (Flow-Endo K)) (Kernel.body-decode K γ))
 
 -- ============================================================================
 -- Trust helpers: make γ* fixed-point and FlowCode monotonicity explicit.
@@ -170,11 +168,11 @@ decode-FlowCode-eq K γ =
         (Kernel.Body∂ K (Kernel.decode K (Kernel.γ* K))))
 γ*-decode≤stepBody K =
   let
+    CP = BulkBoundary.bnd (Kernel.BB K)
     open Kernel K
-    CP = BulkBoundary.bnd BB
-    le = fst γ*-guard
-    eq = decode-FlowCode-eq K γ*
-  in subst (λ x → ConPoset._⊑_ CP (decode γ*) x) eq le
+    le = fst (Kernel.γ*-guard K)
+    eq = decode-FlowCode-eq K (Kernel.γ* K)
+  in subst (λ x → ConPoset._⊑_ CP (Kernel.decode K (Kernel.γ* K)) x) eq le
 
 stepBody≤γ*-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -185,11 +183,11 @@ stepBody≤γ*-decode
       (Kernel.decode K (Kernel.γ* K))
 stepBody≤γ*-decode K =
   let
+    CP = BulkBoundary.bnd (Kernel.BB K)
     open Kernel K
-    CP = BulkBoundary.bnd BB
-    le = snd γ*-guard
-    eq = decode-FlowCode-eq K γ*
-  in subst (λ x → ConPoset._⊑_ CP x (decode γ*)) eq le
+    le = snd (Kernel.γ*-guard K)
+    eq = decode-FlowCode-eq K (Kernel.γ* K)
+  in subst (λ x → ConPoset._⊑_ CP x (Kernel.decode K (Kernel.γ* K))) eq le
 
 -- If the boundary preorder is antisymmetric (a partial order), γ* is an actual
 -- equality fixed point at decode-level.
@@ -204,8 +202,8 @@ decode-FlowCode-γ*-eq K po =
     open Kernel K
     open BulkBoundaryPO po using (po-bnd)
     open PartialOrder po-bnd using (antisym)
-    le₁ = fst γ*-guard
-    le₂ = snd γ*-guard
+    le₁ = fst (Kernel.γ*-guard K)
+    le₂ = snd (Kernel.γ*-guard K)
   in antisym le₂ le₁
 
 -- Optional: monotonicity of FlowCode at decode-level, assuming Body∂ is monotone.
@@ -213,7 +211,7 @@ decode-FlowCode-γ*-eq K po =
 decode-FlowCode-mono
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
-  → BodyMonotone K
+  → KCore.BodyMonotoneShape (Kernel.shape K)
   → ∀ {γ δ}
   → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K γ) (Kernel.decode K δ)
   → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
@@ -222,17 +220,16 @@ decode-FlowCode-mono
 decode-FlowCode-mono {Sig = Sig} {Q = Q} K bm {γ} {δ} le =
   let
     open Kernel K
-    CP = BulkBoundary.bnd BB
-    module GT0 = Truth.GuardedTruth Sig Q
-    F = GT0.GuardedClosure.Flow GTruth
-    bodyLe = BodyMonotone.mono-Body∂ bm le
-    flowLe : ConPoset._⊑_ CP (F (Body∂ (decode γ))) (F (Body∂ (decode δ)))
-    flowLe = GT0.GuardedClosure.mono GTruth bodyLe
+    CP = BulkBoundary.bnd (Kernel.BB K)
+    F = Truth.GuardedCore.GuardedClosure.Flow GTruth
+    bodyLe = KCore.BodyMonotoneShape.mono-Body∂ bm le
+    flowLe : ConPoset._⊑_ CP (F (Kernel.Body∂ K (Kernel.decode K γ))) (F (Kernel.Body∂ K (Kernel.decode K δ)))
+    flowLe = Truth.GuardedCore.GuardedClosure.mono GTruth bodyLe
     eqγ = decode-FlowCode-eq K γ
     eqδ = decode-FlowCode-eq K δ
-    flowLe' : ConPoset._⊑_ CP (F (Body∂ (decode γ))) (decode (FlowCode K δ))
-    flowLe' = subst (λ x → ConPoset._⊑_ CP (F (Body∂ (decode γ))) x) (sym eqδ) flowLe
-  in subst (λ x → ConPoset._⊑_ CP x (decode (FlowCode K δ))) (sym eqγ) flowLe'
+    flowLe' : ConPoset._⊑_ CP (F (Kernel.Body∂ K (Kernel.decode K γ))) (Kernel.decode K (FlowCode K δ))
+    flowLe' = subst (λ x → ConPoset._⊑_ CP (F (Kernel.Body∂ K (Kernel.decode K γ))) x) (sym eqδ) flowLe
+  in subst (λ x → ConPoset._⊑_ CP x (Kernel.decode K (FlowCode K δ))) (sym eqγ) flowLe'
 
 -- Textbook alias: monotonicity of the operational step (FlowCode), under BodyMonotone.
 

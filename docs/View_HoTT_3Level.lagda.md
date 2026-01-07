@@ -1,12 +1,13 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
 % LogOS as a 3-Level HoTT-Style System (S / H / G)
 
 ```agda
+{-# OPTIONS --safe #-}
 module docs.View_HoTT_3Level where
 
 open import LogOS.Docs.Views.View_HoTT_3Level public
@@ -50,11 +51,43 @@ LogOS names the tiers:
    - This tier is the “stability/communication” layer: local truths become globally stable via
      the closure step.
 
+4) **R — Reflection (Code)**
+   - A code layer (`Code`, `encode`, `decode`, `Guard`, `Body`) internalising admissible steps.
+   - This is the “+” in “3+ levels”: it is not another truth predicate, but a reflective interface
+     that lets the kernel speak about its own boundary reasoning at `decode` level.
+   - The reflection/guard coherence law is a kernel field (unguarded kernel: `LogOS/Kernel.agda`,
+     uniform interface: `LogOS/Kernel/LogicKernel.agda`).
+   - Optional tightening (functorial syntax): a signature-indexed “sentence/program” layer with
+     covariant translation along `SigHom` lives in `LogOS/Free/ConstraintsOverSig.agda`. This is
+     the institution-style `Sen` direction and complements the kernel’s contravariant model
+     reindexing (`reindexKernel`).
+
 The coherence laws between tiers are **fields of the Kernel record** (`LogOS/Kernel.agda`):
 
-- `coh-LH` connects strict S-truth to H-truth via `TransH : Fml → Con∂` using a *bi-implication*
+- `coh-LH` connects strict S-truth to H-truth via `TransH : Fml → Con_bnd` using a *bi-implication*
   (`_↔_`), not a definitional equality.
-- `sat-coh` connects world-indexed H-truth to boundary-indexed H-truth via `bnd`.
+- `sat-coh` connects world-indexed H-truth to boundary-indexed H-truth via `to∂`.
+
+```agda
+-- Anchor: the kernel coherence `sat-coh` is phrased using the signature’s `to∂`.
+open import LogOS.Prelude
+open import LogOS.Base.Signature using (LogOSSignature)
+open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Kernel using (Kernel)
+open import LogOS.Syntax.Prop using (_↔_)
+import LogOS.Minimal.Truth as Truth
+
+module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) where
+  module HT = Truth.HomotypicalTruth Sig Q (Kernel.HWorld K)
+  sat-coh-typed
+    : ∀ (w : LogOSSignature.Cosp Sig)
+        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+    → _↔_
+        (HT.HLayer.Sat_H (Kernel.HTruth K) w c)
+        (Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c)
+  sat-coh-typed = Kernel.sat-coh K
+```
 
 Why this is “HoTT-style” (and not just “3 modules”)
 ---------------------------------------------------
@@ -72,7 +105,8 @@ In code, this appears as:
 - coherence records using `_↔_` from `LogOS/Syntax/Prop.agda`.
 
 ### 2) Modal/closure structure is explicit (Flow as a modality)
-The guarded tier packages a closure/nucleus `Flow`. Fixed points of a nucleus are the
+The guarded tier packages a closure/nucleus `Flow`. Fixed points (preorder‑stable constraints:
+`Flow t ⊑ t`) of a nucleus are the
 standard categorical semantics of a modality (monotone, inflationary, idempotent‑lax endomap),
 and under antisymmetry this upgrades to equality-level idempotence; LogOS makes this explicit
 at the boundary logic level.

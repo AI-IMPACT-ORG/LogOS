@@ -1,6 +1,6 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
@@ -34,7 +34,7 @@ make check-all
 - No direct `Agda.Builtin.*` / `Agda.Primitive` imports outside the host-surface shims (see `README.md` “Host surface”).
 - No `postulate` in the production library (`LogOS/*`, `Tests/*`); any assumptions must be explicit record fields.
 - No `postulate` (and no unsafe OPTIONS) inside Agda code blocks in `docs/*.lagda.md`.
-- Architectural layering: core layers must not import `LogOS.Domain.*` / `LogOS.Models.*` / `LogOS.Packs.*` / `LogOS.Docs.*` (enforced by `scripts/import_layer_check.sh`).
+- Architectural layering: core layers must not import `LogOS.Domain.*` / `LogOS.Packs.*` / `LogOS.ObjectLogic.*` / `LogOS.Docs.*` (enforced by `scripts/import_layer_check.sh`).
 - Prefer importing `LogOS.Prelude` / `LogOS.API.Minimal` instead of raw `Data.*`.
 - Documentation path references inside backticks must resolve (see `scripts/doc_reference_check.sh`).
 

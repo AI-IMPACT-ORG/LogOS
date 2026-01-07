@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -25,6 +25,7 @@ import LogOS.Domain.Opacity.NumberTheory.HP.Flow as HPFlow
 
 open import LogOS.Theorems.Meta.Assumptions.Diagonal using (TruthDiagonal)
 import LogOS.Theorems.Meta.SpectralSeparationOutput as SSO
+import LogOS.Theorems.Meta.BudgetedSeparationOutput as BSO
 
 -- “Opacity” theorem for Hilbert–Pólya style operators:
 --
@@ -60,22 +61,28 @@ module For
   -- or explicitly returns `inj₂ tt` (undefined / no certificate).
   record OpFixedOracle : Set (lsuc (lsuc ℓ)) where
     field
-      infer : Code → (Σ Con∂ OpFixed∂) ⊎ ⊤ {ℓ = lzero}
-
-      ext : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → infer γ₁ ≡ infer γ₂
+      oracle : SSO.Oracle K (Σ Con∂ OpFixed∂)
 
       correct : ∀ γ {c} {pf : OpFixed∂ c} →
-        infer γ ≡ inj₁ (c , pf) → c ≡ decode γ
+        SSO.Oracle.infer oracle γ ≡ inj₁ (c , pf) → c ≡ decode γ
+
+    open SSO.Oracle oracle public using (infer; ext)
 
   -- View an OpFixedOracle as a generic partial-output surface.
   toSSO : OpFixedOracle → SSO.SpectralSeparationOutput K
-  toSSO O = record
-    { core = record
-        { Witness = Σ Con∂ OpFixed∂
-        ; infer   = OpFixedOracle.infer O
-        ; ext     = OpFixedOracle.ext O
-        }
-    }
+  toSSO O = SSO.Oracle.toSSO (OpFixedOracle.oracle O)
+
+  -- Budgeted/graded strengthening: rule out any oracle that is both
+  -- (i) extensional and (ii) total *within a given budget predicate*.
+  --
+  -- This is the quantale/grade-friendly form of opacity: you can allow witnesses
+  -- to exist in principle, but no single budget function can make them uniformly
+  -- available everywhere under diagonalisation.
+
+  module Budgeted (O : OpFixedOracle) where
+    module GB = BSO.GeneralB (toSSO O)
+    open GB public using (WitnessCostB)
+    module General = GB.General
 
   -- Extract: whenever the oracle returns a witness, it is a proof that Op fixes
   -- the decoded boundary constraint.

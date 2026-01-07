@@ -1,6 +1,6 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
@@ -27,7 +27,7 @@ Entry points
   - Umbrella re-export: `LogOS/Theorems/Meta/Assumptions.agda`
 - Transport: `LogOS/Theorems/Meta/Full.agda`
 - Rice/Tarski (conditional wrappers): `LogOS/Theorems/Meta/Rice.agda`, `LogOS/Theorems/Meta/Tarski.agda`
-- Löb/Gödel (conditional): `LogOS/Theorems/Meta/Lob.agda`, `LogOS/Theorems/Meta/Godel.agda`
+- Löb/Gödel (conditional): `LogOS/Theorems/Meta/Lob.agda`, `LogOS/Theorems/Meta/Godel.agda` (kernel-independent core lemma: `LogOS/Theorems/Meta/LobCore.agda`)
 - No omniscience / event horizon packaging (diagonal-against-decidable-observers form): `LogOS/Theorems/Meta/NoOmniscience.agda`
 - Spectral separation partial output (assumption-only, anti-totality): `LogOS/Theorems/Meta/SpectralSeparationOutput.agda`
 - Math/Physics observer+opacity bundle (graded-kernel friendly): `LogOS/Theorems/Meta/MathPhysSynthesis.agda`
@@ -43,7 +43,9 @@ Typical usage (Rice/Tarski shape)
 
 Typical usage (Gödel/Löb shape)
 1) Package `Provability K` (decode‑extensional predicate with nontriviality; add HBLClassic/diagonalization assumptions if desired).
-2) Provide the standard provability‑side assumptions (HBL, diagonalization, Löb) as explicit packs.
+2) Provide the standard provability‑side assumptions as explicit packs:
+   - Preferred: `InternalHomWitness` + `DecodeImp⊑` (or `QuoteSubst` + `DecodeImp`) to *derive* `Diagonalization`, then `HBLClassic` + `ImpRules` (use `Meta/Lob.loebAxiom-from-InternalHom` / `Meta/Lob.loebAxiom-from-QuoteSubst`).
+   - Corollary: if you already have `Diagonalization`, combine it with `HBLClassic` + `ImpRules` via `Meta/Lob.loebFromHBL`.
 3) Use the Gödel packaging (`LogOS/Theorems/Meta/Godel.agda`) to derive the incompleteness claim for your model.
 
 Notes
@@ -55,6 +57,5 @@ Notes
 - Some optional packs (e.g. `LogOS/Theorems/Meta/Diagonal.agda`) phrase diagonalization using
   code-level equalities; these are still explicit assumptions and are not required by the
   transport wrappers.
-- For Gödel 2, provide `Provability`, `ProvabilityOps`, and a `LoebAxiom`; use
-  `Meta/Godel.incompleteness` to conclude unprovability of a standard consistency sentence.
+- For Gödel 2, provide `Provability`, `ProvabilityOps`, and a `LoebAxiom` (either given directly, or obtained via `Meta/Lob.loebAxiom-from-InternalHom` / `Meta/Lob.loebAxiom-from-QuoteSubst`, or via the corollary `Meta/Lob.loebFromHBL` when `Diagonalization` is already packaged); use `Meta/Godel.incompleteness`.
 - Model‑specific instantiations (e.g., concrete fixed points) should live outside the core library and depend only on these small, explicit assumption records.

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.OS.Noninterference where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (_↔_)
+open import LogOS.Syntax.Prop as Prop using (_↔_)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -35,24 +35,19 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     module HT = Truth.HomotypicalTruth Sig Q HWorld
 
   ObsEq : CP.Con → CP.Con → Set ℓ
-  ObsEq c d = ∀ (w : Cosp) →
-    (HT.HLayer.Sat_H HTruth w c) ↔ (HT.HLayer.Sat_H HTruth w d)
+  ObsEq = Prop.ObsEqOn (HT.HLayer.Sat_H HTruth)
 
   CodeObsEq : Code → Code → Set ℓ
   CodeObsEq γ δ = ObsEq (decode γ) (decode δ)
 
   ObsEq-refl : ∀ c → ObsEq c c
-  ObsEq-refl c w = record { to = λ x → x ; from = λ x → x }
+  ObsEq-refl c w = Prop.↔-refl
 
   ObsEq-sym : ∀ {c d} → ObsEq c d → ObsEq d c
-  ObsEq-sym eq w = record { to = _↔_.from (eq w) ; from = _↔_.to (eq w) }
+  ObsEq-sym eq w = Prop.↔-sym (eq w)
 
   ObsEq-trans : ∀ {c d e} → ObsEq c d → ObsEq d e → ObsEq c e
-  ObsEq-trans cd de w =
-    record
-      { to   = λ sc → _↔_.to (de w) (_↔_.to (cd w) sc)
-      ; from = λ se → _↔_.from (cd w) (_↔_.from (de w) se)
-      }
+  ObsEq-trans cd de w = Prop.↔-trans (cd w) (de w)
 
   record NonInterferingEndo (f : Endo K) : Set (lsuc ℓ) where
     field

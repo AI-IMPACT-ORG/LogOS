@@ -1,6 +1,6 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
@@ -26,14 +26,15 @@ Backends
 - `LogOS/Domain/UniversalIR/Languages/Ethereum.agda` — EVM-like unbounded stack/memory machine (jumps + memory; `MUL`)
 - `LogOS/Domain/UniversalIR/Languages/QuantumOracle.agda` — minimal oracle-with-classical-control model (oracle tape / measurement instruction)
 - `LogOS/Domain/UniversalIR/Languages/QuantumCircuit.agda` — explicit basis-state circuit syntax (X/CNOT/TOFF + deterministic measurement)
+- `LogOS/Domain/UniversalIR/Core/QuantumCircuitAmp.agda` — amplitude-level circuit semantics (abstract scalars, Born-style distribution)
 
 The concrete small-step semantics for each paradigm live in `LogOS/Domain/UniversalIR/Core.agda`.
 
 Entry points
 ------------
-- **Recommended stable surface:** `LogOS/Models/UniversalIR/Core.agda` (curated, no demos)
+- **Recommended stable surface:** `LogOS/Packs/UniversalIR/Core.agda` (curated, no demos)
 - **Pack skeleton (Assumptions/Claim/Pack/mkPack):** `LogOS/Domain/UniversalIR/Pack.agda`
-  (curated re-export: `LogOS/Models/UniversalIR/Pack.agda`)
+  (curated re-export: `LogOS/Packs/UniversalIR/Pack.agda`)
 - `LogOS/Domain/UniversalIR/Std.agda` — tiny shared lemma pack (“mini stdlib”)
 - `LogOS/Computation/Scheme.agda` — shared scheme interface (`run≤`, fuel-free `ComputesTo`/`ComputesWithin`)
 - `LogOS/Domain/UniversalIR/Walkthrough.lagda.md` — narrative walkthrough

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -24,12 +24,10 @@ open import LogOS.Domain.Opacity.WeilCriterionDagger public
 open import LogOS.Domain.Opacity.ZetaTruthLedger public hiding (RH_from_AxiomLedger)
 open import LogOS.Domain.Opacity.ObservableSector public
 
+open import LogOS.Domain.Opacity.WeilProbeImplication public
 open import LogOS.Domain.Opacity.AccessibleWeilLedger public
-open import LogOS.Domain.Opacity.AccessibleWeilLimitBridge public
-open import LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridge public
 open import LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStable public
 open import LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStableCofinal public
-open import LogOS.Domain.Opacity.ZetaAccessibleMeetLimitLedger public
 open import LogOS.Domain.Opacity.ZetaAccessibleMeetLimitLedgerStable public
 
 open import LogOS.Domain.Opacity.HasseObservableClass public
@@ -37,3 +35,4 @@ open import LogOS.Domain.Opacity.HasseYonedaTransport public
 open import LogOS.Domain.Opacity.ZetaHasseYonedaLedger public
 
 open import LogOS.Domain.Opacity.LogicLanglands public
+open import LogOS.Domain.Opacity.TruthSeparation public

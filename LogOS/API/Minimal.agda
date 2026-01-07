@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -18,8 +18,8 @@ module LogOS.API.Minimal where
 --
 -- This is the canonical `--safe` core API entry in this codebase.
 -- Guarantee: this module does not import `LogOS.Axioms.*` (no global postulates).
--- For curated, heavier packs (ZFC/GRH/PvsNP/universality/IR), import the relevant
--- `LogOS/Packs/*` or `LogOS/Models/*` module directly (no umbrella packs entrypoint).
+-- For curated, heavier packs (ZFC/opacity/complexity/universality/IR), import the relevant
+-- `LogOS/Packs/*` module directly (no umbrella packs entrypoint).
 -- Deprecated “Standard/Full” APIs are not present here. Additional theorems and
 -- adapters live under `LogOS.Theorems.*`, `LogOS.Ports.*`, and `LogOS.Adapters.*`.
 -- ============================================================================
@@ -41,6 +41,7 @@ open import LogOS.Minimal.Adapter   public
 open import LogOS.Minimal.ScaleOps  public
 open import LogOS.Minimal.World     public
 open import LogOS.Minimal.Con       public
+open import LogOS.Minimal.Closure   public
 open import LogOS.Minimal.Adjunction public
 open import LogOS.Minimal.Truth     public
 open import LogOS.Algebra.ConAlg    public
@@ -53,8 +54,7 @@ open import LogOS.Kernel.Finite public
 open import LogOS.Kernel.Infinite public
 open import LogOS.Kernel.Reindex public
 open import LogOS.Kernel.HomOverSig public
-open import LogOS.Kernel.Infinite.Adapters public
-open import LogOS.Kernel.Infinite.Lemmas public
+open import LogOS.Kernel.Infinite.Lemmas public hiding (module For)
 open import LogOS.Kernel.Infinite.Hom public
 open import LogOS.Kernel.Infinite.Initial public
 open import LogOS.Kernel.Infinite.Reindex public
@@ -78,6 +78,7 @@ open import LogOS.Computation.Blum       public
 open import LogOS.Boundary.IO         public
 open import LogOS.Boundary.MultiIO    public
 open import LogOS.Boundary.Semantics  public
+open import LogOS.Boundary.Port       public
 
 -- ============================================================================
 -- USAGE EXAMPLE
@@ -91,11 +92,11 @@ open import LogOS.Boundary.Semantics  public
 --   
 --   -- Choose a Quantale+Time adapter (finite-join quantale + time monoid embedding).
 --   -- Ready-made instances:
---   --   `LogOS.Adapters.QNat.QNat`    (steps/time as ℕ, with max/join)
---   --   `LogOS.Adapters.QNat2.QNat2`  (two-axis budgets: unitary + measurement)
---   --   `LogOS.Adapters.QNatTop.QNatTop` (ℕ with an explicit top grade ω)
+--   --   `LogOS.QAdapters.QNat.QNat`    (steps/time as ℕ, with max/join)
+--   --   `LogOS.QAdapters.QNat2.QNat2`  (two-axis budgets: unitary + measurement)
+--   --   `LogOS.QAdapters.QNatTop.QNatTop` (ℕ with an explicit top grade ω)
 --   Q : QAdapter ℓ
---   Q = LogOS.Adapters.QNat.QNat
+--   Q = LogOS.QAdapters.QNat.QNat
 --   
 --   -- Provide a single integrated kernel (S/H/G + Code) instance
 --   kernel : Kernel sig Q

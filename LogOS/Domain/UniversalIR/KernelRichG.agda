@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -12,7 +12,7 @@ open import LogOS.Prelude
 open import LogOS.Domain.UniversalIR.Core using (UCode; UM; stepU; simulate)
 open import LogOS.Domain.UniversalIR.Core.Minsky using (mkM)
 open import LogOS.Domain.UniversalIR.IR using (lowerToIR)
-import LogOS.Adapters.QNatTop as QTop
+import LogOS.QAdapters.QNatTop as QTop
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.ScaleOps using (ScaleOps)
@@ -39,7 +39,7 @@ Sig = record
       }
   ; boundaryOps = record
       { src∂ = λ _ → tt ; tgt∂ = λ _ → tt ; id∂ = λ _ → tt ; _∘∂_ = λ _ _ → tt
-      ; _⊕∂_ = λ _ _ → tt ; _⊗∂_ = λ _ _ → tt ; ext = λ _ → tt ; bnd = λ _ → tt
+      ; _⊕∂_ = λ _ _ → tt ; _⊗∂_ = λ _ _ → tt ; from∂ = λ _ → tt ; to∂ = λ _ → tt
       }
   }
 
@@ -107,33 +107,35 @@ GTruth = record
 
 GUKR : GradedKernel Sig Q
 GUKR = record
-  { HWorld = HWorld
-  ; BB     = BB
-  ; MBulk  = MBulk
-  ; MBnd   = MBnd
-  ; Holo   = Holo
-  ; HTruth = HTruth
-  ; HInv   = HInv
-  ; Sat_H_bnd = λ _ _ → ⊤
-  ; sat-coh   = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
-  ; Fml    = ⊤
-  ; Strict = record { Sat_S = λ _ _ → ⊤ ; _⊢S_ = λ _ _ → ⊤ }
-  ; TransH = λ _ → UM (mkM 0 0 0 0 0 [])
-  ; coh-LH = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
+  { shape = record
+      { HWorld = HWorld
+      ; BB     = BB
+      ; MBulk  = MBulk
+      ; MBnd   = MBnd
+      ; Holo   = Holo
+      ; HTruth = HTruth
+      ; HInv   = HInv
+      ; Sat_H_bnd = λ _ _ → ⊤
+      ; sat-coh   = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
+      ; Fml    = ⊤
+      ; Strict = record { Sat_S = λ _ _ → ⊤ }
+      ; TransH = λ _ → UM (mkM 0 0 0 0 0 [])
+      ; coh-LH = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
+      ; Code   = UCode
+      ; encode = λ γ → γ
+      ; decode = λ γ → γ
+      ; decode∘encode = λ _ → refl
+      ; Guard  = stepU
+      ; Body   = λ γ → γ
+      ; γ*     = UM (mkM 0 0 0 0 0 [])
+      ; γ*-guard = (tt , tt)
+      ; reify  = λ γ → γ
+      ; reify-decode = λ _ → refl
+      ; Body∂  = λ c → c
+      ; body-decode = λ _ → refl
+      }
   ; GTruth = GTruth
-  ; Code   = UCode
-  ; encode = λ γ → γ
-  ; decode = λ γ → γ
-  ; decode∘encode = λ _ → refl
-  ; Guard  = stepU
-  ; Body   = λ γ → γ
   ; step-grade = fin (suc zero)
   ; guard-decode = λ _ → refl
-  ; γ*     = UM (mkM 0 0 0 0 0 [])
-  ; γ*-guard = (tt , tt)
   ; decode-γ* = refl
-  ; reify  = λ γ → γ
-  ; reify-decode = λ _ → refl
-  ; Body∂  = λ c → c
-  ; body-decode = λ _ → refl
   }

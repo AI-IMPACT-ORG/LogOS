@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -11,10 +11,12 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Minimal.Closure using (infl)
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
 open import LogOS.Kernel.Endo
-open import LogOS.Domain.SetTheory.Pack as ZFC
+open import Data.Product using (fst)
+open import LogOS.Domain.ZFC.SetTheory.Pack as ZFC
 open import LogOS.Theorems.Meta.Diagonal as Diag
 open import LogOS.Theorems.Meta.GRHBridge as GRHB
 
@@ -70,17 +72,28 @@ Flow-eq→stable {K = K} {c} eq =
 
 -- Build the canonical Flow nucleus bridge from the ZFC stability pack.
 
+flowTruthSeparation
+  : ∀ {ℓ Sig Q} {K : Kernel Sig Q}
+    (RS   : RiemannSpectral)
+    (Stab : ZFCFlowStability {ℓ} {Sig} {Q} K RS)
+  → TruthSep.FlowTruthSeparation K RS
+flowTruthSeparation {K = K} RS Stab =
+  record
+    { c = ZFCFlowStability.c Stab
+    ; zero→JClosed = λ s nz → fst (ZFCFlowStability.zero→Flow-stable Stab s nz)
+    ; JClosed→OnLine =
+        λ s closed →
+          ZFCFlowStability.Flow-stable→OnLine Stab s
+            (closed , infl (TruthSep.FlowClosureOp K) (ZFCFlowStability.c Stab s))
+    }
+
 flowBridge
   : ∀ {ℓ Sig Q} {K : Kernel Sig Q}
     (RS   : RiemannSpectral)
     (Stab : ZFCFlowStability {ℓ} {Sig} {Q} K RS)
   → GRHB.GlobalNucleusBridge K (TruthSep.RStoSP RS)
-flowBridge {K = K} RS Stab = record
-  { Pr = GRHB.FlowProjector K
-  ; c  = ZFCFlowStability.c Stab
-  ; zero→PFixed = ZFCFlowStability.zero→Flow-stable Stab
-  ; PFixed→OnLine = ZFCFlowStability.Flow-stable→OnLine Stab
-  }
+flowBridge {K = K} RS Stab =
+  TruthSep.flowNucleusBridge K RS (flowTruthSeparation RS Stab)
 
 -- GRH via the canonical nucleus interpretation of ZFC stability.
 
@@ -91,4 +104,4 @@ GRH_Without_Vacuity_Guards_from_ZFCStability
     (Stab : ZFCFlowStability {ℓ} {Sig} {Q} K RS)
   → ∀ s → RiemannSpectral.NontrivialZero RS s → RiemannSpectral.OnLine RS s
 GRH_Without_Vacuity_Guards_from_ZFCStability K RS Stab =
-  GRHB.GRH_Without_Vacuity_Guards_via_GlobalNucleus K (TruthSep.RStoSP RS) (flowBridge RS Stab)
+  TruthSep.GRH_Without_Vacuity_Guards_from_FlowTruthSeparation K RS (flowTruthSeparation RS Stab)

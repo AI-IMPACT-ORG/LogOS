@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -15,19 +15,19 @@ module LogOS.Packs.ZFC.All where
 open import LogOS.API.Minimal public
 
 module SetTheory where
-  open import LogOS.Domain.SetTheory.DefinablePack public
-  open import LogOS.Domain.SetTheory.Dsl public
-  open import LogOS.Domain.SetTheory.FormulaPack public
-  open import LogOS.Domain.SetTheory.FormulaFromDefinable public
-  open import LogOS.Domain.SetTheory.FormulaDerived public
-  open import LogOS.Domain.SetTheory.FullUpgradeFromDefinable public
-  open import LogOS.Domain.SetTheory.Pack public
-  open import LogOS.Domain.SetTheory.LimitPack public
-  open import LogOS.Domain.SetTheory.Cumulative public
+  open import LogOS.Domain.ZFC.SetTheory.DefinablePack public
+  open import LogOS.Domain.ZFC.SetTheory.Dsl public
+  open import LogOS.Domain.ZFC.SetTheory.FormulaPack public
+  open import LogOS.Domain.ZFC.SetTheory.FormulaFromDefinable public
+  open import LogOS.Domain.ZFC.SetTheory.FormulaDerived public
+  open import LogOS.Domain.ZFC.SetTheory.FullUpgradeFromDefinable public
+  open import LogOS.Domain.ZFC.SetTheory.Pack public
+  open import LogOS.Domain.ZFC.SetTheory.LimitPack public
+  open import LogOS.Domain.ZFC.SetTheory.Cumulative public
 
 module Logic where
-  open import LogOS.Logic.FOL.All public
-  open import LogOS.Logic.ZFC.All public
+  open import LogOS.ObjectLogic.FOL.All public
+  open import LogOS.ObjectLogic.ZFC.All public
 
 import LogOS.Packs.ZFC.WFGraph as WFGraphₜ
 module WFGraph = WFGraphₜ

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -10,6 +10,10 @@ module LogOS.Theorems.Boundary.Mu where
 -- Guarded μ-unfold and μ-induction wrappers instantiated at a Kernel.
 -- All proofs are inherited directly from `LogOS.Minimal.Truth` once a Kernel
 -- supplies the required GuardedClosure/OmegaCPO/FiniteFirst records.
+--
+-- This module also exposes a *generic* Kleene μ-calculus on any boundary ωCPO,
+-- independent of the kernel’s distinguished `Th*` witness:
+-- see `Truth.GuardedCore.Kleene`.
 
 open import LogOS.Prelude
 open import LogOS.Base.Signature
@@ -73,3 +77,38 @@ least-prefixed-point-K = park-induction-K
     (K : Kernel Sig Q)
   → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (FlowTh⋆K K) (Th⋆K K)
 μ-unfold-right Sig Q K = FlowTh⋆≤Th⋆ K
+
+-- ============================================================================
+-- Generic Kleene μ on a boundary ωCPO (independent of `Th*`)
+-- ============================================================================
+
+module Kleene
+  {ℓ}
+  (Sig : LogOSSignature ℓ)
+  (Q   : QAdapter ℓ)
+  (K   : Kernel Sig Q)
+  (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO)
+            (BulkBoundary.bnd (Kernel.BB K)))
+  where
+
+  private
+    module GT = Truth.GuardedTruth Sig Q
+    CP = BulkBoundary.bnd (Kernel.BB K)
+
+  open ConPoset CP public
+  open GT.OmegaCPO ωCPO public
+
+  module μ = GT.Kleene ωCPO
+
+  -- Re-export the core definitions and theorems specialised to the kernel boundary.
+  iter = μ.iter
+  μF   = μ.μ
+
+  μF-unfold-left = μ.μ-unfold-left
+  μF-induction   = μ.μ-induction
+
+  ScottContinuous = μ.ScottContinuous
+  μF-unfold-right  = μ.μ-unfold-right
+
+  iter-mono-chain-infl = μ.iter-mono-chain-infl
+  μF-unfold-right-infl = μ.μ-unfold-right-infl

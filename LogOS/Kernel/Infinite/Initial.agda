@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -74,86 +74,87 @@ record InitialInfiniteKernel {ℓ : Level}
 --  - a signature + QAdapter + chosen world (as for the finite initial kernel), and
 --  - ωCPO/FiniteFirst structure on the free kernel’s boundary (plus bot≡I∂).
 
-build∞
-  : ∀ {ℓ : Level}
-    (Sig : LogOSSignature ℓ)
-    (Q   : QAdapter ℓ)
-    (HW  : Worlds.WorldH Sig Q)
-  → (poF   : BulkBoundaryPO (Kernel.BB (Init.InitialKernel.FreeK (Init.build Sig Q HW))))
-  → (ωCPOF : (let module GT∞ = Truth.GuardedTruth Sig Q in GT∞.OmegaCPO)
-              (BulkBoundary.bnd (Kernel.BB (Init.InitialKernel.FreeK (Init.build Sig Q HW)))))
-  → (FFF   : (let module GT∞ = Truth.GuardedTruth Sig Q in GT∞.FiniteFirst)
-              (BulkBoundary.bnd (Kernel.BB (Init.InitialKernel.FreeK (Init.build Sig Q HW))))
-              (Kernel.GTruth (Init.InitialKernel.FreeK (Init.build Sig Q HW)))
-              ωCPOF)
-  → (bot≡I∂F : (let module GT∞ = Truth.GuardedTruth Sig Q in GT∞.OmegaCPO.⊥ ωCPOF)
-               ≡ MonoidalPoset.I (Kernel.MBnd (Init.InitialKernel.FreeK (Init.build Sig Q HW))))
-  → InitialInfiniteKernel Sig Q
-build∞ {ℓ} Sig Q HW poF ωCPOF FFF bot≡I∂F = record
-  { Free∞ = Free∞
-  ; fold∞ = fold∞
-  ; unique∞ = unique∞
-  ; unique∞≃ = unique∞≃
-  }
-  where
-    IK₀ : Init.InitialKernel Sig Q
-    IK₀ = Init.build Sig Q HW
+module Build∞ {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ) where
+  private
+    module GT∞ = Truth.GuardedTruth Sig Q
 
-    FreeK : Kernel Sig Q
-    FreeK = Init.InitialKernel.FreeK IK₀
+  build∞
+    : (HW  : Worlds.WorldH Sig Q)
+    → (poF   : BulkBoundaryPO (Kernel.BB (Init.InitialKernel.FreeK (Init.build Sig Q HW))))
+    → (ωCPOF : GT∞.OmegaCPO
+                (BulkBoundary.bnd (Kernel.BB (Init.InitialKernel.FreeK (Init.build Sig Q HW)))))
+    → (FFF   : GT∞.FiniteFirst
+                (BulkBoundary.bnd (Kernel.BB (Init.InitialKernel.FreeK (Init.build Sig Q HW))))
+                (Kernel.GTruth (Init.InitialKernel.FreeK (Init.build Sig Q HW)))
+                ωCPOF)
+    → (bot≡I∂F : GT∞.OmegaCPO.⊥ ωCPOF
+                 ≡ MonoidalPoset.I (Kernel.MBnd (Init.InitialKernel.FreeK (Init.build Sig Q HW))))
+    → InitialInfiniteKernel Sig Q
+  build∞ HW poF ωCPOF FFF bot≡I∂F = record
+    { Free∞ = Free∞
+    ; fold∞ = fold∞
+    ; unique∞ = unique∞
+    ; unique∞≃ = unique∞≃
+    }
+    where
+      IK₀ : Init.InitialKernel Sig Q
+      IK₀ = Init.build Sig Q HW
 
-    Free∞ : InfiniteKernel Sig Q
-    Free∞ = record
-      { K = FreeK
-      ; po = poF
-      ; ωCPO = ωCPOF
-      ; FF = FFF
-      ; bot≡I∂ = bot≡I∂F
-      }
+      FreeK : Kernel Sig Q
+      FreeK = Init.InitialKernel.FreeK IK₀
 
-    fold∞ : ∀ (IK : InfiniteKernel Sig Q) → InfiniteKernelHom Free∞ IK
-    fold∞ IK = record { hom = h ; flow = ht }
-      where
-        Kt : Kernel Sig Q
-        Kt = InfiniteKernel.K IK
+      Free∞ : InfiniteKernel Sig Q
+      Free∞ = record
+        { K = FreeK
+        ; po = poF
+        ; ωCPO = ωCPOF
+        ; FF = FFF
+        ; bot≡I∂ = bot≡I∂F
+        }
 
-        h : KernelHom FreeK Kt
-        h = Init.InitialKernel.foldK IK₀ Kt
+      fold∞ : ∀ (IK : InfiniteKernel Sig Q) → InfiniteKernelHom Free∞ IK
+      fold∞ IK = record { hom = h ; flow = ht }
+        where
+          Kt : Kernel Sig Q
+          Kt = InfiniteKernel.K IK
 
-        eq-bot
-          : ConAlgHom≡.map∂ (KernelHom.con-hom h) I∂ ≡
-            (let module GT∞ = Truth.GuardedTruth Sig Q in GT∞.OmegaCPO.⊥ (InfiniteKernel.ωCPO IK))
-        eq-bot =
-          let unit∂ = ConAlgHom≡.unit∂ (KernelHom.con-hom h)
-              bot≡I = InfiniteKernel.bot≡I∂ IK
-          in trans unit∂ (sym bot≡I)
+          h : KernelHom FreeK Kt
+          h = Init.InitialKernel.foldK IK₀ Kt
 
-        ht : KernelHomFlow FreeK Kt h
-        ht = Init.foldFlow-build-auto Sig Q HW Kt (InfiniteKernel.ωCPO IK) eq-bot
+          eq-bot : ConAlgHom≡.map∂ (KernelHom.con-hom h) I∂ ≡ GT∞.OmegaCPO.⊥ (InfiniteKernel.ωCPO IK)
+          eq-bot =
+            let unit∂ = ConAlgHom≡.unit∂ (KernelHom.con-hom h)
+                bot≡I = InfiniteKernel.bot≡I∂ IK
+            in trans unit∂ (sym bot≡I)
 
-    unique∞
-      : ∀ (IK : InfiniteKernel Sig Q) (h : InfiniteKernelHom Free∞ IK) →
-        (∀ c → KernelHom.mapCode (InfiniteKernelHom.hom (fold∞ IK)) (Kernel.encode FreeK c)
-              ≡ KernelHom.mapCode (InfiniteKernelHom.hom h) (Kernel.encode FreeK c))
-        ×
-        (∀ d → ConAlgHom≡.mapb (KernelHom.con-hom (InfiniteKernelHom.hom (fold∞ IK))) d
-              ≡ ConAlgHom≡.mapb (KernelHom.con-hom (InfiniteKernelHom.hom h)) d)
-    unique∞ IK h = Init.InitialKernel.unique IK₀ (InfiniteKernel.K IK) (InfiniteKernelHom.hom h)
+          ht : KernelHomFlow FreeK Kt h
+          ht = Init.foldFlow-build-auto Sig Q HW Kt (InfiniteKernel.ωCPO IK) eq-bot
 
-    unique∞≃
-      : ∀ (IK : InfiniteKernel Sig Q) (h : InfiniteKernelHom Free∞ IK) →
-        (∀ γ → Kernel.decode (InfiniteKernel.K IK)
-                (KernelHom.mapCode (InfiniteKernelHom.hom (fold∞ IK)) γ)
-                ≡ ConAlgHom≡.map∂ (KernelHom.con-hom (InfiniteKernelHom.hom (fold∞ IK)))
-                                  (Kernel.decode FreeK γ))
-        ×
-        (∀ γ → Kernel.decode (InfiniteKernel.K IK)
-                (KernelHom.mapCode (InfiniteKernelHom.hom h) γ)
-                ≡ ConAlgHom≡.map∂ (KernelHom.con-hom (InfiniteKernelHom.hom h))
-                                  (Kernel.decode FreeK γ))
-        ×
-        (∀ γ → Kernel.decode (InfiniteKernel.K IK)
-                (KernelHom.mapCode (InfiniteKernelHom.hom (fold∞ IK)) γ)
-                ≡ Kernel.decode (InfiniteKernel.K IK)
-                    (KernelHom.mapCode (InfiniteKernelHom.hom h) γ))
-    unique∞≃ IK h = Init.InitialKernel.unique≃ IK₀ (InfiniteKernel.K IK) (InfiniteKernelHom.hom h)
+      unique∞
+        : ∀ (IK : InfiniteKernel Sig Q) (h : InfiniteKernelHom Free∞ IK) →
+          (∀ c → KernelHom.mapCode (InfiniteKernelHom.hom (fold∞ IK)) (Kernel.encode FreeK c)
+                ≡ KernelHom.mapCode (InfiniteKernelHom.hom h) (Kernel.encode FreeK c))
+          ×
+          (∀ d → ConAlgHom≡.mapb (KernelHom.con-hom (InfiniteKernelHom.hom (fold∞ IK))) d
+                ≡ ConAlgHom≡.mapb (KernelHom.con-hom (InfiniteKernelHom.hom h)) d)
+      unique∞ IK h = Init.InitialKernel.unique IK₀ (InfiniteKernel.K IK) (InfiniteKernelHom.hom h)
+
+      unique∞≃
+        : ∀ (IK : InfiniteKernel Sig Q) (h : InfiniteKernelHom Free∞ IK) →
+          (∀ γ → Kernel.decode (InfiniteKernel.K IK)
+                  (KernelHom.mapCode (InfiniteKernelHom.hom (fold∞ IK)) γ)
+                  ≡ ConAlgHom≡.map∂ (KernelHom.con-hom (InfiniteKernelHom.hom (fold∞ IK)))
+                                    (Kernel.decode FreeK γ))
+          ×
+          (∀ γ → Kernel.decode (InfiniteKernel.K IK)
+                  (KernelHom.mapCode (InfiniteKernelHom.hom h) γ)
+                  ≡ ConAlgHom≡.map∂ (KernelHom.con-hom (InfiniteKernelHom.hom h))
+                                    (Kernel.decode FreeK γ))
+          ×
+          (∀ γ → Kernel.decode (InfiniteKernel.K IK)
+                  (KernelHom.mapCode (InfiniteKernelHom.hom (fold∞ IK)) γ)
+                  ≡ Kernel.decode (InfiniteKernel.K IK)
+                      (KernelHom.mapCode (InfiniteKernelHom.hom h) γ))
+      unique∞≃ IK h = Init.InitialKernel.unique≃ IK₀ (InfiniteKernel.K IK) (InfiniteKernelHom.hom h)
+
+build∞ = Build∞.build∞

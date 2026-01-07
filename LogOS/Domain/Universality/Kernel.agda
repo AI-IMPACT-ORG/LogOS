@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -29,7 +29,7 @@ Sig : LogOSSignature lzero
 Sig = record
   { sorts = record { Iface = ⊤ ; Cosp = ⊤ ; ∂Cosp = ⊤ }
   ; cospanOps = record { src = λ _ → tt ; tgt = λ _ → tt ; idC = λ _ → tt ; _∘C_ = λ _ _ → tt ; _⊕C_ = λ _ _ → tt ; _⊗C_ = λ _ _ → tt }
-  ; boundaryOps = record { src∂ = λ _ → tt ; tgt∂ = λ _ → tt ; id∂ = λ _ → tt ; _∘∂_ = λ _ _ → tt ; _⊕∂_ = λ _ _ → tt ; _⊗∂_ = λ _ _ → tt ; ext = λ _ → tt ; bnd = λ _ → tt }
+  ; boundaryOps = record { src∂ = λ _ → tt ; tgt∂ = λ _ → tt ; id∂ = λ _ → tt ; _∘∂_ = λ _ _ → tt ; _⊕∂_ = λ _ _ → tt ; _⊗∂_ = λ _ _ → tt ; from∂ = λ _ → tt ; to∂ = λ _ → tt }
   }
 
 Q : QAdapter lzero
@@ -74,36 +74,48 @@ GTruth = record
 
 GUK : GradedKernel Sig Q
 GUK = record
-  { HWorld = HWorld
-  ; BB     = BB
-  ; MBulk  = MBnd
-  ; MBnd   = MBnd
-  ; Holo   = record { core = record { ext = λ _ → tt ; bnd = λ _ → tt ; unit-lax = λ _ → tt ; counit-lax = λ _ → tt }
-                    ; ext-⊗-lax = λ _ _ → tt ; ext-I-lax = tt ; bnd-⊗-lax = λ _ _ → tt ; bnd-I-lax = tt }
-  ; HTruth = record { Sat_H = λ _ _ → ⊤ ; mono-Con = λ _ _ → tt ; mono-ctx = λ _ _ → tt }
-  ; HInv   = record { Inv_H = λ c → c ; infl = λ _ → tt ; idemp-lax = λ _ → tt }
-  ; Sat_H_bnd = λ _ _ → ⊤
-  ; sat-coh   = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
-  ; Fml    = ⊤
-  ; Strict = record { Sat_S = λ _ _ → ⊤ ; _⊢S_ = λ _ _ → ⊤ }
-  ; TransH = λ _ → tt
-  ; coh-LH = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
- ; GTruth = GTruth
-  ; Code   = ToyUCode
-  ; encode = λ _ → ToyT (mkT 0 0)
-  ; decode = λ _ → tt
-  ; decode∘encode = λ { ttℓ → refl }
-  ; Guard  = λ γ → stepToyU γ
-  ; Body = λ γ → γ
+  { shape = record
+      { HWorld = HWorld
+      ; BB     = BB
+      ; MBulk  = MBnd
+      ; MBnd   = MBnd
+      ; Holo   = record
+          { core = record
+              { ext = λ _ → tt
+              ; bnd = λ _ → tt
+              ; unit-lax = λ _ → tt
+              ; counit-lax = λ _ → tt
+              }
+          ; ext-⊗-lax = λ _ _ → tt
+          ; ext-I-lax = tt
+          ; bnd-⊗-lax = λ _ _ → tt
+          ; bnd-I-lax = tt
+          }
+      ; HTruth = record { Sat_H = λ _ _ → ⊤ ; mono-Con = λ _ _ → tt ; mono-ctx = λ _ _ → tt }
+      ; HInv   = record { Inv_H = λ c → c ; infl = λ _ → tt ; idemp-lax = λ _ → tt }
+      ; Sat_H_bnd = λ _ _ → ⊤
+      ; sat-coh   = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
+      ; Fml    = ⊤
+      ; Strict = record { Sat_S = λ _ _ → ⊤ }
+      ; TransH = λ _ → tt
+      ; coh-LH = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
+      ; Code   = ToyUCode
+      ; encode = λ _ → ToyT (mkT 0 0)
+      ; decode = λ _ → tt
+      ; decode∘encode = λ { ttℓ → refl }
+      ; Guard  = λ γ → stepToyU γ
+      ; Body = λ γ → γ
+      ; γ*           = ToyC (mkC 0)
+      ; γ*-guard     = (tt , tt)
+      ; reify        = λ _ → ToyT (mkT 0 0)
+      ; reify-decode = λ _ → refl
+      ; Body∂      = λ _ → tt
+      ; body-decode = λ _ → refl
+      }
+  ; GTruth = GTruth
   ; step-grade   = tt
   ; guard-decode = λ _ → refl
-  ; γ*           = ToyC (mkC 0)
-  ; γ*-guard     = (tt , tt)
   ; decode-γ*    = refl
-  ; reify        = λ _ → ToyT (mkT 0 0)
-  ; reify-decode = λ _ → refl
-  ; Body∂      = λ _ → tt
-  ; body-decode = λ _ → refl
   }
 
 -- Derive Computation from the toy kernel and relate iterate to simulateToy

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -10,6 +10,9 @@ module Tests.CoherenceSurfaces where
 open import LogOS.API.Minimal
 open import LogOS.Theorems.Core as T
 import LogOS.Theorems.Boundary.Graded.All as GB
+import LogOS.Packs.UniversalIR.Agreement as UAgree
+import LogOS.Packs.Complexity.PhysicsOfInformation as POI
+import LogOS.API.Architecture as Arch
 
 -- Coherence regression: ensure the curated public surfaces keep exporting
 -- the “textbook name” aliases and key lemma entrypoints.
@@ -38,6 +41,12 @@ flowcode-mono-decode' = T.Code.flowcode-mono-decode
 reify-idempotent-decode' : _
 reify-idempotent-decode' = T.Boundary.reify-idempotent-decode
 
+satS↔Form' : _
+satS↔Form' = T.Boundary.SatS↔Form
+
+code→form-flowcode' : _
+code→form-flowcode' = T.Boundary.Code→Form-FlowCode
+
 -- Graded quick wins: operational iteration bounds and saturation absorption.
 
 step-iteration≤sat' : _
@@ -49,3 +58,33 @@ saturation-absorption' = GB.saturation-absorption
 step-power-law' : _
 step-power-law' = GB.step-power-law
 
+-- Core science surfaces used in the Nature-facing narrative.
+
+five-paradigm-agreement' : _
+five-paradigm-agreement' = UAgree.five-paradigm-agreement
+
+merge-implies-entropy-increase' : _
+merge-implies-entropy-increase' = POI.merge-implies-entropy-increase
+
+irreversible-io-cost-lower-bound' : _
+irreversible-io-cost-lower-bound' = POI.irreversible-io-cost-lower-bound
+
+-- Ports/adapters spine: keep the canonical navigation surface stable.
+
+idSatMor' : _
+idSatMor' = Arch.Ports.idSatMor
+
+composeSatMor' : _
+composeSatMor' = Arch.Ports.composeSatMor
+
+rebaseSystemIO' : _
+rebaseSystemIO' = Arch.Tooling.rebase
+
+rebaseSystemIOAlongSatMor' : _
+rebaseSystemIOAlongSatMor' = Arch.Tooling.rebaseAlongSatMor
+
+proofsystem-pullback' : _
+proofsystem-pullback' = Arch.Tooling.pullback
+
+proofsystem-lift' : _
+proofsystem-lift' = Arch.Tooling.liftProofSystem

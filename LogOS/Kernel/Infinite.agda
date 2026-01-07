@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -26,6 +26,9 @@ record InfiniteKernel {ℓ : Level}
                       (Sig : LogOSSignature ℓ)
                       (Q   : QAdapter ℓ)
                       : Set (lsuc (lsuc ℓ)) where
+  private
+    module GT∞ = Truth.GuardedTruth Sig Q
+
   field
     K   : Kernel Sig Q
 
@@ -34,12 +37,36 @@ record InfiniteKernel {ℓ : Level}
   field
     po   : BulkBoundaryPO BB
 
-    ωCPO : (let module GT∞ = Truth.GuardedTruth Sig Q in GT∞.OmegaCPO) (BulkBoundary.bnd BB)
-    FF   : (let module GT∞ = Truth.GuardedTruth Sig Q in GT∞.FiniteFirst) (BulkBoundary.bnd BB) GTruth ωCPO
+    ωCPO : GT∞.OmegaCPO (BulkBoundary.bnd BB)
+    FF   : GT∞.FiniteFirst (BulkBoundary.bnd BB) GTruth ωCPO
 
     -- Canonical choice for the ω-CPO bottom: align ⊥ with the boundary monoidal unit.
     -- This is what lets the initial kernel’s fold produce a Flow-preserving hom
     -- automatically for any InfiniteKernel target (no extra per-target assumptions).
     bot≡I∂
-      : (let module GT∞ = Truth.GuardedTruth Sig Q in GT∞.OmegaCPO.⊥ ωCPO)
+      : GT∞.OmegaCPO.⊥ ωCPO
         ≡ (MonoidalPoset.I MBnd)
+
+-- Convenience projections.
+
+module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
+  private
+    module GT∞ = Truth.GuardedTruth Sig Q
+
+  KernelPO
+    : (IK : InfiniteKernel Sig Q)
+    → BulkBoundaryPO (Kernel.BB (InfiniteKernel.K IK))
+  KernelPO IK = InfiniteKernel.po IK
+
+  OmegaCPO∂
+    : (IK : InfiniteKernel Sig Q)
+    → GT∞.OmegaCPO (BulkBoundary.bnd (Kernel.BB (InfiniteKernel.K IK)))
+  OmegaCPO∂ IK = InfiniteKernel.ωCPO IK
+
+  FiniteFirst∂
+    : (IK : InfiniteKernel Sig Q)
+    → GT∞.FiniteFirst
+        (BulkBoundary.bnd (Kernel.BB (InfiniteKernel.K IK)))
+        (Kernel.GTruth (InfiniteKernel.K IK))
+        (InfiniteKernel.ωCPO IK)
+  FiniteFirst∂ IK = InfiniteKernel.FF IK

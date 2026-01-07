@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -26,8 +26,21 @@ DecodeExtensional
     (K : Kernel Sig Q)
     (P : Kernel.Code K → Set ℓP)
   → Set (ℓ ⊔ ℓP)
+-- `DecodeExtensional K P` is not an axiom about `decode` (and does not assume any
+-- form of function extensionality). It is a *predicate-compatibility* condition:
+-- `P` must be insensitive to code representation beyond decoded meaning.
 DecodeExtensional K P =
   ∀ γ₁ γ₂ → Kernel.decode K γ₁ ≡ Kernel.decode K γ₂ → P γ₁ → P γ₂
+
+DecodeExtensionalFn
+  : ∀ {ℓ ℓX} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    {X : Set ℓX}
+    (f : Kernel.Code K → X)
+  → Set (ℓ ⊔ ℓX)
+-- Function-specialised variant: `f` respects decoded meaning.
+DecodeExtensionalFn K f =
+  ∀ γ₁ γ₂ → Kernel.decode K γ₁ ≡ Kernel.decode K γ₂ → f γ₁ ≡ f γ₂
 
 record BoundaryFix {ℓ}
                    {Sig : LogOSSignature ℓ}
@@ -69,6 +82,23 @@ record ProvabilityOps {ℓ}
     Imp : Code → Code → Code
     Box : Code → Code
 
+-- Minimal implicational fragment over the model-provided `Imp` constructor.
+-- We keep this separate so metatheorems can precisely state when they need
+-- “plain” propositional reasoning in addition to provability-side axioms.
+
+record ImpRules {ℓ}
+                {Sig : LogOSSignature ℓ}
+                {Q : QAdapter ℓ}
+                (K  : Kernel Sig Q)
+                (Pr : Provability K)
+                (Op : ProvabilityOps K)
+                : Set (lsuc ℓ) where
+  open Provability Pr renaming (Prov to ⊢)
+  open ProvabilityOps Op
+  field
+    mp   : ∀ {φ ψ} → ⊢ (Imp φ ψ) → ⊢ φ → ⊢ ψ
+    impI : ∀ {φ ψ} → (⊢ φ → ⊢ ψ) → ⊢ (Imp φ ψ)
+
 -- HBL (classic):
 -- 1) Necessitation: if ⊢ φ then ⊢ Box φ
 -- 2) Distribution (K): ⊢ Box(φ → ψ) → (Box φ → Box ψ)
@@ -85,5 +115,5 @@ record HBLClassic {ℓ}
   open ProvabilityOps Op
   field
     Necessitation : ∀ φ → ⊢ φ → ⊢ (Box φ)
-    Kdist         : ∀ φ ψ → ⊢ (Imp φ ψ) → (⊢ (Box φ) → ⊢ (Box ψ))
+    Kdist         : ∀ φ ψ → ⊢ (Box (Imp φ ψ)) → (⊢ (Box φ) → ⊢ (Box ψ))
     Four          : ∀ φ → ⊢ (Box φ) → ⊢ (Box (Box φ))

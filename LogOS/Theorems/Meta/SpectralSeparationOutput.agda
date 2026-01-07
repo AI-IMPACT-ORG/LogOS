@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -17,6 +17,7 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
 open import LogOS.Theorems.Meta.Assumptions.Diagonal using (TruthDiagonal; TruthDiagonalC; TruthDiagonal→TruthDiagonalC)
+open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn)
 
 -- A partial “spectral separation output” surface: for each code, either produce
 -- some witness W (inj₁ w) or explicitly leave the input undefined (inj₂ tt).
@@ -94,6 +95,30 @@ record SpectralSeparationOutput {ℓ}
     core : G.SpectralSeparationOutputC
 
   open G.SpectralSeparationOutputC core public
+
+-- A lightweight “oracle core” for spectral separation: fix the witness type and
+-- expose `infer/ext` plus the induced `SpectralSeparationOutput`.
+
+record Oracle {ℓ}
+              {Sig : LogOSSignature ℓ}
+              {Q   : QAdapter ℓ}
+              (K   : Kernel Sig Q)
+              (Witness : Set ℓ)
+              : Set (lsuc (lsuc ℓ)) where
+  open Kernel K
+  field
+    -- `inj₁ w` returns a witness, `inj₂ tt` abstains (no output).
+    infer : Code → Witness ⊎ ⊤ {ℓ = lzero}
+    ext   : DecodeExtensionalFn K infer
+
+  toSSO : SpectralSeparationOutput K
+  toSSO = record
+    { core = record
+        { Witness = Witness
+        ; infer   = infer
+        ; ext     = ext
+        }
+    }
 
 -- A lightweight reflection surface: the theory can *name* a certificate of
 -- totality and reflect it outward to a meta-level “defined everywhere” claim.

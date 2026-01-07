@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -23,7 +23,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Domain.ZFC.SetU.WFGraphCore as Core using (WFGraph)
 open import LogOS.Domain.ZFC.SetU.GraphTreeBridge as Bridge using (SupStructure)
-open import LogOS.Domain.SetTheory.DefinablePackNoInfinity using (ZFAxiomsᵈ-NoInf)
+open import LogOS.Domain.ZFC.SetTheory.DefinablePackNoInfinity using (ZFAxiomsᵈ-NoInf)
 
 -- An explicit, presentations-first ZF model over a well-founded membership graph.
 --
@@ -211,8 +211,8 @@ module _ {ℓ : Level}
         ; _∘∂_ = λ _ _ → ttℓ
         ; _⊕∂_ = λ _ _ → ttℓ
         ; _⊗∂_ = λ _ _ → ttℓ
-        ; ext  = λ _ → ttℓ
-        ; bnd  = λ _ → ttℓ
+        ; from∂ = λ _ → ttℓ
+        ; to∂   = λ _ → ttℓ
         }
     }
 
@@ -286,7 +286,7 @@ module _ {ℓ : Level}
   sat-coh _ _ = intro (λ x → x) (λ x → x)
 
   Strict : ST.StrictLayer (Topℓ {ℓ})
-  Strict = record { Sat_S = λ _ _ → Topℓ {ℓ} ; _⊢S_ = λ _ _ → Topℓ {ℓ} }
+  Strict = record { Sat_S = λ _ _ → Topℓ {ℓ} }
 
   -- Guarded closure/flow: take the identity endomap (closed, idempotent-lax).
   GTruth : GT.GuardedClosure conPoset
@@ -301,34 +301,36 @@ module _ {ℓ : Level}
 
   K : Kernel Sig Q
   K = record
-    { HWorld = HWorld
-    ; BB     = BB
-    ; MBulk  = mon
-    ; MBnd   = mon
-    ; Holo   = Holo
-    ; HTruth = HTruth
-    ; HInv   = HInv
-    ; Sat_H_bnd = Sat_H_bnd
-    ; sat-coh   = sat-coh
-    ; Fml = Topℓ {ℓ}
-    ; Strict = Strict
-    ; TransH = λ _ → emptyN
-    ; coh-LH = λ _ _ → intro (λ x → x) (λ x → x)
-    ; GTruth = GTruth
-    ; Code = N
-    ; encode = λ c → c
-    ; decode = λ γ → γ
-    ; decode∘encode = λ _ → refl
-    ; Guard = λ γ → γ
-    ; Body = λ _ → emptyN
+    { shape = record
+        { HWorld = HWorld
+        ; BB     = BB
+        ; MBulk  = mon
+        ; MBnd   = mon
+        ; Holo   = Holo
+        ; HTruth = HTruth
+        ; HInv   = HInv
+        ; Sat_H_bnd = Sat_H_bnd
+        ; sat-coh   = sat-coh
+        ; Fml = Topℓ {ℓ}
+        ; Strict = Strict
+        ; TransH = λ _ → emptyN
+        ; coh-LH = λ _ _ → intro (λ x → x) (λ x → x)
+        ; Code = N
+        ; encode = λ c → c
+        ; decode = λ γ → γ
+        ; decode∘encode = λ _ → refl
+        ; Guard = λ γ → γ
+        ; Body = λ _ → emptyN
+        ; γ* = emptyN
+        ; γ*-guard = refl⊑N emptyN , refl⊑N emptyN
+        ; reify = λ γ → γ
+        ; reify-decode = λ _ → refl
+        ; Body∂ = λ _ → emptyN
+        ; body-decode = λ _ → refl
+        }
+    ; GTruth       = GTruth
     ; guard-decode = λ _ → refl
-    ; γ* = emptyN
-    ; γ*-guard = refl⊑N emptyN , refl⊑N emptyN
-    ; decode-γ* = refl
-    ; reify = λ γ → γ
-    ; reify-decode = λ _ → refl
-    ; Body∂ = λ _ → emptyN
-    ; body-decode = λ _ → refl
+    ; decode-γ*    = refl
     }
 
   -- Definable ZF interface over this kernel.

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -12,6 +12,7 @@ open import Data.Product using (_×_; _,_; fst; snd)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
+open import LogOS.Minimal.Closure
 open import LogOS.Minimal.Adapter
 
 -- Minimal S/H/G truth interfaces with explicit laxness
@@ -20,10 +21,8 @@ module StrictTruth {ℓ : Level} (Sig : LogOSSignature ℓ) where
   open LogOSSignature Sig
   -- Strict layer interface, supplied by models when needed
   record StrictLayer (Fml : Set ℓ) : Set (lsuc ℓ) where
-    infix 2 _⊢S_
     field
       Sat_S : Cosp → Fml → Set ℓ
-      _⊢S_  : Set ℓ → Set ℓ → Set ℓ
 
 module HomotypicalTruth {ℓ : Level}
                         (Sig : LogOSSignature ℓ)
@@ -69,12 +68,31 @@ module GuardedCore {ℓ : Level} where
       mono        : ∀ {c c'} → _⊑_ c c' → _⊑_ (Flow c) (Flow c')
       infl        : ∀ c → _⊑_ c (Flow c)
       idemp-lax   : ∀ c → _⊑_ (Flow (Flow c)) (Flow c)
-      -- Axiom: least fixed point characterisation via inequalities
+      -- Axiom: chosen (lax) fixed point witness via inequalities.
+      -- Leastness / induction principles are derived separately once additional
+      -- domain structure (e.g. ωCPO + finite-first approximants) is provided.
       Th*         : Con
       Th*-fixed   : (_⊑_ (Th*) (Flow Th*)) × (_⊑_ (Flow Th*) Th*)
       -- Approximants Th₀, Th₁, … and dcpo structure can be provided by models
 
-  -- Flow homomorphism (lax): map ∘ F₁ ⊑ F₂ ∘ map and map Th*₁ ⊑ Th*₂
+  -- Forget the distinguished fixed point: a guarded closure always yields a
+  -- plain closure operator.
+  closureOfGuardedClosure
+    : ∀ {CP : ConPoset ℓ}
+    → GuardedClosure CP → ClosureOp CP
+  closureOfGuardedClosure G =
+    record
+      { cl        = GuardedClosure.Flow G
+      ; mono      = GuardedClosure.mono G
+      ; infl      = GuardedClosure.infl G
+      ; idemp-lax = GuardedClosure.idemp-lax G
+      }
+
+  -- Flow homomorphism (lax): map ∘ F₁ ⊑ F₂ ∘ map and map Th*₁ ⊑ Th*₂.
+  --
+  -- Note: monotonicity of `map` itself (w.r.t. `_⊑_`) is intentionally not part
+  -- of this record; it is usually supplied by the surrounding structure (e.g.
+  -- kernel/constraint algebra homs provide a `MonoMap` separately).
   record FlowHom (CP₁ CP₂ : ConPoset ℓ)
                  (G₁ : GuardedClosure CP₁)
                  (G₂ : GuardedClosure CP₂)
@@ -107,6 +125,18 @@ module GuardedCore {ℓ : Level} where
       idemp-sat  : ∀ c → _⊑_ (Flow sat (Flow sat c)) (Flow sat c)
       Th*        : Con
       Th*-fixed  : (_⊑_ Th* (Flow sat Th*)) × (_⊑_ (Flow sat Th*) Th*)
+
+  -- Saturation grade induces a (plain) closure operator.
+  closureOfGradedClosure-sat
+    : ∀ {Q : QAdapter ℓ} {CP : ConPoset ℓ}
+    → GradedClosure Q CP → ClosureOp CP
+  closureOfGradedClosure-sat GC =
+    record
+      { cl        = GradedClosure.Flow GC (GradedClosure.sat GC)
+      ; mono      = λ {c} {c'} le → GradedClosure.mono GC le
+      ; infl      = GradedClosure.infl-sat GC
+      ; idemp-lax = GradedClosure.idemp-sat GC
+      }
 
   -- Lax grade morphism (monotone, monoid-compatible).
   record GradeHom (Q₁ Q₂ : QAdapter ℓ) : Set (lsuc ℓ) where
@@ -277,7 +307,7 @@ module GuardedCore {ℓ : Level} where
   forgetGradedClosure {Q = Q} {CP = CP} GC =
     record
       { Flow      = Flow sat
-      ; mono      = λ {c} {c'} le → mono {g = sat} le
+      ; mono      = λ {c} {c'} le → GradedClosure.mono GC {g = sat} le
       ; infl      = infl-sat
       ; idemp-lax = idemp-sat
       ; Th*       = Th*
@@ -295,6 +325,102 @@ module GuardedCore {ℓ : Level} where
       supω   : (ℕ → Con) → Con
       ub     : ∀ (f : ℕ → Con) (n : ℕ) → _⊑_ (f n) (supω f)
       least  : ∀ (f : ℕ → Con) (x : Con) → (∀ n → _⊑_ (f n) x) → _⊑_ (supω f) x
+
+  -- Generic Kleene μ-calculus on a boundary preorder:
+  -- define μ as the ω-sup of approximants from ⊥, and derive Park/least-pre-fixed
+  -- point induction. This is independent of any distinguished `Th*`.
+
+  module Kleene
+    {CP : ConPoset ℓ}
+    (ωCPO : OmegaCPO CP)
+    where
+    open ConPoset CP
+    open OmegaCPO ωCPO
+
+    -- Iteration from ⊥ (Kleene approximants).
+    iter : (Con → Con) → ℕ → Con
+    iter F zero    = ⊥
+    iter F (suc n) = F (iter F n)
+
+    μ : (Con → Con) → Con
+    μ F = supω (iter F)
+
+    -- “Unfold-left”: μF is always below one more step (no continuity needed).
+    μ-unfold-left
+      : (F : Con → Con)
+      → MonoOn CP F
+      → _⊑_ (μ F) (F (μ F))
+    μ-unfold-left F monoF =
+      least (iter F) (F (μ F)) ubF
+      where
+        ubF : ∀ n → _⊑_ (iter F n) (F (μ F))
+        ubF zero = isBot (F (μ F))
+        ubF (suc n) = monoF (ub (iter F) n)
+
+    -- Park/least-pre-fixed-point induction for μF.
+    μ-induction
+      : (F : Con → Con)
+      → MonoOn CP F
+      → ∀ c → _⊑_ (F c) c → _⊑_ (μ F) c
+    μ-induction F monoF c pre =
+      least (iter F) c (iter≤c pre)
+      where
+        iter≤c : _⊑_ (F c) c → ∀ n → _⊑_ (iter F n) c
+        iter≤c _ zero = isBot c
+        iter≤c pre (suc n) =
+          ConPoset.trans CP (monoF (iter≤c pre n)) pre
+
+    -- Scott-continuity (lax) for an endomap on an ωCPO preorder.
+    record ScottContinuous (F : Con → Con) : Set (lsuc ℓ) where
+      field
+        cont-ω : ∀ (f : ℕ → Con)
+                 (mono-chain : ∀ n → _⊑_ (f n) (f (suc n)))
+               → _⊑_ (F (supω f)) (supω (λ n → F (f n)))
+
+    -- Tail-sup is always bounded by the full sup: sup (f ∘ suc) ⊑ sup f.
+    supω-tail≤
+      : (f : ℕ → Con)
+      → _⊑_ (supω (λ n → f (suc n))) (supω f)
+    supω-tail≤ f =
+      least (λ n → f (suc n)) (supω f) (λ n → ub f (suc n))
+
+    -- Any inflationary endomap yields an increasing Kleene chain.
+    iter-mono-chain-infl
+      : (F : Con → Con)
+      → (inflF : ∀ c → _⊑_ c (F c))
+      → ∀ n → _⊑_ (iter F n) (iter F (suc n))
+    iter-mono-chain-infl F inflF zero =
+      isBot (F ⊥)
+    iter-mono-chain-infl F inflF (suc n) =
+      inflF (iter F (suc n))
+
+    -- “Unfold-right”: under Scott continuity (and any chosen chain witness),
+    -- μF is also a pre-fixed point: F (μF) ⊑ μF.
+    μ-unfold-right
+      : (F : Con → Con)
+      → ScottContinuous F
+      → (mono-chain : ∀ n → _⊑_ (iter F n) (iter F (suc n)))
+      → _⊑_ (F (μ F)) (μ F)
+    μ-unfold-right F SC mono-chain =
+      ConPoset.trans CP step₁ step₂
+      where
+        open ScottContinuous SC
+        step₁ : _⊑_ (F (μ F)) (supω (λ n → F (iter F n)))
+        step₁ = cont-ω (iter F) mono-chain
+
+        step₂ : _⊑_ (supω (λ n → F (iter F n))) (μ F)
+        step₂ =
+          -- F (iter n) is definitionally iter (suc n)
+          supω-tail≤ (iter F)
+
+    -- Turnkey version: derive the chain witness from inflationarity.
+    μ-unfold-right-infl
+      : (F : Con → Con)
+      → ScottContinuous F
+      → (inflF : ∀ c → _⊑_ c (F c))
+      → _⊑_ (F (μ F)) (μ F)
+    μ-unfold-right-infl F SC inflF =
+      μ-unfold-right F SC (iter-mono-chain-infl F inflF)
 
   -- Optional continuity and finite-first specification, layered over GuardedClosure
   record FiniteFirst (CP : ConPoset ℓ)

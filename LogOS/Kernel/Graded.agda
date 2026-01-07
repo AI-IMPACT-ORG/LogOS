@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -11,11 +11,9 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
-open import LogOS.Minimal.Adjunction
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Syntax.Prop as Prop
+open import LogOS.Kernel.Core as Core
 
 open Truth.GuardedCore public using
   ( GradedClosure
@@ -25,84 +23,32 @@ open Truth.GuardedCore public using
   ; forgetGradedClosure
   )
 
--- Graded kernel: same S/H/Code layers as Kernel, but guarded flow is graded.
-record GradedKernel {ℓ : Level}
-                    (Sig : LogOSSignature ℓ)
-                    (Q   : QAdapter ℓ)
-                    : Set (lsuc (lsuc ℓ)) where
-  open LogOSSignature Sig
-  module W = Worlds Sig
-  open Truth.StrictTruth Sig
+-- Graded kernel: same shared shape as `Kernel`, but guarded flow is grade-indexed.
+record GradedKernel {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
+  : Set (lsuc (lsuc ℓ)) where
   field
-    -- H-tier: world context + Q-weighted flow
-    HWorld : W.WorldH Q
-
-  private
-    module HT = Truth.HomotypicalTruth Sig Q HWorld
+    shape : Core.KernelShape Sig Q
+  open Core.KernelShape shape public
 
   field
-    -- Constraints and lax monoidal adjunction
-    BB     : BulkBoundary ℓ
-    MBulk  : MonoidalPoset (BulkBoundary.bulk BB)
-    MBnd   : MonoidalPoset (BulkBoundary.bnd  BB)
-    Holo   : LaxMonoidalAdjunction BB MBulk MBnd
+    -- G-tier: graded guarded closure on boundary constraints
+    GTruth     : GradedClosure Q (BulkBoundary.bnd (Core.KernelShape.BB shape))
+    step-grade : QAdapter.Scale Q
 
-    -- H-tier satisfaction and invariance (dependent on the chosen world)
-    HTruth : HT.HLayer BB
-    HInv   : HT.Invariance BB
+    -- Kernel coherence: `Guard` internalises the one-step (step-grade) flow at decode level.
+    guard-decode
+      : ∀ γ
+      → Core.KernelShape.decode shape (Core.KernelShape.Guard shape γ)
+        ≡ GradedClosure.Flow GTruth step-grade (Core.KernelShape.decode shape γ)
 
-    -- Boundary satisfaction + coherence (optional, internalized)
-    Sat_H_bnd : ∂Cosp → (ConPoset.Con (BulkBoundary.bnd BB)) → Set ℓ
-    sat-coh   : ∀ (w : Cosp) (c : ConPoset.Con (BulkBoundary.bnd BB)) →
-                Prop._↔_ (HT.HLayer.Sat_H HTruth w c)
-                         (Sat_H_bnd (bnd w) c)
-
-    -- S-tier: strict logic interface and translation into H-tier constraints
-    Fml    : Set ℓ
-    Strict : StrictLayer Fml
-    TransH : Fml → (ConPoset.Con (BulkBoundary.bnd BB))
-    coh-LH : ∀ (w : Cosp) (φ : Fml) →
-             Prop._↔_ (StrictLayer.Sat_S Strict w φ)
-                      (HT.HLayer.Sat_H HTruth w (TransH φ))
-
-    -- G-tier: graded guarded truth closure on boundary constraints
-    GTruth : GradedClosure Q (BulkBoundary.bnd BB)
-
-    -- Code layer: guarded reflection
-    Code   : Set ℓ
-    encode : (ConPoset.Con (BulkBoundary.bnd BB)) → Code
-    decode : Code → (ConPoset.Con (BulkBoundary.bnd BB))
-    decode∘encode : ∀ c → decode (encode c) ≡ c
-    Guard         : Code → Code
-    Body          : Code → Code
-    step-grade    : QAdapter.Scale Q
-    guard-decode  : ∀ γ → decode (Guard γ) ≡ (GradedClosure.Flow GTruth step-grade) (decode γ)
-    -- Guarded fixpoint (saturated grade from GTruth)
-    γ*            : Code
-    -- `γ*` is a code-level witness for the guarded fixed point, but we only
-    -- require closure-style strength: stability under one `FlowCode` step is
-    -- expressed as boundary preorder inequalities (not a definitional code
-    -- equality). This avoids silently conflating step-grade Flow with
-    -- saturation-grade fixed points.
-    γ*-guard      : (ConPoset._⊑_ (BulkBoundary.bnd BB)
-                      (decode γ*)
-                      (decode (Guard (Body γ*))))
-                    × (ConPoset._⊑_ (BulkBoundary.bnd BB)
-                        (decode (Guard (Body γ*)))
-                        (decode γ*))
-    decode-γ*     : decode γ* ≡ (GradedClosure.Th* GTruth)
-
-    -- Safe self-reflection (observational)
-    reify         : Code → Code
-    reify-decode  : ∀ γ → decode (reify γ) ≡ decode γ
-    Body∂         : (ConPoset.Con (BulkBoundary.bnd BB)) → (ConPoset.Con (BulkBoundary.bnd BB))
-    body-decode   : ∀ γ → decode (Body γ) ≡ Body∂ (decode γ)
+    -- Distinguished code witness decodes to the saturation-grade fixed point.
+    decode-γ* : Core.KernelShape.decode shape (Core.KernelShape.γ* shape) ≡ GradedClosure.Th* GTruth
 
 -- Derived code-level Flow (Guard ∘ Body).
 FlowCode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q) → GradedKernel.Code K → GradedKernel.Code K
-FlowCode K γ = GradedKernel.Guard K (GradedKernel.Body K γ)
+FlowCode K = Core.FlowCodeShape (GradedKernel.shape K)
 
 decode-FlowCode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -138,9 +84,9 @@ guard-decode≤sat
         (GradedKernel.decode K γ))
 guard-decode≤sat K γ =
   let open GradedKernel K
-      CP = BulkBoundary.bnd BB
-      le = GradedClosure.mono-grade GTruth (step≤sat K) (decode γ)
-  in subst (λ x → ConPoset._⊑_ CP x (GradedClosure.Flow GTruth (GradedClosure.sat GTruth) (decode γ)))
+      CP = BulkBoundary.bnd (GradedKernel.BB K)
+      le = GradedClosure.mono-grade GTruth (step≤sat K) (GradedKernel.decode K γ)
+  in subst (λ x → ConPoset._⊑_ CP x (GradedClosure.Flow GTruth (GradedClosure.sat GTruth) (GradedKernel.decode K γ)))
            (sym (guard-decode γ))
            le
 
@@ -153,17 +99,8 @@ decode-FlowCode≤sat
         (GradedKernel.Body∂ K (GradedKernel.decode K γ)))
 decode-FlowCode≤sat K γ =
   let open GradedKernel K
-      CP = BulkBoundary.bnd BB
-      le = GradedClosure.mono-grade GTruth (step≤sat K) (Body∂ (decode γ))
-  in subst (λ x → ConPoset._⊑_ CP x (GradedClosure.Flow GTruth (GradedClosure.sat GTruth) (Body∂ (decode γ))))
+      CP = BulkBoundary.bnd (GradedKernel.BB K)
+      le = GradedClosure.mono-grade GTruth (step≤sat K) (GradedKernel.Body∂ K (GradedKernel.decode K γ))
+  in subst (λ x → ConPoset._⊑_ CP x (GradedClosure.Flow GTruth (GradedClosure.sat GTruth) (GradedKernel.Body∂ K (GradedKernel.decode K γ))))
            (sym (decode-FlowCode K γ))
            le
-
-record BodyMonotone
-  {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-  (K : GradedKernel Sig Q) : Set (lsuc (lsuc ℓ)) where
-  field
-    mono-Body∂
-      : ∀ {c d}
-      → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) c d
-      → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) (GradedKernel.Body∂ K c) (GradedKernel.Body∂ K d)

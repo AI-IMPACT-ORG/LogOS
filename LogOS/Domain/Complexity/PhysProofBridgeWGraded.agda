@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -19,7 +19,6 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Kernel.Graded
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
 import LogOS.Domain.Complexity.PhysicsClassesWGraded as PCW
-import LogOS.Domain.Complexity.TruthRoute as TR
 import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TRG
 import LogOS.Domain.Complexity.PolyGrade as PG
 
@@ -87,7 +86,7 @@ module Kernel
   (WSize : GradedKernel.Code K → ℕ)
   where
 
-  module R = TR.For K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  module R = TRG.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
   module C = PCW.Kernel K Input Size DetRun VerRun VerRunWith IsPoly gradeBound WSize
 
   open C public using (Con; PhysP; PhysNPw; SuperPolyHardness; notPhysP)

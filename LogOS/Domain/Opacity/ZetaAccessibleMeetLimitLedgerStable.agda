@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -18,6 +18,7 @@ open import LogOS.Domain.Opacity.NumberTheory.LFunction.PartitionZetaBridge as P
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
 
 import LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStable as AWLMS
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 -- ζ-facing wrapper for the “accessible Weil + meet-limit” route, using the
 -- stable-truth refinement:
@@ -63,9 +64,8 @@ module QuartetZetaMeetLimitLedgerStable
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards (RiemannSpectralFromFacts F)
 
-  record Pack (A : Assumptions) : Set (lsuc (ℓ ⊔ lsuc ℓW)) where
-    field
-      claim : Claim A
+  module Q = Quartet.Make Assumptions Claim
+  open Q public using (Pack; assumptionsOf; claimOf)
 
-  mkPack : (A : Assumptions) → Pack A
-  mkPack A = record { claim = ZetaAccessibleMeetLimitLedgerStable.GRH_Without_Vacuity_Guardsζ A }
+  mkPack : (A : Assumptions) → Pack
+  mkPack = Q.mkPack (ZetaAccessibleMeetLimitLedgerStable.GRH_Without_Vacuity_Guardsζ {F = F})

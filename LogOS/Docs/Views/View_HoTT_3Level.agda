@@ -1,18 +1,15 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
 {-# OPTIONS --safe #-}
 module LogOS.Docs.Views.View_HoTT_3Level where
 
--- Documentation view: the S/H/G tier structure and its kernel coherences.
+-- Typechecked “view surface” for the 3-level HoTT-style reading (S/H/G).
+--
+-- Keep this module lightweight to avoid name clashes when imported alongside
+-- other views/tests.
 
 open import LogOS.Prelude public
-open import LogOS.Minimal.Tier public
-open import LogOS.Minimal.Con public
-open import LogOS.Minimal.Truth public
-open import LogOS.Kernel public
-open import LogOS.Docs.Views.KernelProjection public
-

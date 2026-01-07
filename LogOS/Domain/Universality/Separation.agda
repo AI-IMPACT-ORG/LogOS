@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -13,8 +13,7 @@ open import LogOS.Domain.Universality.ComplexitySpectrum
 open import Data.Product using (Σ; _,_)
 open import Data.Nat using (ℕ)
 open import LogOS.Domain.Universality.Core
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import LogOS.Syntax.Prop using (¬_)
+open import LogOS.Syntax.Prop using (¬_; Dec)
 open import LogOS.Domain.Universality.Physics
 
 -- Compatibility between encodings and operator semantics (abstract, model-provided)
@@ -25,13 +24,20 @@ record EncodingsCompat {ℓ : Level}
                        : Set (lsuc (lsuc ℓ)) where
   open ComplexityModel CM
   open EvolOperator EO
+
+  -- Verifier acceptance witness: there exists a code/witness and a time bound
+  -- such that the verifier runs within that time.
+  VerAccepts : Input → Set lzero
+  VerAccepts x = Σ ℕ (λ n → Σ ToyUCode (λ w → TimeLeV n (encV x)))
+
   field
     DetSub : H → Set ℓ
     VerSub : H → Set ℓ
     inDet  : ∀ x → DetSub (embed (encD x))
     inVer  : ∀ x → VerSub (embed (encV x))
-    -- Acceptance semantics links verifier complexity to acceptance in H (model-provided)
-    AcceptLink : ∀ x → (Σ ℕ (λ n → Σ ToyUCode (λ w → TimeLeV n (encV x)))) ⊎ ¬ (Σ ℕ (λ n → Σ ToyUCode (λ w → TimeLeV n (encV x))))
+
+    -- Acceptance semantics links verifier complexity to acceptance in H (model-provided).
+    AcceptLink : ∀ x → Dec (VerAccepts x)
 
 -- Full separation pack: complexity, operator, physics, compatibility ⇒ separation claim
 

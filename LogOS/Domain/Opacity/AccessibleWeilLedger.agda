@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -21,6 +21,7 @@ open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSp
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
 
 import LogOS.Domain.Opacity.ZetaTruthLedger as Ledger
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 -- General (L-function–agnostic) ledger: parameterize by a spectral adapter RS.
 -- This is the clean statement for “GRH_Without_Vacuity_Guards for an L-function”, once RS packages:
@@ -122,12 +123,11 @@ module QuartetRS
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  record Pack (A : Assumptions) : Set (lsuc (ℓ ⊔ ℓW ⊔ lsuc ℓC)) where
-    field
-      claim : Claim A
+  module Q = Quartet.Make Assumptions Claim
+  open Q public using (Pack; assumptionsOf; claimOf)
 
-  mkPack : (A : Assumptions) → Pack A
-  mkPack A = record { claim = GRH_Without_Vacuity_Guards_from_AccessibleWeilLedgerRS {ℓC = ℓC} K RS A }
+  mkPack : (A : Assumptions) → Pack
+  mkPack = Q.mkPack (GRH_Without_Vacuity_Guards_from_AccessibleWeilLedgerRS {ℓC = ℓC} K RS)
 
 module QuartetZeta
   {ℓ ℓW ℓC}
@@ -142,9 +142,8 @@ module QuartetZeta
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards (RiemannSpectralFromFacts F)
 
-  record Pack (A : Assumptions) : Set (lsuc (ℓ ⊔ ℓW ⊔ lsuc ℓC)) where
-    field
-      claim : Claim A
+  module Q = Quartet.Make Assumptions Claim
+  open Q public using (Pack; assumptionsOf; claimOf)
 
-  mkPack : (A : Assumptions) → Pack A
-  mkPack A = record { claim = GRH_Without_Vacuity_Guards_from_AccessibleWeilLedger {ℓC = ℓC} K F A }
+  mkPack : (A : Assumptions) → Pack
+  mkPack = Q.mkPack (GRH_Without_Vacuity_Guards_from_AccessibleWeilLedger {ℓC = ℓC} K F)

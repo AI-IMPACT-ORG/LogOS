@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -29,19 +29,22 @@ import LogOS.Computation.Scheme as Sch
 defaultAssumptions : Assumptions
 defaultAssumptions = mkAssumptions
 
-defaultPack : Pack defaultAssumptions
+defaultPack : Pack
 defaultPack = mkPack defaultAssumptions
 
-claimOf : ∀ {A} → Pack A → Claim A
-claimOf = Pack.claim
+assumptionsOf : Pack → Assumptions
+assumptionsOf = Pack.assumptions
 
-defaultClaim : Claim defaultAssumptions
+claimOf : (p : Pack) → Claim (assumptionsOf p)
+claimOf p = Pack.claim p
+
+defaultClaim : Claim (assumptionsOf defaultPack)
 defaultClaim = claimOf defaultPack
 
 alg : ∀ {A} → Claim A → Sch.Algorithm PATask ℕ
 alg = Claim.Alg
 
-algOf : ∀ {A} → Pack A → Sch.Algorithm PATask ℕ
+algOf : Pack → Sch.Algorithm PATask ℕ
 algOf p = alg (claimOf p)
 
 minskyImplements

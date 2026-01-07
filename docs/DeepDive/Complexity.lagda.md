@@ -1,45 +1,18 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
 % Complexity — LogOS (Verification vs Search)
 
 ```agda
+{-# OPTIONS --safe #-}
 module docs.DeepDive.Complexity where
 
 -- Sync guard: these imports anchor the module paths this document references.
 -- If they drift, the docs build fails.
-import LogOS.Models.Complexity.Core
-import LogOS.Domain.Complexity.PvsNP
-import LogOS.Domain.Complexity.TruthRoute_Grade_Only
-import LogOS.Domain.Complexity.TruthRoute
-import LogOS.Domain.Complexity.StandardCMLaws
-import LogOS.Domain.Complexity.PvsNP_Grade_Only
-import LogOS.Domain.Complexity.ClassicalPvsNP
-import LogOS.Domain.Complexity.PvsNPFromInfo_Grade_Only
-import LogOS.Domain.Complexity.PolyGrade
-import LogOS.Domain.Complexity.ProofSearchSeparation
-import LogOS.Domain.Complexity.ProofSearchBoundary
-import LogOS.Domain.Complexity.ResourceSchemaG
-import LogOS.Domain.Complexity.ResourceSchemaGraded
-import LogOS.Domain.Complexity.ObservabilityBudgetG
-import LogOS.Domain.Complexity.ObservabilityBudgetGraded
-import LogOS.Domain.Complexity.ProofSearchOpacitySpine
-import LogOS.Domain.Complexity.InfoBottleneckAdaptersG
-import LogOS.Domain.Complexity.InfoBottleneckAdaptersGraded
-import LogOS.Domain.Complexity.ProofSearchCapstoneGraded
-import LogOS.Domain.Complexity.PhysToTruthRouteBridge
-import LogOS.Domain.Complexity.Examples.GoldenPath
-import LogOS.Domain.Complexity.Examples.GoldenPathMinsky
-import LogOS.Domain.Complexity.Targets.ProofSearchChainedTheoremGraded
-import LogOS.Domain.Complexity.Targets.ProofSearchQuantumPivotGraded
-import LogOS.Domain.Complexity.Targets.ProofSearchGraded
-import LogOS.Domain.Complexity.Targets.SATPhysicalSeparationCostGuardsGraded
-
--- Quantitative “opacity” bridge (budgeted observers/certificates).
-import LogOS.Theorems.Meta.BudgetedSeparationOutput
+import LogOS.Packs.Complexity.Surface
 import LogOS.Theorems.Meta.BudgetedTruthPositivity
 ```
 
@@ -64,15 +37,17 @@ LogOS internalises the split:
   unbounded existential (a “global OR”), and that is exactly where diagonal /
   observability bottlenecks appear.
 
-This is packaged as the `ProofSearch*` family under `LogOS/Domain/Complexity/*` (with recommended wrappers under `LogOS/Models/Complexity/*`).
+This is packaged as the `ProofSearch`‑prefixed family under `LogOS/Domain/Complexity/*`
+(with curated pack surfaces under `LogOS/Packs/Complexity/*`).
 
-## Core ledger (GRH-aligned, proof-search first)
+## Core ledger (opacity-aligned, proof-search first)
 
 The strongest LogOS-native separation story is *proof-search opacity*:
 
 - `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (partial proof-search oracle + budgeted opacity barrier).
-- Ledger-style assumptions mirror GRH/opacity: diagonalization (`TruthDiagonalC`), decode-extensional oracle,
-  decode-extensional budget (`BudgetBy`), a physical cost model (`BudgetedSeparationOutput.WitnessCost` with `GeneralB`),
+- Ledger-style assumptions mirror opacity/observability: diagonalization (`TruthDiagonalC`), decode-extensional oracle,
+  decode-extensional budget (`BudgetBy`), a witness-cost model (`BudgetedSeparationOutput.WitnessCost`)
+  (and optionally a general budget carrier via `BudgetedSeparationOutput.GeneralB.WitnessCostB`),
   and an explicit non-vacuity guard (`VacuityGuards`).
 - This yields a direct internal separation between proof search and verification as algorithms,
   without asserting classical P != NP.
@@ -91,15 +66,18 @@ with `Pack.claim` as the canonical extractor.
    - Generic names: `DetPolyTimeBoundedG` / `PolyWitnessedTotalVerificationG` (via `TruthRoute_Grade_Only.GradeBounded`).
    - Core implementation: `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda`.
 
-2. **Witness-size refinement (within `TruthRoute`):**
-   - `TruthRoute.For.WithWitnessSize` (adds explicit witness-size bounds to the verifier interface).
+2. **Witness-size refinement (within `TruthRoute_Grade_Only.ForNat`):**
+   - `TruthRoute_Grade_Only.ForNat.WithWitnessSize` (adds explicit witness-size bounds to the verifier interface).
 
-3. **Correctness-carrying interface (within `TruthRoute`):**
-   - `TruthRoute.For.InP` and `TruthRoute.For.WithWitnessSize.InNP` (language-relative, correctness carried explicitly).
+3. **Correctness-carrying interface (within `TruthRoute_Grade_Only.ForNat`):**
+   - `TruthRoute_Grade_Only.ForNat.InP` and `TruthRoute_Grade_Only.ForNat.WithWitnessSize.InNP`
+     (language-relative, correctness carried explicitly).
 
 4. **Classical interface (literature-aligned, ℕ-bound):** `LogOS/Domain/Complexity/ClassicalPvsNP.agda`
    - Thin renaming of the grade-native physical classes specialized to ℕ-costs via `QNat` + `gradeBound = τ`.
-   - `FromTruthRoute` reinterprets `TruthRoute.For.InP` / `TruthRoute.For.WithWitnessSize.InNP` as classical `InP` / `InNP` once you map
+   - `FromTruthRoute` reinterprets
+     `TruthRoute_Grade_Only.ForNat.InP` / `TruthRoute_Grade_Only.ForNat.WithWitnessSize.InNP`
+     as classical `InP` / `InNP` once you map
      `ComplexityModel.poly` into the shared polynomial predicate.
 
 Canonical conditional route (kernel-native, minimal axioms):
@@ -109,17 +87,17 @@ Canonical conditional route (kernel-native, minimal axioms):
 - This is the **default** high-assurance story: minimal assumptions, explicit dependencies.
   For ℕ polynomial predicates, use `PvsNPFromInfo_Grade_Only.FromNat` (via `PolyGrade.FromNat`).
 
-The “strong-by-default” packaged claim object is:
+Legacy wrapper (packaging-only, not part of the curated surface):
 
-- `LogOS/Domain/Complexity/PvsNP.agda` (packaging of `InNP` + `¬ InP`, no derivation)
+- `LogOS/Domain/Complexity/Legacy/PvsNP.agda` (repackages `InNP` + `¬ InP`, no derivation)
 
-Non-deterministic spine (shared with GRH/opacity):
+Non-deterministic spine (shared with opacity/observability):
 - `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (proof-search oracle + budgeted opacity barrier)
   - General budgets: `ProofSearchOpacitySpine.For.Budgeted.GeneralB` (swap in any budget carrier).
 
 Other routes:
-- `TruthRoute_Grade_Only` (grade-only) is the canonical kernel-native story.
-- `TruthRoute` (ℕ-bound via `gradeBound`) is a deprecated compatibility wrapper for literature-aligned interfaces.
+- `TruthRoute_Grade_Only` is the canonical kernel-native story (grade-indexed bounds).
+- ℕ-bounded convenience interfaces live in `TruthRoute_Grade_Only.ForNat` (explicit `gradeBound : ℕ → grade`).
 
 ## Quantitative bite: budgeted observability
 
@@ -142,7 +120,7 @@ that budget discipline.
 
 - “Centerpiece” entrypoint (re-exports the story modules):
   - Implementation: `LogOS/Domain/Complexity/ProofSearchSeparation.agda`
-  - Curated surface: `LogOS/Models/Complexity/Core.agda`
+  - Curated surface: `LogOS/Packs/Complexity/Core.agda`
 - Proof-search boundary (local checker → bounded search → unbounded search):
   - `LogOS/Domain/Complexity/ProofSearchBoundary.agda`
 - Triple-axis resource schema (time + non-unitary events + classical info):
@@ -150,9 +128,7 @@ that budget discipline.
     `LogOS/Domain/Complexity/ObservabilityBudgetG.agda`
   - GradeBound + ℕ-polynomial wrapper: `LogOS/Domain/Complexity/ResourceSchemaGraded.agda`,
     `LogOS/Domain/Complexity/ObservabilityBudgetGraded.agda`
-  - LOB to info-bottleneck adapters: `LogOS/Domain/Complexity/InfoBottleneckAdaptersG.agda`
-    (grade-native) and `LogOS/Domain/Complexity/InfoBottleneckAdaptersGraded.agda`
-    (`FromLOBGradePG` grade-bound, `FromLOB` compat)
+  - LOB to info-bottleneck adapters: `LogOS/Domain/Complexity/InfoBottleneckAdaptersG.agda` (grade-native `FromLOB`)
 - Capstone theorem (generic “physics ⇒ no poly-budget decider”):
   - Grade-native core: `LogOS/Domain/Complexity/ProofSearchCapstoneGraded.agda`,
     `LogOS/Domain/Complexity/Targets/ProofSearchChainedTheoremGraded.agda`
@@ -179,19 +155,19 @@ that budget discipline.
 ## Curated import (namespaced)
 
 ```text
-open import LogOS.Models.Complexity.Core as Complexity
+open import LogOS.Packs.Complexity.Surface as Complexity
 ```
 
 From that import, the stable surface exposes the proof-search boundary, the
 resource schema, and the main capstone/bridge lemmas as a single navigable API.
-For the P vs NP surface via the same import, use:
+For the P vs NP surfaces via the same import, use:
 
-- `Complexity.PvsNP` (re-exported namespace)
-- `Complexity.ClassicalPvsNP` (re-exported namespace)
+- `Complexity.PvsNP_Grade_Only` (grade-native kernel route)
+- `Complexity.ClassicalPvsNP` (literature-aligned surface)
 - `Complexity.PvsNPFromInfo_Grade_Only` (minimal info-theory route)
 
 Safe P/NP-only import (curated to avoid generic/compat surfaces):
-`LogOS/Models/Complexity/PvsNP/Public.agda`.
+`LogOS/Packs/Complexity/PvsNP/Public.agda`.
 
 ## Audit build (one command)
 

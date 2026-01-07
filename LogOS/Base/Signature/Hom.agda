@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -27,13 +27,13 @@ record SigHom {ℓ : Level} (Sig₁ Sig₂ : LogOSSignature ℓ) : Set (lsuc ℓ
     ( Iface to Iface₁; Cosp to Cosp₁; ∂Cosp to ∂Cosp₁
     ; src to src₁; tgt to tgt₁; idC to idC₁; _∘C_ to _∘C₁_; _⊕C_ to _⊕C₁_; _⊗C_ to _⊗C₁_
     ; src∂ to src∂₁; tgt∂ to tgt∂₁; id∂ to id∂₁; _∘∂_ to _∘∂₁_; _⊕∂_ to _⊕∂₁_; _⊗∂_ to _⊗∂₁_
-    ; ext to ext₁; bnd to bnd₁
+    ; from∂ to from∂₁; to∂ to to∂₁
     )
   open LogOSSignature Sig₂ renaming
     ( Iface to Iface₂; Cosp to Cosp₂; ∂Cosp to ∂Cosp₂
     ; src to src₂; tgt to tgt₂; idC to idC₂; _∘C_ to _∘C₂_; _⊕C_ to _⊕C₂_; _⊗C_ to _⊗C₂_
     ; src∂ to src∂₂; tgt∂ to tgt∂₂; id∂ to id∂₂; _∘∂_ to _∘∂₂_; _⊕∂_ to _⊕∂₂_; _⊗∂_ to _⊗∂₂_
-    ; ext to ext₂; bnd to bnd₂
+    ; from∂ to from∂₂; to∂ to to∂₂
     )
   field
     mapIface  : Iface₁ → Iface₂
@@ -57,8 +57,8 @@ record SigHom {ℓ : Level} (Sig₁ Sig₂ : LogOSSignature ℓ) : Set (lsuc ℓ
     ⊗∂-pres   : ∀ f g → map∂Cosp (f ⊗∂₁ g) ≡ (map∂Cosp f ⊗∂₂ map∂Cosp g)
 
     -- Bulk/boundary maps
-    ext-pres  : ∀ w → mapCosp (ext₁ w) ≡ ext₂ (map∂Cosp w)
-    bnd-pres  : ∀ w → map∂Cosp (bnd₁ w) ≡ bnd₂ (mapCosp w)
+    from∂-pres : ∀ w → mapCosp (from∂₁ w) ≡ from∂₂ (map∂Cosp w)
+    to∂-pres   : ∀ w → map∂Cosp (to∂₁ w) ≡ to∂₂ (mapCosp w)
 
 idSigHom : ∀ {ℓ} (Sig : LogOSSignature ℓ) → SigHom Sig Sig
 idSigHom Sig = record
@@ -77,8 +77,8 @@ idSigHom Sig = record
   ; ∘∂-pres   = λ _ _ → refl
   ; ⊕∂-pres   = λ _ _ → refl
   ; ⊗∂-pres   = λ _ _ → refl
-  ; ext-pres  = λ _ → refl
-  ; bnd-pres  = λ _ → refl
+  ; from∂-pres = λ _ → refl
+  ; to∂-pres   = λ _ → refl
   }
 
 composeSigHom
@@ -112,6 +112,12 @@ composeSigHom σ τ = record
   ; ⊗∂-pres   = λ f g →
                   trans (cong (SigHom.map∂Cosp τ) (SigHom.⊗∂-pres σ f g))
                         (SigHom.⊗∂-pres τ (SigHom.map∂Cosp σ f) (SigHom.map∂Cosp σ g))
-  ; ext-pres  = λ w → trans (cong (SigHom.mapCosp τ) (SigHom.ext-pres σ w)) (SigHom.ext-pres τ (SigHom.map∂Cosp σ w))
-  ; bnd-pres  = λ w → trans (cong (SigHom.map∂Cosp τ) (SigHom.bnd-pres σ w)) (SigHom.bnd-pres τ (SigHom.mapCosp σ w))
+  ; from∂-pres = λ w →
+      trans
+        (cong (SigHom.mapCosp τ) (SigHom.from∂-pres σ w))
+        (SigHom.from∂-pres τ (SigHom.map∂Cosp σ w))
+  ; to∂-pres   = λ w →
+      trans
+        (cong (SigHom.map∂Cosp τ) (SigHom.to∂-pres σ w))
+        (SigHom.to∂-pres τ (SigHom.mapCosp σ w))
   }

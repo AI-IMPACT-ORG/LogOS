@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -10,10 +10,11 @@ module LogOS.Domain.UniversalIR.Schemes where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 open import Data.Nat using (ℕ; suc; zero; _+_)
+open import Data.List using (List; []; _∷_)
 open import Data.Product using (_×_; _,_)
 
-open import LogOS.Adapters.QNat2 using (QNat2)
-open import LogOS.Adapters.QNat2 as Q2 using (scaleOps; steps-budget-τ; μ; μ-+; μ-zero; τ-mono; μ-mono)
+open import LogOS.QAdapters.QNat2 using (QNat2)
+open import LogOS.QAdapters.QNat2 as Q2 using (scaleOps; steps-budget-τ; μ; μ-+; μ-zero; τ-mono; μ-mono)
 open import Data.NatExtra using (⊔ℕ-zeroʳ)
 open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl)
 open import LogOS.Minimal.Adapter using (QAdapter)
@@ -23,9 +24,12 @@ open import LogOS.Computation.Scheme using (Scheme; Closure)
 import LogOS.Computation.Scheme as Sch
 import LogOS.Computation.SchemeCategory as Cat
 
+import LogOS.Domain.UniversalIR.Core.QuantumCircuitAmp
+
 open import LogOS.Domain.UniversalIR.Core
   using
-    ( UCode; UM; UL; UE; UQ; UQC
+    ( QScalars
+    ; UCode; UM; UL; UE; UQ; UQC
     ; stepU; simulate
     ; MinskyCode; stepM; MInstr; HALT; INC; DECJZ
     ; EVMCode; stepE; EInstr; STOP; PUSH; ADD; MUL; POP; SUB; DUP; SWAP; JUMP; JUMPI; MLOAD; MSTORE
@@ -176,10 +180,10 @@ CPᵁ = record
 
 IdNormᵁ : Closure CPᵁ
 IdNormᵁ = record
-  { normalize  = λ u → u
-  ; mono       = λ {u} {v} eq → eq
-  ; infl       = λ _ → refl
-  ; idemp-lax  = λ _ → refl
+  { cl        = λ u → u
+  ; mono      = λ {u} {v} eq → eq
+  ; infl      = λ _ → refl
+  ; idemp-lax = λ _ → refl
   }
 
 observeU : UCode → ℕ
@@ -521,38 +525,56 @@ run≤ᵁ-budget₂≡work k m u =
 fuelGrade : (fuel : PATask → ℕ) → PATask → Cat.Process.Scale UProcess
 fuelGrade fuel t = work (fuel t)
 
+mkChoice
+  : ∀ {ℓI ℓO ℓC ℓQ}
+    {Input : Set ℓI} {Output : Set ℓO}
+    (P : Cat.Process {ℓO} {ℓC} {ℓQ} Output)
+    → (Input → Cat.Process.Con P)
+    → (Input → ℕ)
+    → Cat.Choice Input P
+mkChoice _ compile fuel = record { compile = compile ; fuel = fuel }
+
+mkScheme
+  : ∀ {ℓI ℓO ℓC ℓQ}
+    {Input : Set ℓI} {Output : Set ℓO}
+    (P : Cat.Process {ℓO} {ℓC} {ℓQ} Output)
+    → (Input → Cat.Process.Con P)
+    → (Input → ℕ)
+    → Scheme Input Output
+mkScheme P compile fuel = Cat.schemeFromChoice P (mkChoice P compile fuel)
+
 minskyChoice : Cat.Choice PATask UProcess
-minskyChoice = record { compile = Minsky.compile ; fuel = Minsky.fuel }
+minskyChoice = mkChoice UProcess Minsky.compile Minsky.fuel
 
 lambdaChoice : Cat.Choice PATask UProcess
-lambdaChoice = record { compile = Lambda.compile ; fuel = Lambda.fuel }
+lambdaChoice = mkChoice UProcess Lambda.compile Lambda.fuel
 
 ethereumChoice : Cat.Choice PATask UProcess
-ethereumChoice = record { compile = Ethereum.compile ; fuel = Ethereum.fuel }
+ethereumChoice = mkChoice UProcess Ethereum.compile Ethereum.fuel
 
 oracleChoice : Cat.Choice PATask UProcess
-oracleChoice = record { compile = QuantumOracle.compile ; fuel = QuantumOracle.fuel }
+oracleChoice = mkChoice UProcess QuantumOracle.compile QuantumOracle.fuel
 
 quantumCircuitChoice : Cat.Choice PATask UProcess
-quantumCircuitChoice = record { compile = QuantumCircuit.compile ; fuel = QuantumCircuit.fuel }
+quantumCircuitChoice = mkChoice UProcess QuantumCircuit.compile QuantumCircuit.fuel
 
 -- Five concrete “representation schemes” for the same PATask meaning.
 -- (Same process, different choices.)
 
 minskyScheme : Scheme PATask ℕ
-minskyScheme = Cat.schemeFromChoice UProcess minskyChoice
+minskyScheme = mkScheme UProcess Minsky.compile Minsky.fuel
 
 lambdaScheme : Scheme PATask ℕ
-lambdaScheme = Cat.schemeFromChoice UProcess lambdaChoice
+lambdaScheme = mkScheme UProcess Lambda.compile Lambda.fuel
 
 ethereumScheme : Scheme PATask ℕ
-ethereumScheme = Cat.schemeFromChoice UProcess ethereumChoice
+ethereumScheme = mkScheme UProcess Ethereum.compile Ethereum.fuel
 
 oracleScheme : Scheme PATask ℕ
-oracleScheme = Cat.schemeFromChoice UProcess oracleChoice
+oracleScheme = mkScheme UProcess QuantumOracle.compile QuantumOracle.fuel
 
 quantumCircuitScheme : Scheme PATask ℕ
-quantumCircuitScheme = Cat.schemeFromChoice UProcess quantumCircuitChoice
+quantumCircuitScheme = mkScheme UProcess QuantumCircuit.compile QuantumCircuit.fuel
 
 -- Scale-indexed execution for each scheme (grade → step budget via `ScaleOps`).
 --
@@ -575,31 +597,33 @@ run≤-quantumCircuit g t = Sch.run≤ quantumCircuitScheme OpsSteps g t
 
 -- Special case: the schedule-based `Sch.run` (with schedule `fuel`) is the same
 -- as `run≤-*` at grade `work (fuel t)` (i.e. `τ (fuel t)` in `QNat2`).
+
+run≤-fuel≡run-choice
+  : ∀ (C : Cat.Choice PATask UProcess) (t : PATask)
+  → Sch.run≤ (Cat.schemeFromChoice UProcess C) OpsSteps (fuelGrade (Cat.Choice.fuel C) t) t
+    ≡ Sch.run (Cat.schemeFromChoice UProcess C) t
+run≤-fuel≡run-choice C t =
+  cong
+    (λ k → Sch.decode S (Sch.normalize S (Sch.exec S k t)))
+    (sym (Q2.steps-budget-τ (Cat.Choice.fuel C t)))
+  where
+    S = Cat.schemeFromChoice UProcess C
+
 run≤-fuel≡run-minsky : ∀ t → run≤-minsky (fuelGrade Minsky.fuel t) t ≡ Sch.run minskyScheme t
-run≤-fuel≡run-minsky t =
-  cong (λ k → Sch.decode minskyScheme (Sch.normalize minskyScheme (Sch.exec minskyScheme k t)))
-       (sym (Q2.steps-budget-τ (Minsky.fuel t)))
+run≤-fuel≡run-minsky t = run≤-fuel≡run-choice minskyChoice t
 
 run≤-fuel≡run-lambda : ∀ t → run≤-lambda (fuelGrade Lambda.fuel t) t ≡ Sch.run lambdaScheme t
-run≤-fuel≡run-lambda t =
-  cong (λ k → Sch.decode lambdaScheme (Sch.normalize lambdaScheme (Sch.exec lambdaScheme k t)))
-       (sym (Q2.steps-budget-τ (Lambda.fuel t)))
+run≤-fuel≡run-lambda t = run≤-fuel≡run-choice lambdaChoice t
 
 run≤-fuel≡run-ethereum : ∀ t → run≤-ethereum (fuelGrade Ethereum.fuel t) t ≡ Sch.run ethereumScheme t
-run≤-fuel≡run-ethereum t =
-  cong (λ k → Sch.decode ethereumScheme (Sch.normalize ethereumScheme (Sch.exec ethereumScheme k t)))
-       (sym (Q2.steps-budget-τ (Ethereum.fuel t)))
+run≤-fuel≡run-ethereum t = run≤-fuel≡run-choice ethereumChoice t
 
 run≤-fuel≡run-oracle : ∀ t → run≤-oracle (fuelGrade QuantumOracle.fuel t) t ≡ Sch.run oracleScheme t
-run≤-fuel≡run-oracle t =
-  cong (λ k → Sch.decode oracleScheme (Sch.normalize oracleScheme (Sch.exec oracleScheme k t)))
-       (sym (Q2.steps-budget-τ (QuantumOracle.fuel t)))
+run≤-fuel≡run-oracle t = run≤-fuel≡run-choice oracleChoice t
 
 run≤-fuel≡run-quantumCircuit
   : ∀ t → run≤-quantumCircuit (fuelGrade QuantumCircuit.fuel t) t ≡ Sch.run quantumCircuitScheme t
-run≤-fuel≡run-quantumCircuit t =
-  cong (λ k → Sch.decode quantumCircuitScheme (Sch.normalize quantumCircuitScheme (Sch.exec quantumCircuitScheme k t)))
-       (sym (Q2.steps-budget-τ (QuantumCircuit.fuel t)))
+run≤-fuel≡run-quantumCircuit t = run≤-fuel≡run-choice quantumCircuitChoice t
 
 -- ============================================================================
 -- “Machines are schemes”: each paradigm can be presented as its own scheme
@@ -614,10 +638,10 @@ EqCP A = record { Con = A ; _⊑_ = _≡_ ; refl = refl ; trans = trans }
 
 IdClosure : ∀ {ℓ} (CP : ConPoset ℓ) → Closure CP
 IdClosure CP = record
-  { normalize  = λ c → c
-  ; mono       = λ p → p
-  ; infl       = λ _ → ConPoset.refl CP
-  ; idemp-lax  = λ _ → ConPoset.refl CP
+  { cl        = λ c → c
+  ; mono      = λ p → p
+  ; infl      = λ _ → ConPoset.refl CP
+  ; idemp-lax = λ _ → ConPoset.refl CP
   }
 
 MinskyProcess : Cat.Process ℕ
@@ -701,36 +725,77 @@ QuantumCircuitProcess =
     ; stepCost = stepCostQC
     }
 
+module QuantumCircuitAmpSchemes {ℓ} (S : QScalars {ℓ}) where
+  module A = LogOS.Domain.UniversalIR.Core.QuantumCircuitAmp.For S
+
+  open QScalars S using (Carrier)
+  open A using (QuantumCircuitAmpPCode; QCInstrP; DistList; Wires; stepDistQCA; observeDistList)
+  open A.QuantumCircuitAmpPCode using (pc; prog)
+  open A.DistList using (support)
+
+  costQCAInstr : ∀ {n} → QCInstrP n → Budget
+  costQCAInstr A.QCHALT = work zero
+  costQCAInstr (A.QX _) = work one
+  costQCAInstr (A.QH _) = work one
+  costQCAInstr (A.QCNOT _ _) = work one
+  costQCAInstr (A.QTOFF _ _ _) = work two
+  costQCAInstr (A.QMEASURE _ _ _) = meas one
+
+  stepCostQCA : ∀ {n} → QuantumCircuitAmpPCode n → Budget
+  stepCostQCA q = costQCAInstr (lookupDefault A.QCHALT (prog q) (pc q))
+
+  joinSupport : ∀ {n} → List (Carrier × QuantumCircuitAmpPCode n) → Budget
+  joinSupport [] = e
+  joinSupport ((_ , q) ∷ xs) = stepCostQCA q ⊔s joinSupport xs
+
+  stepCostDistQCA : ∀ {n} → DistList (QuantumCircuitAmpPCode n) → Budget
+  stepCostDistQCA d = joinSupport (support d)
+
+  QuantumCircuitAmpProcess : ∀ {n} → Cat.Process (DistList (Wires n))
+  QuantumCircuitAmpProcess {n} =
+    record
+      { CP       = EqCP (DistList (QuantumCircuitAmpPCode n))
+      ; Step     = stepDistQCA
+      ; Norm     = IdClosure (EqCP (DistList (QuantumCircuitAmpPCode n)))
+      ; decode   = observeDistList
+      ; Q        = QSteps
+      ; stepCost = stepCostDistQCA
+      }
+
+module QuantumCircuitAmpFree where
+  open import LogOS.Domain.UniversalIR.Quantum.Scalars.Free using (formalScalars)
+  open QuantumCircuitAmpSchemes formalScalars public
+
 minskyMachineChoice : Cat.Choice PATask MinskyProcess
-minskyMachineChoice = record { compile = Minsky.compileBrand ; fuel = Minsky.fuel }
+minskyMachineChoice = mkChoice MinskyProcess Minsky.compileBrand Minsky.fuel
 
 ethereumMachineChoice : Cat.Choice PATask EthereumProcess
-ethereumMachineChoice = record { compile = Ethereum.compileBrand ; fuel = Ethereum.fuel }
+ethereumMachineChoice = mkChoice EthereumProcess Ethereum.compileBrand Ethereum.fuel
 
 lambdaMachineChoice : Cat.Choice PATask LambdaProcess
-lambdaMachineChoice = record { compile = Lambda.compileBrand ; fuel = Lambda.fuel }
+lambdaMachineChoice = mkChoice LambdaProcess Lambda.compileBrand Lambda.fuel
 
 oracleMachineChoice : Cat.Choice PATask QuantumOracleProcess
-oracleMachineChoice = record { compile = QuantumOracle.compileBrand ; fuel = QuantumOracle.fuel }
+oracleMachineChoice = mkChoice QuantumOracleProcess QuantumOracle.compileBrand QuantumOracle.fuel
 
 quantumCircuitMachineChoice : Cat.Choice PATask QuantumCircuitProcess
-quantumCircuitMachineChoice = record { compile = QuantumCircuit.compileBrand ; fuel = QuantumCircuit.fuel }
+quantumCircuitMachineChoice = mkChoice QuantumCircuitProcess QuantumCircuit.compileBrand QuantumCircuit.fuel
 
 minskyMachineScheme : Scheme PATask ℕ
-minskyMachineScheme = Cat.schemeFromChoice MinskyProcess minskyMachineChoice
+minskyMachineScheme = mkScheme MinskyProcess Minsky.compileBrand Minsky.fuel
 
 ethereumMachineScheme : Scheme PATask ℕ
-ethereumMachineScheme = Cat.schemeFromChoice EthereumProcess ethereumMachineChoice
+ethereumMachineScheme = mkScheme EthereumProcess Ethereum.compileBrand Ethereum.fuel
 
 lambdaMachineScheme : Scheme PATask ℕ
-lambdaMachineScheme = Cat.schemeFromChoice LambdaProcess lambdaMachineChoice
+lambdaMachineScheme = mkScheme LambdaProcess Lambda.compileBrand Lambda.fuel
 
 oracleMachineScheme : Scheme PATask ℕ
-oracleMachineScheme = Cat.schemeFromChoice QuantumOracleProcess oracleMachineChoice
+oracleMachineScheme = mkScheme QuantumOracleProcess QuantumOracle.compileBrand QuantumOracle.fuel
 
 quantumCircuitMachineScheme : Scheme PATask ℕ
 quantumCircuitMachineScheme =
-  Cat.schemeFromChoice QuantumCircuitProcess quantumCircuitMachineChoice
+  mkScheme QuantumCircuitProcess QuantumCircuit.compileBrand QuantumCircuit.fuel
 
 -- ============================================================================
 -- Circuit families (uniform-by-bound)
@@ -751,10 +816,9 @@ open Bounded public
 
 quantumCircuitFamilyChoice : Cat.Choice (Bounded PATask) QuantumCircuitProcess
 quantumCircuitFamilyChoice =
-  record
-    { compile = λ bt → QuantumCircuit.compileFamilyFromMinsky (steps bt) (input bt)
-    ; fuel    = λ _ → zero
-    }
+  mkChoice QuantumCircuitProcess
+    (λ bt → QuantumCircuit.compileFamilyFromMinsky (steps bt) (input bt))
+    (λ _ → zero)
 
 quantumCircuitFamilyScheme : Scheme (Bounded PATask) ℕ
 quantumCircuitFamilyScheme =

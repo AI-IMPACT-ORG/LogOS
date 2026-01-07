@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -21,6 +21,7 @@ open import LogOS.Syntax.Prop as Prop
 open import LogOS.Kernel.Graded
 open import LogOS.Kernel.Graded.Endo
 open import LogOS.Kernel.Graded.Hom
+import LogOS.Kernel.Graded.Reachability as KR
 open import LogOS.Theorems.Boundary.Graded.Mu
 open import LogOS.Theorems.Code.Graded as Code
 
@@ -98,8 +99,8 @@ Sat_H_bnd-mono-Con
     (w : LogOSSignature.Cosp Sig)
     {c c' : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))}
   → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) c c'
-  → GradedKernel.Sat_H_bnd K (LogOSSignature.bnd Sig w) c
-  → GradedKernel.Sat_H_bnd K (LogOSSignature.bnd Sig w) c'
+  → GradedKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
+  → GradedKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c'
 Sat_H_bnd-mono-Con Sig Q K w le sat =
   let
     module HT = Truth.HomotypicalTruth Sig Q (GradedKernel.HWorld K)
@@ -121,8 +122,8 @@ Sat_H_bnd-mono-ctx
     {w w' : LogOSSignature.Cosp Sig}
     {c : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))}
   → Worlds.WorldH._≤ctx_ (GradedKernel.HWorld K) w w'
-  → GradedKernel.Sat_H_bnd K (LogOSSignature.bnd Sig w) c
-  → GradedKernel.Sat_H_bnd K (LogOSSignature.bnd Sig w') c
+  → GradedKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
+  → GradedKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w') c
 Sat_H_bnd-mono-ctx Sig Q K le sat =
   let
     module HT = Truth.HomotypicalTruth Sig Q (GradedKernel.HWorld K)
@@ -256,6 +257,29 @@ iterStepPow K (suc n) c =
 -- Textbook alias: graded step power law (stepⁿ bounded by grade-power).
 
 step-power-law = iterStepPow
+
+-- ============================================================================
+-- Reachability view (Q-graded): `c ⟶[g] d` iff `d ⊑ Flow g c`.
+-- ============================================================================
+
+module ReachabilityView where
+  module For
+    {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : GradedKernel Sig Q)
+    where
+
+    module R = KR.For K
+    open R public using (_⟶[_]_; _⟶⋆_)
+
+    -- Any finite number of step-iterations is reachable at saturation grade.
+    iterStep⟶⋆
+      : ∀ n c → c ⟶⋆ iterStep K n c
+    iterStep⟶⋆ n c = iterStep≤sat K n c
+
+    -- (n+1)-step iteration is reachable at the “power grade” `powStep`.
+    iterStep⟶pow
+      : ∀ n c → c ⟶[ powStep K n ] iterStep K (suc n) c
+    iterStep⟶pow n c = iterStepPow K n c
 
 ineq→Sat_S
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)

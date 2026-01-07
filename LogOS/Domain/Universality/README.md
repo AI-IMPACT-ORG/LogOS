@@ -1,6 +1,6 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
@@ -22,9 +22,16 @@ Core: `LogOS/Domain/Universality/Core.agda`
 
 Adapters: `LogOS/Domain/Universality/Adapters.agda`
 - Re-export the bridge tooling: canonical adapter, Rice/BodyEq transports,
-  Flow universality lemmas, physics/complexity packs, etc.
+  Flow universality lemmas, and the toy-spectrum complexity/separation scaffolding.
 
-Curated surface: `LogOS/Models/Universality/Core.agda`
+Physics-of-information packs (Landauer / DPI / measurement-capacity) live in:
+- `LogOS/Domain/Complexity/LCUToLandauer.agda`
+- `LogOS/Domain/Complexity/SecondLaw.agda`
+- `LogOS/Domain/Complexity/MeasurementCapacity.agda`
+- `LogOS/Domain/Complexity/NonUnitaryCapacity.agda`
+- `LogOS/Domain/Complexity/DataProcessingInequality.agda`
+
+Curated surface: `LogOS/Packs/Universality/Core.agda`
 - Recommended stable import surface (no demos).
 
 This directory intentionally does not provide a large `All` umbrella module; import

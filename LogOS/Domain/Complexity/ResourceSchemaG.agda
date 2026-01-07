@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Complexity.ResourceSchemaG where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (¬_)
+open import LogOS.Syntax.Prop using (¬_; _↔_; to; from)
 
 open import Data.Nat using (ℕ)
 open import Data.Product using (Σ; _,_; proj₁; proj₂)
@@ -16,7 +16,8 @@ open import Data.Sum using (_⊎_)
 open import Data.NatOrder using (_≤ℕ_; trans≤ℕ)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
-import LogOS.Domain.Universality.MeasurementCapacity as MC
+open import LogOS.Computation.Decider using (Decider)
+import LogOS.Domain.Complexity.MeasurementCapacity as MC
 
 -- Grade-native resource schema (no ℕ-polynomial scaffolding).
 -- Bounds live in the grade; size is only used as an index.
@@ -44,6 +45,36 @@ module For {ℓI ℓ ℓQ : Level}
 
       boundG : ℕ → Grade
       time≤G : ∀ x → _≤g_ (time x) (boundG (size x))
+
+  -- Forget the resource fields: any `QTimeDeciderG` is a total decider.
+  toDeciderG : ∀ {L} → QTimeDeciderG L → Decider Input L
+  toDeciderG qd =
+    record
+      { decide = QTimeDeciderG.decide qd
+      ; total  = QTimeDeciderG.total qd
+      ; sound  = QTimeDeciderG.sound qd
+      ; comp   = QTimeDeciderG.comp qd
+      }
+
+  -- Transport a grade-native time decider across pointwise logical equivalence.
+  -- This keeps time/measurement/bounds unchanged.
+
+  mapQTimeDeciderG
+    : ∀ {L L′}
+      → (∀ x → L x ↔ L′ x)
+      → QTimeDeciderG L
+      → QTimeDeciderG L′
+  mapQTimeDeciderG eq qd =
+    record
+      { decide = QTimeDeciderG.decide qd
+      ; total  = QTimeDeciderG.total qd
+      ; sound  = λ x dx → to (eq x) (QTimeDeciderG.sound qd x dx)
+      ; comp   = λ x lx → QTimeDeciderG.comp qd x (from (eq x) lx)
+      ; time   = QTimeDeciderG.time qd
+      ; meas   = QTimeDeciderG.meas qd
+      ; boundG = QTimeDeciderG.boundG qd
+      ; time≤G = QTimeDeciderG.time≤G qd
+      }
 
   record ThroughputG : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
     field
@@ -105,6 +136,37 @@ module For {ℓI ℓ ℓQ : Level}
         boundG : ℕ → Grade
         boundOk : IsBound boundG
         time≤G : ∀ x → _≤g_ (time x) (boundG (size x))
+
+    -- Forget the bound witness/resource fields.
+    toDecider : ∀ {L} → QTimeDecider L → Decider Input L
+    toDecider qd =
+      record
+        { decide = QTimeDecider.decide qd
+        ; total  = QTimeDecider.total qd
+        ; sound  = QTimeDecider.sound qd
+          ; comp   = QTimeDecider.comp qd
+          }
+
+    -- Transport a bounded time decider across pointwise logical equivalence.
+    -- This keeps time/measurement/bounds unchanged.
+
+    mapQTimeDecider
+      : ∀ {L L′}
+        → (∀ x → L x ↔ L′ x)
+        → QTimeDecider L
+        → QTimeDecider L′
+    mapQTimeDecider eq qd =
+      record
+        { decide  = QTimeDecider.decide qd
+        ; total   = QTimeDecider.total qd
+        ; sound   = λ x dx → to (eq x) (QTimeDecider.sound qd x dx)
+        ; comp    = λ x lx → QTimeDecider.comp qd x (from (eq x) lx)
+        ; time    = QTimeDecider.time qd
+        ; meas    = QTimeDecider.meas qd
+        ; boundG  = QTimeDecider.boundG qd
+        ; boundOk = QTimeDecider.boundOk qd
+        ; time≤G  = QTimeDecider.time≤G qd
+        }
 
     toQTimeDeciderG : ∀ {L} → QTimeDecider L → QTimeDeciderG L
     toQTimeDeciderG qd =

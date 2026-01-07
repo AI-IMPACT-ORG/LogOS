@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -20,7 +20,7 @@ import LogOS.Domain.Complexity.PolyGrade as PG
 import LogOS.Domain.Complexity.PvsNPFromInfo_Grade_Only as PFI
 import LogOS.Domain.Complexity.PhysToTruthRouteBridge as Bridge
 import LogOS.Domain.Complexity.ClassicalPvsNP as CP
-import LogOS.Domain.Complexity.TruthRoute as TR
+import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TR
 
 -- Golden path skeleton:
 -- grade-native core (info-hardness) → grade-hom bridge → classical alignment at the end.
@@ -109,7 +109,7 @@ module ClassicalAlignment
   IsPoly : (ℕ → ℕ) → Set
   IsPoly = PolyPred.isPoly Pℕ
 
-  module Rℕ = TR.For K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  module Rℕ = TR.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
   module Wℕ = Rℕ.WithWitnessSize WSize
 
   module CS =

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.Assumptions.Diagonal where
 
 open import LogOS.Prelude
-open import Data.Product using (Σ; proj₁; proj₂)
+open import Data.Product using (Σ; proj₁; proj₂; fst; snd)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -75,6 +75,109 @@ record QuoteSubst {ℓ}
     representable : (f : Code → Code) → Σ Code₁ (λ u → ∀ γ → decode (inst u γ) ≡ decode (f γ))
     self          : (u : Code₁) → Σ Code (λ s → decode s ≡ decode (inst u s))
 
+-- ----------------------------------------------------------------------------
+-- Lawvere fixed point (boundary-preorder form).
+--
+-- In the presence of `QuoteSubst⊑ K` (a “code-as-internal-hom” witness), we can
+-- produce a decoded fixed point of any endomap `f : Code → Code` without
+-- assuming antisymmetry of the boundary preorder.
+
+InternalHomWitness
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+  → Set (lsuc ℓ)
+InternalHomWitness = QuoteSubst⊑
+
+lawvereFix
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+  → InternalHomWitness K
+  → (f : Kernel.Code K → Kernel.Code K)
+  → Σ (Kernel.Code K) (λ s →
+      ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+        (Kernel.decode K s) (Kernel.decode K (f s))
+      ×
+      ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+        (Kernel.decode K (f s)) (Kernel.decode K s))
+lawvereFix {K = K} QS f =
+  let
+    open Kernel K
+    open QuoteSubst⊑ QS
+
+    rep  = representable f
+    u    = proj₁ rep
+    repr = proj₂ rep
+    se   = self u
+    s    = proj₁ se
+
+    selfL = fst (proj₂ se)
+    selfR = snd (proj₂ se)
+    reprL = fst (repr s)
+    reprR = snd (repr s)
+
+    left  = ConPoset.trans (BulkBoundary.bnd BB) selfL reprL
+    right = ConPoset.trans (BulkBoundary.bnd BB) reprR selfR
+  in
+  s , (left , right)
+
+-- Optional strengthening: if the boundary preorder is antisymmetric (a partial
+-- order), the mutual refinement from `lawvereFix` upgrades to an equality.
+
+lawvereFix≡
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+  → BulkBoundaryPO (Kernel.BB K)
+  → InternalHomWitness K
+  → (f : Kernel.Code K → Kernel.Code K)
+  → Σ (Kernel.Code K) (λ s → Kernel.decode K s ≡ Kernel.decode K (f s))
+lawvereFix≡ {K = K} po QS f =
+  let
+    open Kernel K
+    open BulkBoundaryPO po using (po-bnd)
+    open PartialOrder po-bnd using (antisym)
+    s , (le₁ , le₂) = lawvereFix {K = K} QS f
+  in
+  s , antisym le₁ le₂
+
+-- A convenient fixed-point chooser (used by derived diagonalisation constructors).
+
+lawvereDiag
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+  → InternalHomWitness K
+  → (Kernel.Code K → Kernel.Code K)
+  → Kernel.Code K
+lawvereDiag QS f = proj₁ (lawvereFix QS f)
+
+lawvereDiag≡
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+  → BulkBoundaryPO (Kernel.BB K)
+  → (QS : InternalHomWitness K)
+  → (f  : Kernel.Code K → Kernel.Code K)
+  → Kernel.decode K (lawvereDiag QS f) ≡ Kernel.decode K (f (lawvereDiag QS f))
+lawvereDiag≡ po QS f = proj₂ (lawvereFix≡ po QS f)
+
+lawvereDiag-⊑
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+  → (QS : InternalHomWitness K)
+  → (f  : Kernel.Code K → Kernel.Code K)
+  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+      (Kernel.decode K (lawvereDiag QS f))
+      (Kernel.decode K (f (lawvereDiag QS f)))
+lawvereDiag-⊑ QS f = fst (proj₂ (lawvereFix QS f))
+
+⊑-lawvereDiag
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+  → (QS : InternalHomWitness K)
+  → (f  : Kernel.Code K → Kernel.Code K)
+  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+      (Kernel.decode K (f (lawvereDiag QS f)))
+      (Kernel.decode K (lawvereDiag QS f))
+⊑-lawvereDiag QS f = snd (proj₂ (lawvereFix QS f))
+
 -- A thin reflection principle: decode-equality implies provability of an implication
 -- built with the object-level Imp constructor. This stays model-local.
 --
@@ -109,6 +212,23 @@ record DecodeImp {ℓ}
   open ProvabilityOps Op
   field
     from-decode≡→imp : ∀ {φ ψ} → decode φ ≡ decode ψ → ⊢ (Imp φ ψ)
+
+-- Provability-level diagonalization as a theorem:
+-- internal-hom witness + local decode⊑→imp bridge ⇒ the classical diagonal schema.
+
+Diagonalization-from-InternalHom
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K  : Kernel Sig Q)
+    (Pr : Provability K)
+    (Op : ProvabilityOps K)
+    (IH : InternalHomWitness K)
+    (DI : DecodeImp⊑ K Pr Op)
+  → Diagonalization K Pr Op
+Diagonalization-from-InternalHom K Pr Op IH DI = record
+  { diag  = λ f → lawvereDiag IH f
+  ; diag→ = λ f → DecodeImp⊑.from-decode⊑→imp DI (lawvereDiag-⊑ IH f)
+  ; →diag = λ f → DecodeImp⊑.from-decode⊑→imp DI (⊑-lawvereDiag IH f)
+  }
 
 Diagonalization-from-QuoteSubst
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}

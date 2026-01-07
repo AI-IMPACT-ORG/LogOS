@@ -1,6 +1,6 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
@@ -12,14 +12,20 @@ module docs.DeepDive.ZFC_Demo where
 
 open import LogOS.Prelude
 
-open import LogOS.Domain.SetTheory.FormulaPack using (ZFAxiomsᶠ)
-import LogOS.Domain.SetTheory.FormulaDerived as FormulaDerived
+open import LogOS.Domain.ZFC.SetTheory.FormulaPack using (ZFAxiomsᶠ)
+import LogOS.Domain.ZFC.SetTheory.FormulaDerived as FormulaDerived
+import LogOS.Domain.ZFC.SetTheory.Dsl
+import LogOS.Domain.ZFC.SetTheory.StageToCHFromHierarchy
 import LogOS.Packs.ZFC.WFGraph as ZFCPack
 ```
 
 This is a small, typechecked “proof-of-mechanisation” note: it shows how to do
 recognisable ZF reasoning (singleton, binary union, membership equivalences)
 *inside the coded/formula-pack interface* used by the WFGraph route.
+
+For the forcing-like boundary closure (Flow/μFlow) that ties ZF back to the kernel,
+see `LogOS/Domain/ZFC/SetTheory/Dsl.agda` and `LogOS/Domain/ZFC/SetTheory/StageToCHFromHierarchy.agda`.
+This demo stays strictly inside the formula-pack surface.
 
 ## Minimal derived constructions (formula-pack ZF)
 
@@ -32,10 +38,11 @@ module _ {ℓ : Level}
   A : Z.Assumptions {ℓ}
   A = record { W = W }
 
-  P : Z.Pack A
+  P : Z.Pack {ℓ}
   P = Z.mkPack A
 
   open Z.Pack P
+  open Z.Claim claim
   open ZFAxiomsᶠ zfᶠ
 
   module Der = FormulaDerived.For K zfᶠ

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Complexity.Targets.ProofSearchChainedTheoremGraded where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (¬_)
+open import LogOS.Syntax.Prop as Prop using (NoWitness)
 
 open import Data.Product using (Σ; _,_)
 
@@ -18,6 +18,7 @@ import LogOS.Domain.Complexity.ProofSearchBoundary as B
 import LogOS.Domain.Complexity.ProofSearchCapstoneGraded as Cap
 import LogOS.Domain.Complexity.ResourceSchemaGraded as RS
 import LogOS.Domain.Complexity.ObservabilityBudgetGraded as OB
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 -- One chained theorem (grade-native entrypoint) for the “verification vs search” story.
 
@@ -36,10 +37,10 @@ module For {ℓI ℓ ℓQ : Level}
   module O  = OB.For {ℓI = ℓI} {ℓ = ℓ} {ℓQ = ℓQ} Input size Pℕ Q gradeBound
 
   ClaimP : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
-  ClaimP = ¬ (Σ (R.QTimeDecider P) (λ _ → ⊤ {ℓ = lzero}))
+  ClaimP = Prop.NoWitness (R.QTimeDecider P)
 
   ClaimPG : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
-  ClaimPG = ¬ (Σ (R.QTimeDeciderG P) (λ _ → ⊤ {ℓ = lzero}))
+  ClaimPG = Prop.NoWitness (R.QTimeDeciderG P)
 
   module Base where
     record Assumptions (PS : PB.ProofSystem) : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
@@ -52,21 +53,16 @@ module For {ℓI ℓ ℓQ : Level}
     Claim : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
     Claim = ClaimP
 
-    record Pack (PS : PB.ProofSystem) (A : Assumptions PS)
-      : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
-      field
-        assumptions : Assumptions PS
-        claim       : Claim
+    derive : ∀ {PS} → Assumptions PS → Claim
+    derive A =
+      C.notPolyTime-P (Assumptions.complete A)
+                      (Assumptions.TH A)
+                      (Assumptions.CP A)
+                      (Assumptions.hard A)
 
-    mkPack : ∀ {PS} → (A : Assumptions PS) → Pack PS A
-    mkPack {PS} A =
-      record
-        { assumptions = A
-        ; claim = C.notPolyTime-P (Assumptions.complete A)
-                                   (Assumptions.TH A)
-                                   (Assumptions.CP A)
-                                   (Assumptions.hard A)
-        }
+    module Q {PS : PB.ProofSystem} =
+      Quartet.MakeConstPack (Assumptions PS) Claim derive
+    open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module G where
     record Assumptions (PS : PB.ProofSystem) : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
@@ -79,21 +75,16 @@ module For {ℓI ℓ ℓQ : Level}
     Claim : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
     Claim = ClaimPG
 
-    record Pack (PS : PB.ProofSystem) (A : Assumptions PS)
-      : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
-      field
-        assumptions : Assumptions PS
-        claim       : Claim
+    derive : ∀ {PS} → Assumptions PS → Claim
+    derive A =
+      C.notTimeBoundedG-P (Assumptions.complete A)
+                          (Assumptions.TH A)
+                          (Assumptions.CP A)
+                          (Assumptions.hard A)
 
-    mkPack : ∀ {PS} → (A : Assumptions PS) → Pack PS A
-    mkPack {PS} A =
-      record
-        { assumptions = A
-        ; claim = C.notTimeBoundedG-P (Assumptions.complete A)
-                                      (Assumptions.TH A)
-                                      (Assumptions.CP A)
-                                      (Assumptions.hard A)
-        }
+    module Q {PS : PB.ProofSystem} =
+      Quartet.MakeConstPack (Assumptions PS) Claim derive
+    open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module LOB where
     record Assumptions (PS : PB.ProofSystem) : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
@@ -105,21 +96,16 @@ module For {ℓI ℓ ℓQ : Level}
     Claim : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
     Claim = ClaimP
 
-    record Pack (PS : PB.ProofSystem) (A : Assumptions PS)
-      : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
-      field
-        assumptions : Assumptions PS
-        claim       : Claim
+    derive : ∀ {PS} → Assumptions PS → Claim
+    derive A =
+      C.notPolyTime-P (Assumptions.complete A)
+                      (O.toThroughput (Assumptions.lob A))
+                      (O.toCapacity (Assumptions.lob A))
+                      (Assumptions.hard A)
 
-    mkPack : ∀ {PS} → (A : Assumptions PS) → Pack PS A
-    mkPack {PS} A =
-      record
-        { assumptions = A
-        ; claim = C.notPolyTime-P (Assumptions.complete A)
-                                   (O.toThroughput (Assumptions.lob A))
-                                   (O.toCapacity (Assumptions.lob A))
-                                   (Assumptions.hard A)
-        }
+    module Q {PS : PB.ProofSystem} =
+      Quartet.MakeConstPack (Assumptions PS) Claim derive
+    open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module LOBG where
     record Assumptions (PS : PB.ProofSystem) : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
@@ -131,18 +117,13 @@ module For {ℓI ℓ ℓQ : Level}
     Claim : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
     Claim = ClaimPG
 
-    record Pack (PS : PB.ProofSystem) (A : Assumptions PS)
-      : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ))) where
-      field
-        assumptions : Assumptions PS
-        claim       : Claim
+    derive : ∀ {PS} → Assumptions PS → Claim
+    derive A =
+      C.notTimeBoundedG-P (Assumptions.complete A)
+                          (O.toThroughputG (Assumptions.lob A))
+                          (O.toCapacityG (Assumptions.lob A))
+                          (Assumptions.hard A)
 
-    mkPack : ∀ {PS} → (A : Assumptions PS) → Pack PS A
-    mkPack {PS} A =
-      record
-        { assumptions = A
-        ; claim = C.notTimeBoundedG-P (Assumptions.complete A)
-                                      (O.toThroughputG (Assumptions.lob A))
-                                      (O.toCapacityG (Assumptions.lob A))
-                                      (Assumptions.hard A)
-        }
+    module Q {PS : PB.ProofSystem} =
+      Quartet.MakeConstPack (Assumptions PS) Claim derive
+    open Q public using (Pack; assumptionsOf; claimOf; mkPack)

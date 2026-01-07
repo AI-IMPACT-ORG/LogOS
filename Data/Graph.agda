@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -25,10 +25,10 @@ open Graph public
 Neighbors : ∀ {ℓ} → (G : Graph {ℓ}) → Graph.Vertex G → Set ℓ
 Neighbors G v = Σ (Graph.Vertex G) (λ w → Graph.Edge G v w)
 
--- Forget the edge witness and just collect the target vertices.
+-- Forget the edge witness and just expose adjacency as a predicate.
 
-adjacentTo : ∀ {ℓ} → (G : Graph {ℓ}) → Graph.Vertex G → Set ℓ
-adjacentTo = Neighbors
+adjacentTo : ∀ {ℓ} → (G : Graph {ℓ}) → Graph.Vertex G → Graph.Vertex G → Set ℓ
+adjacentTo G v w = Graph.Edge G v w
 
 -- Build a graph directly from an adjacency relation.
 

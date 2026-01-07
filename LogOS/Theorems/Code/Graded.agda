@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -14,6 +14,7 @@ module LogOS.Theorems.Code.Graded where
 open import LogOS.Prelude
 
 open import LogOS.Kernel.Graded
+open import LogOS.Kernel.Core as KCore
 open import LogOS.Kernel.Graded.Hom
 open import LogOS.Minimal.Con
 open import LogOS.Base.Signature
@@ -90,10 +91,10 @@ reify-guard-decode K γ =
   let open GradedKernel K
       F = GradedClosure.Flow GTruth step-grade
   in
-  trans (GradedKernel.reify-decode K (Guard γ))
+  trans (GradedKernel.reify-decode K (GradedKernel.Guard K γ))
     (trans (GradedKernel.guard-decode K γ)
       (trans (cong F (sym (GradedKernel.reify-decode K γ)))
-        (sym (GradedKernel.guard-decode K (reify γ)))))
+        (sym (GradedKernel.guard-decode K (GradedKernel.reify K γ)))))
 
 reify-body-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -102,11 +103,10 @@ reify-body-decode
   → GradedKernel.decode K (GradedKernel.reify K (GradedKernel.Body K γ))
     ≡ GradedKernel.decode K (GradedKernel.Body K (GradedKernel.reify K γ))
 reify-body-decode K γ =
-  let open GradedKernel K in
-  trans (GradedKernel.reify-decode K (Body γ))
+  trans (GradedKernel.reify-decode K (GradedKernel.Body K γ))
     (trans (GradedKernel.body-decode K γ)
-      (trans (cong Body∂ (sym (GradedKernel.reify-decode K γ)))
-        (sym (GradedKernel.body-decode K (reify γ)))))
+      (trans (cong (GradedKernel.Body∂ K) (sym (GradedKernel.reify-decode K γ)))
+        (sym (GradedKernel.body-decode K (GradedKernel.reify K γ)))))
 
 -- Factorization at decode-level: prefer Guard ∘ Body on the code layer.
 
@@ -132,11 +132,14 @@ decode-FlowCode-eq K γ = decode-FlowCode K γ
         (GradedKernel.Body∂ K (GradedKernel.decode K (GradedKernel.γ* K))))
 γ*-decode≤stepBody K =
   let
-    open GradedKernel K
-    CP = BulkBoundary.bnd BB
-    le = fst γ*-guard
-    eq = decode-FlowCode-eq K γ*
-  in subst (λ x → ConPoset._⊑_ CP (decode γ*) x) eq le
+    CP = BulkBoundary.bnd (GradedKernel.BB K)
+    le = fst (GradedKernel.γ*-guard K)
+    eq = decode-FlowCode-eq K (GradedKernel.γ* K)
+  in
+  subst
+    (λ x → ConPoset._⊑_ CP (GradedKernel.decode K (GradedKernel.γ* K)) x)
+    eq
+    le
 
 stepBody≤γ*-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -147,11 +150,14 @@ stepBody≤γ*-decode
       (GradedKernel.decode K (GradedKernel.γ* K))
 stepBody≤γ*-decode K =
   let
-    open GradedKernel K
-    CP = BulkBoundary.bnd BB
-    le = snd γ*-guard
-    eq = decode-FlowCode-eq K γ*
-  in subst (λ x → ConPoset._⊑_ CP x (decode γ*)) eq le
+    CP = BulkBoundary.bnd (GradedKernel.BB K)
+    le = snd (GradedKernel.γ*-guard K)
+    eq = decode-FlowCode-eq K (GradedKernel.γ* K)
+  in
+  subst
+    (λ x → ConPoset._⊑_ CP x (GradedKernel.decode K (GradedKernel.γ* K)))
+    eq
+    le
 
 decode-FlowCode-γ*-eq
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -163,14 +169,14 @@ decode-FlowCode-γ*-eq K po =
     open GradedKernel K
     open BulkBoundaryPO po using (po-bnd)
     open PartialOrder po-bnd using (antisym)
-    le₁ = fst γ*-guard
-    le₂ = snd γ*-guard
+    le₁ = fst (GradedKernel.γ*-guard K)
+    le₂ = snd (GradedKernel.γ*-guard K)
   in antisym le₂ le₁
 
 decode-FlowCode-mono
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
-  → BodyMonotone K
+  → KCore.BodyMonotoneShape (GradedKernel.shape K)
   → ∀ {γ δ}
   → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) (GradedKernel.decode K γ) (GradedKernel.decode K δ)
   → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
@@ -179,16 +185,16 @@ decode-FlowCode-mono
 decode-FlowCode-mono K bm {γ} {δ} le =
   let
     open GradedKernel K
-    CP = BulkBoundary.bnd BB
+    CP = BulkBoundary.bnd (GradedKernel.BB K)
     F  = GradedClosure.Flow GTruth step-grade
-    bodyLe = BodyMonotone.mono-Body∂ bm le
-    flowLe : ConPoset._⊑_ CP (F (Body∂ (decode γ))) (F (Body∂ (decode δ)))
+    bodyLe = KCore.BodyMonotoneShape.mono-Body∂ bm le
+    flowLe : ConPoset._⊑_ CP (F (GradedKernel.Body∂ K (GradedKernel.decode K γ))) (F (GradedKernel.Body∂ K (GradedKernel.decode K δ)))
     flowLe = GradedClosure.mono GTruth bodyLe
     eqγ = decode-FlowCode-eq K γ
     eqδ = decode-FlowCode-eq K δ
-    flowLe' : ConPoset._⊑_ CP (F (Body∂ (decode γ))) (decode (FlowCode K δ))
-    flowLe' = subst (λ x → ConPoset._⊑_ CP (F (Body∂ (decode γ))) x) (sym eqδ) flowLe
-  in subst (λ x → ConPoset._⊑_ CP x (decode (FlowCode K δ))) (sym eqγ) flowLe'
+    flowLe' : ConPoset._⊑_ CP (F (GradedKernel.Body∂ K (GradedKernel.decode K γ))) (GradedKernel.decode K (FlowCode K δ))
+    flowLe' = subst (λ x → ConPoset._⊑_ CP (F (GradedKernel.Body∂ K (GradedKernel.decode K γ))) x) (sym eqδ) flowLe
+  in subst (λ x → ConPoset._⊑_ CP x (GradedKernel.decode K (FlowCode K δ))) (sym eqγ) flowLe'
 
 -- Textbook alias: monotonicity of the operational step (FlowCode), under BodyMonotone.
 

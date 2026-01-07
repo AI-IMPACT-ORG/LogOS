@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -14,6 +14,7 @@ open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Wit
 
 import LogOS.Theorems.Meta.TruthPositivity as TP
 open TP public using (TruthPositivity)
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 -- A “Weil criterion / explicit-formula” surface, phrased against an abstract
 -- spectral adapter RS and an observer-facing positivity interface TPo.
@@ -158,8 +159,8 @@ GRH_Without_Vacuity_Guards-from-WeilCriterion
 GRH_Without_Vacuity_Guards-from-WeilCriterion RS TPo WC =
   GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo (toWeak WC) (WeilCriterion.probe-observable WC)
 
--- Convenience shims: the split forms can be collapsed into the existing
--- criterion records and then discharged by the existing GRH_Without_Vacuity_Guards lemmas.
+-- Bridge lemmas: the split forms can be collapsed into the existing criterion
+-- records and then discharged by the existing GRH_Without_Vacuity_Guards lemmas.
 
 GRH_Without_Vacuity_Guards-from-weak-split+complete
   : ∀ {ℓT ℓW ℓObs ℓMid}
@@ -240,18 +241,16 @@ module QuartetWeilWeakCriterion {ℓT ℓW ℓObs : Level}
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  record Pack (A : Assumptions) : Set (lsuc (ℓT ⊔ ℓW ⊔ ℓObs)) where
-    field
-      claim : Claim A
+  module Q = Quartet.Make Assumptions Claim
+  open Q public using (Pack; assumptionsOf; claimOf)
 
-  mkPack : (A : Assumptions) → Pack A
-  mkPack A =
-    record
-      { claim =
-          GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo
-            (Assumptions.WC A)
-            (Assumptions.complete A)
-      }
+  mkPack : (A : Assumptions) → Pack
+  mkPack =
+    Q.mkPack
+      (λ A →
+        GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo
+          (Assumptions.WC A)
+          (Assumptions.complete A))
 
 module QuartetWeilCriterion {ℓT ℓW ℓObs : Level}
                (RS  : RiemannSpectral)
@@ -264,9 +263,8 @@ module QuartetWeilCriterion {ℓT ℓW ℓObs : Level}
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  record Pack (A : Assumptions) : Set (lsuc (ℓT ⊔ ℓW ⊔ ℓObs)) where
-    field
-      claim : Claim A
+  module Q = Quartet.Make Assumptions Claim
+  open Q public using (Pack; assumptionsOf; claimOf)
 
-  mkPack : (A : Assumptions) → Pack A
-  mkPack A = record { claim = GRH_Without_Vacuity_Guards-from-WeilCriterion RS TPo (Assumptions.WC A) }
+  mkPack : (A : Assumptions) → Pack
+  mkPack = Q.mkPack (λ A → GRH_Without_Vacuity_Guards-from-WeilCriterion RS TPo (Assumptions.WC A))

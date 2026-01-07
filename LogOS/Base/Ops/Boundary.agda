@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -36,8 +36,8 @@ record BoundaryOps {ℓ : Level} (∂Cosp Iface Cosp : Set ℓ) : Set ℓ where
     _⊗∂_  : ∂Cosp → ∂Cosp → ∂Cosp
     
     -- Bulk-boundary maps (lax adjunction captured elsewhere)
-    ext : ∂Cosp → Cosp
-    bnd : Cosp → ∂Cosp
+    from∂ : ∂Cosp → Cosp
+    to∂   : Cosp → ∂Cosp
 
   infixr 9 _∘∂_
   infixl 6 _⊕∂_

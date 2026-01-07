@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -40,6 +40,23 @@ record MultiBoundaryIO {ℓ : Level}
                  → Prop._↔_ (HT.HLayer.Sat_H H w c)
                              (Sat∂ r (to∂ r w) c)
 
+-- Default multi-port builder from a `BoundaryIO`: every role shares the same view.
+
+defaultMultiBoundaryIOFromBoundaryIO
+  : ∀ {ℓ} {Role : Set ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → (B : BoundaryIO Sig Q W BB H)
+  → MultiBoundaryIO Role Sig Q W BB H
+defaultMultiBoundaryIOFromBoundaryIO {Role = Role} B =
+  record
+    { to∂    = λ _ w → BoundaryIO.to∂ B w
+    ; from∂  = λ _ p → BoundaryIO.from∂ B p
+    ; Sat∂   = λ _ p c → BoundaryIO.Sat∂ B p c
+    ; sat-coh-role = λ _ w c → BoundaryIO.sat-coh B w c
+    }
+
 -- Default multi-port builder from a Kernel: every role shares the same view.
 
 defaultMultiBoundaryIO
@@ -47,11 +64,7 @@ defaultMultiBoundaryIO
     (Role : Set ℓ)
     (K : Kernel Sig Q)
   → MultiBoundaryIO Role Sig Q (Kernel.HWorld K) (Kernel.BB K) (Kernel.HTruth K)
-defaultMultiBoundaryIO {Sig = Sig} Role K = record
-  { to∂    = λ _ w → bnd w
-  ; from∂  = λ _ p → ext p
-  ; Sat∂   = λ _ p c → Kernel.Sat_H_bnd K p c
-  ; sat-coh-role = λ _ w c → Kernel.sat-coh K w c
-  }
+defaultMultiBoundaryIO {Sig = Sig} Role K =
+  defaultMultiBoundaryIOFromBoundaryIO {Role = Role} (boundaryIO K)
   where
-  open LogOSSignature Sig
+  open import LogOS.Kernel.Boundary using (boundaryIO)

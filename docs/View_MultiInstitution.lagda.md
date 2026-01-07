@@ -1,12 +1,13 @@
 <!--
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
 % LogOS — Classic (Model-Theoretic) Presentation as a Multi-Institution
 
 ```agda
+{-# OPTIONS --safe #-}
 module docs.View_MultiInstitution where
 
 open import LogOS.Docs.Views.View_MultiInstitution public
@@ -16,8 +17,12 @@ This note is a documentation artefact written in a paper-ready style. It gives a
 classic model-theoretic view of the LogOS kernel architecture as a **multi-institution**.
 
 It is intentionally “implementation-aligned”: where the Agda library does not
-currently expose a notion (e.g. a category of signature morphisms), we make the
-weakest choice consistent with the code (e.g. take signatures as a discrete category).
+expose a notion as a packaged categorical structure (e.g. a `Category` record),
+we make the weakest presentation consistent with the implemented interfaces.
+In particular, this note sometimes works **at fixed signature** (so signatures
+can be treated as a discrete/one-object category), while also pointing to the
+nontrivial signature-change interfaces that *do* exist (`SigHom`, `reindexKernel`,
+and the optional `rename∂` sentence layer).
 
 ## Institutions (recall)
 
@@ -52,14 +57,33 @@ $$
 
 **Remark (signatures in LogOS).** The Agda implementation is parameterized by a signature
 (a record of primitive carriers/operations). The library does provide *structure-preserving*
-signature maps (`LogOS.Base.Signature.Hom.SigHom`) together with identity and composition,
+signature maps (`SigHom` in `LogOS/Base/Signature/Hom.agda`) together with identity and composition,
 enough to view signatures as a small category if desired.
 
-For a presentation that stays maximally close to the current documentation surfaces (and
-avoids committing to any particular choice of `Sen`/`Mod` reindexing functoriality in this
-note), one may also take $\mathbf{Sig}$ to be a **discrete category** of signatures. Then
-the satisfaction condition is tautological. Nothing below relies on nontrivial signature
-morphisms.
+Moreover, the kernel interface exposes a concrete semantic reindexing operation along
+signature maps:
+
+- `LogOS/Kernel/Reindex.agda` (`reindexKernel`)
+
+This is enough to present the *model reduct* part of the institution satisfaction condition
+in a way that is aligned with the implemented surface.
+
+Implementation-aligned choice (conservative): default sentence translation can be trivial.
+Historically the library only needed the model reduct direction (`Mod`) and so kept `Sen`
+constant-on-morphisms. This remains a valid conservative presentation.
+
+However, LogOS now also provides an **optional nontrivial sentence/program layer** that is
+functorial along signature morphisms (the institution `Sen` direction):
+
+- `LogOS/Free/ConstraintsOverSig.agda` (`Con∂ Sig` and `rename∂ : SigHom Sig₁ Sig₂ → Con∂ Sig₁ → Con∂ Sig₂`)
+
+This makes it possible to state satisfaction conditions with a genuine $\mathrm{Sen}(\sigma)$ map once a model
+supplies an interpretation of the atomic generators (e.g. a valuation of interface atoms into
+boundary constraints).
+
+For coherence/functoriality across signature morphisms at the kernel-hom level, see:
+
+- `LogOS/Kernel/HomOverSig.agda`
 
 ## LogOS kernels as an indexed family of institutions
 
@@ -95,7 +119,7 @@ not a definitional equality.
 
 Define an institution $\mathcal{I}_S(K)$ (“S-tier”) by:
 
-- $\mathbf{Sig}$: discrete category with the chosen kernel signature as an object,
+- $\mathbf{Sig}$: the one-object discrete category (we fix the kernel signature in this section),
 - $\mathrm{Sen}_S(\Sigma) := \mathrm{Fml}$,
 - $\mathrm{Mod}_S(\Sigma) :=$ the discrete category on the set $\mathrm{World}$,
 - satisfaction: $w \models_S \varphi$ iff $\mathrm{Sat}_S(w,\varphi)$.
@@ -118,8 +142,9 @@ The guarded tier is most naturally a **consequence/closure** interface. A standa
 model-theoretic presentation uses **fixed points** of the closure operator as models.
 
 Let $\mathrm{Fix}(\mathrm{Flow})$ be the set of constraints $t \in \mathrm{Con}_\partial$
-that are fixed by the closure (up to preorder equivalence), i.e. $t \preceq \mathrm{Flow}(t)$
-and $\mathrm{Flow}(t) \preceq t$.
+that are **stable** under the closure, i.e. $\mathrm{Flow}(t) \preceq t$ (pre‑fixed points).
+Because `Flow` is inflationary in LogOS, this automatically implies $t \preceq \mathrm{Flow}(t)$
+as well, hence $t$ is “fixed” up to preorder equivalence.
 
 Define an institution $\mathcal{I}_G(K)$ (“G-tier”) by:
 
@@ -129,7 +154,8 @@ Define an institution $\mathcal{I}_G(K)$ (“G-tier”) by:
 
 In this view, $\mathrm{Th}^\ast$ is a distinguished model representing “global stable truth”.
 Under additional order/continuity structure (not assumed in the minimal kernel interface),
-one can upgrade this to a genuine “least fixed point / least model” presentation.
+one can upgrade this to a “least (pre)fixed point / least model (in the boundary preorder)”
+presentation (e.g. via `OmegaCPO` + `FiniteFirst`, and antisymmetry if you want equality-level leastness).
 
 ## Multi-institution structure (S/H/G together)
 
@@ -172,7 +198,8 @@ $$
   \qquad
   \mathrm{Guard} : \mathrm{Code} \to \mathrm{Code},
 $$
-with $\mathrm{decode}\circ \mathrm{encode} = \mathrm{id}$ and the key coherence law:
+with a *pointwise* retraction witness `decode∘encode : ∀ c → decode (encode c) ≡ c`
+(no function extensionality is assumed) and the key coherence law:
 $$
   \mathrm{decode}(\mathrm{encode}(c)) \;\equiv\; c,
   \qquad

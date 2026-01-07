@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -15,7 +15,7 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Kernel.Graded
 
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
-import LogOS.Domain.Complexity.TruthRoute as TruthRoute
+import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TruthRoute
 
 open import LogOS.Domain.UniversalIR.Task as Task using (PATask)
 open import LogOS.Domain.UniversalIR.Core using (UCode)
@@ -95,7 +95,7 @@ module TR
     verRunWithK : Inputᵀ → CodeK → CodeK
     verRunWithK x w = toCodeK (encVWᵀ x (fromCodeK w))
 
-  module G = TruthRoute.For
+  module G = TruthRoute.ForNat
     K
     Inputᵀ
     sizeᵀ
@@ -153,31 +153,26 @@ mkIRCM Pℕ b =
 -- Extract the run-equality witnesses from the universality pack.
 
 minsky≡lambda-run
-  : ∀ {A}
-  → UIPack.Pack A
+  : UIPack.Pack
   → Sch.RunEq UIS.minskyScheme UIS.lambdaScheme
 minsky≡lambda-run P = UIPack.minskyLambdaEq (UIPack.claimOf P)
 
 lambda≡ethereum-run
-  : ∀ {A}
-  → UIPack.Pack A
+  : UIPack.Pack
   → Sch.RunEq UIS.lambdaScheme UIS.ethereumScheme
 lambda≡ethereum-run P = UIPack.lambdaEthereumEq (UIPack.claimOf P)
 
 minsky≡ethereum-run
-  : ∀ {A}
-  → UIPack.Pack A
+  : UIPack.Pack
   → Sch.RunEq UIS.minskyScheme UIS.ethereumScheme
 minsky≡ethereum-run P = UIPack.minskyEthereumEq (UIPack.claimOf P)
 
 ethereum≡oracle-run
-  : ∀ {A}
-  → UIPack.Pack A
+  : UIPack.Pack
   → Sch.RunEq UIS.ethereumScheme UIS.oracleScheme
 ethereum≡oracle-run P = UIPack.ethereumOracleEq (UIPack.claimOf P)
 
 oracle≡circuit-run
-  : ∀ {A}
-  → UIPack.Pack A
+  : UIPack.Pack
   → Sch.RunEq UIS.oracleScheme UIS.quantumCircuitScheme
 oracle≡circuit-run P = UIPack.oracleCircuitEq (UIPack.claimOf P)

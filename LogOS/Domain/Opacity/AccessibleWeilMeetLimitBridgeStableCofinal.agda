@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -18,14 +18,15 @@ open import LogOS.Kernel
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
 import LogOS.Theorems.Meta.MathTruth as MT
 import LogOS.Theorems.Meta.LimitPublicisation as LP
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
 
 import LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStable as Stable
-import LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridge as AWLM
+import LogOS.Domain.Opacity.WeilProbeImplication as WPI
 
-open import LogOS.Helpers.LocalGlobalBoundary as LGB
+open import LogOS.Theorems.Meta.LocalGlobalBoundary as LGB
 
 -- Cofinal-schedule refinement of the stable meet-limit bridge:
 -- instead of requiring probe truth at every regulator index, it suffices to give
@@ -55,17 +56,17 @@ record AccessibleWeilMeetLimitBridgeStableCofinal {ℓ ℓW : Level}
     cof : LP.Cofinal PIdx u
 
     -- Weil direction at the meet-limit predicate.
-    WProbe : AWLM.WeilProbeImplication RS (Kernel.Code K) W∞
+    WProbe : WPI.WeilProbeImplication RS (Kernel.Code K) W∞
 
     -- Each regulator predicate is stable/extensional (so it is self-observable).
     Wᵢ-ext : ∀ i → Comm.DecodeExtensional′ K (Wᵢ i)
     Wᵢ-stable : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (FlowCode K γ))
 
     -- Plain finite evidence only along the cofinal schedule.
-    holdsᵇ : ∀ b s → NontrivialZero s → Wᵢ (u b) (AWLM.WeilProbeImplication.probe WProbe s)
+    holdsᵇ : ∀ b s → NontrivialZero s → Wᵢ (u b) (WPI.WeilProbeImplication.probe WProbe s)
 
   -- Derive full “all regulators” evidence from cofinality + antitonicity.
-  holdsᵢ : ∀ i s → NontrivialZero s → Wᵢ i (AWLM.WeilProbeImplication.probe WProbe s)
+  holdsᵢ : ∀ i s → NontrivialZero s → Wᵢ i (WPI.WeilProbeImplication.probe WProbe s)
   holdsᵢ i s nz =
     LGB.meetFromCofinal PIdx u cof Wᵢ antiMono (λ b → holdsᵇ b s nz) i
 
@@ -99,13 +100,10 @@ module QuartetMeetLimitStableCofinal
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  record Pack (A : Assumptions) : Set (lsuc (ℓ ⊔ lsuc ℓW)) where
-    field
-      claim : Claim A
+  module Q = Quartet.Make Assumptions Claim
+  open Q public using (Pack; assumptionsOf; claimOf)
 
-  mkPack : (A : Assumptions) → Pack A
-  mkPack A =
-    record
-      { claim =
-          AccessibleWeilMeetLimitBridgeStableCofinal.GRH_Without_Vacuity_Guards-from-cofinal A
-      }
+  mkPack : (A : Assumptions) → Pack
+  mkPack =
+    Q.mkPack
+      (AccessibleWeilMeetLimitBridgeStableCofinal.GRH_Without_Vacuity_Guards-from-cofinal {RS = RS})

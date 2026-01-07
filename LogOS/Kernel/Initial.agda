@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -99,7 +99,7 @@ build {ℓ} Sig Q HWorld₀ = record
   Fml₀ = Topℓ
   module ST₀ = Truth.StrictTruth Sig
   Strict₀ : ST₀.StrictLayer Fml₀
-  Strict₀ = record { Sat_S = λ _ _ → Topℓ ; _⊢S_ = λ _ _ → Topℓ }
+  Strict₀ = record { Sat_S = λ _ _ → Topℓ }
   TransH₀ : Fml₀ → ConPoset.Con (BulkBoundary.bnd BB₀)
   TransH₀ = λ _ → I∂
 
@@ -129,36 +129,38 @@ build {ℓ} Sig Q HWorld₀ = record
 
   freeK : Kernel Sig Q
   freeK = record
-    { HWorld = HWorld₀
-    ; BB     = BB₀
-    ; MBulk  = MBulk₀
-    ; MBnd   = MBnd₀
-    ; Holo   = Holo₀
-    ; HTruth = HTruth₀
-    ; HInv   = HInv₀
-    ; Sat_H_bnd = λ _ _ → Topℓ
-    ; sat-coh   = λ _ _ → record { to = λ x → x ; from = λ x → x }
-    ; Fml = Fml₀
-    ; Strict = Strict₀
-    ; TransH = TransH₀
-    ; coh-LH = λ _ _ → record { to = λ x → x ; from = λ x → x }
-    ; GTruth = GTruth₀
-    ; Code   = Code₀
-    ; encode = encode₀
-    ; decode = decode₀
-    ; decode∘encode = λ _ → refl
-    ; Guard         = Guard₀
-    ; Body          = Body₀
-    ; guard-decode  = λ _ → refl
-    ; γ*            = I∂
-    ; γ*-guard      =
-        (ConPoset.refl (BulkBoundary.bnd BB₀) {c = decode₀ I∂})
-      , (ConPoset.refl (BulkBoundary.bnd BB₀) {c = decode₀ I∂})
-    ; decode-γ*     = refl
-    ; reify         = λ γ → encode₀ (decode₀ γ)
-    ; reify-decode  = λ γ → refl
-    ; Body∂         = λ c → decode₀ (Body₀ (encode₀ c))
-    ; body-decode   = λ γ → refl
+    { shape = record
+        { HWorld = HWorld₀
+        ; BB     = BB₀
+        ; MBulk  = MBulk₀
+        ; MBnd   = MBnd₀
+        ; Holo   = Holo₀
+        ; HTruth = HTruth₀
+        ; HInv   = HInv₀
+        ; Sat_H_bnd = λ _ _ → Topℓ
+        ; sat-coh   = λ _ _ → record { to = λ x → x ; from = λ x → x }
+        ; Fml = Fml₀
+        ; Strict = Strict₀
+        ; TransH = TransH₀
+        ; coh-LH = λ _ _ → record { to = λ x → x ; from = λ x → x }
+        ; Code   = Code₀
+        ; encode = encode₀
+        ; decode = decode₀
+        ; decode∘encode = λ _ → refl
+        ; Guard         = Guard₀
+        ; Body          = Body₀
+        ; γ*            = I∂
+        ; γ*-guard      =
+            (ConPoset.refl (BulkBoundary.bnd BB₀) {c = decode₀ I∂})
+          , (ConPoset.refl (BulkBoundary.bnd BB₀) {c = decode₀ I∂})
+        ; reify         = λ γ → encode₀ (decode₀ γ)
+        ; reify-decode  = λ γ → refl
+        ; Body∂         = λ c → decode₀ (Body₀ (encode₀ c))
+        ; body-decode   = λ γ → refl
+        }
+    ; GTruth       = GTruth₀
+    ; guard-decode = λ _ → refl
+    ; decode-γ*    = refl
     }
 
   -- Canonical fold hom into any Kernel K: constraints via initialConAlg, code by encode∘map∂∘decode
@@ -180,7 +182,7 @@ build {ℓ} Sig Q HWorld₀ = record
   foldFlow K base = record
     { flow-hom = record
         { preserves-F  = λ c →
-            (let module GT = Truth.GuardedTruth Sig Q in GT.GuardedClosure.infl (Kernel.GTruth K))
+            GT₀.GuardedClosure.infl (Kernel.GTruth K)
               (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) c)
         ; preserves-Th = base
         }
@@ -189,7 +191,7 @@ build {ℓ} Sig Q HWorld₀ = record
   -- Automatic construction of the base inequality using OmegaCPO + FiniteFirst
   foldFlow-auto
     : ∀ (K : Kernel Sig Q)
-      (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
+      (ωCPO : GT₀.OmegaCPO (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
       (eq-bot : ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) I∂ ≡ GT₀.OmegaCPO.⊥ ωCPO)
       → KernelHomFlow freeK K (foldHom K)
   foldFlow-auto K ωCPO eq-bot = foldFlow K base
@@ -199,7 +201,9 @@ build {ℓ} Sig Q HWorld₀ = record
                            (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) (GT₀.GuardedClosure.Th* GTruth₀))
                            (GT₀.GuardedClosure.Th* (Kernel.GTruth K))
       base =
-        let le : ConPoset._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))) (GT₀.OmegaCPO.⊥ ωCPO) (GT₀.GuardedClosure.Th* (Kernel.GTruth K))
+        let le : ConPoset._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
+                 (GT₀.OmegaCPO.⊥ ωCPO)
+                 (GT₀.GuardedClosure.Th* (Kernel.GTruth K))
             le = GT₀.OmegaCPO.isBot ωCPO (GT₀.GuardedClosure.Th* (Kernel.GTruth K))
             eqTh : ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) (GT₀.GuardedClosure.Th* GTruth₀)
                    ≡ ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) I∂
@@ -211,7 +215,7 @@ build {ℓ} Sig Q HWorld₀ = record
   -- Variant: base via inequality map∂ I∂ ⊑ ⊥
   foldFlow-auto-ineq
     : ∀ (K : Kernel Sig Q)
-      (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
+      (ωCPO : GT₀.OmegaCPO (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
       (le-bot : ConPoset._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
                               (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) I∂)
                               (GT₀.OmegaCPO.⊥ ωCPO))
@@ -227,27 +231,33 @@ build {ℓ} Sig Q HWorld₀ = record
 -- Top-level convenience: construct a Flow-preserving hom (KernelHomFlow)
 -- from the initial kernel built at (Sig, Q, HWorld).
 
-foldFlow-build-auto
-  : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
-    (HWorld : Worlds.WorldH Sig Q)
-    (K : Kernel Sig Q)
-    (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
-    (eq-bot : ConAlgHom≡.map∂ (KernelHom.con-hom (InitialKernel.foldK (build Sig Q HWorld) K)) I∂
-              ≡ (let module GT0 = Truth.GuardedTruth Sig Q in GT0.OmegaCPO.⊥ ωCPO))
-  → KernelHomFlow (InitialKernel.FreeK (build Sig Q HWorld)) K (InitialKernel.foldK (build Sig Q HWorld) K)
-foldFlow-build-auto Sig Q HW K ωCPO eq-bot =
-  let IK   = build Sig Q HW
-      h    = InitialKernel.foldK IK K
-      bb   = ConAlg.BB (conAlgOf K)
-      le   = (let module GT0 = Truth.GuardedTruth Sig Q in GT0.OmegaCPO.isBot ωCPO) (Th⋆K K)
-      eqTh = refl
-      eqBoth = trans eqTh eq-bot
-      base = subst (λ x → ConPoset._⊑_ (BulkBoundary.bnd bb) x (Th⋆K K)) (sym eqBoth) le
-  in record
-    { flow-hom = record
-        { preserves-F  = λ c →
-            (let module GT0 = Truth.GuardedTruth Sig Q in GT0.GuardedClosure.infl (Kernel.GTruth K))
-              (ConAlgHom≡.map∂ (KernelHom.con-hom h) c)
-        ; preserves-Th = base
-        }
-    }
+module FoldFlowBuildAuto {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ) where
+  private
+    module GT = Truth.GuardedTruth Sig Q
+
+  foldFlow-build-auto
+    : (HWorld : Worlds.WorldH Sig Q)
+    → (K : Kernel Sig Q)
+    → (ωCPO : GT.OmegaCPO (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
+    → (eq-bot : ConAlgHom≡.map∂ (KernelHom.con-hom (InitialKernel.foldK (build Sig Q HWorld) K)) I∂
+                ≡ GT.OmegaCPO.⊥ ωCPO)
+    → KernelHomFlow (InitialKernel.FreeK (build Sig Q HWorld)) K
+        (InitialKernel.foldK (build Sig Q HWorld) K)
+  foldFlow-build-auto HW K ωCPO eq-bot =
+    let IK   = build Sig Q HW
+        h    = InitialKernel.foldK IK K
+        bb   = ConAlg.BB (conAlgOf K)
+        le   = GT.OmegaCPO.isBot ωCPO (Th⋆K K)
+        eqTh = refl
+        eqBoth = trans eqTh eq-bot
+        base = subst (λ x → ConPoset._⊑_ (BulkBoundary.bnd bb) x (Th⋆K K)) (sym eqBoth) le
+    in record
+      { flow-hom = record
+          { preserves-F  = λ c →
+              GT.GuardedClosure.infl (Kernel.GTruth K)
+                (ConAlgHom≡.map∂ (KernelHom.con-hom h) c)
+          ; preserves-Th = base
+          }
+      }
+
+foldFlow-build-auto = FoldFlowBuildAuto.foldFlow-build-auto

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -17,19 +17,12 @@ module LogOS.Domain.UniversalIR.CQM.QuantumCircuitRel where
 
 open import LogOS.Prelude
 
-open import Data.List using (List; []; _∷_)
+open import Data.List using (List; []; _∷_; _++_)
 
 open import LogOS.Syntax.Prop using (_↔_; intro)
 open import LogOS.Theorems.Meta.CQM using (Rel; _≈Rel_; DaggerSMC; RelDaggerSMC)
 open import LogOS.Domain.UniversalIR.Core.QuantumCircuit
   using (Wires; flipAt; applyCNOT; applyTOFF)
-
--- Local list append (to avoid importing unrelated stdlib fragments).
-
-infixr 5 _++_
-_++_ : ∀ {A : Set} → List A → List A → List A
-[]       ++ ys = ys
-(x ∷ xs) ++ ys = x ∷ (xs ++ ys)
 
 -- Unitary-ish gate fragment (no branching/measurement).
 -- (This is the fragment used by the dagger story.)

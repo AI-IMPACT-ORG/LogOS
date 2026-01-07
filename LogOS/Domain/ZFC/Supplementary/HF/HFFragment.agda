@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -17,7 +17,7 @@ open import LogOS.Syntax.Prop using (⊥; ¬_; _↔_; intro)
 -- We intentionally avoid stdlib lists and define the small utilities we need
 -- on top of the project’s `Data.List` (which bridges the host’s builtin list).
 
-open import Data.List using (List; []; _∷_; map)
+open import Data.List using (List; []; _∷_; map; _++_; concat)
 
 -- Minimal dependent pair and sum from project’s Data/*
 open import Data.Product using (Σ; _,_; proj₁; proj₂)
@@ -28,18 +28,6 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 data HF : Set where
   ∅   : HF
   sup : List HF → HF
-
--- List utilities (no stdlib dependency)
-
-infixr 5 _++_
-
-_++_ : ∀ {A : Set} → List A → List A → List A
-[] ++ ys = ys
-(x ∷ xs) ++ ys = x ∷ (xs ++ ys)
-
-concat : ∀ {A : Set} → List (List A) → List A
-concat [] = []
-concat (xs ∷ xss) = xs ++ concat xss
 
 -- “Any” list membership witness
 

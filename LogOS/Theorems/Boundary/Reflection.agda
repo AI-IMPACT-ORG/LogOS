@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -14,7 +14,9 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
+open import LogOS.Kernel.Boundary
 open import LogOS.Kernel.Endo
+open import LogOS.Boundary.Port
 
 -- Kernel self-reflection “up to the explicit boundary”: codes are observed only
 -- via the boundary view `Sat_H_bnd ∘ decode`.
@@ -36,7 +38,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
   infix 4 _≈∂_
   _≈∂_ : Kernel.Code K → Kernel.Code K → Set ℓ
-  γ ≈∂ δ = ∀ (p : LogOSSignature.∂Cosp Sig) → Sat_H_bnd p (decode γ) ↔ Sat_H_bnd p (decode δ)
+  γ ≈∂ δ = decode γ ≈∂[ boundaryIO K ] decode δ
 
   -- Propositional equality of decoded constraints implies boundary equivalence.
 

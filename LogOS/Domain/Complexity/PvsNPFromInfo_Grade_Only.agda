@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -16,6 +16,7 @@ import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TRG
 import LogOS.Domain.Complexity.InfoHardnessBridge as IHB
 import LogOS.Domain.Complexity.PolyGrade as PG
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
+import LogOS.Theorems.Meta.QuartetCore as Quartet
 
 -- Grade-native convenience constructor: build the TruthRoute PvsNP claim from
 -- an NP witness plus an information bottleneck interface.
@@ -51,26 +52,24 @@ module For
     Claim : Set (lsuc (ℓ ⊔ ℓI ⊔ ℓA))
     Claim = G.PvsNPClaimG Acc
 
-    record Pack (A : Assumptions) : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓA))) where
-      field
-        assumptions : Assumptions
-        claim       : Claim
+    module Q = Quartet.Make Assumptions (λ _ → Claim)
+    open Q public using (Pack; assumptionsOf; claimOf)
 
-    mkPack : (A : Assumptions) → Pack A
+    mkPack : (A : Assumptions) → Pack
     mkPack A =
-      let
-        A' : G.SpectralSeparationAssumptionsG Acc
-        A' =
-          record
-            { NP-witnessG   = Assumptions.NP-witnessG A
-            ; Det-superpolyG = detSuperPolyFromInfo (Assumptions.BtlG A)
-                                                  (Assumptions.hardG A)
-            }
-      in
-      record
-        { assumptions = A
-        ; claim       = G.PvsNPPackG.claim (G.mkPvsNPG A')
-        }
+      Q.mkPack
+        (λ A →
+          let
+            A' : G.SpectralSeparationAssumptionsG Acc
+            A' =
+              record
+                { NP-witnessG   = Assumptions.NP-witnessG A
+                ; Det-superpolyG = detSuperPolyFromInfo (Assumptions.BtlG A)
+                                                      (Assumptions.hardG A)
+                }
+          in
+          G.PvsNPPackG.claim (G.mkPvsNPG A'))
+        A
 
     module WithWitnessSizeG {ℓW}
                              (IsPolyW : (ℕ → ℕ) → Set ℓW)
@@ -88,26 +87,24 @@ module For
       ClaimW : Set (lsuc (ℓ ⊔ ℓI ⊔ ℓA ⊔ ℓW))
       ClaimW = WG.PvsNPClaimWG Acc
 
-      record PackW (A : AssumptionsW) : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓA ⊔ ℓW))) where
-        field
-          assumptions : AssumptionsW
-          claim       : ClaimW
+      module QW = Quartet.Make AssumptionsW (λ _ → ClaimW)
+      open QW public hiding (mkPack ; assumptionsOf ; claimOf) renaming (Pack to PackW)
 
-      mkPackW : (A : AssumptionsW) → PackW A
+      mkPackW : (A : AssumptionsW) → PackW
       mkPackW A =
-        let
-          A' : WG.SpectralSeparationAssumptionsWG Acc
-          A' =
-            record
-              { NP-witnessWG   = AssumptionsW.NP-witnessWG A
-              ; Det-superpolyG = detSuperPolyFromInfo (AssumptionsW.BtlG A)
-                                                    (AssumptionsW.hardG A)
-              }
-        in
-        record
-          { assumptions = A
-          ; claim       = WG.PvsNPPackWG.claim (WG.mkPvsNPWG A')
-          }
+        QW.mkPack
+          (λ A →
+            let
+              A' : WG.SpectralSeparationAssumptionsWG Acc
+              A' =
+                record
+                  { NP-witnessWG   = AssumptionsW.NP-witnessWG A
+                  ; Det-superpolyG = detSuperPolyFromInfo (AssumptionsW.BtlG A)
+                                                        (AssumptionsW.hardG A)
+                  }
+            in
+            WG.PvsNPPackWG.claim (WG.mkPvsNPWG A'))
+          A
 
 -- Convenience adapter: lift PolyPred via a gradeBound into the grade-native route.
 module FromNat

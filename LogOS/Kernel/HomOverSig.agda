@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -25,6 +25,7 @@ open import LogOS.Kernel
 open import LogOS.Kernel.Reindex
 open import LogOS.Kernel.Hom
 open import LogOS.Algebra.ConAlg
+open import LogOS.Kernel.HomOverSigCore as Core
 
 -- Reindex a kernel hom along a signature map.
 --
@@ -62,43 +63,42 @@ reindexKernel-composeHom σ τ K = record
   ; map-decode = λ γ → refl
   }
 
--- Signature-indexed kernel morphism.
+module _ {ℓ : Level} {Q : QAdapter ℓ} where
+  reindexKernel-idHom
+    : ∀ {Sig : LogOSSignature ℓ}
+      (K : Kernel Sig Q)
+    → KernelHom K (reindexKernel (idSigHom Sig) K)
+  reindexKernel-idHom K =
+    record
+      { con-hom    = idHom≡ (conAlgOf K)
+      ; mapCode    = λ γ → γ
+      ; map-encode = λ _ → refl
+      ; map-decode = λ _ → refl
+      }
 
-record KernelHomOver {ℓ : Level}
-                     {Q : QAdapter ℓ}
-                     {Sig₁ Sig₂ : LogOSSignature ℓ}
-                     (K₁ : Kernel Sig₁ Q)
-                     (K₂ : Kernel Sig₂ Q)
-                     : Set (lsuc (lsuc ℓ)) where
-  field
-    σ   : SigHom Sig₁ Sig₂
-    hom : KernelHom K₁ (reindexKernel σ K₂)
+  private
+    ops : Core.Ops {ℓ}
+    ops =
+      record
+        { Obj                = λ Sig → Kernel Sig Q
+        ; Hom                = λ {Sig} → KernelHom {Sig = Sig} {Q = Q}
+        ; idHom              = λ {Sig} K → idKernelHom {Sig = Sig} {Q = Q} K
+        ; composeHom         = λ {Sig} {K₁} {K₂} {K₃} h₁ h₂ →
+                                 composeKernelHom {Sig = Sig} {Q = Q} {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} h₁ h₂
+        ; reindexObj         = λ {Sig₁ Sig₂} σ K →
+                                 reindexKernel {Sig₁ = Sig₁} {Sig₂ = Sig₂} {Q = Q} σ K
+        ; reindexHom         = λ {Sig₁ Sig₂} σ {K} {K'} h →
+                                 reindexKernelHom {Sig₁ = Sig₁} {Sig₂ = Sig₂} {Q = Q} σ {K = K} {K' = K'} h
+        ; reindex-composeHom = λ {Sig₁ Sig₂ Sig₃} σ τ K →
+                                 reindexKernel-composeHom {Sig₁ = Sig₁} {Sig₂ = Sig₂} {Sig₃ = Sig₃} {Q = Q} σ τ K
+        ; reindex-idHom      = λ {Sig} K → reindexKernel-idHom {Sig = Sig} K
+        }
 
-idKernelHomOver
-  : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (K : Kernel Sig Q)
-    → KernelHomOver K K
-idKernelHomOver {Sig = Sig} K = record
-  { σ   = idSigHom Sig
-  ; hom = idKernelHom K
-  }
+  module C = Core.WithOps ops
 
-composeKernelHomOver
-  : ∀ {ℓ : Level} {Q : QAdapter ℓ}
-    {Sig₁ Sig₂ Sig₃ : LogOSSignature ℓ}
-    {K₁ : Kernel Sig₁ Q} {K₂ : Kernel Sig₂ Q} {K₃ : Kernel Sig₃ Q}
-    → KernelHomOver K₁ K₂ → KernelHomOver K₂ K₃ → KernelHomOver K₁ K₃
-composeKernelHomOver {K₂ = K₂} {K₃ = K₃} h₁₂ h₂₃ = record
-  { σ   = composeSigHom σ₁₂ σ₂₃
-  ; hom = composeKernelHom hom₁₂ (composeKernelHom hom₂₃' bridge)
-  }
-  where
-    open KernelHomOver h₁₂ renaming (σ to σ₁₂; hom to hom₁₂)
-    open KernelHomOver h₂₃ renaming (σ to σ₂₃; hom to hom₂₃)
-
-    hom₂₃' : KernelHom (reindexKernel σ₁₂ K₂) (reindexKernel σ₁₂ (reindexKernel σ₂₃ K₃))
-    hom₂₃' = reindexKernelHom σ₁₂ hom₂₃
-
-    bridge : KernelHom (reindexKernel σ₁₂ (reindexKernel σ₂₃ K₃))
-                     (reindexKernel (composeSigHom σ₁₂ σ₂₃) K₃)
-    bridge = reindexKernel-composeHom σ₁₂ σ₂₃ K₃
+  open C public
+    renaming
+      ( HomOver       to KernelHomOver
+      ; idHomOver     to idKernelHomOver
+      ; composeHomOver to composeKernelHomOver
+      )

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.ObserverCore where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (_↔_)
+open import LogOS.Syntax.Prop using (_↔_; intro; to; from)
 open import Data.Product using (Σ; _,_; _×_)
 
 -- Generic “observer semantics” core:
@@ -47,6 +47,11 @@ open Admissible public
 
 -- “Largest admissible predicate” (a la Comm⋆ / Obs⋆): P⋆ γ holds iff there
 -- exists some admissible predicate P that contains γ.
+--
+-- Universe note: because `Pred⋆` is a `Σ` over predicates `P : Code → Set ℓP`,
+-- the result lives one universe higher (in `… ⊔ lsuc ℓP`). This is intentional:
+-- setting `ℓP = lsuc ℓ` allows witness-carrying observers (traces/certificates),
+-- while setting `ℓP = ℓ` tightens types at the cost of restricting observers.
 
 Pred⋆
   : ∀ {ℓCode ℓDec ℓT ℓP : Level}
@@ -57,3 +62,75 @@ Pred⋆
   → Code → Set (ℓCode ⊔ ℓDec ⊔ ℓT ⊔ lsuc ℓP)
 Pred⋆ {ℓP = ℓP} {Code} {Dec} decode step TruthK γ =
   Σ (Code → Set ℓP) (λ P → Admissible Code Dec decode step TruthK P × P γ)
+
+-- --------------------------------------------------------------------------
+-- Derived facts: Pred⋆ is the largest admissible predicate.
+-- --------------------------------------------------------------------------
+
+Pred⋆-contains
+  : ∀ {ℓCode ℓDec ℓT ℓP : Level}
+    {Code : Set ℓCode} {Dec : Set ℓDec}
+    (decode : Code → Dec)
+    (step   : Code → Code)
+    (TruthK : Code → Set ℓT)
+    (P      : Code → Set ℓP)
+  → Admissible Code Dec decode step TruthK P
+  → ∀ {γ} → P γ → Pred⋆ {ℓP = ℓP} decode step TruthK γ
+Pred⋆-contains _ _ _ P AP p = P , (AP , p)
+
+Pred⋆-sound
+  : ∀ {ℓCode ℓDec ℓT ℓP : Level}
+    {Code : Set ℓCode} {Dec : Set ℓDec}
+    (decode : Code → Dec)
+    (step   : Code → Code)
+    (TruthK : Code → Set ℓT)
+  → ∀ {γ} → Pred⋆ {ℓP = ℓP} decode step TruthK γ → TruthK γ
+Pred⋆-sound _ _ _ (P , (AP , p)) = sound AP p
+
+Pred⋆-ext
+  : ∀ {ℓCode ℓDec ℓT ℓP : Level}
+    {Code : Set ℓCode} {Dec : Set ℓDec}
+    (decode : Code → Dec)
+    (step   : Code → Code)
+    (TruthK : Code → Set ℓT)
+  → DecodeExtensional decode (Pred⋆ {ℓP = ℓP} decode step TruthK)
+Pred⋆-ext decode step TruthK γ₁ γ₂ eq (P , (AP , p)) =
+  P , (AP , ext AP γ₁ γ₂ eq p)
+
+Pred⋆-stable
+  : ∀ {ℓCode ℓDec ℓT ℓP : Level}
+    {Code : Set ℓCode} {Dec : Set ℓDec}
+    (decode : Code → Dec)
+    (step   : Code → Code)
+    (TruthK : Code → Set ℓT)
+  → ∀ γ → Pred⋆ {ℓP = ℓP} decode step TruthK γ ↔ Pred⋆ {ℓP = ℓP} decode step TruthK (step γ)
+Pred⋆-stable decode step TruthK γ =
+  intro
+    (λ (P , (AP , p)) → P , (AP , to (stable AP γ) p))
+    (λ (P , (AP , p)) → P , (AP , from (stable AP γ) p))
+
+Pred⋆-admissible
+  : ∀ {ℓCode ℓDec ℓT ℓP : Level}
+    {Code : Set ℓCode} {Dec : Set ℓDec}
+    (decode : Code → Dec)
+    (step   : Code → Code)
+    (TruthK : Code → Set ℓT)
+  → Admissible Code Dec decode step TruthK (Pred⋆ {ℓP = ℓP} decode step TruthK)
+Pred⋆-admissible decode step TruthK =
+  record
+    { ext    = Pred⋆-ext decode step TruthK
+    ; sound  = Pred⋆-sound decode step TruthK
+    ; stable = Pred⋆-stable decode step TruthK
+    }
+
+Pred⋆-largest
+  : ∀ {ℓCode ℓDec ℓT ℓP : Level}
+    {Code : Set ℓCode} {Dec : Set ℓDec}
+    (decode : Code → Dec)
+    (step   : Code → Code)
+    (TruthK : Code → Set ℓT)
+    (P      : Code → Set ℓP)
+  → Admissible Code Dec decode step TruthK P
+  → ∀ γ → P γ → Pred⋆ {ℓP = ℓP} decode step TruthK γ
+Pred⋆-largest decode step TruthK P AP γ p =
+  Pred⋆-contains decode step TruthK P AP p

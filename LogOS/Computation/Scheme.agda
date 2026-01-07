@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -8,27 +8,15 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Computation.Scheme where
 
 open import LogOS.Prelude
+open import LogOS.Syntax.Prop using (_↔_; intro; to; from)
 
 open import LogOS.Computation.Core using (iterate; iterate-+; Computation)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPoset)
+open import LogOS.Minimal.Closure public renaming (ClosureOp to Closure)
 open import LogOS.Minimal.ScaleOps using (ScaleOps)
 open import Data.Product using (_×_; _,_; fst; snd)
 open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; total≤ℕ)
-
--- A minimal “renormaliser”/normaliser interface: a lax closure operator on a
--- preorder (monotone + inflationary + idempotent up to ⊑).
---
--- This is intentionally signature-independent; it matches the shape of
--- the `Flow`/monotonicity laws inside `LogOS.Minimal.Truth.GuardedCore.GuardedClosure`.
-
-record Closure {ℓ : Level} (CP : ConPoset ℓ) : Set (lsuc ℓ) where
-  open ConPoset CP
-  field
-    normalize    : Con → Con
-    mono         : ∀ {c c'} → _⊑_ c c' → _⊑_ (normalize c) (normalize c')
-    infl         : ∀ c → _⊑_ c (normalize c)
-    idemp-lax    : ∀ c → _⊑_ (normalize (normalize c)) (normalize c)
 
 -- A “computation scheme” packages:
 -- - a concrete representation (Code + compiler),
@@ -59,10 +47,10 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
 
   open ConPoset CP public using (Con; _⊑_; refl; trans)
   open Closure Norm public renaming
-    ( normalize  to normalize
-    ; mono       to normalize-mono
-    ; infl       to normalize-infl
-    ; idemp-lax  to normalize-idemp-lax
+    ( cl        to normalize
+    ; mono      to normalize-mono
+    ; infl      to normalize-infl
+    ; idemp-lax to normalize-idemp-lax
     )
   open QAdapter Q public using (Scale; _≤s_; _⊔s_; ⊥s; _·_; e)
 
@@ -133,6 +121,48 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
   ComputesWithin : Input → Scale → Output → Set (ℓC ⊔ ℓO ⊔ ℓQ)
   ComputesWithin x b y =
     Σ Con (λ c' → NormalizesTo≤ b (compile x) c' × decode (normalize c') ≡ y)
+
+  -- Unbudgeted semantics is exactly “there exists some budget”.
+  --
+  -- This is the Join/colimit view of resource-indexed computation: finite
+  -- executions produce a concrete cost witness, and budgeted executions can be
+  -- forgotten.
+
+  NormalizesTo≤→NormalizesTo
+    : ∀ {b c c'} → NormalizesTo≤ b c c' → NormalizesTo c c'
+  NormalizesTo≤→NormalizesTo (n , (reach , (halt , _))) = n , (reach , halt)
+
+  NormalizesTo→∃NormalizesTo≤
+    : ∀ {c c'} → NormalizesTo c c' → Σ Scale (λ b → NormalizesTo≤ b c c')
+  NormalizesTo→∃NormalizesTo≤ {c = c} (n , (reach , halt)) =
+    costExec n c , (n , (reach , (halt , QAdapter.≤s-refl Q)))
+
+  NormalizesTo↔∃NormalizesTo≤
+    : ∀ {c c'} → NormalizesTo c c' ↔ Σ Scale (λ b → NormalizesTo≤ b c c')
+  NormalizesTo↔∃NormalizesTo≤ =
+    record
+      { to   = NormalizesTo→∃NormalizesTo≤
+      ; from = λ ex → NormalizesTo≤→NormalizesTo (proj₂ ex)
+      }
+
+  ComputesWithin→ComputesTo
+    : ∀ {x b y} → ComputesWithin x b y → ComputesTo x y
+  ComputesWithin→ComputesTo (c' , (norm≤ , out≡)) =
+    c' , (NormalizesTo≤→NormalizesTo norm≤ , out≡)
+
+  ComputesTo→∃ComputesWithin
+    : ∀ {x y} → ComputesTo x y → Σ Scale (λ b → ComputesWithin x b y)
+  ComputesTo→∃ComputesWithin {x = x} (c' , (n , (reach , halt)) , out≡) =
+    costExec n (compile x)
+    , (c' , ((n , (reach , (halt , QAdapter.≤s-refl Q))) , out≡))
+
+  ComputesTo↔∃ComputesWithin
+    : ∀ {x y} → ComputesTo x y ↔ Σ Scale (λ b → ComputesWithin x b y)
+  ComputesTo↔∃ComputesWithin =
+    record
+      { to   = ComputesTo→∃ComputesWithin
+      ; from = λ ex → ComputesWithin→ComputesTo (proj₂ ex)
+      }
 
   -- ==========================================================================
   -- Budget algebra (quantale-facing)
@@ -280,6 +310,33 @@ ObsEq S T =
     (Scheme.ComputesTo S x y → Scheme.ComputesTo T x y)
   × (Scheme.ComputesTo T x y → Scheme.ComputesTo S x y)
 
+-- A more `LogOS.Syntax.Prop`-aligned presentation: observational equivalence as
+-- pointwise logical equivalence (`↔`) of the computed-output relation.
+
+ObsEq↔
+  : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
+    {Input : Set ℓI} {Output : Set ℓO}
+  → Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output
+  → Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output
+  → Set (ℓI ⊔ ℓO ⊔ ℓC₁ ⊔ ℓC₂)
+ObsEq↔ S T = ∀ x y → Scheme.ComputesTo S x y ↔ Scheme.ComputesTo T x y
+
+ObsEq→ObsEq↔
+  : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
+    {Input : Set ℓI} {Output : Set ℓO}
+    {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
+    {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
+  → ObsEq S T → ObsEq↔ S T
+ObsEq→ObsEq↔ eq x y = intro (fst (eq x y)) (snd (eq x y))
+
+ObsEq↔→ObsEq
+  : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
+    {Input : Set ℓI} {Output : Set ℓO}
+    {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
+    {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
+  → ObsEq↔ S T → ObsEq S T
+ObsEq↔→ObsEq eq x y = to (eq x y) , from (eq x y)
+
 ObsEq-refl
   : ∀ {ℓI ℓO ℓC ℓQ}
     {Input : Set ℓI} {Output : Set ℓO}
@@ -407,6 +464,29 @@ module FuelSound {ℓI ℓO ℓC ℓQ}
       c' = exec n x
       halt' = fh x
 
+  -- `run` is budget-sound for its own observed cost.
+  --
+  -- This is the “cost honesty produces an actual certificate” lemma:
+  -- if the chosen fuel schedule halts, then the schedule output is also
+  -- witnessed as a `ComputesWithin` computation at budget `cost x`.
+
+  runIsComputesWithinCost
+    : FuelHalts S → ∀ x → ComputesWithin x (cost x) (run x)
+  runIsComputesWithinCost fh x =
+    c' , ((n , (refl , (halt' , QAdapter.≤s-refl Q))) , refl)
+    where
+      n  = fuel x
+      c' = exec n x
+      halt' = fh x
+
+  -- If you can bound the observed cost of the chosen schedule by some budget,
+  -- you automatically get a `ComputesWithin` witness at that budget.
+
+  runIsComputesWithin
+    : FuelHalts S → ∀ x b → cost x ≤s b → ComputesWithin x b (run x)
+  runIsComputesWithin fh x b cost≤ =
+    ComputesWithin-mono cost≤ (runIsComputesWithinCost fh x)
+
   computesTo→run : FuelHalts S → ∀ x y → ComputesTo x y → y ≡ run x
   computesTo→run fh x y (c' , (n , (reach , haltC')) , outEq) =
     trans (sym outEq) (cong (λ c → decode (normalize c)) (sym eqFC))
@@ -527,3 +607,20 @@ rel→run {S = S} fh rel = record
   { correct = λ x →
       ImplementsRel.sound rel x (Scheme.run S x) (FuelSound.runIsComputesTo S fh x)
   }
+
+-- If the chosen schedule truly reaches a fixed point (`FuelHalts`), then
+-- schedule correctness implies relational correctness (for any `ComputesTo` run).
+run→rel
+  : ∀ {ℓI ℓO ℓS ℓC ℓQ}
+    {Input : Set ℓI} {Output : Set ℓO}
+    {A : Algorithm {ℓI} {ℓO} {ℓS} Input Output}
+    {S : Scheme {ℓI} {ℓO} {ℓC} {ℓQ} Input Output}
+  → FuelHalts S
+  → ImplementsRun A S
+  → ImplementsRel A S
+run→rel {A = A} {S = S} fh run =
+  record
+    { sound = λ x y c →
+        subst (Algorithm.Spec A x) (sym (FuelSound.computesTo→run S fh x y c))
+          (ImplementsRun.correct run x)
+    }

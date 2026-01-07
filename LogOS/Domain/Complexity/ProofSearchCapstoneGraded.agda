@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -62,18 +62,8 @@ module For {ℓI ℓ ℓQ : Level}
       → (C : PB.Complete PS)
       → R.QTimeDecider P
       → R.QTimeDecider (PB.Prov∞ PS)
-  toProv∞Decider {PS} C qd =
-    record
-      { decide = R.QTimeDecider.decide qd
-      ; total  = R.QTimeDecider.total qd
-      ; sound  = λ x dx → PB.P→Prov∞ C x (R.QTimeDecider.sound qd x dx)
-      ; comp   = λ x pr∞ → R.QTimeDecider.comp qd x (PB.Prov∞→P PS x pr∞)
-      ; time   = R.QTimeDecider.time qd
-      ; meas   = R.QTimeDecider.meas qd
-      ; boundT = R.QTimeDecider.boundT qd
-      ; polyT  = R.QTimeDecider.polyT qd
-      ; time≤  = R.QTimeDecider.time≤ qd
-      }
+  toProv∞Decider {PS} C =
+    R.mapQTimeDecider (P↔Prov∞ {PS = PS} C)
 
   -- Grade-bound decider variant (no ℕ-polynomial wrapper).
   toProv∞DeciderG
@@ -81,17 +71,8 @@ module For {ℓI ℓ ℓQ : Level}
       → (C : PB.Complete PS)
       → R.QTimeDeciderG P
       → R.QTimeDeciderG (PB.Prov∞ PS)
-  toProv∞DeciderG {PS} C qd =
-    record
-      { decide = R.QTimeDeciderG.decide qd
-      ; total  = R.QTimeDeciderG.total qd
-      ; sound  = λ x dx → PB.P→Prov∞ C x (R.QTimeDeciderG.sound qd x dx)
-      ; comp   = λ x pr∞ → R.QTimeDeciderG.comp qd x (PB.Prov∞→P PS x pr∞)
-      ; time   = R.QTimeDeciderG.time qd
-      ; meas   = R.QTimeDeciderG.meas qd
-      ; boundG = R.QTimeDeciderG.boundG qd
-      ; time≤G = R.QTimeDeciderG.time≤G qd
-      }
+  toProv∞DeciderG {PS} C =
+    R.mapQTimeDeciderG (P↔Prov∞ {PS = PS} C)
 
   -- Main consequence: hardness for Prov∞ blocks any poly-budget decider for P as well.
   notPolyTime-P

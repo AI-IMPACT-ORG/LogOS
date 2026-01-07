@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -41,10 +41,11 @@ record LaxMonoidalFlow {ℓ : Level}
   open MonoidalPoset MBnd using (_⊗_; I)
   field
     Flow⊗-lax : ∀ {c d} → ConPoset._⊑_ (BulkBoundary.bnd BB)
-                         (GT.GuardedClosure.Flow GTruth (c ⊗ d))
-                         ((GT.GuardedClosure.Flow GTruth c) ⊗ (GT.GuardedClosure.Flow GTruth d))
+                         (Truth.GuardedCore.GuardedClosure.Flow GTruth (c ⊗ d))
+                         ((Truth.GuardedCore.GuardedClosure.Flow GTruth c)
+                           ⊗ (Truth.GuardedCore.GuardedClosure.Flow GTruth d))
     Flow-I-lax : ConPoset._⊑_ (BulkBoundary.bnd BB)
-                (GT.GuardedClosure.Flow GTruth I)
+                (Truth.GuardedCore.GuardedClosure.Flow GTruth I)
                 I
 
 -- Canonical tensor endomaps on the boundary (right- and left-handed).

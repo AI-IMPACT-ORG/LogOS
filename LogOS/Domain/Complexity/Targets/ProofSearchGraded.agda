@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -10,14 +10,14 @@ module LogOS.Domain.Complexity.Targets.ProofSearchGraded where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ; zero; suc)
+open import Data.Nat using (ℕ)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _,_; _×_; fst; snd; proj₁; proj₂)
-open import Data.NatOrder using (_≤ℕ_; dec≤ℕ; z≤n; ≤ℕ-refl)
+open import Data.NatOrder using (dec≤ℕ)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Computation.Decider as Dec using (dec×)
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
-open import LogOS.Domain.Complexity.Arithmetic using (pow)
 import LogOS.Domain.Complexity.LanguageWitnessW as LWW
 import LogOS.Domain.Complexity.PhysicsClassesWGraded as PCW
 import LogOS.Domain.Complexity.PhysicsClassesWCostGuardsGraded as PCWCG
@@ -61,47 +61,50 @@ module For {ℓI ℓ ℓQ : Level}
       (λ p → (LWW._≤ℕ_ (ProofSystem.psize PS p) (ProofSystem.polyBound PS (size x)))
            × ProofSystem.Check PS x p)
 
-  thm-inPhysNPw
-    : ∀ {P} (PS : ProofSystem P) → C.PhysNPw (Thm PS)
-  thm-inPhysNPw {P} PS =
-    (record
-      { WS = record
-          { W        = ProofSystem.Proof PS
-          ; wsize    = ProofSystem.psize PS
-          ; size     = size
-          ; polyBound = ProofSystem.polyBound PS
-          ; Check    = λ x p →
-                        (LWW._≤ℕ_ (ProofSystem.psize PS p)
-                                  (ProofSystem.polyBound PS (size x)))
-                        × ProofSystem.Check PS x p
-          ; decCheck = decCheck'
-          ; sound    = λ x p pr → p , pr
-          ; complete = λ x thm →
-              let p  = proj₁ thm in
-              let le = fst (proj₂ thm) in
-              let ok = snd (proj₂ thm) in
-              p , (le , (le , ok))
-          }
+  CheckThm : ∀ {P} (PS : ProofSystem P) → (x : Input) → ProofSystem.Proof PS x → Set ℓ
+  CheckThm PS x p =
+    (LWW._≤ℕ_ (ProofSystem.psize PS p) (ProofSystem.polyBound PS (size x)))
+    × ProofSystem.Check PS x p
+
+  decCheckThm
+    : ∀ {P} (PS : ProofSystem P)
+      → ∀ x p → CheckThm PS x p ⊎ ¬ CheckThm PS x p
+  decCheckThm PS x p =
+    Dec.dec×
+      (dec≤ℕ (ProofSystem.psize PS p) (ProofSystem.polyBound PS (size x)))
+      (ProofSystem.decCheck PS x p)
+
+  witnessSystemForThm
+    : ∀ {P} (PS : ProofSystem P) → LWW.WitnessSystemW Input (Thm PS)
+  witnessSystemForThm PS =
+    record
+      { W        = ProofSystem.Proof PS
+      ; wsize    = ProofSystem.psize PS
+      ; size     = size
+      ; polyBound = ProofSystem.polyBound PS
+      ; Check    = CheckThm PS
+      ; decCheck = decCheckThm PS
+      ; sound    = λ x p pr → p , pr
+      ; complete = λ x thm →
+          let p  = proj₁ thm in
+          let le = fst (proj₂ thm) in
+          let ok = snd (proj₂ thm) in
+          p , (le , (le , ok))
+      }
+
+  physWitnessForThm : ∀ {P} (PS : ProofSystem P) → C.PhysWitnessW (Thm PS)
+  physWitnessForThm PS =
+    record
+      { WS        = witnessSystemForThm PS
       ; checkCost  = ProofSystem.checkCost PS
       ; checkBound = ProofSystem.checkBound PS
       ; polyCheck  = ProofSystem.polyCheck PS
       ; checkCost≤ = ProofSystem.checkCost≤ PS
-      } , tt)
-    where
-      decCheck'
-        : ∀ x p →
-          ((LWW._≤ℕ_ (ProofSystem.psize PS p)
-                     (ProofSystem.polyBound PS (size x)))
-           × ProofSystem.Check PS x p)
-          ⊎
-          ¬ ((LWW._≤ℕ_ (ProofSystem.psize PS p)
-                        (ProofSystem.polyBound PS (size x)))
-              × ProofSystem.Check PS x p)
-      decCheck' x p with dec≤ℕ (ProofSystem.psize PS p) (ProofSystem.polyBound PS (size x))
-                         | ProofSystem.decCheck PS x p
-      ... | inj₁ le | inj₁ ok = inj₁ (le , ok)
-      ... | inj₁ le | inj₂ nok = inj₂ (λ pr → nok (snd pr))
-      ... | inj₂ nle | _ = inj₂ (λ pr → nle (fst pr))
+      }
+
+  thm-inPhysNPw
+    : ∀ {P} (PS : ProofSystem P) → C.PhysNPw (Thm PS)
+  thm-inPhysNPw PS = physWitnessForThm PS , tt
 
   thm-separates
     : ∀ {P} (PS : ProofSystem P)
@@ -114,44 +117,7 @@ module For {ℓI ℓ ℓQ : Level}
 
   thm-inPhysNPwG
     : ∀ {P} (PS : ProofSystem P) → C.PhysNPwG (Thm PS)
-  thm-inPhysNPwG {P} PS =
-    (record
-      { WS = record
-          { W        = ProofSystem.Proof PS
-          ; wsize    = ProofSystem.psize PS
-          ; size     = size
-          ; polyBound = ProofSystem.polyBound PS
-          ; Check    = λ x p →
-                        (LWW._≤ℕ_ (ProofSystem.psize PS p)
-                                  (ProofSystem.polyBound PS (size x)))
-                        × ProofSystem.Check PS x p
-          ; decCheck = decCheck'
-          ; sound    = λ x p pr → p , pr
-          ; complete = λ x thm →
-              let p  = proj₁ thm in
-              let le = fst (proj₂ thm) in
-              let ok = snd (proj₂ thm) in
-              p , (le , (le , ok))
-          }
-      ; checkCost   = ProofSystem.checkCost PS
-      ; checkBoundG = λ n → gradeBound (ProofSystem.checkBound PS n)
-      ; checkCost≤  = ProofSystem.checkCost≤ PS
-      } , tt)
-    where
-      decCheck'
-        : ∀ x p →
-          ((LWW._≤ℕ_ (ProofSystem.psize PS p)
-                     (ProofSystem.polyBound PS (size x)))
-           × ProofSystem.Check PS x p)
-          ⊎
-          ¬ ((LWW._≤ℕ_ (ProofSystem.psize PS p)
-                        (ProofSystem.polyBound PS (size x)))
-              × ProofSystem.Check PS x p)
-      decCheck' x p with dec≤ℕ (ProofSystem.psize PS p) (ProofSystem.polyBound PS (size x))
-                         | ProofSystem.decCheck PS x p
-      ... | inj₁ le | inj₁ ok = inj₁ (le , ok)
-      ... | inj₁ le | inj₂ nok = inj₂ (λ pr → nok (snd pr))
-      ... | inj₂ nle | _ = inj₂ (λ pr → nle (fst pr))
+  thm-inPhysNPwG PS = C.toPhysWitnessWG (physWitnessForThm PS) , tt
 
   thm-separatesG
     : ∀ {P} (PS : ProofSystem P)
@@ -166,45 +132,8 @@ module For {ℓI ℓ ℓQ : Level}
 
   thm-inPhysNPwCostGuards
     : ∀ {P} (PS : ProofSystem P) → CS.PhysNPwCostGuards (Thm PS)
-  thm-inPhysNPwCostGuards {P} PS =
+  thm-inPhysNPwCostGuards PS =
     (record
-      { PW = record
-          { WS = record
-              { W        = ProofSystem.Proof PS
-              ; wsize    = ProofSystem.psize PS
-              ; size     = size
-              ; polyBound = ProofSystem.polyBound PS
-              ; Check    = λ x p →
-                            (LWW._≤ℕ_ (ProofSystem.psize PS p)
-                                      (ProofSystem.polyBound PS (size x)))
-                            × ProofSystem.Check PS x p
-              ; decCheck = decCheck'
-              ; sound    = λ x p pr → p , pr
-              ; complete = λ x thm →
-                  let p  = proj₁ thm in
-                  let le = fst (proj₂ thm) in
-                  let ok = snd (proj₂ thm) in
-                  p , (le , (le , ok))
-              }
-          ; checkCost  = ProofSystem.checkCost PS
-          ; checkBound = ProofSystem.checkBound PS
-          ; polyCheck  = ProofSystem.polyCheck PS
-          ; checkCost≤ = ProofSystem.checkCost≤ PS
-          }
+      { PW = physWitnessForThm PS
       ; wsize≤checkCost = ProofSystem.wsize≤checkCost PS
       } , tt)
-    where
-      decCheck'
-        : ∀ x p →
-          ((LWW._≤ℕ_ (ProofSystem.psize PS p)
-                     (ProofSystem.polyBound PS (size x)))
-           × ProofSystem.Check PS x p)
-          ⊎
-          ¬ ((LWW._≤ℕ_ (ProofSystem.psize PS p)
-                        (ProofSystem.polyBound PS (size x)))
-              × ProofSystem.Check PS x p)
-      decCheck' x p with dec≤ℕ (ProofSystem.psize PS p) (ProofSystem.polyBound PS (size x))
-                         | ProofSystem.decCheck PS x p
-      ... | inj₁ le | inj₁ ok = inj₁ (le , ok)
-      ... | inj₁ le | inj₂ nok = inj₂ (λ pr → nok (snd pr))
-      ... | inj₂ nle | _ = inj₂ (λ pr → nle (fst pr))

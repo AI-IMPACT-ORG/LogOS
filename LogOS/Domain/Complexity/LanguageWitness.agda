@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -15,7 +15,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (Σ; _,_; proj₁; proj₂)
 
 open import LogOS.Domain.Complexity.CookReckhow using (Finℓ; toNat; fzero; fsuc)
-open import LogOS.Computation.Decider as D using (Decider)
+open import LogOS.Computation.Decider as D using (Decider; reindexDecider)
 open import LogOS.Domain.Complexity.PolyBoundedCore as PB
 
 -- TM-style “language” layer (input-indexed):
@@ -34,13 +34,7 @@ reindexDeciderI
     (P : Input₂ → Set ℓ)
   → DeciderI Input₂ P
   → DeciderI Input₁ (λ x → P (f x))
-reindexDeciderI f P dec =
-  record
-    { decide = λ x → D.decide dec (f x)
-    ; total  = λ x → D.total  dec (f x)
-    ; sound  = λ x → D.sound  dec (f x)
-    ; comp   = λ x → D.comp   dec (f x)
-    }
+reindexDeciderI f P = reindexDecider f P
 
 -- Poly-bounded witness systems for languages (Cook–Reckhow in input-indexed form).
 -- This matches the usual NP certificate story: a decidable checker and a uniform

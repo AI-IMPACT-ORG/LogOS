@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -19,8 +19,8 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Kernel.Graded
-import LogOS.Domain.Universality.MeasurementCapacity as MC
-import LogOS.Domain.Complexity.TruthRoute as TR
+import LogOS.Domain.Complexity.MeasurementCapacity as MC
+import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TRG
 
 -- Generic (model-polymorphic) info-hardness bridge --------------------------
 --
@@ -279,7 +279,7 @@ module For
   (Acc : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K)) → Set ℓA)
   where
 
-  module R = TR.For K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  module R = TRG.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
   module G = Generic Input Size IsPoly (R.DetWithin Acc)
 
   open G public
@@ -307,7 +307,7 @@ module ForGrade
   (Acc : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K)) → Set ℓA)
   where
 
-  module R = TR.For K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  module R = TRG.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
   module G = GenericGrade Input Size IsPoly R.Grade (R.DetWithinAt Acc) gradeBound
 
   open G public

@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -12,7 +12,7 @@ open import Data.Nat using (ℕ)
 open import Data.NatOrder using (_≤ℕ_; trans≤ℕ)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
-import LogOS.Domain.Universality.MeasurementCapacity as MC
+import LogOS.Domain.Complexity.MeasurementCapacity as MC
 import LogOS.Domain.Complexity.InfoHardnessBridge as IHB
 import LogOS.Domain.Complexity.ResourceSchemaG as RS
 import LogOS.Domain.Complexity.ObservabilityBudgetG as OB

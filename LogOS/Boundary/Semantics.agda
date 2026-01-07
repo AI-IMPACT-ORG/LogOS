@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -22,28 +22,42 @@ open import LogOS.Boundary.IO
 -- Provide a BoundaryIO and an interpretation of boundary constraints into
 -- external formulas with a semantic equivalence; derive a transport lemma.
 
-record BoundarySemantics {ℓ}
+record BoundarySemantics {ℓ ℓForm}
                         (Sig : LogOSSignature ℓ)
                         (Q   : QAdapter ℓ)
                         (W   : Worlds.WorldH Sig Q)
                         (BB  : BulkBoundary ℓ)
                         (H   : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB)
                         (B   : BoundaryIO Sig Q W BB H)
-                        : Set (lsuc ℓ) where
+                        : Set (lsuc (ℓ ⊔ ℓForm)) where
   open LogOSSignature Sig
   module HT = Truth.HomotypicalTruth Sig Q W
   open BulkBoundary BB
   field
-    Form  : Set ℓ
+    Form  : Set ℓForm
     SatF  : ∂Cosp → Form → Set ℓ
     Interp : Con_bnd → Form
     Sat∂≈F : ∀ p c → Prop._↔_ (BoundaryIO.Sat∂ B p c) (SatF p (Interp c))
+
+  -- Derived: direct H-tier ↔ external form equivalence (via the boundary).
+
+  H↔Form
+    : ∀ (w : Cosp) (c : Con_bnd)
+    → Prop._↔_ (HT.HLayer.Sat_H H w c)
+               (SatF (BoundaryIO.to∂ B w) (Interp c))
+  H↔Form w c =
+    Prop.↔-trans
+      (BoundaryIO.sat-coh B w c)
+      (Sat∂≈F (BoundaryIO.to∂ B w) c)
 
   H→Form
     : ∀ (w : Cosp) (c : Con_bnd)
     → HT.HLayer.Sat_H H w c
     → SatF (BoundaryIO.to∂ B w) (Interp c)
-  H→Form w c hw =
-    let coh = BoundaryIO.sat-coh B w c in
-    Prop._↔_.to (Sat∂≈F (BoundaryIO.to∂ B w) c)
-      (Prop._↔_.to coh hw)
+  H→Form w c = Prop._↔_.to (H↔Form w c)
+
+  Form→H
+    : ∀ (w : Cosp) (c : Con_bnd)
+    → SatF (BoundaryIO.to∂ B w) (Interp c)
+    → HT.HLayer.Sat_H H w c
+  Form→H w c = Prop._↔_.from (H↔Form w c)

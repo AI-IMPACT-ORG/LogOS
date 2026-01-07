@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -17,10 +17,10 @@ open import LogOS.Kernel
 open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 
-open import LogOS.Domain.SetTheory.DefinablePack using (ZFAxiomsᵈ)
-open import LogOS.Domain.SetTheory.DefinablePackNoInfinity using (ZFAxiomsᵈ-NoInf)
-open import LogOS.Domain.SetTheory.Pack using (ZFAxioms)
-open import LogOS.Domain.SetTheory.FullUpgradeFromDefinable as Full
+open import LogOS.Domain.ZFC.SetTheory.DefinablePack using (ZFAxiomsᵈ)
+open import LogOS.Domain.ZFC.SetTheory.DefinablePackNoInfinity using (ZFAxiomsᵈ-NoInf)
+open import LogOS.Domain.ZFC.SetTheory.Pack using (ZFAxioms)
+open import LogOS.Domain.ZFC.SetTheory.FullUpgradeFromDefinable as Full
   using (PredicateRepresentable; FunctionGraphRepresentable)
 
 open import LogOS.Domain.ZFC.SetU.IterativeSetTree using (Natℓ; zero; sucℓ)

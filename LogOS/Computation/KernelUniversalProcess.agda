@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -12,10 +12,12 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
-import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel
 open import LogOS.Kernel.Graded
+open import LogOS.Kernel.LogicKernel using (LogicKernel; GTier)
+import LogOS.Kernel.LogicKernel.FromKernel as LKFromKernel
+import LogOS.Kernel.LogicKernel.FromGradedKernel as LKFromGraded
 
 import LogOS.Computation.Scheme as Sch
 import LogOS.Computation.SchemeCategory as Cat
@@ -30,9 +32,15 @@ import LogOS.Computation.SchemeCategory as Cat
 -- The key link is definitional/explicit: `decode` transports the code step into
 -- the boundary step via `guard-decode` + `body-decode`.
 
-module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) where
+module ForLogicKernel
+  {ℓ : Level}
+  {Sig : LogOSSignature ℓ}
+  {Q : QAdapter ℓ}
+  (K : LogicKernel Sig Q)
+  (stepGrade : QAdapter.Scale Q)
+  where
 
-  open Kernel K
+  open LogicKernel K
 
   private
     CP∂ : ConPoset ℓ
@@ -40,19 +48,16 @@ module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K 
 
     module CP∂ = ConPoset CP∂
 
-    Flow∂ : CP∂.Con → CP∂.Con
-    Flow∂ = GT.GuardedClosure.Flow GTruth
-
     step∂ : CP∂.Con → CP∂.Con
-    step∂ c = Flow∂ (Body∂ c)
+    step∂ c = GTier.Flow (LogicKernel.G K) (GTier.step (LogicKernel.G K)) (Body∂ c)
 
     idClosure∂ : Sch.Closure CP∂
     idClosure∂ =
       record
-        { normalize = λ c → c
+        { cl        = λ c → c
         ; mono      = λ p → p
-        ; infl      = λ c → CP∂.refl
-        ; idemp-lax = λ c → CP∂.refl
+        ; infl      = λ _ → CP∂.refl
+        ; idemp-lax = λ _ → CP∂.refl
         }
 
     -- Code carrier with the equality preorder (enough to talk about “a process”).
@@ -68,7 +73,7 @@ module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K 
     idClosureCode : Sch.Closure CPCode
     idClosureCode =
       record
-        { normalize = λ c → c
+        { cl        = λ c → c
         ; mono      = λ p → p
         ; infl      = λ _ → refl
         ; idemp-lax = λ _ → refl
@@ -82,7 +87,7 @@ module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K 
       ; Norm     = idClosure∂
       ; decode   = λ c → c
       ; Q        = Q
-      ; stepCost = λ _ → QAdapter.e Q
+      ; stepCost = λ _ → stepGrade
       }
 
   CodeProcess : Cat.Process CP∂.Con
@@ -93,7 +98,7 @@ module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K 
       ; Norm     = idClosureCode
       ; decode   = decode
       ; Q        = Q
-      ; stepCost = λ _ → QAdapter.e Q
+      ; stepCost = λ _ → stepGrade
       }
 
   decodeHom : Cat.ProcessHom CodeProcess BoundaryProcess
@@ -104,15 +109,27 @@ module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K 
           subst (λ d → CP∂._⊑_ (decode x) d) (cong decode eq) CP∂.refl
       ; step-comm = λ γ →
           let
-            step₁ : decode (Guard (Body γ)) ≡ Flow∂ (decode (Body γ))
+            FlowStep : CP∂.Con → CP∂.Con
+            FlowStep = GTier.Flow (LogicKernel.G K) (GTier.step (LogicKernel.G K))
+
+            step₁ : decode (Guard (Body γ)) ≡ FlowStep (decode (Body γ))
             step₁ = guard-decode (Body γ)
+
             step₂ : decode (Body γ) ≡ Body∂ (decode γ)
             step₂ = body-decode γ
           in
-          trans step₁ (cong Flow∂ step₂)
+          trans step₁ (cong FlowStep step₂)
       ; norm-comm = λ _ → refl
       ; decode-comm = λ _ → refl
       }
+
+  decodeHomLax : Cat.ProcessHomLax CodeProcess BoundaryProcess
+  decodeHomLax = Cat.ProcessHom→Lax decodeHom
+
+module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) where
+
+  module LK = ForLogicKernel (LKFromKernel.asLogicKernel K) (QAdapter.e Q)
+  open LK public
 
 -- Graded kernel-as-process: same story as `ForKernel`, but boundary evolution is
 -- driven by the graded flow at the kernel’s chosen step grade (not necessarily
@@ -121,83 +138,5 @@ module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K 
 
 module ForGradedKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : GradedKernel Sig Q) where
 
-  open GradedKernel K
-
-  private
-    CP∂ : ConPoset ℓ
-    CP∂ = BulkBoundary.bnd BB
-
-    module CP∂ = ConPoset CP∂
-
-    Flow∂At : QAdapter.Scale Q → CP∂.Con → CP∂.Con
-    Flow∂At g = Truth.GuardedCore.GradedClosure.Flow GTruth g
-
-    step∂ : CP∂.Con → CP∂.Con
-    step∂ c = Flow∂At step-grade (Body∂ c)
-
-    idClosure∂ : Sch.Closure CP∂
-    idClosure∂ =
-      record
-        { normalize = λ c → c
-        ; mono      = λ p → p
-        ; infl      = λ _ → CP∂.refl
-        ; idemp-lax = λ _ → CP∂.refl
-        }
-
-    CPCode : ConPoset ℓ
-    CPCode =
-      record
-        { Con  = Code
-        ; _⊑_  = _≡_
-        ; refl = refl
-        ; trans = trans
-        }
-
-    idClosureCode : Sch.Closure CPCode
-    idClosureCode =
-      record
-        { normalize = λ c → c
-        ; mono      = λ p → p
-        ; infl      = λ _ → refl
-        ; idemp-lax = λ _ → refl
-        }
-
-  BoundaryProcess : Cat.Process CP∂.Con
-  BoundaryProcess =
-    record
-      { CP       = CP∂
-      ; Step     = step∂
-      ; Norm     = idClosure∂
-      ; decode   = λ c → c
-      ; Q        = Q
-      ; stepCost = λ _ → step-grade
-      }
-
-  CodeProcess : Cat.Process CP∂.Con
-  CodeProcess =
-    record
-      { CP       = CPCode
-      ; Step     = λ γ → Guard (Body γ)
-      ; Norm     = idClosureCode
-      ; decode   = decode
-      ; Q        = Q
-      ; stepCost = λ _ → step-grade
-      }
-
-  decodeHom : Cat.ProcessHom CodeProcess BoundaryProcess
-  decodeHom =
-    record
-      { map = decode
-      ; mono = λ {x} {y} eq →
-          subst (λ d → CP∂._⊑_ (decode x) d) (cong decode eq) CP∂.refl
-      ; step-comm = λ γ →
-          let
-            step₁ : decode (Guard (Body γ)) ≡ Flow∂At step-grade (decode (Body γ))
-            step₁ = guard-decode (Body γ)
-            step₂ : decode (Body γ) ≡ Body∂ (decode γ)
-            step₂ = body-decode γ
-          in
-          trans step₁ (cong (Flow∂At step-grade) step₂)
-      ; norm-comm = λ _ → refl
-      ; decode-comm = λ _ → refl
-      }
+  module LK = ForLogicKernel (LKFromGraded.asLogicKernel K) (GradedKernel.step-grade K)
+  open LK public

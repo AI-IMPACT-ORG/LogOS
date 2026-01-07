@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# LogOS: an Agda Library for foundational logic architecture
-# Copyright (C) 2025 AI.IMPACT GmbH
+# LogOS: an Agda research library for foundational logic system architecture.
+# Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
 set -euo pipefail
@@ -19,7 +19,7 @@ cd "${LIB_ROOT}"
 # builtins / primitive universe machinery. Everything else should depend on
 # these wrappers instead, making the library easier to port to other hosts.
 HOST_SURFACE_FILES=(
-  "Level.agda"
+  "Host/Level.agda"
   "Data/Nat.agda"
   "Data/Bool.agda"
   "Data/List.agda"

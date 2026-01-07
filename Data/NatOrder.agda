@@ -1,6 +1,6 @@
 {-
-LogOS: an Agda Library for foundational logic architecture
-Copyright (C) 2025 AI.IMPACT GmbH
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
 
@@ -52,3 +52,20 @@ not≤→≥ : ∀ {m n} → ¬ (m ≤ℕ n) → n ≤ℕ m
 not≤→≥ {m} {n} not with total≤ℕ n m
 ... | inj₁ nm = nm
 ... | inj₂ mn = ⊥-elim (not mn)
+
+antisym≤ℕ : ∀ {a b} → a ≤ℕ b → b ≤ℕ a → a ≡ b
+antisym≤ℕ z≤n z≤n = refl
+antisym≤ℕ (s≤s ab) (s≤s ba) = cong suc (antisym≤ℕ ab ba)
+
+-- No natural is ≥ its successor.
+¬suc≤self : ∀ {n} → ¬ (suc n ≤ℕ n)
+¬suc≤self {zero} ()
+¬suc≤self {suc n} (s≤s sn≤n) = ¬suc≤self sn≤n
+
+split≤suc : ∀ {k d} → k ≤ℕ suc d → (k ≤ℕ d) ⊎ (k ≡ suc d)
+split≤suc {k = zero} {_} _ = inj₁ z≤n
+split≤suc {k = suc k} {d = zero} (s≤s k≤0) =
+  inj₂ (cong suc (antisym≤ℕ k≤0 z≤n))
+split≤suc {k = suc k} {d = suc d} (s≤s k≤sd) with split≤suc {k = k} {d = d} k≤sd
+... | inj₁ k≤d = inj₁ (s≤s k≤d)
+... | inj₂ k≡  = inj₂ (cong suc k≡)
