@@ -14,7 +14,7 @@ module LogOS.Theorems.Code.Graded where
 open import LogOS.Prelude
 
 open import LogOS.Kernel.Graded
-open import LogOS.Kernel.Core as KCore
+open import LogOS.Kernel.Core as KCore hiding (FlowCode)
 open import LogOS.Kernel.Graded.Hom
 open import LogOS.Minimal.Con
 open import LogOS.Base.Signature

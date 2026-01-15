@@ -25,13 +25,32 @@ Entry points
 - Assumptions (structural): `LogOS/Theorems/Meta/Assumptions/Core.agda`
 - Assumptions (diagonalisation): `LogOS/Theorems/Meta/Assumptions/Diagonal.agda`
   - Umbrella re-export: `LogOS/Theorems/Meta/Assumptions.agda`
+- Core provability ops (HBL/Imp scaffolding, kernel-independent `*C` records):
+  `LogOS/Theorems/Meta/Assumptions/Core.agda`
 - Transport: `LogOS/Theorems/Meta/Full.agda`
 - Rice/Tarski (conditional wrappers): `LogOS/Theorems/Meta/Rice.agda`, `LogOS/Theorems/Meta/Tarski.agda`
-- Löb/Gödel (conditional): `LogOS/Theorems/Meta/Lob.agda`, `LogOS/Theorems/Meta/Godel.agda` (kernel-independent core lemma: `LogOS/Theorems/Meta/LobCore.agda`)
-- No omniscience / event horizon packaging (diagonal-against-decidable-observers form): `LogOS/Theorems/Meta/NoOmniscience.agda`
+- Löb/Gödel (conditional): `LogOS/Theorems/Meta/Lob.agda`, `LogOS/Theorems/Meta/Godel.agda`
+  (kernel-independent core lemma: `LogOS/Theorems/Meta/Lob.agda` module `Core`)
+- No omniscience / event horizon (diagonal-against-decidable-observers form): use
+  `LogOS/Theorems/Meta/SpectralSeparationOutput.agda` for event-horizon witnesses and
+  `LogOS/Theorems/Meta/Tarski.agda` (`undef-classical`) or
+  `LogOS/Theorems/Meta/Assumptions/Diagonal.agda` (`noOmniscientDeciderC`) for decider barriers.
 - Spectral separation partial output (assumption-only, anti-totality): `LogOS/Theorems/Meta/SpectralSeparationOutput.agda`
 - Math/Physics observer+opacity bundle (graded-kernel friendly): `LogOS/Theorems/Meta/MathPhysSynthesis.agda`
+- CHL capstone (proof/model/category/system views): `LogOS/Theorems/Meta/CHL.agda`
+- Minimal PL mechanization spine (syntax/statics/dynamics): `LogOS/Docs/PLSpine.agda`
 - Maximal communicable truth (Flow-stable): `LogOS/Theorems/Meta/CommunicableTruth.agda`
+- Safe reflection (literature-aligned):
+  - Generic safe reflection: `LogOS/Theorems/Meta/ObserverCore.agda` (`Safe⋆`, `safe⋆-sound`, `safe⋆-stable`).
+  - Kernel-safe reflection (FlowCode): `LogOS/Theorems/Meta/CommunicableTruth.agda`
+    (`Safe⋆`, `safe⋆-core` connecting kernel ↔ generic).
+  - LogicKernel instantiation: `LogOS/Theorems/Meta/ObserverFromLogicKernel.agda`
+    (`Safe⋆`, `SafeTruthAt`).
+- Safety spine (design choice → architecture + paradox gates):
+  - `LogOS/Theorems/Meta/Safety/DesignChoice.agda`
+  - `LogOS/Theorems/Meta/Safety/ArchitectureFromSafety.agda`
+  - `LogOS/Theorems/Meta/Safety/AvoidanceList.agda`
+  - `LogOS/Theorems/Meta/Safety/Matrix.agda`
 - Regulated truth → observable truth (MathTruth pack): `LogOS/Theorems/Meta/MathTruth.agda`
 - Limit publicisation laws (reflector property, cofinality, naturality): `LogOS/Theorems/Meta/LimitPublicisation.agda`
 - Minimal dagger/* infrastructure (quadratic positivity shims): `LogOS/Theorems/Meta/Dagger.agda`
@@ -45,6 +64,7 @@ Typical usage (Gödel/Löb shape)
 1) Package `Provability K` (decode‑extensional predicate with nontriviality; add HBLClassic/diagonalization assumptions if desired).
 2) Provide the standard provability‑side assumptions as explicit packs:
    - Preferred: `InternalHomWitness` + `DecodeImp⊑` (or `QuoteSubst` + `DecodeImp`) to *derive* `Diagonalization`, then `HBLClassic` + `ImpRules` (use `Meta/Lob.loebAxiom-from-InternalHom` / `Meta/Lob.loebAxiom-from-QuoteSubst`).
+     Note: `QuoteSubst` is now the antisymmetric (partial-order) specialization of `QuoteSubst⊑`.
    - Corollary: if you already have `Diagonalization`, combine it with `HBLClassic` + `ImpRules` via `Meta/Lob.loebFromHBL`.
 3) Use the Gödel packaging (`LogOS/Theorems/Meta/Godel.agda`) to derive the incompleteness claim for your model.
 
@@ -54,8 +74,10 @@ Notes
   canonical FreeKernel; transport to any kernel is automated.
 - `LogOS/Theorems/Meta/Full.agda` also exports the general lemma `noDecider-by-pullback`:
   undecidability pushes forward along any `KernelHom` by contrapositive pullback of deciders.
-- Some optional packs (e.g. `LogOS/Theorems/Meta/Diagonal.agda`) phrase diagonalization using
-  code-level equalities; these are still explicit assumptions and are not required by the
-  transport wrappers.
+- Some optional packs (e.g. `LogOS/Theorems/Meta/Assumptions/Diagonal.agda`’s `Diagonal`)
+  phrase diagonalization using code-level equalities; these are still explicit assumptions
+  and are not required by the transport wrappers.
+- Migration: the old `Diagonal` pack is now in
+  `LogOS/Theorems/Meta/Assumptions/Diagonal.agda`.
 - For Gödel 2, provide `Provability`, `ProvabilityOps`, and a `LoebAxiom` (either given directly, or obtained via `Meta/Lob.loebAxiom-from-InternalHom` / `Meta/Lob.loebAxiom-from-QuoteSubst`, or via the corollary `Meta/Lob.loebFromHBL` when `Diagonalization` is already packaged); use `Meta/Godel.incompleteness`.
 - Model‑specific instantiations (e.g., concrete fixed points) should live outside the core library and depend only on these small, explicit assumption records.

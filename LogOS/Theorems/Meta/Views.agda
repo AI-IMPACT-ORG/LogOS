@@ -31,9 +31,10 @@ import LogOS.Kernel.Hom as KH
 
 import LogOS.Kernel.LogicKernel as LK
 import LogOS.Kernel.LogicKernel.FromKernel as LKFromK
+import LogOS.Kernel.LogicKernel.Hom.FromKernel as LKHom
 import LogOS.Kernel.LogicKernel.Hom2Cat as LK2
-import LogOS.Kernel.LogicKernel.Hom as LKH
 import LogOS.Kernel.LogicKernel.ConAlgOf as LKConAlg
+import LogOS.Kernel.LogicKernel.Reindex as LKReindex
 open import LogOS.Minimal.Truth as Truth
 
 -- ============================================================================
@@ -148,6 +149,101 @@ module ReindexingSatisfaction
         (Kernel.Sat_H_bnd K₁ (LogOSSignature.to∂ Sig₁ w) c)
   SatHcoh-precompose = Kernel.sat-coh K₁
 
+module ReindexingSatisfactionWithFml
+  {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (σ : SigHom Sig₁ Sig₂)
+  (K₂ : Kernel Sig₂ Q)
+  {Fml₁ : Set ℓ}
+  (mapFml : Fml₁ → Kernel.Fml K₂)
+  where
+
+  open Reindex
+
+  K₁ : Kernel Sig₁ Q
+  K₁ = reindexKernelWithFml σ K₂ mapFml
+
+  module ST₁ = Truth.StrictTruth Sig₁
+  module ST₂ = Truth.StrictTruth Sig₂
+  module HT₁ = Truth.HomotypicalTruth Sig₁ Q (Kernel.HWorld K₁)
+  module HT₂ = Truth.HomotypicalTruth Sig₂ Q (Kernel.HWorld K₂)
+
+  SatS-precompose
+    : ∀ (w : LogOSSignature.Cosp Sig₁)
+        (φ : Fml₁)
+    → Prop._↔_
+        (ST₁.StrictLayer.Sat_S (Kernel.Strict K₁) w φ)
+        (ST₂.StrictLayer.Sat_S (Kernel.Strict K₂) (SigHom.mapCosp σ w) (mapFml φ))
+  SatS-precompose = reindex-satS-withFml σ K₂ mapFml
+
+  SatH-precompose
+    : ∀ (w : LogOSSignature.Cosp Sig₁)
+        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+    → HT₁.HLayer.Sat_H (Kernel.HTruth K₁) w c
+      ≡ HT₂.HLayer.Sat_H (Kernel.HTruth K₂) (SigHom.mapCosp σ w) c
+  SatH-precompose _ _ = refl
+
+  SatHbnd-precompose
+    : ∀ (w : LogOSSignature.∂Cosp Sig₁)
+        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+    → Kernel.Sat_H_bnd K₁ w c ≡ Kernel.Sat_H_bnd K₂ (SigHom.map∂Cosp σ w) c
+  SatHbnd-precompose _ _ = refl
+
+  SatHcoh-precompose
+    : ∀ (w : LogOSSignature.Cosp Sig₁)
+        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+    → Prop._↔_
+        (HT₁.HLayer.Sat_H (Kernel.HTruth K₁) w c)
+        (Kernel.Sat_H_bnd K₁ (LogOSSignature.to∂ Sig₁ w) c)
+  SatHcoh-precompose = Kernel.sat-coh K₁
+
+module ReindexingSatisfactionWithFmlLogic
+  {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (σ : SigHom Sig₁ Sig₂)
+  (K₂ : LK.LogicKernel Sig₂ Q)
+  {Fml₁ : Set ℓ}
+  (mapFml : Fml₁ → LK.LogicKernel.Fml K₂)
+  where
+
+  open LK
+  open LogicKernel
+
+  K₁ : LK.LogicKernel Sig₁ Q
+  K₁ = LKReindex.reindexLogicKernelWithFml σ K₂ mapFml
+
+  module ST₁ = Truth.StrictTruth Sig₁
+  module ST₂ = Truth.StrictTruth Sig₂
+  module HT₁ = Truth.HomotypicalTruth Sig₁ Q (LogicKernel.HWorld K₁)
+  module HT₂ = Truth.HomotypicalTruth Sig₂ Q (LogicKernel.HWorld K₂)
+
+  SatS-precompose
+    : ∀ (w : LogOSSignature.Cosp Sig₁)
+        (φ : Fml₁)
+    → Prop._↔_
+        (ST₁.StrictLayer.Sat_S (LogicKernel.Strict K₁) w φ)
+        (ST₂.StrictLayer.Sat_S (LogicKernel.Strict K₂) (SigHom.mapCosp σ w) (mapFml φ))
+  SatS-precompose = LKReindex.reindexLogic-satS-withFml σ K₂ mapFml
+
+  SatH-precompose
+    : ∀ (w : LogOSSignature.Cosp Sig₁)
+        (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
+    → HT₁.HLayer.Sat_H (LogicKernel.HTruth K₁) w c
+      ≡ HT₂.HLayer.Sat_H (LogicKernel.HTruth K₂) (SigHom.mapCosp σ w) c
+  SatH-precompose _ _ = refl
+
+  SatHbnd-precompose
+    : ∀ (w : LogOSSignature.∂Cosp Sig₁)
+        (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
+    → LogicKernel.Sat_H_bnd K₁ w c ≡ LogicKernel.Sat_H_bnd K₂ (SigHom.map∂Cosp σ w) c
+  SatHbnd-precompose _ _ = refl
+
+  SatHcoh-precompose
+    : ∀ (w : LogOSSignature.Cosp Sig₁)
+        (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
+    → Prop._↔_
+        (HT₁.HLayer.Sat_H (LogicKernel.HTruth K₁) w c)
+        (LogicKernel.Sat_H_bnd K₁ (LogOSSignature.to∂ Sig₁ w) c)
+  SatHcoh-precompose = LogicKernel.sat-coh K₁
+
 -- ============================================================================
 -- 3) Kernel ↪ LogicKernel is 2-fully-faithful (by definitional restriction)
 -- ============================================================================
@@ -163,21 +259,32 @@ module KernelIntoLogicKernel
     : ∀ {K₁ K₂ : Kernel Sig Q}
     → K2.KernelHom₁ K₁ K₂
     → LK2.LogicKernelHom₁ (asLogicKernel K₁) (asLogicKernel K₂)
-  toLKHom₁ h = h
+  toLKHom₁ h =
+    record
+      { hom   = LKHom.asLogicKernelHom (K2.KernelHom₁.hom h)
+      ; mono∂ = K2.KernelHom₁.mono∂ h
+      }
 
   fromLKHom₁
     : ∀ {K₁ K₂ : Kernel Sig Q}
     → LK2.LogicKernelHom₁ (asLogicKernel K₁) (asLogicKernel K₂)
     → K2.KernelHom₁ K₁ K₂
-  fromLKHom₁ h = h
+  fromLKHom₁ h =
+    record
+      { hom   = LKHom.asKernelHom (LK2.LogicKernelHom₁.hom h)
+      ; mono∂ = LK2.LogicKernelHom₁.mono∂ h
+      }
 
-  to-from : ∀ {K₁ K₂ : Kernel Sig Q} (h : K2.KernelHom₁ K₁ K₂) → fromLKHom₁ (toLKHom₁ h) ≡ h
+  to-from
+    : ∀ {K₁ K₂ : Kernel Sig Q}
+      (h : K2.KernelHom₁ K₁ K₂)
+    → fromLKHom₁ {K₁ = K₁} {K₂ = K₂} (toLKHom₁ {K₁ = K₁} {K₂ = K₂} h) ≡ h
   to-from _ = refl
 
   from-to
     : ∀ {K₁ K₂ : Kernel Sig Q}
       (h : LK2.LogicKernelHom₁ (asLogicKernel K₁) (asLogicKernel K₂))
-    → toLKHom₁ (fromLKHom₁ h) ≡ h
+    → toLKHom₁ {K₁ = K₁} {K₂ = K₂} (fromLKHom₁ {K₁ = K₁} {K₂ = K₂} h) ≡ h
   from-to _ = refl
 
 -- ============================================================================
@@ -188,7 +295,21 @@ module RefinementLaws
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   where
 
-  open LK2 public using (_⇒_; _≈_; whiskerL; whiskerR; _⊙_; cong-∘₁-≈; trans⇒; refl⇒; refl≈; trans≈; sym≈)
+  open LK2 public using
+    ( _⇒_
+    ; _≈_
+    ; whiskerL
+    ; whiskerR
+    ; whisker-left
+    ; whisker-right
+    ; _⊙_
+    ; cong-∘₁-≈
+    ; trans⇒
+    ; refl⇒
+    ; refl≈
+    ; trans≈
+    ; sym≈
+    )
 
 -- ============================================================================
 -- 5) Flow/Guard transport: steps are respected by flow-preserving morphisms (lax)

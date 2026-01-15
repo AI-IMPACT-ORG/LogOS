@@ -21,6 +21,7 @@ open import LogOS.Base.Signature
 open import LogOS.Base.Signature.Hom
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
+open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Algebra.ConAlg
 open import LogOS.Ports.Semantic.SatMor
@@ -34,6 +35,7 @@ open import LogOS.Kernel.LogicKernel
 open import LogOS.Kernel.LogicKernel.Reindex
 open import LogOS.Kernel.LogicKernel.Hom
 open import LogOS.Kernel.LogicKernel.HomOverSig
+import LogOS.Kernel.LogicKernel.Tiers as LKT
 
 -- ---------------------------------------------------------------------------
 -- Signature reindexing induces a satisfaction morphism (boundary satisfaction).
@@ -53,7 +55,7 @@ satMor-reindexKernel-boundary σ K =
   record
     { mapCtx = SigHom.map∂Cosp σ
     ; mapCon = λ c → c
-    ; sat-↔  = λ _ _ → Prop.↔-refl
+    ; sat-↔  = λ p c → reindex-sat-bnd σ K p c
     }
 
 satMor-reindexLogicKernel-boundary
@@ -70,6 +72,130 @@ satMor-reindexLogicKernel-boundary σ K =
   record
     { mapCtx = SigHom.map∂Cosp σ
     ; mapCon = λ c → c
+    ; sat-↔  = λ p c → reindexLogic-sat-bnd σ K p c
+    }
+
+-- ---------------------------------------------------------------------------
+-- Signature reindexing induces a satisfaction morphism (strict satisfaction).
+-- ---------------------------------------------------------------------------
+
+satMor-reindexKernel-strict
+  : ∀ {ℓ : Level}
+    {Sig₁ Sig₂ : LogOSSignature ℓ}
+    {Q : QAdapter ℓ}
+    (σ : SigHom Sig₁ Sig₂)
+    (K : Kernel Sig₂ Q)
+    {Fml₁ : Set ℓ}
+  → (mapFml : Fml₁ → Kernel.Fml K)
+  → SatMor (LogOSSignature.Cosp Sig₁) Fml₁
+           (Truth.StrictTruth.StrictLayer.Sat_S (Kernel.Strict (reindexKernelWithFml σ K mapFml)))
+           (LogOSSignature.Cosp Sig₂) (Kernel.Fml K)
+           (Truth.StrictTruth.StrictLayer.Sat_S (Kernel.Strict K))
+satMor-reindexKernel-strict σ K mapFml =
+  record
+    { mapCtx = SigHom.mapCosp σ
+    ; mapCon = mapFml
+    ; sat-↔  = λ p φ → reindex-satS-withFml σ K mapFml p φ
+    }
+
+satMor-reindexLogicKernel-strict
+  : ∀ {ℓ : Level}
+    {Sig₁ Sig₂ : LogOSSignature ℓ}
+    {Q : QAdapter ℓ}
+    (σ : SigHom Sig₁ Sig₂)
+    (K : LogicKernel Sig₂ Q)
+    {Fml₁ : Set ℓ}
+  → (mapFml : Fml₁ → LogicKernel.Fml K)
+  → SatMor (LogOSSignature.Cosp Sig₁) Fml₁
+           (Truth.StrictTruth.StrictLayer.Sat_S (LogicKernel.Strict (reindexLogicKernelWithFml σ K mapFml)))
+           (LogOSSignature.Cosp Sig₂) (LogicKernel.Fml K)
+           (Truth.StrictTruth.StrictLayer.Sat_S (LogicKernel.Strict K))
+satMor-reindexLogicKernel-strict σ K mapFml =
+  record
+    { mapCtx = SigHom.mapCosp σ
+    ; mapCon = mapFml
+    ; sat-↔  = λ p φ → reindexLogic-satS-withFml σ K mapFml p φ
+    }
+
+-- ---------------------------------------------------------------------------
+-- Strict satisfaction to boundary satisfaction (kernel coherence as SatMor).
+-- ---------------------------------------------------------------------------
+
+satMor-strict-to-boundary
+  : ∀ {ℓ : Level}
+    {Sig : LogOSSignature ℓ}
+    {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+  → let open BulkBoundary (Kernel.BB K)
+        open Truth.StrictTruth Sig
+        module HT = Truth.HomotypicalTruth Sig Q (Kernel.HWorld K)
+    in SatMor (LogOSSignature.Cosp Sig) (Kernel.Fml K)
+              (StrictLayer.Sat_S (Kernel.Strict K))
+              (LogOSSignature.∂Cosp Sig) Con_bnd (Kernel.Sat_H_bnd K)
+satMor-strict-to-boundary {Sig = Sig} K =
+  record
+    { mapCtx = LogOSSignature.to∂ Sig
+    ; mapCon = Kernel.TransH K
+    ; sat-↔  = λ w φ →
+        Prop.↔-trans
+          (Kernel.coh-LH K w φ)
+          (Kernel.sat-coh K w (Kernel.TransH K φ))
+    }
+
+satMor-strict-to-boundaryLogic
+  : ∀ {ℓ : Level}
+    {Sig : LogOSSignature ℓ}
+    {Q : QAdapter ℓ}
+    (K : LogicKernel Sig Q)
+  → let open BulkBoundary (LogicKernel.BB K)
+        open Truth.StrictTruth Sig
+        module HT = Truth.HomotypicalTruth Sig Q (LogicKernel.HWorld K)
+    in SatMor (LogOSSignature.Cosp Sig) (LogicKernel.Fml K)
+              (StrictLayer.Sat_S (LogicKernel.Strict K))
+              (LogOSSignature.∂Cosp Sig) Con_bnd (LogicKernel.Sat_H_bnd K)
+satMor-strict-to-boundaryLogic {Sig = Sig} K =
+  record
+    { mapCtx = LogOSSignature.to∂ Sig
+    ; mapCon = LogicKernel.TransH K
+    ; sat-↔  = λ w φ →
+        Prop.↔-trans
+          (LogicKernel.coh-LH K w φ)
+          (LogicKernel.sat-coh K w (LogicKernel.TransH K φ))
+    }
+
+-- ---------------------------------------------------------------------------
+-- Reflection (code) to boundary satisfaction as a SatMor.
+-- ---------------------------------------------------------------------------
+
+satMor-code-to-boundary
+  : ∀ {ℓ : Level}
+    {Sig : LogOSSignature ℓ}
+    {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+  → let open BulkBoundary (Kernel.BB K) in
+    SatMor (LogOSSignature.Cosp Sig) (Kernel.Code K)
+           (λ w γ → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) (Kernel.decode K γ))
+           (LogOSSignature.∂Cosp Sig) Con_bnd (Kernel.Sat_H_bnd K)
+satMor-code-to-boundary {Sig = Sig} K =
+  record
+    { mapCtx = LogOSSignature.to∂ Sig
+    ; mapCon = Kernel.decode K
+    ; sat-↔  = λ _ _ → Prop.↔-refl
+    }
+
+satMor-code-to-boundaryLogic
+  : ∀ {ℓ : Level}
+    {Sig : LogOSSignature ℓ}
+    {Q : QAdapter ℓ}
+    (K : LogicKernel Sig Q)
+  → let open BulkBoundary (LogicKernel.BB K)
+        module R = LKT.For K
+    in SatMor (LogOSSignature.Cosp Sig) (LogicKernel.Code K) (R.Sat_R)
+              (LogOSSignature.∂Cosp Sig) Con_bnd (LogicKernel.Sat_H_bnd K)
+satMor-code-to-boundaryLogic {Sig = Sig} K =
+  record
+    { mapCtx = LogOSSignature.to∂ Sig
+    ; mapCon = LogicKernel.decode K
     ; sat-↔  = λ _ _ → Prop.↔-refl
     }
 

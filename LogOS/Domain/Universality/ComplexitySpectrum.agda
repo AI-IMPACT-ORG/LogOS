@@ -25,10 +25,10 @@ record ComplexityModel {ℓ : Level} : Set (lsuc (lsuc ℓ)) where
   field
     Input : Set ℓ
     size  : Input → ℕ
-    encD  : Input → ToyUCode               -- deterministic encoding
-    encV  : Input → ToyUCode               -- verifier encoding (for NP)
-    BlumD : Blum ToyUCode                  -- Blum structure for deterministic step
-    BlumV : Blum ToyUCode                  -- Blum structure for verifier
+    encD  : Input → CoreUCode               -- deterministic encoding
+    encV  : Input → CoreUCode               -- verifier encoding (for NP)
+    BlumD : Blum CoreUCode                  -- Blum structure for deterministic step
+    BlumV : Blum CoreUCode                  -- Blum structure for verifier
 
   open Blum BlumD renaming (TimeLe to TimeLeD) public
   open Blum BlumV renaming (TimeLe to TimeLeV) public
@@ -60,15 +60,15 @@ record EvolEndo {ℓ : Level}
     CP = BulkBoundary.bnd BB
     module CP = ConPoset CP
   field
-    embed : ToyUCode → CP.Con
+    embed : CoreUCode → CP.Con
     StepE : Endo K
-    intertwine≤ : ∀ u → CP._⊑_ (embed (stepToyU u)) (Endo.fn StepE (embed u))
+    intertwine≤ : ∀ u → CP._⊑_ (embed (stepCoreU u)) (Endo.fn StepE (embed u))
 
 -- Spectral hypotheses for separation (schematic): polynomial vs superpolynomial growth
 
 record SeparationHypotheses {ℓ : Level}
                             (CM : ComplexityModel {ℓ})
-                            (EO : EvolOperator {ℓH = ℓ} ToyUCode stepToyU)
+                            (EO : EvolOperator {ℓH = ℓ} CoreUCode stepCoreU)
                             : Set (lsuc (lsuc ℓ)) where
   open ComplexityModel CM
   open EvolOperator EO

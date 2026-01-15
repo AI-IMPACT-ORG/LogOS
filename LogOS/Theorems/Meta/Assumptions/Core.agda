@@ -15,6 +15,7 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 open import LogOS.Minimal.Con
 open import LogOS.Theorems.Meta.Base using (NonTrivialC)
+import LogOS.Theorems.Meta.ObserverCore as ObsCore
 
 -- Shared assumption packs for conditional meta theorems.
 --
@@ -30,7 +31,7 @@ DecodeExtensional
 -- form of function extensionality). It is a *predicate-compatibility* condition:
 -- `P` must be insensitive to code representation beyond decoded meaning.
 DecodeExtensional K P =
-  ∀ γ₁ γ₂ → Kernel.decode K γ₁ ≡ Kernel.decode K γ₂ → P γ₁ → P γ₂
+  ObsCore.DecodeExtensional (Kernel.decode K) P
 
 DecodeExtensionalFn
   : ∀ {ℓ ℓX} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -41,6 +42,34 @@ DecodeExtensionalFn
 -- Function-specialised variant: `f` respects decoded meaning.
 DecodeExtensionalFn K f =
   ∀ γ₁ γ₂ → Kernel.decode K γ₁ ≡ Kernel.decode K γ₂ → f γ₁ ≡ f γ₂
+
+-- Kernel-independent provability scaffolding (reused by Löb/Gödel core).
+
+record ProvabilityOpsC {ℓCode : Level} (Code : Set ℓCode) : Set (lsuc ℓCode) where
+  field
+    Imp : Code → Code → Code
+    Box : Code → Code
+
+record ImpRulesC {ℓCode ℓPr : Level}
+                 {Code : Set ℓCode}
+                 (⊢    : Code → Set ℓPr)
+                 (Op   : ProvabilityOpsC Code)
+                 : Set (lsuc (ℓCode ⊔ ℓPr)) where
+  open ProvabilityOpsC Op
+  field
+    mp   : ∀ {φ ψ} → ⊢ (Imp φ ψ) → ⊢ φ → ⊢ ψ
+    impI : ∀ {φ ψ} → (⊢ φ → ⊢ ψ) → ⊢ (Imp φ ψ)
+
+record HBLClassicC {ℓCode ℓPr : Level}
+                   {Code : Set ℓCode}
+                   (⊢    : Code → Set ℓPr)
+                   (Op   : ProvabilityOpsC Code)
+                   : Set (lsuc (ℓCode ⊔ ℓPr)) where
+  open ProvabilityOpsC Op
+  field
+    Necessitation : ∀ φ → ⊢ φ → ⊢ (Box φ)
+    Kdist         : ∀ φ ψ → ⊢ (Box (Imp φ ψ)) → (⊢ (Box φ) → ⊢ (Box ψ))
+    Four          : ∀ φ → ⊢ (Box φ) → ⊢ (Box (Box φ))
 
 record BoundaryFix {ℓ}
                    {Sig : LogOSSignature ℓ}
@@ -82,6 +111,16 @@ record ProvabilityOps {ℓ}
     Imp : Code → Code → Code
     Box : Code → Code
 
+toOpsC
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+  → ProvabilityOps K
+  → ProvabilityOpsC (Kernel.Code K)
+toOpsC Op = record
+  { Imp = ProvabilityOps.Imp Op
+  ; Box = ProvabilityOps.Box Op
+  }
+
 -- Minimal implicational fragment over the model-provided `Imp` constructor.
 -- We keep this separate so metatheorems can precisely state when they need
 -- “plain” propositional reasoning in addition to provability-side axioms.
@@ -98,6 +137,18 @@ record ImpRules {ℓ}
   field
     mp   : ∀ {φ ψ} → ⊢ (Imp φ ψ) → ⊢ φ → ⊢ ψ
     impI : ∀ {φ ψ} → (⊢ φ → ⊢ ψ) → ⊢ (Imp φ ψ)
+
+toImpRulesC
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K  : Kernel Sig Q}
+    {Pr : Provability K}
+    {Op : ProvabilityOps K}
+  → ImpRules K Pr Op
+  → ImpRulesC (Provability.Prov Pr) (toOpsC Op)
+toImpRulesC Ir = record
+  { mp   = ImpRules.mp Ir
+  ; impI = ImpRules.impI Ir
+  }
 
 -- HBL (classic):
 -- 1) Necessitation: if ⊢ φ then ⊢ Box φ
@@ -117,3 +168,16 @@ record HBLClassic {ℓ}
     Necessitation : ∀ φ → ⊢ φ → ⊢ (Box φ)
     Kdist         : ∀ φ ψ → ⊢ (Box (Imp φ ψ)) → (⊢ (Box φ) → ⊢ (Box ψ))
     Four          : ∀ φ → ⊢ (Box φ) → ⊢ (Box (Box φ))
+
+toHBLClassicC
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K  : Kernel Sig Q}
+    {Pr : Provability K}
+    {Op : ProvabilityOps K}
+  → HBLClassic K Pr Op
+  → HBLClassicC (Provability.Prov Pr) (toOpsC Op)
+toHBLClassicC Hb = record
+  { Necessitation = HBLClassic.Necessitation Hb
+  ; Kdist         = HBLClassic.Kdist Hb
+  ; Four          = HBLClassic.Four Hb
+  }

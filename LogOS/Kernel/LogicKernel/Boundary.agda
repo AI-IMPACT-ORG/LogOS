@@ -11,9 +11,6 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Minimal.World
-open import LogOS.Minimal.Con
-open import LogOS.Minimal.Truth as Truth
 open import LogOS.Boundary.IO
 
 open import LogOS.Kernel.LogicKernel
@@ -24,13 +21,4 @@ boundaryIO
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : LogicKernel Sig Q)
   → BoundaryIO Sig Q (LogicKernel.HWorld K) (LogicKernel.BB K) (LogicKernel.HTruth K)
-boundaryIO {Sig = Sig} {Q = Q} K =
-  record
-    { to∂    = to∂Sig
-    ; from∂  = from∂Sig
-    ; Sat∂   = LogicKernel.Sat_H_bnd K
-    ; sat-coh = LogicKernel.sat-coh K
-    }
-  where
-  open LogOSSignature Sig renaming (to∂ to to∂Sig; from∂ to from∂Sig)
-
+boundaryIO K = fromKernelShape (LogicKernel.shape K)

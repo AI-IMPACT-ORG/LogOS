@@ -101,9 +101,12 @@ module For
                  (translateCon (tensorR c safetyR))
                  (tensorS (translateCon c) safetyS))
     → Compatible (applyR MonR.defaultMonitor) (applyS MonS.defaultMonitor)
-  defaultMonitor-compatible flowRespects flowCompat tensorCompatSafety c =
-    let
-      step1 = flowCompat (tensorR c safetyR)
-      step2 = flowRespects (tensorCompatSafety c)
-    in
-    Prop.ObsEqOn-trans {Sat = M.Sat₂↑} step1 step2
+  defaultMonitor-compatible flowRespects flowCompat tensorCompatSafety =
+    compatible-comp
+      {F₁ = flowR}
+      {G₁ = λ c → tensorR c safetyR}
+      {F₂ = flowS}
+      {G₂ = λ c → tensorS c safetyS}
+      flowRespects
+      flowCompat
+      tensorCompatSafety

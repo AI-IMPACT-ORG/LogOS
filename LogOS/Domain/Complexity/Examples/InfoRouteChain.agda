@@ -127,3 +127,53 @@ module ForFromNat
   module PGN = PG.FromNat Q Pℕ gradeBound
   module Core = For K Input Size DetRun VerRun VerRunWith PGN.polyPredG
   open Core public
+
+-- -------------------------------------------------------------------------
+-- UniversalIR instantiation (previously in InfoRouteChainIR).
+-- -------------------------------------------------------------------------
+
+module UniversalIR where
+  open import LogOS.Domain.UniversalIR.Core using (UCode)
+  import LogOS.Domain.Complexity.UniversalIRCM as UIR
+
+  module ForIR
+    {Sig : LogOSSignature lzero}
+    {Q : QAdapter lzero}
+    (K : GradedKernel Sig Q)
+    (toCodeK : UCode → GradedKernel.Code K)
+    (fromCodeK : GradedKernel.Code K → UCode)
+    (gradeBound : ℕ → QAdapter.Scale Q)
+    (Pℕ : PolyPred)
+    (brand : UIR.Brand)
+    where
+
+    M : UIR.StandardCMᴵᴿ {ℓ = lzero}
+    M = UIR.mkIRCM Pℕ brand
+
+    open UIR.StandardCMᴵᴿ M renaming
+      ( Input  to Inputᵀ
+      ; size   to sizeᵀ
+      ; poly   to polyᵀ
+      ; wsize  to wsizeᵀ
+      )
+
+    module TR = UIR.TR K toCodeK fromCodeK gradeBound M
+
+    WSize : GradedKernel.Code K → ℕ
+    WSize w = wsizeᵀ (fromCodeK w)
+
+    module C = ForFromNat
+      K Inputᵀ sizeᵀ
+      TR.DetRun TR.VerRun TR.VerRunWith
+      gradeBound Pℕ
+
+    sizeGrade : ℕ → QAdapter.Scale Q
+    sizeGrade = gradeBound
+
+    module WithAccExample {ℓA} (Acc : C.R.Con → Set ℓA) where
+      module W = C.WithAcc Acc
+
+      NonDegenerateAt : W.O.LOB → Set _
+      NonDegenerateAt lob = W.NonDegenerate lob sizeGrade
+
+    open C public

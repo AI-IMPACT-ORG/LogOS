@@ -27,10 +27,6 @@ open import LogOS.Theorems.Meta.Assumptions.Diagonal using (TruthDiagonalC)
 import LogOS.Theorems.Meta.QuartetCore as Quartet
 open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn)
 
--- Re-export the opacity/GRH core machinery for the PvsNP spine.
-module SpectralSeparationOutput = SSOₜ
-module BudgetedSeparationOutput = BSOₜ
-
 -- Proof-search opacity spine: a proof-search oracle is a partial-output surface,
 -- and the same diagonal/opacity machinery blocks any total, budget-bounded oracle.
 
@@ -82,7 +78,7 @@ module For {ℓ ℓP : Level}
   oracle-sound O γ (n , eq) = Lift.lower n , ProofSearchOracle.sound O γ n eq
 
   module Budgeted {PS} (O : ProofSearchOracle PS) (C : ProofCost) where
-    module OG = BSOₜ.GeneralB (toSSO O)
+    module OG = SSOₜ.GeneralB (toSSO O)
     infix 4 _≤B_
     _≤B_ : ProofIndex → ProofIndex → Set ℓ
     _≤B_ x y = Lift ℓ (Lift.lower x ≤ℕ Lift.lower y)
@@ -125,90 +121,8 @@ module For {ℓ ℓP : Level}
       diagonal-witness-within-budget (BudgetBy.budget Bnd) TD
 
     -- General budget carrier: keep the oracle/witness surface fixed, vary budgets.
-    module GeneralB (Budget : Set ℓ)
-                    (_≤B_ : Budget → Budget → Set ℓ)
-                    (costB : ProofIndex → Budget)
-                    where
-      module GB = OG.General Budget _≤B_ (record { costB = costB })
-
-      WithinBudgetB : (Code → Budget) → Code → Set ℓ
-      WithinBudgetB = GB.WithinBudget
-
-      no-total-within-budgetB
-        : ∀ (Bnd : Code → Budget)
-          → TruthDiagonalC Code (WithinBudgetB Bnd)
-          → ¬ (∀ γ → WithinBudgetB Bnd γ)
-      no-total-within-budgetB = GB.no-total-within-budget
-
-      diagonal-witness-within-budgetB
-        : ∀ (Bnd : Code → Budget)
-          → TruthDiagonalC Code (WithinBudgetB Bnd)
-          → Σ Code (λ γ → ¬ WithinBudgetB Bnd γ)
-      diagonal-witness-within-budgetB = GB.diagonal-witness-within-budget
-
-  WithinBudget
-    : ∀ {PS}
-      → ProofSearchOracle PS
-      → ProofCost
-      → (Code → ℕ)
-      → Code → Set ℓ
-  WithinBudget O C Bnd =
-    let module B = Budgeted O C in
-    B.WithinBudget Bnd
-
-  no-total-within-budget
-    : ∀ {PS}
-      → (O : ProofSearchOracle PS)
-      → (C : ProofCost)
-      → (Bnd : Code → ℕ)
-      → TruthDiagonalC Code (WithinBudget O C Bnd)
-      → ¬ (∀ γ → WithinBudget O C Bnd γ)
-  no-total-within-budget O C Bnd TD =
-    let module B = Budgeted O C in
-    B.no-total-within-budget Bnd TD
-
-  diagonal-witness-within-budget
-    : ∀ {PS}
-      → (O : ProofSearchOracle PS)
-      → (C : ProofCost)
-      → (Bnd : Code → ℕ)
-      → TruthDiagonalC Code (WithinBudget O C Bnd)
-      → Σ Code (λ γ → ¬ WithinBudget O C Bnd γ)
-  diagonal-witness-within-budget O C Bnd TD =
-    let module B = Budgeted O C in
-    B.diagonal-witness-within-budget Bnd TD
-
-  WithinBudgetBy
-    : ∀ {PS}
-      → ProofSearchOracle PS
-      → ProofCost
-      → BudgetBy
-      → Code → Set ℓ
-  WithinBudgetBy O C Bnd =
-    let module B = Budgeted O C in
-    B.WithinBudgetBy Bnd
-
-  no-total-within-budgetBy
-    : ∀ {PS}
-      → (O : ProofSearchOracle PS)
-      → (C : ProofCost)
-      → (Bnd : BudgetBy)
-      → TruthDiagonalC Code (WithinBudgetBy O C Bnd)
-      → ¬ (∀ γ → WithinBudgetBy O C Bnd γ)
-  no-total-within-budgetBy O C Bnd TD =
-    let module B = Budgeted O C in
-    B.no-total-within-budgetBy Bnd TD
-
-  diagonal-witness-within-budgetBy
-    : ∀ {PS}
-      → (O : ProofSearchOracle PS)
-      → (C : ProofCost)
-      → (Bnd : BudgetBy)
-      → TruthDiagonalC Code (WithinBudgetBy O C Bnd)
-      → Σ Code (λ γ → ¬ WithinBudgetBy O C Bnd γ)
-  diagonal-witness-within-budgetBy O C Bnd TD =
-    let module B = Budgeted O C in
-    B.diagonal-witness-within-budgetBy Bnd TD
+    open OG public using (WitnessCostB)
+    module General = OG.General
 
   record VacuityGuards
     (PS : PB.ProofSystem)
@@ -216,8 +130,10 @@ module For {ℓ ℓP : Level}
     (C : ProofCost)
     (Bnd : BudgetBy)
     : Set (lsuc (lsuc (ℓ ⊔ ℓP))) where
+    private
+      module B = Budgeted O C
     field
-      someWithin : Σ Code (λ γ → WithinBudgetBy O C Bnd γ)
+      someWithin : Σ Code (λ γ → B.WithinBudgetBy Bnd γ)
 
   NonTrivialWithinBudget
     : ∀ {PS}
@@ -226,7 +142,8 @@ module For {ℓ ℓP : Level}
       → BudgetBy
       → Set ℓ
   NonTrivialWithinBudget O C Bnd =
-    NonTrivialC {K = K} (WithinBudgetBy O C Bnd)
+    let module B = Budgeted O C in
+    NonTrivialC {K = K} (B.WithinBudgetBy Bnd)
 
   -- Standard pack skeleton: assumptions and claim are self-contained.
   record Assumptions (PS : PB.ProofSystem) : Set (lsuc (lsuc (ℓ ⊔ ℓP))) where
@@ -234,14 +151,17 @@ module For {ℓ ℓP : Level}
       oracle   : ProofSearchOracle PS
       cost     : ProofCost
       budget   : BudgetBy
-      diagonal : TruthDiagonalC Code (WithinBudgetBy oracle cost budget)
+      diagonal : let module B = Budgeted oracle cost in
+                 TruthDiagonalC Code (B.WithinBudgetBy budget)
       vacuity  : VacuityGuards PS oracle cost budget
 
   record Claim (PS : PB.ProofSystem) (A : Assumptions PS) : Set (lsuc (lsuc (ℓ ⊔ ℓP))) where
     open Assumptions A
+    private
+      module B = Budgeted oracle cost
     field
-      no-total : ¬ (∀ γ → WithinBudgetBy oracle cost budget γ)
-      witness  : Σ Code (λ γ → ¬ WithinBudgetBy oracle cost budget γ)
+      no-total : ¬ (∀ γ → B.WithinBudgetBy budget γ)
+      witness  : Σ Code (λ γ → ¬ B.WithinBudgetBy budget γ)
       nontrivial : NonTrivialWithinBudget oracle cost budget
 
   module Q {PS : PB.ProofSystem} = Quartet.Make (Assumptions PS) (Claim PS)
@@ -252,16 +172,13 @@ module For {ℓ ℓP : Level}
     Q.mkPack
       (λ A →
         let
+          module B = Budgeted (Assumptions.oracle A) (Assumptions.cost A)
           noTotal =
-            no-total-within-budgetBy
-              (Assumptions.oracle A)
-              (Assumptions.cost A)
+            B.no-total-within-budgetBy
               (Assumptions.budget A)
               (Assumptions.diagonal A)
           witness =
-            diagonal-witness-within-budgetBy
-              (Assumptions.oracle A)
-              (Assumptions.cost A)
+            B.diagonal-witness-within-budgetBy
               (Assumptions.budget A)
               (Assumptions.diagonal A)
           nontriv : NonTrivialWithinBudget

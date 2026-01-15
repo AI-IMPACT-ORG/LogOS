@@ -21,7 +21,8 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
-open import LogOS.Kernel.Hom2Cat.Core as Core
+open import LogOS.Minimal.Thin2Cat using (Thin2Cat; Thin2CatLaws)
+import LogOS.Kernel.Hom2Cat.Core as Core
 open import LogOS.Kernel.Hom2Cat.FlowSub2Cat as FlowSub
 open import LogOS.Kernel.LogicKernel
 open import LogOS.Kernel.LogicKernel.Hom as KH
@@ -42,10 +43,12 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
         ; map-decode     = KH.LogicKernelHom.map-decode
         ; idHom          = KH.idLogicKernelHom
         ; composeHom     = KH.composeLogicKernelHom
-        ; map∂-id        = λ _ → refl
-        ; map∂-compose   = λ _ _ _ → refl
-        ; mapCode-id     = λ _ → refl
-        ; mapCode-compose = λ _ _ _ → refl
+        ; map∂-id        = λ {K} c → KH.map∂-id {K = K} c
+        ; map∂-compose   = λ {K₁} {K₂} {K₃} h₁ h₂ c →
+                             KH.map∂-compose {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} h₁ h₂ c
+        ; mapCode-id     = λ {K} γ → KH.mapCode-id {K = K} γ
+        ; mapCode-compose = λ {K₁} {K₂} {K₃} h₁ h₂ γ →
+                              KH.mapCode-compose {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} h₁ h₂ γ
         }
 
     module B = Core.Build kit
@@ -68,6 +71,43 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ; trans≈      to trans≈
       ; cong-∘₁-≈   to cong-∘₁-≈
       )
+
+  -- Thin 2-category view (LogicKernel level) and its laws.
+
+  LogicKernelHomPoset
+    : LogicKernel Sig Q → LogicKernel Sig Q → ConPoset (lsuc (lsuc ℓ))
+  LogicKernelHomPoset K₁ K₂ =
+    record
+      { Con = LogicKernelHom₁ K₁ K₂
+      ; _⊑_ = λ f g → Lift (lsuc (lsuc ℓ)) (f ⇒ g)
+      ; refl = λ {f} → lift (refl⇒ f)
+      ; trans = λ {f} {g} {h} fg gh →
+          lift (trans⇒ {f = f} {g = g} {h = h} (Lift.lower fg) (Lift.lower gh))
+      }
+
+  LogicKernelThin2Cat : Thin2Cat (lsuc (lsuc ℓ)) (lsuc (lsuc ℓ))
+  LogicKernelThin2Cat =
+    record
+      { Obj = LogicKernel Sig Q
+      ; Hom = LogicKernelHomPoset
+      ; id  = λ {A} → idLogicKernelHom₁ A
+      ; _∘_ = _∘₁_
+      ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} le →
+          lift (whisker-left {K₁ = A} {K₂ = B} {K₃ = C} {g = f} {g' = f'} g (Lift.lower le))
+      ; comp-mono-r = λ {A} {B} {C} {f} {g} {g'} le →
+          lift (whisker-right {K₁ = A} {K₂ = B} {K₃ = C} f {f = g} {f' = g'} (Lift.lower le))
+      }
+
+  LogicKernelThin2CatLaws : Thin2CatLaws LogicKernelThin2Cat
+  LogicKernelThin2CatLaws =
+    record
+      { id-left = λ f →
+          (lift (id-left⇒ f) , lift (id-left⇐ f))
+      ; id-right = λ f →
+          (lift (id-right⇒ f) , lift (id-right⇐ f))
+      ; assoc = λ f g h →
+          (lift (assoc⇒ h g f) , lift (assoc⇐ h g f))
+      }
 
   -- Step-grade flow preservation (logic-kernel level).
   --

@@ -18,8 +18,14 @@ cd "${LIB_ROOT}"
 status=0
 
 while IFS= read -r -d '' surf; do
-  pack="$(basename "$(dirname "${surf}")")"
-  allowed="open import LogOS.Packs.${pack}.All public"
+  parent="$(basename "$(dirname "${surf}")")"
+  if [[ "${parent}" == "Experimental" ]]; then
+    pack="$(basename "$(dirname "$(dirname "${surf}")")")"
+    allowed="open import LogOS.Packs.${pack}.Experimental.All public"
+  else
+    pack="${parent}"
+    allowed="open import LogOS.Packs.${pack}.All public"
+  fi
 
   # Top-level imports start at column 1; nested module imports are indented.
   top_imports="$(grep -n '^open import ' "${surf}" || true)"
@@ -42,11 +48,10 @@ while IFS= read -r -d '' surf; do
     echo "${bad}" >&2
     status=1
   fi
-done < <(find LogOS/Packs -mindepth 2 -maxdepth 2 -type f -name 'Surface.agda' -print0)
+done < <(find LogOS/Packs -mindepth 2 -maxdepth 3 -type f -name 'Surface.agda' -print0)
 
 if [[ "${status}" -ne 0 ]]; then
   exit 1
 fi
 
 echo "surface-namespace-check: OK"
-

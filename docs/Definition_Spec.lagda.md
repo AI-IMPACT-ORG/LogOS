@@ -122,9 +122,11 @@ Kernel (Integrated Model)
 - Worlds/constraints: `HWorld`, `BB`, `MBulk`, `MBnd`, `Holo`.
 - H‑tier truth/invariance: `HTruth`, `HInv`.
 - Boundary + S/H coherence: `Sat_H_bnd`, `sat-coh`, `Fml`, `Strict`, `TransH`, `coh-LH`.
+- Boundary monotonicity (derived): `Sat_H_bnd-mono`, `Sat_H_bnd-mono-ctx` (via `sat-coh` + HTruth).
 - G‑tier closure: `GTruth` with `Flow` and `Th*` (`Th*-fixed`).
 - Code/reflection: `Code`, `encode/decode`, `Guard/Body`, `FlowCode`, `guard-decode`,
   `γ*`/`decode-γ*`, `reify`, `Body∂` and `body-decode`.
+- R‑tier monotonicity (derived): `Sat_R-mono`, `Sat_R-mono-ctx` in `LogOS/Kernel/LogicKernel/Tiers.agda`.
 
 Reflection (Cross‑Cutting Structure)
 ------------------------------------
@@ -135,6 +137,14 @@ Reflection is an axis across S/H/G and the bulk↔boundary interface:
 - H/invariance: `Inv_H` is a projector on boundary constraints.
 - Holo: the **lax** adjunction `ext ⊣ bnd` yields induced projectors
   (`LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda`).
+- Port reflection: `CodePort` and the canonical boundary port are equivalent
+  presentations of the same satisfaction, so the bootstrapping map is the
+  canonical interlingua translation (not a bespoke compiler/transpiler).
+  See `LogOS/Ports/Semantic/CanonicalPorts.agda` (definitions) and
+  `LogOS/Theorems/Meta/Bootstrapping.agda` (`bootstrap-iso`).
+- Safety spine: the boundary/port/guarded-flow architecture is a consequence of
+  the “kernel‑only” design choice (no implicit truth/provability). See
+  `docs/Meta_Safety.lagda.md` and `LogOS/Theorems/Meta/Safety/*`.
 - Kernel-level nucleus theorems: `LogOS/Theorems/Reflection/QuanticNucleus.agda`
   (fixed points form a quantale + quotient factorization, given a nucleus that
   preserves join/multiplication up to `≈`), `LogOS/Theorems/Reflection/NucleusMu.agda`
@@ -240,13 +250,13 @@ semantic stories without changing the foundational definitions.
   - Boundary: results are conditional on explicit model/adapter assumptions.
   - Interest: unifies computation and physics under one kernel interface.
 
-- Opacity pack (`LogOS/Packs/Opacity/All.agda`)
+- Opacity pack (`LogOS/Packs/Opacity/Experimental/All.agda`)
   - Claim: observability/diagonal barriers as explicit records; nucleus/fixed‑point
     reasoning for what can be observed at the boundary.
   - Boundary: application claims are conditional; analytic content stays isolated.
   - Interest: opacity is kernel‑native (Flow + Projector), so it composes across domains.
 
-- Complexity pack (`LogOS/Packs/Complexity/All.agda`)
+- Complexity pack (`LogOS/Packs/Complexity/Experimental/All.agda`)
   - Claim: verification vs search separation as graded‑flow interfaces; classical
     alignment is an adapter, not an axiom.
   - Boundary: separation is conditional on explicit hardness/physics assumptions.
@@ -265,10 +275,10 @@ Examples live under `LogOS/Domain/*/Examples/*`.
 Kernel Polymorphicity: Four Views
 --------------------------------
 The kernel admits multiple semantic readings without altering its definitions:
-- Multi‑institution (model‑theoretic): `docs/View_MultiInstitution.lagda.md`
-- HoTT 3‑level positioning: `docs/View_HoTT_3Level.lagda.md`
-- Categorical logic: `docs/View_CategoricalLogic.lagda.md`
-- Observer semantics (physics‑aligned): `docs/View_ObserverSemantics.lagda.md`
+- Multi‑institution (model‑theoretic): `docs/Views/MultiInstitution.lagda.md`
+- 3‑level HoTT-style positioning: `docs/Views/HoTT_3Level.lagda.md`
+- Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
+- Observer semantics (physics‑aligned): `docs/Views/ObserverSemantics.lagda.md`
 
 Honesty and Scope
 -----------------
@@ -331,7 +341,7 @@ Some packs include optional application routes. They remain *conditional* and li
 outside the core: opacity provides spectral adapters and nucleus bridges; complexity
 provides graded verification/search interfaces. These are interfaces to structure
 assumptions, not proofs of external analytic or combinatorial claims.
-Further narrative: `docs/Application_Opacity.lagda.md`, `docs/Application_Complexity.lagda.md`.
+Further narrative: `docs/Applications/Opacity.lagda.md`, `docs/Applications/Complexity.lagda.md`.
 ZF in the Limit (Cumulative Hierarchy)
 --------------------------------------
 - Forcing-like closure: boundary `Flow` is a nucleus/closure operator; the DSL requires

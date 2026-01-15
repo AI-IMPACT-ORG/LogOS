@@ -11,11 +11,10 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (BulkBoundary; ConPoset)
-open import LogOS.Minimal.Adjunction using (MonoidalPoset)
-open import LogOS.Algebra.ConAlg using (ConAlg)
 
 open import LogOS.Kernel.LogicKernel using (LogicKernel; GTier)
+import LogOS.Kernel.LogicKernel.Endo as LKEndo
+open import LogOS.Kernel.LogicKernel.TensorEndo using (_⊗ᵣ_)
 
 open import LogOS.Boundary.Port using (Respects≈∂[_])
 
@@ -49,23 +48,20 @@ module For
     FlowAt : GTier.Step (LogicKernel.G LK) → Con_bnd → Con_bnd
     FlowAt g = GTier.Flow (LogicKernel.G LK) g
 
+    flowEndoAt : GTier.Step (LogicKernel.G LK) → LKEndo.Endo LK
+    flowEndoAt g =
+      record
+        { fn = FlowAt g
+        ; mono = GTier.mono (LogicKernel.G LK)
+        }
+
   -- One canonical monitor: “enforce safety by tensoring it in, then saturating”.
   --
   -- This is a design choice, not a theorem: it makes the intended usage explicit
   -- while remaining order-agnostic (preorder-safe).
   defaultMonitorAt : GTier.Step (LogicKernel.G LK) → Monitor
   defaultMonitorAt g =
-    record
-      { fn = λ c → FlowAt g (ConAlg._⊗∂_ conAlg c SafetySem)
-      ; mono = λ {x} {y} x≤y →
-          let
-            CP    = BulkBoundary.bnd (ConAlg.BB conAlg)
-            refl∂ = ConPoset.refl CP {c = SafetySem}
-            open MonoidalPoset (ConAlg.MBnd conAlg) renaming (mono⊗ to mono⊗∂)
-            step⊗ = mono⊗∂ x≤y refl∂
-          in
-          GTier.mono (LogicKernel.G LK) {g = g} step⊗
-      }
+    LKEndo._∘E_ (flowEndoAt g) (LK ⊗ᵣ SafetySem)
 
   -- Default choice: saturate at the kernel’s `sat` grade.
   defaultMonitor : Monitor

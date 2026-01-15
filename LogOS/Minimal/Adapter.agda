@@ -71,7 +71,7 @@ record QAdapter (ℓ : Level) : Set (lsuc ℓ) where
 -- Small builders -------------------------------------------------------------
 
 -- Trivial quantale/time adapter (all structure is unique).
--- Useful for toy kernels and proof infrastructure where costs are irrelevant.
+-- Useful for lightweight kernels and proof infrastructure where costs are irrelevant.
 
 trivialQAdapter : ∀ {ℓ} → QAdapter ℓ
 trivialQAdapter {ℓ} =

@@ -104,10 +104,5 @@ module ForSocket
   module P = ForProcess (AgentSocket.P S)
   open P public
 
--- Optional: the proof-search opacity spine is a ready-made instantiation of
--- “auditing as a partial-output surface”, packaged for proof systems.
---
--- We re-export it here as a recommended downstream instance, without changing
--- any of its statements.
-import LogOS.Packs.Complexity.ProofSearchOpacitySpine as ProofSearchOpacitySpineₜ
-module ProofSearchOpacity = ProofSearchOpacitySpineₜ
+-- Experimental instantiations that depend on the complexity pack live under
+-- `LogOS.Packs.Agents.Experimental.Safety.NoTotalAuditor`.

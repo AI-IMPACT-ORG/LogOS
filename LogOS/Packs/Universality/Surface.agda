@@ -11,12 +11,12 @@ module LogOS.Packs.Universality.Surface where
 -- re-export curated pack entrypoints plus the paper-facing IR/language modules.
 
 -- This surface intentionally keeps the two universality developments namespaced:
--- both the lightweight toy sketch and the UniversalIR-first story define common
+-- both the lightweight core sketch and the UniversalIR-first story define common
 -- names like `iter`, `stepE`, and `gas`.
 
 open import LogOS.Packs.Universality.All public
 
--- The umbrella `All` pack keeps `UniversalIR` and `Toy` namespaced already.
+-- The umbrella `All` pack keeps `UniversalIR` and `Core` namespaced already.
 -- This surface adds a small amount of extra, paper-facing convenience.
 
 module Examples where

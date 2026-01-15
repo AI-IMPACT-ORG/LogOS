@@ -23,7 +23,15 @@ module LogOS.Theorems.CategoryTheory.PortCat where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
 
-open import LogOS.Ports.Semantic.InterlinguaCore using (PresentationC)
+open import LogOS.Ports.Semantic.PresentationCore using (PresentationC; PresentationHom; PresentationHom-respects-ObsEq)
+open import LogOS.Base.Signature
+open import LogOS.Minimal.Adapter
+open import LogOS.Minimal.World
+open import LogOS.Minimal.Con using (BulkBoundary)
+open import LogOS.Minimal.Truth as Truth
+open import LogOS.Boundary.IO
+open import LogOS.Boundary.Port
+import LogOS.Ports.Semantic.Interoperability as Interop
 
 module For
   {ℓCtx ℓCon ℓSat ℓForm : Level}
@@ -40,12 +48,10 @@ module For
   open PresentationC using (Form; SatF; ObsEqF)
 
   -- Morphisms: satisfaction-preserving translations.
-  record PortHom (A B : Port) : Set (lsuc (ℓCtx ⊔ ℓSat ⊔ ℓForm)) where
-    field
-      map : Form A → Form B
-      sem : ∀ p φ → SatF A p φ ↔ SatF B p (map φ)
+  PortHom : Port → Port → Set (lsuc (ℓCtx ⊔ ℓSat ⊔ ℓForm))
+  PortHom = PresentationHom
 
-  open PortHom public
+  open PresentationHom public
 
   -- Equality on morphisms: indistinguishable by *target* satisfaction.
   infix 4 _≈⇒_
@@ -60,10 +66,7 @@ module For
     → ∀ {φ ψ}
     → ObsEqF A φ ψ
     → ObsEqF B (map h φ) (map h ψ)
-  respects-ObsEq {A} {B} h {φ} {ψ} eq p =
-    Prop.↔-trans
-      (Prop.↔-sym (sem h p φ))
-      (Prop.↔-trans (eq p) (sem h p ψ))
+  respects-ObsEq h = PresentationHom-respects-ObsEq h
 
   idPH : ∀ {A} → PortHom A A
   idPH =
@@ -148,4 +151,65 @@ module For
       ; transH = λ {A} {B} {f} {g} {h} e₁ e₂ p φ → Prop.↔-trans (e₁ p φ) (e₂ p φ)
       ; cong-∘ = λ {A} {B} {C} {f} {f'} {g} {g'} eqf eqg →
           cong-∘≈⇒ {A = A} {B = B} {C = C} {f = f} {f' = f'} {g = g} {g' = g'} eqf eqg
+      }
+
+module Boundary
+  {ℓ : Level}
+  {ℓForm : Level}
+  {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  {W : Worlds.WorldH Sig Q}
+  {BB : BulkBoundary ℓ}
+  {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  (B : BoundaryIO Sig Q W BB H)
+  where
+
+  private
+    Port : Set (lsuc (ℓ ⊔ ℓForm))
+    Port = BoundaryPort {ℓForm = ℓForm} Sig Q W BB H B
+
+  -- Category wrapper: boundary ports + adapters, equality via presentations.
+  record PortCat : Set (lsuc (lsuc (ℓ ⊔ ℓForm))) where
+    infixr 9 _∘_
+    field
+      Hom    : (A B : Port) → Set (lsuc (ℓ ⊔ ℓForm))
+      _∘_    : ∀ {A B C} → Hom B C → Hom A B → Hom A C
+      id     : ∀ {A} → Hom A A
+
+      eqHom  : ∀ {A B} → Hom A B → Hom A B → Set (ℓ ⊔ ℓForm)
+      reflH  : ∀ {A B} (f : Hom A B) → eqHom f f
+      symH   : ∀ {A B} {f g : Hom A B} → eqHom f g → eqHom g f
+      transH : ∀ {A B} {f g h : Hom A B} → eqHom f g → eqHom g h → eqHom f h
+      cong-∘ : ∀ {A B C} {f f' : Hom A B} {g g' : Hom B C}
+             → eqHom f f' → eqHom g g' → eqHom (g ∘ f) (g' ∘ f')
+
+  PortCat-instance : PortCat
+  PortCat-instance =
+    record
+      { Hom = λ P₁ P₂ → Interop.PortAdapter B P₁ P₂
+      ; _∘_ = λ {P₁} {P₂} {P₃} g f → Interop.composeAdapter B P₁ P₂ P₃ f g
+      ; id  = λ {A} → Interop.idAdapter B A
+      ; eqHom = λ {P₁} {P₂} f g →
+          ∀ p φ →
+            BoundaryPort.SatF P₂ p (Interop.PortAdapter.map f φ)
+              ↔ BoundaryPort.SatF P₂ p (Interop.PortAdapter.map g φ)
+      ; reflH = λ {P₁} {P₂} f _ _ → Prop.↔-refl
+      ; symH = λ {P₁} {P₂} {f} {g} eq p φ → Prop.↔-sym (eq p φ)
+      ; transH = λ {P₁} {P₂} {f} {g} {h} eq₁ eq₂ p φ →
+          Prop.↔-trans (eq₁ p φ) (eq₂ p φ)
+      ; cong-∘ = λ {P₁} {P₂} {P₃} {f} {f'} {g} {g'} eqf eqg p φ →
+          let
+            stepB
+              : BoundaryPort.SatF P₃ p (Interop.PortAdapter.map g (Interop.PortAdapter.map f φ))
+                  ↔ BoundaryPort.SatF P₃ p (Interop.PortAdapter.map g' (Interop.PortAdapter.map f φ))
+            stepB = eqg p (Interop.PortAdapter.map f φ)
+
+            stepA
+              : BoundaryPort.SatF P₃ p (Interop.PortAdapter.map g' (Interop.PortAdapter.map f φ))
+                  ↔ BoundaryPort.SatF P₃ p (Interop.PortAdapter.map g' (Interop.PortAdapter.map f' φ))
+            stepA =
+              Prop.↔-trans
+                (Prop.↔-sym (Interop.PortAdapter.preserves-Sat g' p (Interop.PortAdapter.map f φ)))
+                (Prop.↔-trans (eqf p φ) (Interop.PortAdapter.preserves-Sat g' p (Interop.PortAdapter.map f' φ)))
+          in
+          Prop.↔-trans stepB stepA
       }

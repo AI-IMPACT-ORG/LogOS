@@ -28,10 +28,8 @@ open import LogOS.Boundary.IO using (BoundaryIO)
 
 import LogOS.Kernel.Hom2Cat as K2
 import LogOS.Kernel.Graded.Hom2Cat as GK2
-import LogOS.Kernel.LogicKernel.FromKernel as LKFromK
 import LogOS.Kernel.LogicKernel.FromGradedKernel as LKFromG
 import LogOS.Kernel.LogicKernel.Hom2Cat as LK2
-import LogOS.Kernel.LogicKernel.Hom as LKH
 import LogOS.Kernel.Hom as KH
 import LogOS.Kernel.Graded.Hom as GKH
 import LogOS.Kernel.Reindex as Reindex
@@ -48,34 +46,19 @@ open import LogOS.Docs.Views.View_CategoricalLogic
 open import LogOS.Docs.Views.View_HoTT_3Level
 open import LogOS.Docs.Views.View_MultiInstitution
 open import LogOS.Docs.Views.View_ObserverSemantics
+open import LogOS.Docs.Views.View_CurryHowardLambek
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
 
   -- Kernel ↪ LogicKernel: the unified interface is available for every kernel.
-  asLogicKernel-K : Kernel Sig Q → LogicKernel Sig Q
-  asLogicKernel-K = LKFromK.asLogicKernel
-
-  -- The kernel-level 2-cell calculus is the logic-kernel calculus restricted to those objects.
-  toLKHom₁-K
-    : ∀ {K₁ K₂ : Kernel Sig Q}
-    → K2.KernelHom₁ K₁ K₂
-    → LK2.LogicKernelHom₁ (asLogicKernel-K K₁) (asLogicKernel-K K₂)
-  toLKHom₁-K h = h
-
-  fromLKHom₁-K
-    : ∀ {K₁ K₂ : Kernel Sig Q}
-    → LK2.LogicKernelHom₁ (asLogicKernel-K K₁) (asLogicKernel-K K₂)
-    → K2.KernelHom₁ K₁ K₂
-  fromLKHom₁-K h = h
-
-  to-from-K : ∀ {K₁ K₂ : Kernel Sig Q} (h : K2.KernelHom₁ K₁ K₂) → fromLKHom₁-K (toLKHom₁-K h) ≡ h
-  to-from-K _ = refl
-
-  from-to-K
-    : ∀ {K₁ K₂ : Kernel Sig Q}
-      (h : LK2.LogicKernelHom₁ (asLogicKernel-K K₁) (asLogicKernel-K K₂))
-    → toLKHom₁-K (fromLKHom₁-K h) ≡ h
-  from-to-K _ = refl
+  open Views.KernelIntoLogicKernel {ℓ} {Sig} {Q}
+    renaming
+      ( asLogicKernel to asLogicKernel-K
+      ; toLKHom₁     to toLKHom₁-K
+      ; fromLKHom₁   to fromLKHom₁-K
+      ; to-from      to to-from-K
+      ; from-to      to from-to-K
+      )
 
   -- Underlying structural kernel hom is still available.
   underlyingKernelHom

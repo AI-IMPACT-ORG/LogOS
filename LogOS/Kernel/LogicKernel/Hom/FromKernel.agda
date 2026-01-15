@@ -33,3 +33,15 @@ asLogicKernelHom h =
     ; map-decode = KernelHom.map-decode h
     }
 
+asKernelHom
+  : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K₁ K₂ : Kernel Sig Q}
+  → LogicKernelHom (asLogicKernel K₁) (asLogicKernel K₂)
+  → KernelHom K₁ K₂
+asKernelHom h =
+  record
+    { con-hom    = LogicKernelHom.con-hom h
+    ; mapCode    = LogicKernelHom.mapCode h
+    ; map-encode = LogicKernelHom.map-encode h
+    ; map-decode = LogicKernelHom.map-decode h
+    }

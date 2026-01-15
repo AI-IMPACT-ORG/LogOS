@@ -7,12 +7,14 @@ AGDA_FLAGS  ?= --no-libraries -i .
 AGDA_WARN_FLAGS ?= -W all -W error
 AGDA_CI_FLAGS ?= $(AGDA_FLAGS) $(AGDA_WARN_FLAGS)
 
-.PHONY: help clean test tests docs ci lint license-check license-headers-check honesty-check postulate-policy-check host-surface-check import-layer-check demo-isolation-check toy-sketch-location-check no-tabs-check doc-reference-check doc-module-check legacy-isolation-check surface-namespace-check agda-lib-check packs packs-zfc packs-universality packs-opacity packs-complexity packs-agents check-all check-all-clean make-all check-all-agda check-all-docs html
+.PHONY: help clean test tests docs ci ci-policy lint license-check license-headers-check honesty-check postulate-policy-check host-surface-check import-layer-check demo-isolation-check toy-sketch-location-check no-tabs-check doc-reference-check doc-module-check legacy-isolation-check surface-namespace-check kernel-antisymmetry-check vacuity-check correctness-check agda-lib-check packs packs-zfc packs-universality packs-opacity packs-complexity packs-agents check-all check-all-clean make-all check-all-agda check-all-docs html
 
 help:
 	@echo "Common targets:"
 	@echo "  make ci         - policy checks + tests + docs"
 	@echo "  make test       - type-check Tests/All.agda"
+	@echo "  make vacuity-check - type-check vacuity-guard surfaces"
+	@echo "  make correctness-check - type-check correctness surfaces"
 	@echo "  make docs       - type-check curated docs entrypoints"
 	@echo "  make packs      - type-check curated packs (heavier)"
 	@echo "  make html       - build HTML docs into _build/html"
@@ -41,17 +43,18 @@ docs: doc-reference-check
 	$(AGDA) $(AGDA_CI_FLAGS) docs/DeepDive/Communication.lagda.md
 	$(AGDA) $(AGDA_CI_FLAGS) docs/DeepDive/AIAssistedModeling.lagda.md
 	$(AGDA) $(AGDA_CI_FLAGS) docs/DeepDive/CoreScience.lagda.md
-	$(AGDA) $(AGDA_CI_FLAGS) docs/View_HoTT_3Level.lagda.md
-	$(AGDA) $(AGDA_CI_FLAGS) docs/View_CategoricalLogic.lagda.md
-	$(AGDA) $(AGDA_CI_FLAGS) docs/View_MultiInstitution.lagda.md
-	$(AGDA) $(AGDA_CI_FLAGS) docs/View_ObserverSemantics.lagda.md
-	$(AGDA) $(AGDA_CI_FLAGS) docs/Application_ZFC.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Views/HoTT_3Level.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Views/CategoricalLogic.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Views/MultiInstitution.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Views/ObserverSemantics.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Views/CurryHowardLambek.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Applications/ZFC.lagda.md
 	$(AGDA) $(AGDA_CI_FLAGS) docs/DeepDive/ZFC_Demo.lagda.md
 	$(AGDA) $(AGDA_CI_FLAGS) docs/DeepDive/Complexity.lagda.md
-	$(AGDA) $(AGDA_CI_FLAGS) docs/Application_Opacity.lagda.md
-	$(AGDA) $(AGDA_CI_FLAGS) docs/Application_Complexity.lagda.md
-	$(AGDA) $(AGDA_CI_FLAGS) docs/Application_Universality.lagda.md
-	$(AGDA) $(AGDA_CI_FLAGS) docs/Application_Agents.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Applications/Opacity.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Applications/Complexity.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Applications/Universality.lagda.md
+	$(AGDA) $(AGDA_CI_FLAGS) docs/Applications/Agents.lagda.md
 
 license-check:
 	@bash scripts/check_gplv3_notice.sh
@@ -101,7 +104,18 @@ agda-lib-check:
 	@printf '%s\n' "$(CURDIR)/LogOS.agda-lib" > _build/local.agda-libraries
 	$(AGDA) --no-default-libraries --library-file=_build/local.agda-libraries -l LogOS $(AGDA_WARN_FLAGS) LogOS/API/Minimal.agda
 
-ci: license-check license-headers-check honesty-check postulate-policy-check host-surface-check import-layer-check demo-isolation-check toy-sketch-location-check no-tabs-check bad-code-smells-check doc-reference-check doc-module-check legacy-isolation-check surface-namespace-check tests docs
+ci-policy: license-check license-headers-check honesty-check postulate-policy-check host-surface-check import-layer-check demo-isolation-check toy-sketch-location-check no-tabs-check bad-code-smells-check doc-reference-check doc-module-check legacy-isolation-check surface-namespace-check kernel-antisymmetry-check
+
+ci: ci-policy vacuity-check correctness-check tests docs
+
+kernel-antisymmetry-check:
+	@bash scripts/kernel_antisymmetry_check.sh
+
+vacuity-check:
+	$(AGDA) $(AGDA_CI_FLAGS) Tests/Vacuity.agda
+
+correctness-check:
+	$(AGDA) $(AGDA_CI_FLAGS) Tests/Correctness.agda
 
 ## Optional: type-check curated packs (heavier; not part of `ci` by default)
 packs: packs-zfc packs-universality packs-opacity packs-complexity packs-agents
@@ -113,10 +127,10 @@ packs-universality:
 	$(AGDA) $(AGDA_FLAGS) LogOS/Packs/Universality/All.agda
 
 packs-opacity:
-	$(AGDA) $(AGDA_FLAGS) LogOS/Packs/Opacity/All.agda
+	$(AGDA) $(AGDA_FLAGS) LogOS/Packs/Opacity/Experimental/All.agda
 
 packs-complexity:
-	$(AGDA) $(AGDA_FLAGS) LogOS/Packs/Complexity/All.agda
+	$(AGDA) $(AGDA_FLAGS) LogOS/Packs/Complexity/Experimental/All.agda
 
 packs-agents:
 	$(AGDA) $(AGDA_FLAGS) LogOS/Packs/Agents/All.agda
@@ -158,7 +172,7 @@ lint:
 # Publication sanity: type-check every Agda source file in this repo.
 #
 # Note: this is intentionally heavier than `make ci` (which checks curated entrypoints).
-check-all: clean ci lint check-all-agda check-all-docs agda-lib-check
+check-all: clean ci-policy lint check-all-agda check-all-docs agda-lib-check
 
 check-all-clean: check-all
 
@@ -167,13 +181,13 @@ make-all: check-all
 
 check-all-agda:
 	@echo "Type-checking all *.agda files..."
-	@find . -type f -name '*.agda' -not -path './_build/*' -print0 \
-		| xargs -0 -n 1 $(AGDA) $(AGDA_FLAGS) $(AGDA_WARN_FLAGS)
+	@AGDA="$(AGDA)" AGDA_FLAGS="$(AGDA_FLAGS)" AGDA_WARN_FLAGS="$(AGDA_WARN_FLAGS)" \
+		bash scripts/check_all_agda.sh
 
 check-all-docs:
 	@echo "Type-checking all *.lagda.md files..."
-	@find . -type f -name '*.lagda.md' -not -path './_build/*' -print0 \
-		| xargs -0 -n 1 $(AGDA) $(AGDA_FLAGS) $(AGDA_WARN_FLAGS)
+	@AGDA="$(AGDA)" AGDA_FLAGS="$(AGDA_FLAGS)" AGDA_WARN_FLAGS="$(AGDA_WARN_FLAGS)" \
+		bash scripts/check_all_docs.sh
 
 HTML_DIR ?= _build/html
 
@@ -184,18 +198,19 @@ html: doc-reference-check
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Definition.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Architecture_PortsAdapters.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Definition_Spec.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/View_HoTT_3Level.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/View_CategoricalLogic.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/View_MultiInstitution.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/View_ObserverSemantics.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Application_ZFC.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/HoTT_3Level.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/CategoricalLogic.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/MultiInstitution.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/ObserverSemantics.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/CurryHowardLambek.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Applications/ZFC.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/DeepDive/CoreScience.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/DeepDive/Communication.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/DeepDive/AIAssistedModeling.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/DeepDive/ZFC_Demo.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/DeepDive/Complexity.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Application_Opacity.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Application_Complexity.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Application_Universality.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Application_Agents.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Applications/Opacity.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Applications/Complexity.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Applications/Universality.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Applications/Agents.lagda.md
 	@bash scripts/write_html_index.sh "$(HTML_DIR)"

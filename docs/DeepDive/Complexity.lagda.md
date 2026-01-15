@@ -10,10 +10,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.DeepDive.Complexity where
 
--- Sync guard: these imports anchor the module paths this document references.
--- If they drift, the docs build fails.
-import LogOS.Packs.Complexity.Surface
-import LogOS.Theorems.Meta.BudgetedTruthPositivity
+
 ```
 
 This note is the single, publication-facing entrypoint for the **complexity**
@@ -38,7 +35,7 @@ LogOS internalises the split:
   observability bottlenecks appear.
 
 This is packaged as the `ProofSearch`‑prefixed family under `LogOS/Domain/Complexity/*`
-(with curated pack surfaces under `LogOS/Packs/Complexity/*`).
+(with curated pack surfaces under `LogOS/Packs/Complexity/Experimental/*`).
 
 ## Core ledger (opacity-aligned, proof-search first)
 
@@ -47,7 +44,7 @@ The strongest LogOS-native separation story is *proof-search opacity*:
 - `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (partial proof-search oracle + budgeted opacity barrier).
 - Ledger-style assumptions mirror opacity/observability: diagonalization (`TruthDiagonalC`), decode-extensional oracle,
   decode-extensional budget (`BudgetBy`), a witness-cost model (`BudgetedSeparationOutput.WitnessCost`)
-  (and optionally a general budget carrier via `BudgetedSeparationOutput.GeneralB.WitnessCostB`),
+  (and optionally a general budget carrier via `SpectralSeparationOutput.GeneralB.WitnessCostB`),
   and an explicit non-vacuity guard (`VacuityGuards`).
 - This yields a direct internal separation between proof search and verification as algorithms,
   without asserting classical P != NP.
@@ -87,13 +84,13 @@ Canonical conditional route (kernel-native, minimal axioms):
 - This is the **default** high-assurance story: minimal assumptions, explicit dependencies.
   For ℕ polynomial predicates, use `PvsNPFromInfo_Grade_Only.FromNat` (via `PolyGrade.FromNat`).
 
-Legacy wrapper (packaging-only, not part of the curated surface):
+Legacy wrapper (packaging-only, not part of the curated surface; see `docs/Legacy.md`):
 
-- `LogOS/Domain/Complexity/Legacy/PvsNP.agda` (repackages `InNP` + `¬ InP`, no derivation)
+- `LogOS/Domain/Legacy/Complexity/PvsNP.agda` (repackages `InNP` + `¬ InP`, no derivation)
 
 Non-deterministic spine (shared with opacity/observability):
 - `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (proof-search oracle + budgeted opacity barrier)
-  - General budgets: `ProofSearchOpacitySpine.For.Budgeted.GeneralB` (swap in any budget carrier).
+  - General budgets: `ProofSearchOpacitySpine.For.Budgeted.General` (swap in any budget carrier).
 
 Other routes:
 - `TruthRoute_Grade_Only` is the canonical kernel-native story (grade-indexed bounds).
@@ -120,7 +117,7 @@ that budget discipline.
 
 - “Centerpiece” entrypoint (re-exports the story modules):
   - Implementation: `LogOS/Domain/Complexity/ProofSearchSeparation.agda`
-  - Curated surface: `LogOS/Packs/Complexity/Core.agda`
+  - Curated surface (experimental): `LogOS/Packs/Complexity/Experimental/Core.agda`
 - Proof-search boundary (local checker → bounded search → unbounded search):
   - `LogOS/Domain/Complexity/ProofSearchBoundary.agda`
 - Triple-axis resource schema (time + non-unitary events + classical info):
@@ -144,22 +141,22 @@ that budget discipline.
     `LogOS/Domain/Complexity/PhysSeparationPipelineWCostGuardsGraded.agda`
   - Kernel route (TruthRoute-based): `LogOS/Domain/Complexity/PhysSeparationPipelineWCostGuardsGraded.agda` (module Kernel)
 - SAT example target (nontrivial verifier cost, witness-size aligned):
-  - `LogOS/Domain/Complexity/Targets/SATPhysicalSeparationCostGuardsGraded.agda` (kernel route in module Kernel)
+  - `LogOS/Domain/Complexity/Targets/SAT.agda` (module `CostGuardsGraded.Kernel`)
 
 ## Examples
 
 - Golden-path scaffold (grade-native → bridge → classical alignment): `LogOS/Domain/Complexity/Examples/GoldenPath.agda`
 - Minsky scheme instantiation (machines-as-schemes factoring; Flow g = simulate (budget g)):
-  `LogOS/Domain/Complexity/Examples/GoldenPathMinsky.agda` (includes `ScaleOps`-based budget hardening)
+  `LogOS/Domain/Complexity/Examples/GoldenPath.agda` (module `Minsky`, includes `ScaleOps`-based budget hardening)
 
 ## Curated import (namespaced)
 
 ```text
-open import LogOS.Packs.Complexity.Surface as Complexity
+open import LogOS.Packs.Complexity.Experimental.Surface as Complexity
 ```
 
-From that import, the stable surface exposes the proof-search boundary, the
-resource schema, and the main capstone/bridge lemmas as a single navigable API.
+From that import, the experimental surface exposes the proof-search boundary,
+the resource schema, and the main capstone/bridge lemmas as a single navigable API.
 For the P vs NP surfaces via the same import, use:
 
 - `Complexity.PvsNP_Grade_Only` (grade-native kernel route)
@@ -167,7 +164,7 @@ For the P vs NP surfaces via the same import, use:
 - `Complexity.PvsNPFromInfo_Grade_Only` (minimal info-theory route)
 
 Safe P/NP-only import (curated to avoid generic/compat surfaces):
-`LogOS/Packs/Complexity/PvsNP/Public.agda`.
+`LogOS/Packs/Complexity/Experimental/PvsNP/Public.agda`.
 
 ## Audit build (one command)
 

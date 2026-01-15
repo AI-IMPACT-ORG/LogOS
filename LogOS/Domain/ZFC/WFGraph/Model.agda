@@ -318,19 +318,25 @@ module _ {ℓ : Level}
         ; Code = N
         ; encode = λ c → c
         ; decode = λ γ → γ
-        ; decode∘encode = λ _ → refl
         ; Guard = λ γ → γ
         ; Body = λ _ → emptyN
         ; γ* = emptyN
-        ; γ*-guard = refl⊑N emptyN , refl⊑N emptyN
         ; reify = λ γ → γ
-        ; reify-decode = λ _ → refl
         ; Body∂ = λ _ → emptyN
-        ; body-decode = λ _ → refl
         }
     ; GTruth       = GTruth
-    ; guard-decode = λ _ → refl
-    ; decode-γ*    = refl
+    ; laws = record
+        { shapeLaws = record
+            { decode∘encode = λ _ → refl
+            ; γ*-guard      = refl⊑N emptyN , refl⊑N emptyN
+            ; reify-decode  = λ _ → refl
+            ; body-decode   = λ _ → refl
+            }
+        ; mono-Body∂    = λ {c} {d} _ → refl⊑N emptyN
+        ; mono-Flow     = Truth.GuardedCore.GuardedClosure.mono GTruth
+        ; guard-decode  = λ _ → refl
+        ; decode-γ*     = refl
+        }
     }
 
   -- Definable ZF interface over this kernel.

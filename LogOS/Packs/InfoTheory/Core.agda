@@ -10,6 +10,7 @@ module LogOS.Packs.InfoTheory.Core where
 -- Curated, stable information-theory surface (no demos).
 
 open import LogOS.Domain.InfoTheory.Shannon.Facts public
+open import LogOS.Domain.InfoTheory.ObserverDPI public
 
 -- Expose each strand as its own namespace to avoid the `For`-module name clash.
 import LogOS.Domain.InfoTheory.Shannon.Core     as ShannonCoreₜ

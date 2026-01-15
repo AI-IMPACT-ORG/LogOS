@@ -12,5 +12,7 @@ open import LogOS.ObjectLogic.FOL.Subst public
 open import LogOS.ObjectLogic.FOL.Semantics public
 open import LogOS.ObjectLogic.FOL.ND public
 open import LogOS.ObjectLogic.FOL.NDTheory public
-open import LogOS.ObjectLogic.FOL.Classical public
 open import LogOS.ObjectLogic.FOL.Soundness public
+
+-- Classical axioms are an explicit add-on: see `LogOS.ObjectLogic.FOL.Classical`
+-- or `LogOS.ObjectLogic.FOL.AllClassical` if you want them bundled.

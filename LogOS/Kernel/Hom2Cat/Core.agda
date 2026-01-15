@@ -142,6 +142,9 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
   g ∘₁ f = composeHom₁ f g
 
   -- 2-cells: pointwise refinement on decoded code maps at the target object.
+  --
+  -- Note: this intentionally quotients over code-level distinctions that
+  -- decode to the same boundary constraint.
 
   infix 4 _⇒_
   _⇒_ : ∀ {K₁ K₂ : Obj} → Hom₁ K₁ K₂ → Hom₁ K₁ K₂ → Set ℓ
@@ -150,6 +153,10 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
       ConPoset._⊑_ (CP K₂)
         (decodeᵏ K₂ (Hom₁.mapCode₁ f γ))
         (decodeᵏ K₂ (Hom₁.mapCode₁ g γ))
+
+  -- Named alias to make the quotienting intent explicit in downstream docs.
+  RefinesDecode : ∀ {K₁ K₂ : Obj} → Hom₁ K₁ K₂ → Hom₁ K₁ K₂ → Set ℓ
+  RefinesDecode = _⇒_
 
   refl⇒ : ∀ {K₁ K₂ : Obj} (f : Hom₁ K₁ K₂) → f ⇒ f
   refl⇒ {K₂ = K₂} _ γ = ConPoset.refl (CP K₂)
@@ -231,6 +238,24 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
     in
     R.substR (sym eqCompR) step₃
 
+  -- Naming alignment with Thin2Cat: left/right refers to the varying 1-cell.
+
+  whisker-left
+    : ∀ {K₁ K₂ K₃ : Obj}
+      {g g' : Hom₁ K₂ K₃}
+      (f : Hom₁ K₁ K₂)
+    → g ⇒ g' → (g ∘₁ f) ⇒ (g' ∘₁ f)
+  whisker-left {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {g = g} {g' = g'} f gg' =
+    whiskerR {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {g = g} {g' = g'} f gg'
+
+  whisker-right
+    : ∀ {K₁ K₂ K₃ : Obj}
+      (g : Hom₁ K₂ K₃)
+      {f f' : Hom₁ K₁ K₂}
+    → f ⇒ f' → (g ∘₁ f) ⇒ (g ∘₁ f')
+  whisker-right {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} g {f = f} {f' = f'} ff' =
+    whiskerL {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} g {f = f} {f' = f'} ff'
+
   -- Horizontal composition of 2-cells.
 
   infixl 7 _⊙_
@@ -244,6 +269,134 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
     ConPoset.trans CP₃
       (whiskerR {g = g} {g' = g'} f gg' γ)
       (whiskerL g' {f = f} {f' = f'} ff' γ)
+
+  -- Unit and associativity laws for the thin 2-category.
+
+  id-left⇒
+    : ∀ {K₁ K₂ : Obj}
+      (f : Hom₁ K₁ K₂)
+    → (idHom₁ K₂ ∘₁ f) ⇒ f
+  id-left⇒ {K₂ = K₂} f γ =
+    let
+      CP₂ = CP K₂
+      module R = ConRewrite.For CP₂
+      eqMap =
+        trans
+          (mapCode-composeᵏ (Hom₁.hom f) (Hom₁.hom (idHom₁ K₂)) γ)
+          (mapCode-idᵏ {K = K₂} (Hom₁.mapCode₁ f γ))
+      eqDec = cong (decodeᵏ K₂) eqMap
+    in
+    R.substR eqDec (ConPoset.refl CP₂)
+
+  id-left⇐
+    : ∀ {K₁ K₂ : Obj}
+      (f : Hom₁ K₁ K₂)
+    → f ⇒ (idHom₁ K₂ ∘₁ f)
+  id-left⇐ {K₂ = K₂} f γ =
+    let
+      CP₂ = CP K₂
+      module R = ConRewrite.For CP₂
+      eqMap =
+        trans
+          (mapCode-composeᵏ (Hom₁.hom f) (Hom₁.hom (idHom₁ K₂)) γ)
+          (mapCode-idᵏ {K = K₂} (Hom₁.mapCode₁ f γ))
+      eqDec = cong (decodeᵏ K₂) eqMap
+    in
+    R.substR (sym eqDec) (ConPoset.refl CP₂)
+
+  id-right⇒
+    : ∀ {K₁ K₂ : Obj}
+      (f : Hom₁ K₁ K₂)
+    → (f ∘₁ idHom₁ K₁) ⇒ f
+  id-right⇒ {K₁ = K₁} {K₂ = K₂} f γ =
+    let
+      CP₂ = CP K₂
+      module R = ConRewrite.For CP₂
+      eqMap =
+        trans
+          (mapCode-composeᵏ (Hom₁.hom (idHom₁ K₁)) (Hom₁.hom f) γ)
+          (cong (mapCodeᵏ (Hom₁.hom f)) (mapCode-idᵏ {K = K₁} γ))
+      eqDec = cong (decodeᵏ K₂) eqMap
+    in
+    R.substR eqDec (ConPoset.refl CP₂)
+
+  id-right⇐
+    : ∀ {K₁ K₂ : Obj}
+      (f : Hom₁ K₁ K₂)
+    → f ⇒ (f ∘₁ idHom₁ K₁)
+  id-right⇐ {K₁ = K₁} {K₂ = K₂} f γ =
+    let
+      CP₂ = CP K₂
+      module R = ConRewrite.For CP₂
+      eqMap =
+        trans
+          (mapCode-composeᵏ (Hom₁.hom (idHom₁ K₁)) (Hom₁.hom f) γ)
+          (cong (mapCodeᵏ (Hom₁.hom f)) (mapCode-idᵏ {K = K₁} γ))
+      eqDec = cong (decodeᵏ K₂) eqMap
+    in
+    R.substR (sym eqDec) (ConPoset.refl CP₂)
+
+  assoc⇒
+    : ∀ {K₁ K₂ K₃ K₄ : Obj}
+      (f : Hom₁ K₁ K₂)
+      (g : Hom₁ K₂ K₃)
+      (h : Hom₁ K₃ K₄)
+    → ((h ∘₁ g) ∘₁ f) ⇒ (h ∘₁ (g ∘₁ f))
+  assoc⇒ {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {K₄ = K₄} f g h γ =
+    let
+      CP₄ = CP K₄
+      module R = ConRewrite.For CP₄
+      eqL1 =
+        mapCode-composeᵏ {K₁ = K₁} {K₂ = K₂} {K₃ = K₄}
+          (Hom₁.hom f) (Hom₁.hom (h ∘₁ g)) γ
+      eqL2 =
+        mapCode-composeᵏ {K₁ = K₂} {K₂ = K₃} {K₃ = K₄}
+          (Hom₁.hom g) (Hom₁.hom h) (Hom₁.mapCode₁ f γ)
+      eqLeft = trans eqL1 eqL2
+      eqR1 =
+        mapCode-composeᵏ {K₁ = K₁} {K₂ = K₃} {K₃ = K₄}
+          (Hom₁.hom (g ∘₁ f)) (Hom₁.hom h) γ
+      eqR2 =
+        mapCode-composeᵏ {K₁ = K₁} {K₂ = K₂} {K₃ = K₃}
+          (Hom₁.hom f) (Hom₁.hom g) γ
+      eqRight =
+        trans eqR1
+          (cong (mapCodeᵏ (Hom₁.hom h)) eqR2)
+      eqMap = trans eqLeft (sym eqRight)
+      eqDec = cong (decodeᵏ K₄) eqMap
+    in
+    R.substR eqDec (ConPoset.refl CP₄)
+
+  assoc⇐
+    : ∀ {K₁ K₂ K₃ K₄ : Obj}
+      (f : Hom₁ K₁ K₂)
+      (g : Hom₁ K₂ K₃)
+      (h : Hom₁ K₃ K₄)
+    → (h ∘₁ (g ∘₁ f)) ⇒ ((h ∘₁ g) ∘₁ f)
+  assoc⇐ {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {K₄ = K₄} f g h γ =
+    let
+      CP₄ = CP K₄
+      module R = ConRewrite.For CP₄
+      eqL1 =
+        mapCode-composeᵏ {K₁ = K₁} {K₂ = K₃} {K₃ = K₄}
+          (Hom₁.hom (g ∘₁ f)) (Hom₁.hom h) γ
+      eqL2 =
+        mapCode-composeᵏ {K₁ = K₁} {K₂ = K₂} {K₃ = K₃}
+          (Hom₁.hom f) (Hom₁.hom g) γ
+      eqLeft =
+        trans eqL1
+          (cong (mapCodeᵏ (Hom₁.hom h)) eqL2)
+      eqR1 =
+        mapCode-composeᵏ {K₁ = K₁} {K₂ = K₂} {K₃ = K₄}
+          (Hom₁.hom f) (Hom₁.hom (h ∘₁ g)) γ
+      eqR2 =
+        mapCode-composeᵏ {K₁ = K₂} {K₂ = K₃} {K₃ = K₄}
+          (Hom₁.hom g) (Hom₁.hom h) (Hom₁.mapCode₁ f γ)
+      eqRight = trans eqR1 eqR2
+      eqMap = trans eqLeft (sym eqRight)
+      eqDec = cong (decodeᵏ K₄) eqMap
+    in
+    R.substR eqDec (ConPoset.refl CP₄)
 
   -- “Homotopy” / observational equivalence: mutual refinement of 2-cells.
 

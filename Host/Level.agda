@@ -17,3 +17,6 @@ record Lift {a : Level} (ℓ : Level) (A : Set a) : Set (a ⊔ ℓ) where
   constructor lift
   field lower : A
 
+open Lift public
+-- Note: this `Lift` is intentionally not tied to Agda builtins, to keep the
+-- development conservative across compiler versions.

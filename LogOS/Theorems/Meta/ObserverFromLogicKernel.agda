@@ -52,6 +52,13 @@ module For
     → Code → Set (ℓ ⊔ ℓT ⊔ lsuc ℓO)
   Observable⋆ {ℓO = ℓO} TruthK = ObsCore.Pred⋆ {ℓP = ℓO} decode stepCode TruthK
 
+  -- Safe reflection (alias): maximal admissible predicate for TruthK.
+  Safe⋆
+    : ∀ {ℓT ℓO : Level}
+      (TruthK : Code → Set ℓT)
+    → Code → Set (ℓ ⊔ ℓT ⊔ lsuc ℓO)
+  Safe⋆ {ℓT} {ℓO} TruthK = Observable⋆ {ℓT} {ℓO} TruthK
+
   -- Concrete truth predicate induced by boundary satisfaction at a chosen world.
   --
   -- This is decode-extensional by construction, so it is a canonical input to `Observable⋆`.
@@ -59,6 +66,12 @@ module For
   TruthAt
     : LogOSSignature.Cosp Sig → Code → Set ℓ
   TruthAt w γ = LK.LogicKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) (decode γ)
+
+  -- Safe reflection of boundary truth at a world.
+  SafeTruthAt
+    : ∀ {ℓO : Level} (w : LogOSSignature.Cosp Sig)
+    → Code → Set (ℓ ⊔ lsuc ℓO)
+  SafeTruthAt {ℓO = ℓO} w = Safe⋆ {ℓO = ℓO} (TruthAt w)
 
   TruthAt-ext : ∀ (w : LogOSSignature.Cosp Sig) → ObsCore.DecodeExtensional decode (TruthAt w)
   TruthAt-ext w γ₁ γ₂ eq sat =

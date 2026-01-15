@@ -15,19 +15,19 @@ open import LogOS.Domain.Universality.ComplexitySpectrum
 
 -- Simplified growth scaffolding: enough structure to compile and wire examples.
 
-record LocalLightCone (EO : EvolOperator {ℓH = lzero} ToyUCode stepToyU) : Set where
+record LocalLightCone (EO : EvolOperator {ℓH = lzero} CoreUCode stepCoreU) : Set where
   field
     LightCone : ⊤
 
-record PolyBoundDet (CM : ComplexityModel {lzero}) (EO : EvolOperator {ℓH = lzero} ToyUCode stepToyU) (LC : LocalLightCone EO) : Set where
+record PolyBoundDet (CM : ComplexityModel {lzero}) (EO : EvolOperator {ℓH = lzero} CoreUCode stepCoreU) (LC : LocalLightCone EO) : Set where
   field
     witnessP : ⊤
 
-record SuperPolyVer (CM : ComplexityModel {lzero}) (EO : EvolOperator {ℓH = lzero} ToyUCode stepToyU) (LC : LocalLightCone EO) : Set where
+record SuperPolyVer (CM : ComplexityModel {lzero}) (EO : EvolOperator {ℓH = lzero} CoreUCode stepCoreU) (LC : LocalLightCone EO) : Set where
   field
     witnessS : ⊤
 
-mkSeparationHyps : (CM : ComplexityModel {lzero}) (EO : EvolOperator {ℓH = lzero} ToyUCode stepToyU) (LC : LocalLightCone EO)
+mkSeparationHyps : (CM : ComplexityModel {lzero}) (EO : EvolOperator {ℓH = lzero} CoreUCode stepCoreU) (LC : LocalLightCone EO)
                  → PolyBoundDet CM EO LC → SuperPolyVer CM EO LC → SeparationHypotheses CM EO
 mkSeparationHyps CM EO LC PBD SPV =
   record { SpecPolyBound = Topℓ

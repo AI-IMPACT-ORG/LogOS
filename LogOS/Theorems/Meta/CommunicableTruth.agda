@@ -57,6 +57,26 @@ Comm⋆ {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K TruthK γ =
     AdmissibleComm {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K TruthK Comm
     × Comm γ)
 
+toPred⋆
+  : ∀ {ℓ ℓT ℓC} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (TruthK : Kernel.Code K → Set ℓT)
+  → ∀ {γ}
+  → Comm⋆ {ℓC = ℓC} K TruthK γ
+  → ObsCore.Pred⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
+toPred⋆ K TruthK (Comm , (A , cγ)) =
+  Comm , (AdmissibleComm.core A , cγ)
+
+fromPred⋆
+  : ∀ {ℓ ℓT ℓC} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (TruthK : Kernel.Code K → Set ℓT)
+  → ∀ {γ}
+  → ObsCore.Pred⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
+  → Comm⋆ {ℓC = ℓC} K TruthK γ
+fromPred⋆ K TruthK (Comm , (A , cγ)) =
+  Comm , (record { core = A } , cγ)
+
 -- Naming alias matching the “stable predicate” intuition:
 -- StableP⋆ is the maximal Flow-compatible communicable fragment of TruthK.
 
@@ -113,8 +133,9 @@ comm⋆-sound
     (K : Kernel Sig Q)
     (TruthK : Kernel.Code K → Set ℓT)
   → ∀ {γ} → Comm⋆ {ℓC = ℓC} K TruthK γ → TruthK γ
-comm⋆-sound K TruthK (Comm , (A , cγ)) =
-  AdmissibleComm.sound A cγ
+comm⋆-sound K TruthK h =
+  ObsCore.Pred⋆-sound (Kernel.decode K) (FlowCode K) TruthK
+    (toPred⋆ K TruthK h)
 
 -- Flow-compatibility: Comm⋆ is stable under FlowCode.
 
@@ -129,14 +150,14 @@ comm⋆-stable {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K TruthK γ =
     open _↔_
 
     to′ : Comm⋆ {ℓC = ℓC} K TruthK γ → Comm⋆ {ℓC = ℓC} K TruthK (FlowCode K γ)
-    to′ (Comm , (A , cγ)) =
-      let st = AdmissibleComm.stable A γ in
-      (Comm , (A , _↔_.to st cγ))
+    to′ h =
+      let st = ObsCore.Pred⋆-stable (Kernel.decode K) (FlowCode K) TruthK γ
+      in fromPred⋆ K TruthK (_↔_.to st (toPred⋆ K TruthK h))
 
     from′ : Comm⋆ {ℓC = ℓC} K TruthK (FlowCode K γ) → Comm⋆ {ℓC = ℓC} K TruthK γ
-    from′ (Comm , (A , cFγ)) =
-      let st = AdmissibleComm.stable A γ in
-      (Comm , (A , _↔_.from st cFγ))
+    from′ h =
+      let st = ObsCore.Pred⋆-stable (Kernel.decode K) (FlowCode K) TruthK γ
+      in fromPred⋆ K TruthK (_↔_.from st (toPred⋆ K TruthK h))
 
 -- Decode-extensionality: if the witness predicate is decode-extensional, so is Comm⋆.
 
@@ -145,9 +166,10 @@ comm⋆-ext
     (K : Kernel Sig Q)
     (TruthK : Kernel.Code K → Set ℓT)
   → DecodeExtensional′ K (Comm⋆ {ℓC = ℓC} K TruthK)
-comm⋆-ext K TruthK γ₁ γ₂ dec≡ (Comm , (A , cγ₁)) =
-  let cγ₂ = AdmissibleComm.ext A γ₁ γ₂ dec≡ cγ₁
-  in (Comm , (A , cγ₂))
+comm⋆-ext K TruthK γ₁ γ₂ dec≡ h =
+  fromPred⋆ K TruthK
+    (ObsCore.Pred⋆-ext (Kernel.decode K) (FlowCode K) TruthK γ₁ γ₂ dec≡
+      (toPred⋆ K TruthK h))
 
 -- Comm⋆ itself is admissible (at a bumped universe for the communicability predicate).
 -- This packages the “compatibility with Flow” and “soundness” checks.
@@ -316,3 +338,45 @@ Pr-Π {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K {Idx} Truthᵢ {γ} all =
             { to   = λ h i → _↔_.to   (AdmissibleComm.stable (Aᵢ i) γ′) (h i)
             ; from = λ h i → _↔_.from (AdmissibleComm.stable (Aᵢ i) γ′) (h i)
             }
+
+-- Safe reflection aliases (kernel-specific, FlowCode-based).
+-- These match the literature’s “reflection as sound, stable predicate”.
+
+SafeReflection = AdmissibleComm
+
+Safe⋆ = Comm⋆
+
+-- Kernel-safe reflection matches the generic observer-core safe reflection.
+safe⋆-core
+  : ∀ {ℓ ℓT ℓC} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (TruthK : Kernel.Code K → Set ℓT)
+  → ∀ {γ}
+  → Comm⋆ {ℓC = ℓC} K TruthK γ
+    ↔ ObsCore.Safe⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
+safe⋆-core {ℓC = ℓC} K TruthK =
+  record
+    { to = to′
+    ; from = from′
+    }
+  where
+    to′
+      : ∀ {γ}
+      → Comm⋆ {ℓC = ℓC} K TruthK γ
+      → ObsCore.Safe⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
+    to′ (Comm , (A , cγ)) =
+      Comm , (AdmissibleComm.core A , cγ)
+
+    from′
+      : ∀ {γ}
+      → ObsCore.Safe⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
+      → Comm⋆ {ℓC = ℓC} K TruthK γ
+    from′ (Comm , (A , cγ)) =
+      Comm , (record { core = A } , cγ)
+
+safe⋆-intro = comm⋆-intro
+safe⋆-sound = comm⋆-sound
+safe⋆-stable = comm⋆-stable
+safe⋆-ext = comm⋆-ext
+safe⋆-admissible = comm⋆-admissible
+safe⋆-mono-Truth = comm⋆-mono-Truth

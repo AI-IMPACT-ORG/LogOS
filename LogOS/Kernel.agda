@@ -13,7 +13,7 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Kernel.Core as Core
+open import LogOS.Kernel.Core as Core hiding (FlowCode)
 
 -- Kernel = shared shape + ungraded guarded closure (G-tier).
 --
@@ -31,23 +31,17 @@ record Kernel {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     -- G-tier: guarded closure on boundary constraints (stable truth).
     GTruth : Truth.GuardedCore.GuardedClosure (BulkBoundary.bnd (Core.KernelShape.BB shape))
 
-    -- Kernel coherence: `Guard` internalises the (stable) flow step at decode level.
-    guard-decode
-      : ∀ γ →
-      Core.KernelShape.decode shape (Core.KernelShape.Guard shape γ)
-        ≡ Truth.GuardedCore.GuardedClosure.Flow GTruth (Core.KernelShape.decode shape γ)
+    -- Kernel coherence (laws) for the shared shape + guarded tier.
+    laws : Core.KernelLaws shape GTruth
 
-    -- Distinguished code witness decodes to the closure fixed point.
-    decode-γ* :
-      Core.KernelShape.decode shape (Core.KernelShape.γ* shape)
-        ≡ Truth.GuardedCore.GuardedClosure.Th* GTruth
+  open Core.KernelLaws laws public
 
 -- Derived code-level Flow (Guard ∘ body)
 
 FlowCode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q) → Kernel.Code K → Kernel.Code K
-FlowCode K = Core.FlowCodeShape (Kernel.shape K)
+FlowCode K = Core.FlowCode (Kernel.shape K)
 
 decode-FlowCode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}

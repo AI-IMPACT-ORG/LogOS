@@ -18,7 +18,7 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
-open import LogOS.Kernel.Endo
+open import LogOS.Theorems.Boundary.ContinuityCore as Core
 
 -- Scott continuity wrapper: lifts cont-ω from FiniteFirst in a Kernel.
 
@@ -30,11 +30,13 @@ Flow-continuity-K
     (f    : ℕ → ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
   → (mono-chain : ∀ n → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (f n) (f (suc n)))
   → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
-                 (Endo.fn (Flow-Endo K)
+                 (Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K)
                    (Truth.GuardedCore.OmegaCPO.supω ωCPO f))
-                 (Truth.GuardedCore.OmegaCPO.supω ωCPO (λ n → Endo.fn (Flow-Endo K) (f n)))
+                 (Truth.GuardedCore.OmegaCPO.supω ωCPO
+                   (λ n → Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K) (f n)))
 Flow-continuity-K Sig Q K ωCPO FF f mono =
-  Truth.GuardedCore.FiniteFirst.cont-ω FF f mono
+  let module C = Core.For (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K)
+  in C.Flow-continuity ωCPO FF f mono
 
 -- Textbook aliases.
 
@@ -49,13 +51,15 @@ Th*-as-sup-K
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (Kernel.BB K)))
     (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
   → (ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
-        (Th⋆K K)
+        (Truth.GuardedCore.GuardedClosure.Th* (Kernel.GTruth K))
         (Truth.GuardedCore.OmegaCPO.supω ωCPO (Truth.GuardedCore.FiniteFirst.approxS FF)))
     ×
     (ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
         (Truth.GuardedCore.OmegaCPO.supω ωCPO (Truth.GuardedCore.FiniteFirst.approxS FF))
-        (Th⋆K K))
-Th*-as-sup-K Sig Q K ωCPO FF = Truth.GuardedCore.FiniteFirst.Th⋆-as-sup FF
+        (Truth.GuardedCore.GuardedClosure.Th* (Kernel.GTruth K)))
+Th*-as-sup-K Sig Q K ωCPO FF =
+  let module C = Core.For (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K)
+  in C.Th*-as-sup ωCPO FF
 
 -- Textbook aliases (Kleene approximation theorem).
 -- Interprets Th⋆ as the ω-supremum of its finite approximants, up to the preorder.

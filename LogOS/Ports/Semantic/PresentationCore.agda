@@ -53,6 +53,26 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
   Import∘Export≈C p c =
     Prop.↔-trans (SatC≈F p c) (SatF≈C p (Export c))
 
+  -- Imports/exports respect observational equivalence.
+
+  Export-respects-ObsEqC
+    : ∀ {c d}
+    → ObsEqC c d
+    → ObsEqF (Export c) (Export d)
+  Export-respects-ObsEqC {c} {d} eq p =
+    Prop.↔-trans
+      (Prop.↔-sym (SatC≈F p c))
+      (Prop.↔-trans (eq p) (SatC≈F p d))
+
+  Import-respects-ObsEqF
+    : ∀ {φ ψ}
+    → ObsEqF φ ψ
+    → ObsEqC (Import φ) (Import ψ)
+  Import-respects-ObsEqF {φ} {ψ} eq p =
+    Prop.↔-trans
+      (Prop.↔-sym (SatF≈C p φ))
+      (Prop.↔-trans (eq p) (SatF≈C p ψ))
+
   -- Lifting a constraint endomap through a port.
 
   Extend : (Con → Con) → Form → Form
@@ -115,3 +135,74 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
     in
     Prop.↔-trans (Prop.↔-trans lhs₀ lhs₁) (Prop.↔-sym rhs₀)
 
+-- -----------------------------------------------------------------------------
+-- Presentation homomorphisms (semantic translations between presentations).
+-- -----------------------------------------------------------------------------
+
+record PresentationHom
+  {ℓCtx ℓCon ℓSat ℓForm₁ ℓForm₂ : Level}
+  {Ctx : Set ℓCtx}
+  {Con : Set ℓCon}
+  {SatC : Ctx → Con → Set ℓSat}
+  (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC)
+  (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx Con SatC)
+  : Set (lsuc (ℓCtx ⊔ ℓSat ⊔ ℓForm₁ ⊔ ℓForm₂)) where
+  private
+    module P1 = PresentationC P₁
+    module P2 = PresentationC P₂
+  field
+    map : P1.Form → P2.Form
+    sem : ∀ p φ → P1.SatF p φ ↔ P2.SatF p (map φ)
+
+open PresentationHom public
+
+PresentationHom-id
+  : ∀ {ℓCtx ℓCon ℓSat ℓForm : Level}
+    {Ctx : Set ℓCtx}
+    {Con : Set ℓCon}
+    {SatC : Ctx → Con → Set ℓSat}
+    (P : PresentationC {ℓForm = ℓForm} Ctx Con SatC)
+  → PresentationHom P P
+PresentationHom-id _ =
+  record
+    { map = λ φ → φ
+    ; sem = λ _ _ → Prop.↔-refl
+    }
+
+PresentationHom-compose
+  : ∀ {ℓCtx ℓCon ℓSat ℓForm₁ ℓForm₂ ℓForm₃ : Level}
+    {Ctx : Set ℓCtx}
+    {Con : Set ℓCon}
+    {SatC : Ctx → Con → Set ℓSat}
+    {P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC}
+    {P₂ : PresentationC {ℓForm = ℓForm₂} Ctx Con SatC}
+    {P₃ : PresentationC {ℓForm = ℓForm₃} Ctx Con SatC}
+  → PresentationHom P₁ P₂
+  → PresentationHom P₂ P₃
+  → PresentationHom P₁ P₃
+PresentationHom-compose h₁ h₂ =
+  record
+    { map = λ φ → map h₂ (map h₁ φ)
+    ; sem = λ p φ →
+        Prop.↔-trans (sem h₁ p φ) (sem h₂ p (map h₁ φ))
+    }
+
+PresentationHom-respects-ObsEq
+  : ∀ {ℓCtx ℓCon ℓSat ℓForm₁ ℓForm₂ : Level}
+    {Ctx : Set ℓCtx}
+    {Con : Set ℓCon}
+    {SatC : Ctx → Con → Set ℓSat}
+    {P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC}
+    {P₂ : PresentationC {ℓForm = ℓForm₂} Ctx Con SatC}
+  → (h : PresentationHom P₁ P₂)
+  → ∀ {φ ψ}
+  → PresentationC.ObsEqF P₁ φ ψ
+  → PresentationC.ObsEqF P₂ (map h φ) (map h ψ)
+PresentationHom-respects-ObsEq {P₁ = P₁} {P₂ = P₂} h {φ} {ψ} eq p =
+  let
+    module P1 = PresentationC P₁
+    module P2 = PresentationC P₂
+  in
+  Prop.↔-trans
+    (Prop.↔-sym (sem h p φ))
+    (Prop.↔-trans (eq p) (sem h p ψ))

@@ -26,13 +26,13 @@ open import LogOS.Theorems.Meta.Base using (NonTrivialC; DeciderC)
 open import LogOS.Theorems.Meta.BodyEquivParam as BodyEq
 open import LogOS.Prelude as Eq using (_≡_; refl; sym; subst)
 
--- Target kernel with decode = id on ToyUCode
+-- Target kernel with decode = id on CoreUCode
 K : Kernel Sig Q
 K = UKR
 
 -- Fix a concrete code δ
 δ : Kernel.Code K
-δ = U.ToyT (U.mkT 0 0)
+δ = U.CoreT (U.mkT 0 0)
 
 -- Canonical FreeKernel and fold hom
 FKU : Kernel Sig Q

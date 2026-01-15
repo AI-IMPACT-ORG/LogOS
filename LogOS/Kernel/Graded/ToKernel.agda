@@ -15,6 +15,7 @@ open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel
+open import LogOS.Kernel.Core as Core
 open import LogOS.Kernel.Graded
 
 -- When the code-level guard grade coincides with the saturation grade, a graded
@@ -32,24 +33,35 @@ asKernel
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
   → StepIsSat K
+  → Core.BodyMonotoneShape (GradedKernel.shape K)
   → Kernel Sig Q
-asKernel {Sig = Sig} {Q = Q} K stepSat =
+asKernel {Sig = Sig} {Q = Q} K stepSat bm =
   record
     { shape = GradedKernel.shape K
     ; GTruth = forgetGradedClosure (GradedKernel.GTruth K)
-    ; guard-decode = guard-decode-sat
-    ; decode-γ* = GradedKernel.decode-γ* K
+    ; laws = record
+        { shapeLaws = record
+            { decode∘encode = GradedKernel.decode∘encode K
+            ; γ*-guard      = GradedKernel.γ*-guard K
+            ; reify-decode  = GradedKernel.reify-decode K
+            ; body-decode   = GradedKernel.body-decode K
+            }
+        ; mono-Body∂    = Core.BodyMonotoneShape.mono-Body∂ bm
+        ; mono-Flow     = Truth.GuardedCore.GuardedClosure.mono (forgetGradedClosure (GradedKernel.GTruth K))
+        ; guard-decode  = guard-decode-sat
+        ; decode-γ*     = GradedKernel.decode-γ* K
+        }
     }
   where
   open StepIsSat stepSat using (step≡sat)
-  open GradedKernel K
+  open GradedKernel K renaming (decode to decodeₖ; Guard to Guardₖ; GTruth to GTruthₖ)
 
   guard-decode-sat
     : ∀ γ
-    → decode (Guard γ)
+    → decodeₖ (Guardₖ γ)
       ≡ Truth.GuardedCore.GuardedClosure.Flow
           (forgetGradedClosure (GradedKernel.GTruth K))
-          (decode γ)
+          (decodeₖ γ)
   guard-decode-sat γ =
     trans (guard-decode γ)
-      (cong (λ g → GradedClosure.Flow GTruth g (decode γ)) step≡sat)
+      (cong (λ g → GradedClosure.Flow GTruthₖ g (decodeₖ γ)) step≡sat)

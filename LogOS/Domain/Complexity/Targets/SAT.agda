@@ -17,6 +17,8 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Bool using (Bool; true; false)
 open import Data.List using (List; []; _∷_)
 
+open import LogOS.Base.Signature using (LogOSSignature)
+
 open import LogOS.Domain.Complexity.LanguageWitnessW as LWW
 
 -- A minimal, safe SAT (CNF) development:
@@ -116,3 +118,80 @@ WS-SAT =
             pr = proj₂ sat
         in ρ , (LWW.≤ℕ-refl , pr)
     }
+
+-- -------------------------------------------------------------------------
+-- Cost-guard graded separation (previously in SATPhysicalSeparationCostGuardsGraded).
+-- -------------------------------------------------------------------------
+
+module CostGuardsGraded where
+  open import LogOS.Minimal.Adapter using (QAdapter)
+  open import LogOS.Kernel.Graded
+  open import LogOS.Domain.Complexity.Poly using (PolyPred)
+  import LogOS.Domain.Complexity.PhysicsClassesWCostGuardsGraded as PCWCG
+  import LogOS.Domain.Complexity.PhysProofBridgeWCostGuardsGraded as PBWCG
+  import LogOS.Domain.Complexity.PhysSeparationPipelineWCostGuardsGraded as Pipe
+
+  module For {ℓQ : Level}
+             (Pℕ : PolyPred)
+             (Q  : QAdapter ℓQ)
+             (gradeBound : ℕ → QAdapter.Scale Q)
+             (monoGradeBound : ∀ {m n} → m ≤ℕ n → QAdapter._≤s_ Q (gradeBound m) (gradeBound n))
+             where
+
+    module C = PCWCG.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} {ℓQ = ℓQ} CNF cnfSize Pℕ Q gradeBound
+    module B = PBWCG.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} {ℓQ = ℓQ} CNF cnfSize Pℕ Q gradeBound
+    module P = Pipe.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} {ℓQ = ℓQ} CNF cnfSize Pℕ Q gradeBound
+
+    SATL : C.Language
+    SATL = SAT
+
+    inPhysNPwCostGuards-SAT : C.PhysNPwCostGuards SATL
+    inPhysNPwCostGuards-SAT =
+      ( record
+          { PW =
+              record
+                { WS        = WS-SAT
+                ; checkCost = λ φ _ → gradeBound (cnfSize φ)
+                ; checkBound = λ n → n
+                ; polyCheck = PolyPred.id-isPoly Pℕ
+                ; checkCost≤ = λ _ _ → monoGradeBound ≤ℕ-refl
+                }
+          ; wsize≤checkCost = λ _ _ → monoGradeBound ≤ℕ-refl
+          }
+      , tt
+      )
+
+    separationFromProof
+      : (MM : B.MergeMeasure SATL)
+      → B.ProofLowerBound SATL MM
+      → P.Claim SATL
+    separationFromProof MM PLB =
+      P.Pack.claim
+        (P.mkPack (record { inNPwCostGuards = inPhysNPwCostGuards-SAT ; MM = MM ; PLB = PLB }))
+
+  module Kernel
+    {ℓ ℓP ℓA : Level}
+    {Sig : LogOSSignature ℓ}
+    {Q : QAdapter ℓ}
+    (K : GradedKernel Sig Q)
+    (DetRun : CNF → GradedKernel.Code K)
+    (VerRun : CNF → GradedKernel.Code K)
+    (VerRunWith : CNF → GradedKernel.Code K → GradedKernel.Code K)
+    (IsPoly : (ℕ → ℕ) → Set ℓP)
+    (gradeBound : ℕ → QAdapter.Scale Q)
+    (WSize : GradedKernel.Code K → ℕ)
+    where
+
+    module C = PCWCG.Kernel K CNF cnfSize DetRun VerRun VerRunWith IsPoly gradeBound WSize
+    module B = PBWCG.Kernel K CNF cnfSize DetRun VerRun VerRunWith IsPoly gradeBound WSize
+    module P = Pipe.Kernel K CNF cnfSize DetRun VerRun VerRunWith IsPoly gradeBound WSize
+
+    separationFromProof
+      : {Acc : C.Con → Set ℓA}
+        → C.PhysNPwCostGuards Acc
+        → (MM : B.MergeMeasure Acc)
+        → B.ProofLowerBound Acc MM
+        → P.Claim Acc
+    separationFromProof inNPwCostGuards MM PLB =
+      P.Pack.claim
+        (P.mkPack (record { inNPwCostGuards = inNPwCostGuards ; MM = MM ; PLB = PLB }))

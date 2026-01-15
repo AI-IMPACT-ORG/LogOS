@@ -110,3 +110,37 @@ fromOutcomeBound {ℓ} Sig Q LCUA Locality Causality meas outcomes κ outcomes�
             ≤ℕ-refl)
     ; unitary→meas0 = unitary→meas0
     }
+
+-- -------------------------------------------------------------------------
+-- Non-unitary capacity: a light generalization of measurement capacity.
+-- -------------------------------------------------------------------------
+
+record NonUnitaryCapacity {ℓ : Level}
+                          (Sig : LogOSSignature ℓ)
+                          (Q   : QAdapter ℓ)
+                          : Set (lsuc (lsuc ℓ)) where
+  open LogOSSignature Sig
+  field
+    LCUA : LCU.LCUObsAssumptions Sig Q
+
+    nuEvents : Cosp → ℕ
+    info : Cosp → ℕ
+
+    κ : ℕ
+    info≤κ·nu : ∀ f → info f ≤ℕ mul κ (nuEvents f)
+
+    unitary→nu0 : ∀ f → LCU.LCUObsAssumptions.LocalUnitary LCUA f → nuEvents f ≡ 0
+
+measurementAsNonUnitary
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    → MeasurementCapacity Sig Q
+    → NonUnitaryCapacity Sig Q
+measurementAsNonUnitary cap =
+  record
+    { LCUA        = MeasurementCapacity.LCUA cap
+    ; nuEvents    = MeasurementCapacity.meas cap
+    ; info        = MeasurementCapacity.info cap
+    ; κ           = MeasurementCapacity.κ cap
+    ; info≤κ·nu   = MeasurementCapacity.info≤κ·meas cap
+    ; unitary→nu0 = MeasurementCapacity.unitary→meas0 cap
+    }

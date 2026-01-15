@@ -11,6 +11,8 @@ module LogOS.Kernel.LogicKernel.All where
 -- kernels, and the shared saturation-level endomap DSL.
 
 open import LogOS.Kernel.LogicKernel public
+open import LogOS.Kernel.LogicKernel.GuardedTier public
+open import LogOS.Kernel.LogicKernel.VacuityGuards public
 open import LogOS.Kernel.LogicKernel.FromKernel public
   renaming (asLogicKernel to asLogicKernelK)
 open import LogOS.Kernel.LogicKernel.FromGradedKernel public

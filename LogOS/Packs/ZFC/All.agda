@@ -17,6 +17,7 @@ open import LogOS.API.Minimal public
 module SetTheory where
   open import LogOS.Domain.ZFC.SetTheory.DefinablePack public
   open import LogOS.Domain.ZFC.SetTheory.Dsl public
+  open import LogOS.Domain.ZFC.SetTheory.ForcingInvariant public
   open import LogOS.Domain.ZFC.SetTheory.FormulaPack public
   open import LogOS.Domain.ZFC.SetTheory.FormulaFromDefinable public
   open import LogOS.Domain.ZFC.SetTheory.FormulaDerived public
@@ -24,6 +25,7 @@ module SetTheory where
   open import LogOS.Domain.ZFC.SetTheory.Pack public
   open import LogOS.Domain.ZFC.SetTheory.LimitPack public
   open import LogOS.Domain.ZFC.SetTheory.Cumulative public
+  open import LogOS.Domain.ZFC.SetTheory.SchemaTheorems public
 
 module Logic where
   open import LogOS.ObjectLogic.FOL.All public

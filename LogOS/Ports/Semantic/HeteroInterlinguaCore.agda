@@ -115,6 +115,20 @@ module For
     → Set _
   Compatible F₁ F₂ = ∀ c → Prop.ObsEqOn M.Sat₂↑ (M.mapCon (F₁ c)) (F₂ (M.mapCon c))
 
+  -- Compatibility is closed under composition when the target map respects ObsEq.
+  compatible-comp
+    : ∀ {F₁ G₁ : Con₁ → Con₁} {F₂ G₂ : Con₂ → Con₂}
+    → RespectsObsEq₂↑ F₂
+    → Compatible F₁ F₂
+    → Compatible G₁ G₂
+    → Compatible (λ c → F₁ (G₁ c)) (λ c → F₂ (G₂ c))
+  compatible-comp {F₁} {G₁} {F₂} {G₂} extF₂ compatF compatG c =
+    let
+      step₁ = compatF (G₁ c)
+      step₂ = extF₂ (compatG c)
+    in
+    Prop.ObsEqOn-trans {Sat = M.Sat₂↑} step₁ step₂
+
   ported-closure-naturality
     : ∀ (F₁ : Con₁ → Con₁) (F₂ : Con₂ → Con₂)
     → RespectsObsEq₂↑ F₂

@@ -18,7 +18,7 @@ Stable entrypoints
 - WFGraph pack quartets (Assumptions/Claim/Pack/mkPack): `LogOS/Packs/ZFC/WFGraph.agda`
 - WFGraph route (worked semantics pipeline): `LogOS/Domain/ZFC/WFGraph/Surface.agda`
 - Proof-theoretic layer (FOL + ZF/ZFC sentences + soundness): `LogOS/ObjectLogic/ZFC/All.agda`
-- Publication-facing ledger: `docs/Application_ZFC.lagda.md`
+- Publication-facing ledger: `docs/Applications/ZFC.lagda.md`
 
 Layering (ports/adapters)
 -------------------------

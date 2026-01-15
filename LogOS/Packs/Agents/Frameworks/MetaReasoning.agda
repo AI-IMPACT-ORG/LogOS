@@ -13,6 +13,7 @@ open import LogOS.Prelude
 -- surfaces (Löb/Gödel) and the budgeted observer barriers.
 
 open import LogOS.Theorems.Meta.Lob public
-open import LogOS.Theorems.Meta.NoOmniscience public
+open import LogOS.Theorems.Meta.SpectralSeparationOutput public
+open import LogOS.Theorems.Meta.Tarski public using (undef-classical)
+open import LogOS.Theorems.Meta.Assumptions.Diagonal public using (noOmniscientDeciderC)
 open import LogOS.Theorems.Meta.BudgetedSeparationOutput public
-

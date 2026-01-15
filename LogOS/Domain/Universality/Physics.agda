@@ -18,7 +18,7 @@ open import LogOS.Domain.Universality.ComplexitySpectrum
 -- Physical postulates for the time evolution operator
 
 record PhysicalPostulates {ℓ : Level}
-                          (EO : EvolOperator {ℓH = ℓ} ToyUCode stepToyU)
+                          (EO : EvolOperator {ℓH = ℓ} CoreUCode stepCoreU)
                           : Set (lsuc (lsuc ℓ)) where
   open EvolOperator EO
   field
@@ -38,7 +38,7 @@ record PhysicalPostulates {ℓ : Level}
 
 record PhysicsSeparation {ℓ : Level}
                          (CM : ComplexityModel {ℓ})
-                         (EO : EvolOperator {ℓH = ℓ} ToyUCode stepToyU)
+                         (EO : EvolOperator {ℓH = ℓ} CoreUCode stepCoreU)
                          (PP : PhysicalPostulates EO)
                          : Set (lsuc (lsuc ℓ)) where
   open ComplexityModel CM

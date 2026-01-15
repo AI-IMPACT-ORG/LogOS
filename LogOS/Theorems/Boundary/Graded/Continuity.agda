@@ -18,6 +18,7 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Minimal.Con
 open import LogOS.Kernel.Graded
+open import LogOS.Theorems.Boundary.ContinuityCore as Core
 
 -- Scott continuity wrapper: lifts cont-ω from FiniteFirst in a graded kernel.
 
@@ -31,12 +32,18 @@ Flow-continuity-K
     (f    : ℕ → ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K)))
   → (mono-chain : ∀ n → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) (f n) (f (suc n)))
   → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
-                 (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K))
+                 (Truth.GuardedCore.GuardedClosure.Flow
+                   (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K))
                    (Truth.GuardedCore.OmegaCPO.supω ωCPO f))
                  (Truth.GuardedCore.OmegaCPO.supω ωCPO
-                   (λ n → GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K)) (f n)))
+                   (λ n →
+                     Truth.GuardedCore.GuardedClosure.Flow
+                       (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K)) (f n)))
 Flow-continuity-K Sig Q K ωCPO FF f mono =
-  Truth.GuardedCore.FiniteFirst.cont-ω FF f mono
+  let module C =
+        Core.For (BulkBoundary.bnd (GradedKernel.BB K))
+                 (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K))
+  in C.Flow-continuity ωCPO FF f mono
 
 -- Textbook aliases.
 
@@ -53,13 +60,19 @@ Th*-as-sup-K
              (BulkBoundary.bnd (GradedKernel.BB K))
              (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K)) ωCPO)
   → (ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
-        (GradedClosure.Th* (GradedKernel.GTruth K))
+        (Truth.GuardedCore.GuardedClosure.Th*
+          (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K)))
         (Truth.GuardedCore.OmegaCPO.supω ωCPO (Truth.GuardedCore.FiniteFirst.approxS FF)))
     ×
     (ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
         (Truth.GuardedCore.OmegaCPO.supω ωCPO (Truth.GuardedCore.FiniteFirst.approxS FF))
-        (GradedClosure.Th* (GradedKernel.GTruth K)))
-Th*-as-sup-K Sig Q K ωCPO FF = Truth.GuardedCore.FiniteFirst.Th⋆-as-sup FF
+        (Truth.GuardedCore.GuardedClosure.Th*
+          (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K))))
+Th*-as-sup-K Sig Q K ωCPO FF =
+  let module C =
+        Core.For (BulkBoundary.bnd (GradedKernel.BB K))
+                 (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K))
+  in C.Th*-as-sup ωCPO FF
 
 -- Textbook aliases (Kleene approximation theorem).
 

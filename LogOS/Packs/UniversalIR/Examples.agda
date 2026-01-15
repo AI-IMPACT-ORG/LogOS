@@ -24,6 +24,9 @@ module Multiplication where
 module QuantumCircuit where
   open import LogOS.Domain.UniversalIR.Examples.QuantumCircuit public
 
+module QuantumCircuitAmp where
+  open import LogOS.Domain.UniversalIR.Examples.QuantumCircuitAmp public
+
 module QuantumOracle where
   open import LogOS.Domain.UniversalIR.Examples.QuantumOracle public
 

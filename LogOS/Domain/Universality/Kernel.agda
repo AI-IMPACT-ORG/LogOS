@@ -21,8 +21,8 @@ open import LogOS.Minimal.Adjunction
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel.Graded
 
--- A Kernel whose Code is ToyUCode and whose Guarded step (Guard ∘ Body) is stepToyU.
--- (Toy universality core.)
+-- A Kernel whose Code is CoreUCode and whose Guarded step (Guard ∘ Body) is stepCoreU.
+-- (Universality core.)
 
 -- Trivial signature and world
 Sig : LogOSSignature lzero
@@ -50,7 +50,7 @@ BB = record { bulk = conPoset ; bnd = conPoset }
 MBnd : MonoidalPoset (BulkBoundary.bnd BB)
 MBnd = record { _⊗_ = λ _ _ → tt ; I = tt ; mono⊗ = λ _ _ → tt }
 
--- Graded truth: in this toy kernel, grading is present but ignored (Flow is constant).
+-- Graded truth: in this kernel, grading is present but ignored (Flow is constant).
 -- This is the intended lightweight upgrade path: existing ungraded constructions lift
 -- to graded ones when a saturation/top grade is available.
 
@@ -70,7 +70,7 @@ GTruth = record
   ; Th*-fixed  = (tt , tt)
   }
 
--- GradedKernel with Code = ToyUCode and Guard = stepToyU
+-- GradedKernel with Code = CoreUCode and Guard = stepCoreU
 
 GUK : GradedKernel Sig Q
 GUK = record
@@ -99,18 +99,20 @@ GUK = record
       ; Strict = record { Sat_S = λ _ _ → ⊤ }
       ; TransH = λ _ → tt
       ; coh-LH = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
-      ; Code   = ToyUCode
-      ; encode = λ _ → ToyT (mkT 0 0)
+      ; Code   = CoreUCode
+      ; encode = λ _ → CoreT (mkT 0 0)
       ; decode = λ _ → tt
-      ; decode∘encode = λ { ttℓ → refl }
-      ; Guard  = λ γ → stepToyU γ
+      ; Guard  = λ γ → stepCoreU γ
       ; Body = λ γ → γ
-      ; γ*           = ToyC (mkC 0)
-      ; γ*-guard     = (tt , tt)
-      ; reify        = λ _ → ToyT (mkT 0 0)
-      ; reify-decode = λ _ → refl
+      ; γ*           = CoreC (mkC 0)
+      ; reify        = λ _ → CoreT (mkT 0 0)
       ; Body∂      = λ _ → tt
-      ; body-decode = λ _ → refl
+      }
+  ; shapeLaws = record
+      { decode∘encode = λ { ttℓ → refl }
+      ; γ*-guard      = (tt , tt)
+      ; reify-decode  = λ _ → refl
+      ; body-decode   = λ _ → refl
       }
   ; GTruth = GTruth
   ; step-grade   = tt
@@ -118,21 +120,21 @@ GUK = record
   ; decode-γ*    = refl
   }
 
--- Derive Computation from the toy kernel and relate iterate to simulateToy
+-- Derive Computation from the kernel and relate iterate to simulateCoreU
 
 module FK = FromGradedKernel Sig Q GUK
 UKComp : Computation (GradedKernel.Code GUK)
 UKComp = FK.Comp
 
 -- Helper projection of Step for clarity
-StepUK : ToyUCode → ToyUCode
+StepUK : CoreUCode → CoreUCode
 StepUK = Computation.Step UKComp
 
-iterateUK : ℕ → ToyUCode → ToyUCode
+iterateUK : ℕ → CoreUCode → CoreUCode
 iterateUK = iterate UKComp
 
--- iterateUK coincides with simulateToy from the universality core
+-- iterateUK coincides with simulateCoreU from the universality core
 
-iter-simulate : ∀ n u → iterateUK n u ≡ simulateToy n u
+iter-simulate : ∀ n u → iterateUK n u ≡ simulateCoreU n u
 iter-simulate zero    u = refl
-iter-simulate (suc n) u = iter-simulate n (stepToyU u)
+iter-simulate (suc n) u = iter-simulate n (stepCoreU u)

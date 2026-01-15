@@ -113,7 +113,8 @@ Flow⊗-infl-≤₂
   → _≤₂_ K ((idEndo K) ∘E ((K ⊗ᵣ_) d))
              ((Flow-Endo K) ∘E ((K ⊗ᵣ_) d))
 Flow⊗-infl-≤₂ K d =
-  λ c → whisker-right K {f = idEndo K} {g = Flow-Endo K} {h = (K ⊗ᵣ_) d} (id≤Flow K) c
+  let open Endo2Cat K in
+  λ c → whisker-right {f = idEndo K} {g = Flow-Endo K} {h = (K ⊗ᵣ_) d} (id≤Flow K) c
 
 Flow⊗-infl-≤₂-left
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -122,4 +123,5 @@ Flow⊗-infl-≤₂-left
   → _≤₂_ K ((idEndo K) ∘E ((K ⊗ₗ_) c))
              ((Flow-Endo K) ∘E ((K ⊗ₗ_) c))
 Flow⊗-infl-≤₂-left K c =
-  λ d → whisker-right K {f = idEndo K} {g = Flow-Endo K} {h = (K ⊗ₗ_) c} (id≤Flow K) d
+  let open Endo2Cat K in
+  λ d → whisker-right {f = idEndo K} {g = Flow-Endo K} {h = (K ⊗ₗ_) c} (id≤Flow K) d

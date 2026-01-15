@@ -11,6 +11,7 @@ open import LogOS.Prelude
 open import Data.List using (List; []; _∷_; _++_; concat)
 open import LogOS.Minimal.Con using (ConPoset; PredConPoset)
 open import LogOS.Minimal.Closure using (ClosureOp)
+import LogOS.Syntax.Prop as Prop
 open import LogOS.Syntax.Prop using (_↔_; intro)
 
 -- Minimal list-wise predicate.
@@ -124,3 +125,41 @@ module _ {ℓ : Level} {CP : ConPoset ℓ} (Cov : Coverage CP) where
 
   sheaf↔fixed : ∀ {U} → Sheaf U ↔ ConPoset._⊑_ PredCP (localOp U) U
   sheaf↔fixed = intro sheaf→fixed fixed→sheaf
+
+-- Coverage equivalence: two presentations of the same site induce the same
+-- sheaf semantics (forcing is invariant under observationally equivalent covers).
+
+module CoverageEq {ℓ : Level} {CP : ConPoset ℓ}
+                  (Cov₁ Cov₂ : Coverage CP) where
+  open Coverage Cov₁ renaming (Cover to Cover₁)
+  open Coverage Cov₂ renaming (Cover to Cover₂)
+  open ConPoset CP
+
+  localOp₁ : (Con → Set ℓ) → Con → Set ℓ
+  localOp₁ U p = Σ (List Con) (λ cs → Cover₁ p cs × All U cs)
+
+  localOp₂ : (Con → Set ℓ) → Con → Set ℓ
+  localOp₂ U p = Σ (List Con) (λ cs → Cover₂ p cs × All U cs)
+
+  Sheaf₁ : (Con → Set ℓ) → Set ℓ
+  Sheaf₁ U = ∀ p cs → Cover₁ p cs → All U cs → U p
+
+  Sheaf₂ : (Con → Set ℓ) → Set ℓ
+  Sheaf₂ U = ∀ p cs → Cover₂ p cs → All U cs → U p
+
+  Cover≈ : Set ℓ
+  Cover≈ = ∀ p cs → Cover₁ p cs ↔ Cover₂ p cs
+
+  localOp-≈ : Cover≈ → ∀ {U} {p} → localOp₁ U p ↔ localOp₂ U p
+  localOp-≈ cov≈ {U} {p} =
+    intro
+      (λ (cs , (cov , allU)) →
+        cs , (Prop._↔_.to (cov≈ p cs) cov , allU))
+      (λ (cs , (cov , allU)) →
+        cs , (Prop._↔_.from (cov≈ p cs) cov , allU))
+
+  sheaf-≈ : Cover≈ → ∀ {U} → Sheaf₁ U ↔ Sheaf₂ U
+  sheaf-≈ cov≈ =
+    intro
+      (λ sh p cs cov allU → sh p cs (Prop._↔_.from (cov≈ p cs) cov) allU)
+      (λ sh p cs cov allU → sh p cs (Prop._↔_.to (cov≈ p cs) cov) allU)

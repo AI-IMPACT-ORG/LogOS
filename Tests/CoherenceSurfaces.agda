@@ -11,7 +11,7 @@ open import LogOS.API.Minimal
 open import LogOS.Theorems.Core as T
 import LogOS.Theorems.Boundary.Graded.All as GB
 import LogOS.Packs.UniversalIR.Agreement as UAgree
-import LogOS.Packs.Complexity.PhysicsOfInformation as POI
+import LogOS.Packs.Complexity.Experimental.PhysicsOfInformation as POI
 import LogOS.API.Architecture as Arch
 
 -- Coherence regression: ensure the curated public surfaces keep exporting

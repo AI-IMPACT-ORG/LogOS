@@ -16,38 +16,41 @@ We present four paradigms as different instantiations of one core, with differen
 - Blockchain (EVM-like, gas-based)
 
 Core: `LogOS/Domain/Universality/Core.agda`
-- ToyUCode: sum type of codes (TuringCode, ChurchCode, ToyQuantumCode, ChainCode)
-- stepToyU: one-step semantics for each branch
-- simulateToy: iterate stepToyU n times
+- CoreUCode: sum type of codes (TuringCode, ChurchCode, CoreQuantumCode, ChainCode)
+- stepCoreU: one-step semantics for each branch
+- simulateCoreU: iterate stepCoreU n times
 
-Adapters: `LogOS/Domain/Universality/Adapters.agda`
+Adapter surface: `LogOS/Domain/Universality/Adapter.agda`
 - Re-export the bridge tooling: canonical adapter, Rice/BodyEq transports,
-  Flow universality lemmas, and the toy-spectrum complexity/separation scaffolding.
+  Flow universality lemmas, and the core-spectrum complexity/separation scaffolding.
+
+Umbrella surface: `LogOS/Domain/Universality/All.agda`
+- Adapter surface plus scheme presentation and lemma bundles.
 
 Physics-of-information packs (Landauer / DPI / measurement-capacity) live in:
 - `LogOS/Domain/Complexity/LCUToLandauer.agda`
 - `LogOS/Domain/Complexity/SecondLaw.agda`
-- `LogOS/Domain/Complexity/MeasurementCapacity.agda`
-- `LogOS/Domain/Complexity/NonUnitaryCapacity.agda`
+- `LogOS/Domain/Complexity/MeasurementCapacity.agda` (record `NonUnitaryCapacity`)
 - `LogOS/Domain/Complexity/DataProcessingInequality.agda`
 
 Curated surface: `LogOS/Packs/Universality/Core.agda`
-- Recommended stable import surface (no demos).
+- Recommended stable import surface (no demos). It re-exports only the core
+  executable code plus the `CoreScheme` wrapper.
 
 This directory intentionally does not provide a large `All` umbrella module; import
 `Core`/`Adapters` directly when you want the minimal ingredients.
 
 Making it executable
-- The stepToyU function is total and simulateToy executes a code for n steps.
+- The stepCoreU function is total and simulateCoreU executes a code for n steps.
 - These simple models are intentionally minimal, but already demonstrate the
   unifying pattern: each paradigm is a code + step pair.
 
 Hooking into Kernel
 - `LogOS/Domain/Universality/Kernel.agda` provides a concrete Kernel instance `UK` with
-  `Code = ToyUCode` and `Guard = stepToyU`, so the guarded reflection layer talks about
-  the same stepper executable via `simulateToy`.
+  `Code = CoreUCode` and `Guard = stepCoreU`, so the guarded reflection layer talks about
+  the same stepper executable via `simulateCoreU`.
 Same PA computation across schemes
 - See `LogOS/Domain/Universality/PAExample.agda`:
   - `encodeT/encodeC/encodeQ/encodeB` map the same input `n` to each scheme.
-  - `simulateToy n (encodeX n)` reduces to the same conceptual result: “decrement-to-zero”
+  - `simulateCoreU n (encodeX n)` reduces to the same conceptual result: “decrement-to-zero”
     while advancing the program counter (Turing/Chain) or shrinking size/gates (Church/Quantum).

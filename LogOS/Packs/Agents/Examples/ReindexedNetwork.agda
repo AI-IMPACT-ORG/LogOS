@@ -12,25 +12,23 @@ open import Data.Bool using (Bool; true; false)
 
 open import LogOS.Base.Signature
 open import LogOS.Base.Signature.Hom using (SigHom)
-open import LogOS.Kernel.LogicKernel.Reindex using (reindexLogicKernel)
-open import LogOS.Adapters.Views.SatMor using (satMor-reindexLogicKernel-boundary)
 
-open import LogOS.Domain.Universality.Core using (ToyUCode; ToyC; mkC)
+open import LogOS.Domain.Universality.Core using (CoreUCode; CoreC; mkC)
 import LogOS.Domain.Universality.KernelRich as KR
 
 open import LogOS.Free.ConstraintsOverSig using (Con∂; I∂; atom∂; rename∂)
 import LogOS.Computation.SchemeCategory as Cat
-import LogOS.Computation.KernelUniversalProcess as KUP
 open import LogOS.Minimal.Adapter using (QAdapter)
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 open import LogOS.Packs.Agents.Socket.Ports using (AgentPorts)
 open import LogOS.Packs.Agents.Socket.Contracts using (AgentContracts)
 import LogOS.Packs.Agents.Socket.FromKernel as FromKernel
+import LogOS.Packs.Agents.Socket.Reindex as SockReindex
 open import LogOS.Packs.Agents.Networks.Hetero using (AgentNode; AgentNetwork)
 import LogOS.Packs.Agents.Networks.Interop as Interop
 
--- A tiny non-identity signature map into the UniversalIR toy signature.
+-- A tiny non-identity signature map into the universality core signature.
 
 SigBool : LogOSSignature lzero
 SigBool = record
@@ -95,8 +93,8 @@ overlap-rename = refl
 Task : Set
 Task = ⊤
 
-defaultCon : ToyUCode
-defaultCon = ToyC (mkC 0)
+defaultCon : CoreUCode
+defaultCon = CoreC (mkC 0)
 
 portsBool : AgentPorts SigBool
 portsBool = record
@@ -118,10 +116,7 @@ portsUnit = record
   ; Comm = tt
   }
 
-val∂Bool : Bool → ToyUCode
-val∂Bool _ = defaultCon
-
-val∂Unit : LogOSSignature.Iface KR.Sig → ToyUCode
+val∂Unit : LogOSSignature.Iface KR.Sig → CoreUCode
 val∂Unit _ = defaultCon
 
 contractsBool : AgentContracts SigBool
@@ -133,25 +128,14 @@ contractsUnit = record { Objective = I∂ ; Safety = I∂ ; Assumes = I∂ }
 K₂ = KR.UKR
 module SockUnit = FromKernel.For K₂ Task
 
-LK₁ = reindexLogicKernel σ SockUnit.LK
-module KPBool = KUP.ForLogicKernel LK₁ (QAdapter.e KR.Q)
-
-choiceBool : Cat.Choice Task KPBool.BoundaryProcess
-choiceBool = record { compile = λ _ → defaultCon ; fuel = λ _ → zero }
-
 choiceUnit : Cat.Choice Task SockUnit.KP.BoundaryProcess
 choiceUnit = record { compile = λ _ → defaultCon ; fuel = λ _ → zero }
 
-socketBool : AgentSocket SigBool KR.Q Task
-socketBool = record
-  { LK     = LK₁
-  ; ports  = portsBool
-  ; val∂   = val∂Bool
-  ; C      = contractsBool
-  ; P      = KPBool.BoundaryProcess
-  ; choice = choiceBool
-  }
+socketUnit : AgentSocket KR.Sig KR.Q Task
 socketUnit = SockUnit.mkBoundarySocket portsUnit val∂Unit contractsUnit choiceUnit
+
+socketBool : AgentSocket SigBool KR.Q Task
+socketBool = SockReindex.reindexSocket σ socketUnit portsBool contractsBool
 
 module SemanticsOverlap where
   open AgentSocket socketUnit using (⟦_⟧)
@@ -191,7 +175,7 @@ module Net = AgentNetwork network
 
 edge : Net.Edge left right
 edge = record
-  { satMor = satMor-reindexLogicKernel-boundary σ SockUnit.LK }
+  { satMor = SockReindex.reindexSocketSatMor σ socketUnit }
 
 portL = AgentSocket.canonicalBoundaryPort socketBool
 portR = AgentSocket.canonicalBoundaryPort socketUnit

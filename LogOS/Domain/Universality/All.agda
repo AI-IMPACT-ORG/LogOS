@@ -12,6 +12,7 @@ module LogOS.Domain.Universality.All where
 
 open import LogOS.Domain.Universality.Adapter public
 open import LogOS.Domain.Universality.Lemmas public
+open import LogOS.Domain.Universality.SchemePresentation public
 
 import LogOS.Domain.Universality.RiceTransport as URice
 module RiceTransport where
@@ -20,4 +21,3 @@ module RiceTransport where
 import LogOS.Domain.Universality.BodyEqTransport as UBodyEq
 module BodyEqTransport where
   open UBodyEq public
-

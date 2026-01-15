@@ -14,6 +14,7 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
 open import LogOS.Boundary.IO
+open import LogOS.Boundary.Telemetry using (ObsLe∂Cosp)
 open import LogOS.Minimal.Truth as Truth
 
 -- A boundary‑I/O flavored Landauer pack: energy carrier from QAdapter, a program
@@ -78,3 +79,43 @@ tensor-bound
   → QAdapter._≤s_ Q (QAdapter._·_ Q ((LandauerIOAssumptions.cost A) f) ((LandauerIOAssumptions.cost A) g))
                    ((LandauerIOAssumptions.cost A) (LogOSSignature._⊗C_ Sig f g))
 tensor-bound B A f g = LandauerIOAssumptions.cost-tensor A f g
+
+-- Refinement monotonicity: if cost is monotone w.r.t. observational preorder on
+-- boundary programs, Landauer bounds are stable under refinement.
+
+ObsLeCosp
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B : BoundaryIO Sig Q W BB H)
+  → LogOSSignature.Cosp Sig
+  → LogOSSignature.Cosp Sig
+  → Set ℓ
+ObsLeCosp B f g =
+  ObsLe∂Cosp B (BoundaryIO.to∂ B f) (BoundaryIO.to∂ B g)
+
+CostMono
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B : BoundaryIO Sig Q W BB H)
+  → (LogOSSignature.Cosp Sig → QAdapter.Scale Q)
+  → Set ℓ
+CostMono {Q = Q} B cost =
+  ∀ {f g} → ObsLeCosp B f g → QAdapter._≤s_ Q (cost f) (cost g)
+
+landauer-io-refine
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B : BoundaryIO Sig Q W BB H)
+    (A : LandauerIOAssumptions Sig Q W BB H B)
+    (monoCost : CostMono B (LandauerIOAssumptions.cost A))
+    {f g : LogOSSignature.Cosp Sig}
+  → ObsLeCosp B f g
+  → LandauerIOAssumptions.MergesIO A f
+  → QAdapter._≤s_ Q (LandauerIOAssumptions.L A) (LandauerIOAssumptions.cost A g)
+landauer-io-refine {Q = Q} B A monoCost {f} {g} f≤g merges =
+  QAdapter.≤s-trans Q
+    (landauer-io B A f merges)
+    (monoCost f≤g)

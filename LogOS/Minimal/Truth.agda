@@ -14,6 +14,7 @@ open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Closure
 open import LogOS.Minimal.Adapter
+import LogOS.Syntax.Prop as Prop
 
 -- Minimal S/H/G truth interfaces with explicit laxness
 
@@ -42,6 +43,48 @@ module HomotypicalTruth {ℓ : Level}
       mono-Con  : ∀ {w c c'} → _⊑bnd_ c c' → Sat_H w c → Sat_H w c'
       mono-ctx  : ∀ {w w' c} → _≤ctx_ w w' → Sat_H w c → Sat_H w' c
 
+  -- Observational preorder on H-tier constraints (by satisfaction).
+
+  ObsLeH
+    : ∀ {BB : BulkBoundary ℓ}
+    → HLayer BB
+    → BulkBoundary.Con_bnd BB
+    → BulkBoundary.Con_bnd BB
+    → Set ℓ
+  ObsLeH {BB = BB} H c d =
+    ∀ w → HLayer.Sat_H H w c → HLayer.Sat_H H w d
+
+  ObsHPoset
+    : ∀ {BB : BulkBoundary ℓ}
+    → HLayer BB
+    → ConPoset ℓ
+  ObsHPoset {BB = BB} H =
+    let open BulkBoundary BB in
+    record
+      { Con = Con_bnd
+      ; _⊑_ = ObsLeH H
+      ; refl = λ {c} w sat → sat
+      ; trans = λ cd de w sat → de w (cd w sat)
+      }
+
+  ObsEqH
+    : ∀ {BB : BulkBoundary ℓ}
+    → HLayer BB
+    → BulkBoundary.Con_bnd BB
+    → BulkBoundary.Con_bnd BB
+    → Set ℓ
+  ObsEqH H c d = Prop.ObsEqOn (HLayer.Sat_H H) c d
+
+  ObsEqH↔ObsLeH
+    : ∀ {BB : BulkBoundary ℓ}
+    → (H : HLayer BB)
+    → {c d : BulkBoundary.Con_bnd BB}
+    → Prop._↔_
+        (ObsEqH H c d)
+        (Prop._∧_ (ObsLeH H c d) (ObsLeH H d c))
+  ObsEqH↔ObsLeH H {c} {d} =
+    Prop.ObsEqOn↔ObsLeOn {Sat = HLayer.Sat_H H} {x = c} {y = d}
+
   -- Invariance closure (lax)
   record Invariance (BB : BulkBoundary ℓ) : Set (lsuc ℓ) where
     open BulkBoundary BB
@@ -52,6 +95,20 @@ module HomotypicalTruth {ℓ : Level}
       infl         : ∀ c → _⊑bnd_ c (Inv_H c)
       -- Axiom: idempotent up to ⊑ Inv_H (Inv_H c) ≤ Inv_H c
       idemp-lax    : ∀ c → _⊑bnd_ (Inv_H (Inv_H c)) (Inv_H c)
+
+  -- If Inv_H is monotone, it defines a closure operator (nucleus-like).
+  InvH-Closure
+    : ∀ {BB : BulkBoundary ℓ}
+    → (I : Invariance BB)
+    → MonoOn (BulkBoundary.bnd BB) (Invariance.Inv_H I)
+    → ClosureOp (BulkBoundary.bnd BB)
+  InvH-Closure {BB = BB} I monoI =
+    record
+      { cl        = Invariance.Inv_H I
+      ; mono      = monoI
+      ; infl      = Invariance.infl I
+      ; idemp-lax = Invariance.idemp-lax I
+      }
 
   -- Bulk/boundary lax adjunction
   open import LogOS.Minimal.Adjunction using (LaxAdjunction; LaxMonoidalAdjunction)
@@ -376,6 +433,50 @@ module GuardedCore {ℓ : Level} where
         cont-ω : ∀ (f : ℕ → Con)
                  (mono-chain : ∀ n → _⊑_ (f n) (f (suc n)))
                → _⊑_ (F (supω f)) (supω (λ n → F (f n)))
+
+    -- Supremum monotonicity: pointwise refinement lifts to supω.
+    supω-mono
+      : ∀ {f g : ℕ → Con}
+      → (∀ n → _⊑_ (f n) (g n))
+      → _⊑_ (supω f) (supω g)
+    supω-mono {f} {g} f≤g =
+      least f (supω g) (λ n → ConPoset.trans CP (f≤g n) (ub g n))
+
+    -- Scott-continuity is stable under composition of monotone maps.
+    ScottContinuous-comp
+      : ∀ {F G : Con → Con}
+      → MonoOn CP F
+      → ScottContinuous F
+      → MonoOn CP G
+      → ScottContinuous G
+      → ScottContinuous (λ x → F (G x))
+    ScottContinuous-comp {F = F} {G = G} monoF SCF monoG SCG =
+      record
+        { cont-ω = λ f mono-chain →
+            ConPoset.trans CP
+              (monoF (ScottContinuous.cont-ω SCG f mono-chain))
+              (ScottContinuous.cont-ω SCF (λ n → G (f n)) (λ n → monoG (mono-chain n)))
+        }
+
+    -- Monotone comparison of Kleene μ along a pointwise refinement.
+    μ-mono
+      : ∀ {F G : Con → Con}
+      → MonoOn CP G
+      → (∀ c → _⊑_ (F c) (G c))
+      → _⊑_ (μ F) (μ G)
+    μ-mono monoG leFG =
+      supω-mono (iter-mono monoG leFG)
+      where
+        iter-mono
+          : ∀ {F G : Con → Con}
+          → MonoOn CP G
+          → (∀ c → _⊑_ (F c) (G c))
+          → ∀ n → _⊑_ (iter F n) (iter G n)
+        iter-mono {F = F} {G = G} _ _ zero = ConPoset.refl CP
+        iter-mono {F = F} {G = G} monoG' leFG' (suc n) =
+          ConPoset.trans CP
+            (leFG' (iter F n))
+            (monoG' (iter-mono monoG' leFG' n))
 
     -- Tail-sup is always bounded by the full sup: sup (f ∘ suc) ⊑ sup f.
     supω-tail≤

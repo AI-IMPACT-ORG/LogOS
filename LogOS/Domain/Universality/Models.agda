@@ -20,7 +20,7 @@ open import LogOS.Domain.Universality.Separation
 
 record CompModelsPack {ℓ : Level}
                       (CM : ComplexityModel {ℓ})
-                      (EO : EvolOperator {ℓH = ℓ} ToyUCode stepToyU)
+                      (EO : EvolOperator {ℓH = ℓ} CoreUCode stepCoreU)
                       (PP : PhysicalPostulates EO)
                       (EC : EncodingsCompat CM EO)
                       : Set (lsuc (lsuc ℓ)) where

@@ -25,7 +25,6 @@ import LogOS.Domain.Opacity.NumberTheory.HP.Flow as HPFlow
 
 open import LogOS.Theorems.Meta.Assumptions.Diagonal using (TruthDiagonal)
 import LogOS.Theorems.Meta.SpectralSeparationOutput as SSO
-import LogOS.Theorems.Meta.BudgetedSeparationOutput as BSO
 
 -- “Opacity” theorem for Hilbert–Pólya style operators:
 --
@@ -80,7 +79,7 @@ module For
   -- available everywhere under diagonalisation.
 
   module Budgeted (O : OpFixedOracle) where
-    module GB = BSO.GeneralB (toSSO O)
+    module GB = SSO.GeneralB (toSSO O)
     open GB public using (WitnessCostB)
     module General = GB.General
 

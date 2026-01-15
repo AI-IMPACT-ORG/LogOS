@@ -1,0 +1,163 @@
+{-
+LogOS: an Agda research library for foundational logic system architecture.
+Copyright (C) 2026 AI.IMPACT GmbH
+SPDX-License-Identifier: GPL-3.0-only
+-}
+
+{-# OPTIONS --safe #-}
+module LogOS.Packs.Agents.Emit.IR.BackendSyntax where
+
+open import Data.Bool using (Bool; true; false)
+open import Data.List using (List; []; _∷_)
+open import Data.Maybe using (Maybe; nothing; just)
+open import Data.String using (String)
+
+open import LogOS.Packs.Agents.Emit.IR.Backend using (Backend)
+
+module For (B : Backend) where
+  open Backend B public
+
+  PyExpr : Set
+  PyExpr = Expr
+
+  PyArg : Set
+  PyArg = Arg
+
+  PySlice : Set
+  PySlice = Slice
+
+  PyTarget : Set
+  PyTarget = Target
+
+  PyStmt : Set
+  PyStmt = Stmt
+
+  PyModule : Set
+  PyModule = Module
+
+  pyRaw : String → PyExpr
+  pyRaw = raw
+
+  pyVar : String → PyExpr
+  pyVar = var
+
+  pyString : String → PyExpr
+  pyString = stringLit
+
+  pyAttr : PyExpr → String → PyExpr
+  pyAttr = attr
+
+  pyCall : PyExpr → List PyArg → PyExpr
+  pyCall = call
+
+  pyBinOp : String → PyExpr → PyExpr → PyExpr
+  pyBinOp = binOp
+
+  pyIndex : PyExpr → PyExpr → PyExpr
+  pyIndex = index
+
+  pyTuple : List PyExpr → PyExpr
+  pyTuple = tuple
+
+  pySubscript : PyExpr → List PySlice → PyExpr
+  pySubscript = subscript
+
+  pyPos : PyExpr → PyArg
+  pyPos = argPos
+
+  pyKw : String → PyExpr → PyArg
+  pyKw = argKw
+
+  pySlice : Maybe PyExpr → Maybe PyExpr → PySlice
+  pySlice = slice
+
+  pySliceIndex : PyExpr → PySlice
+  pySliceIndex = sliceIndex
+
+  pySliceFull : PySlice
+  pySliceFull = slice nothing nothing
+
+  pySliceFrom : PyExpr → PySlice
+  pySliceFrom start = slice (just start) nothing
+
+  pySliceTo : PyExpr → PySlice
+  pySliceTo end = slice nothing (just end)
+
+  pySliceRange : PyExpr → PyExpr → PySlice
+  pySliceRange start end = slice (just start) (just end)
+
+  pyCall0 : PyExpr → PyExpr
+  pyCall0 f = call f []
+
+  pyCall1 : PyExpr → PyExpr → PyExpr
+  pyCall1 f a = call f (argPos a ∷ [])
+
+  pyCall2 : PyExpr → PyExpr → PyExpr → PyExpr
+  pyCall2 f a b = call f (argPos a ∷ argPos b ∷ [])
+
+  pyCall3 : PyExpr → PyExpr → PyExpr → PyExpr → PyExpr
+  pyCall3 f a b c = call f (argPos a ∷ argPos b ∷ argPos c ∷ [])
+
+  pyBlank : PyStmt
+  pyBlank = blank
+
+  pyComment : String → PyStmt
+  pyComment = comment
+
+  pyImportAs : String → String → PyStmt
+  pyImportAs = importAs
+
+  pyAssign : String → PyExpr → PyStmt
+  pyAssign = assign
+
+  pyAssignExpr : PyExpr → PyExpr → PyStmt
+  pyAssignExpr = assignExpr
+
+  pyExprStmt : PyExpr → PyStmt
+  pyExprStmt = exprStmt
+
+  pyReturn : PyExpr → PyStmt
+  pyReturn = return
+
+  pyDef : String → List String → List PyStmt → PyStmt
+  pyDef = def
+
+  pyForIn : PyTarget → PyExpr → List PyStmt → PyStmt
+  pyForIn = forIn
+
+  pyWithAs : PyExpr → String → List PyStmt → PyStmt
+  pyWithAs = withAs
+
+  pyIfElse : PyExpr → List PyStmt → List PyStmt → PyStmt
+  pyIfElse = ifStmt
+
+  pyIf : PyExpr → List PyStmt → PyStmt
+  pyIf cond thenBody = ifStmt cond thenBody []
+
+  pyPrint1 : PyExpr → PyStmt
+  pyPrint1 value = exprStmt (call (var "print") (argPos value ∷ []))
+
+  pyPrint2 : PyExpr → PyExpr → PyStmt
+  pyPrint2 label value =
+    exprStmt (call (var "print") (argPos label ∷ argPos value ∷ []))
+
+  pyModule : List PyStmt → PyModule
+  pyModule = mkModule
+
+  pyTrue : PyExpr
+  pyTrue = raw "True"
+
+  pyFalse : PyExpr
+  pyFalse = raw "False"
+
+  pyBool : Bool → PyExpr
+  pyBool true = pyTrue
+  pyBool false = pyFalse
+
+  licenseHeader : List PyStmt
+  licenseHeader =
+    pyComment "LogOS: an Agda research library for foundational logic system architecture."
+    ∷ pyComment "Copyright (C) 2026 AI.IMPACT GmbH"
+    ∷ pyComment "SPDX-License-Identifier: GPL-3.0-only"
+    ∷ pyBlank
+    ∷ []

@@ -91,22 +91,22 @@ BlumE = record
   ; dec    = λ _ _ → inj₁ tt
   }
 
--- Embed exact ECode into ToyUCode and relate exact time to conservative time
+-- Embed exact ECode into CoreUCode and relate exact time to conservative time
 
-embedE : ECode → ToyUCode
-embedE (ET k) = ToyT (mkT 0 k)
-embedE (EC k) = ToyC (mkC k)
-embedE (EQ k) = ToyQ (mkToyQ k)
-embedE (EB k) = ToyB (mkB 0 k)
+embedE : ECode → CoreUCode
+embedE (ET k) = CoreT (mkT 0 k)
+embedE (EC k) = CoreC (mkC k)
+embedE (EQ k) = CoreQ (mkCoreQ k)
+embedE (EB k) = CoreB (mkB 0 k)
 
--- Conservative time on ToyUCode (Computation ToyUCode)
-UCompU : Computation ToyUCode
-UCompU = record { Step = stepToyU ; Halts = λ u → stepToyU u ≡ u }
+-- Conservative time on CoreUCode (Computation CoreUCode)
+UCompU : Computation CoreUCode
+UCompU = record { Step = stepCoreU ; Halts = λ u → stepCoreU u ≡ u }
 
-iterU : ℕ → ToyUCode → ToyUCode
+iterU : ℕ → CoreUCode → CoreUCode
 iterU = iterate UCompU
 
-TimeU : ℕ → ToyUCode → Set
+TimeU : ℕ → CoreUCode → Set
 TimeU n u = ⊤
 
 timeEq→timeU : ∀ n c → TimeEq n c → TimeU n (embedE c)

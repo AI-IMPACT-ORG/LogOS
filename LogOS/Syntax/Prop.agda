@@ -70,6 +70,29 @@ ObsEqOn
   → X → X → Set (ℓP ⊔ ℓSat)
 ObsEqOn Sat x y = ∀ p → Sat p x ↔ Sat p y
 
+-- Observational preorder induced by a satisfaction predicate.
+
+ObsLeOn
+  : ∀ {ℓP ℓX ℓSat}
+    {P : Set ℓP} {X : Set ℓX}
+  → (P → X → Set ℓSat)
+  → X → X → Set (ℓP ⊔ ℓSat)
+ObsLeOn Sat x y = ∀ p → Sat p x → Sat p y
+
+ObsEqOn↔ObsLeOn
+  : ∀ {ℓP ℓX ℓSat}
+    {P : Set ℓP} {X : Set ℓX}
+    {Sat : P → X → Set ℓSat}
+    {x y : X}
+  → ObsEqOn Sat x y ↔ (ObsLeOn Sat x y × ObsLeOn Sat y x)
+ObsEqOn↔ObsLeOn {Sat = Sat} {x} {y} =
+  intro
+    (λ eq →
+      ( (λ p sat → to (eq p) sat)
+      , (λ p sat → from (eq p) sat)
+      ))
+    (λ (xy , yx) p → intro (xy p) (yx p))
+
 RespectsObsEqOn
   : ∀ {ℓP ℓX ℓSat}
     {P : Set ℓP} {X : Set ℓX}

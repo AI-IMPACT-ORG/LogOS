@@ -33,9 +33,9 @@ open import LogOS.Prelude as Eq using (_≡_; refl; sym; subst)
 K : Kernel Sig Q
 K = UKR
 
--- Property on ToyUCode: “is in the ToyT branch” (nontrivial)
+-- Property on CoreUCode: “is in the CoreT branch” (nontrivial)
 P : Kernel.Code K → Set lzero
-P (U.ToyT _) = ⊤
+P (U.CoreT _) = ⊤
 {-# CATCHALL #-}
 P _        = ⊥
 

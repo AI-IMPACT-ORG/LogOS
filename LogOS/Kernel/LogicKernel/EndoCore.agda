@@ -17,6 +17,7 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
+import LogOS.Minimal.Thin2Cat as Thin2Cat
 open import LogOS.Kernel.LogicKernel
 
 infix 4 _≤₂_
@@ -71,15 +72,59 @@ trans₂ K fg gh = λ c →
   let open LogicKernel K in
   ConPoset.trans (BulkBoundary.bnd BB) (fg c) (gh c)
 
--- Whiskering: composition preserves refinement on either side.
+-- Endomaps form a one-object thin 2-category; whiskering is inherited.
 
-whisker-left : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-               (K : LogicKernel Sig Q)
-               {f g h : Endo K} → _≤₂_ K f g → _≤₂_ K (h ∘E f) (h ∘E g)
-whisker-left K {f} {g} {h} fg = λ c → Endo.mono h (fg c)
+EndoPoset
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : LogicKernel Sig Q)
+  → ConPoset (lsuc ℓ)
+EndoPoset {ℓ} K =
+  record
+    { Con = Endo K
+    ; _⊑_ = λ f g → Lift (lsuc ℓ) (_≤₂_ K f g)
+    ; refl = λ {f} → lift (refl₂ K f)
+    ; trans = λ {f} {g} {h} fg gh →
+        lift (trans₂ K {f = f} {g = g} {h = h} (Lift.lower fg) (Lift.lower gh))
+    }
 
-whisker-right : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-                (K : LogicKernel Sig Q)
-                {f g h : Endo K} → _≤₂_ K f g → _≤₂_ K (f ∘E h) (g ∘E h)
-whisker-right K {f} {g} {h} fg = λ c → fg (Endo.fn h c)
+EndoThin2Cat
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : LogicKernel Sig Q)
+  → Thin2Cat.Thin2Cat ℓ (lsuc ℓ)
+EndoThin2Cat K =
+  record
+    { Obj = ⊤
+    ; Hom = λ _ _ → EndoPoset K
+    ; id  = λ {A} → idEndo K
+    ; _∘_ = _∘E_
+    ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} fg →
+        lift (λ c → Lift.lower fg (Endo.fn g c))
+    ; comp-mono-r = λ {A} {B} {C} {f} {g} {g'} gg' →
+        lift (λ c → Endo.mono f (Lift.lower gg' c))
+    }
 
+module Endo2Cat
+  {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (K : LogicKernel Sig Q) where
+  private
+    C = EndoThin2Cat K
+
+  whisker-left
+    : {f g h : Endo K}
+    → _≤₂_ K f g → _≤₂_ K (h ∘E f) (h ∘E g)
+  whisker-left {f} {g} {h} fg =
+    Lift.lower
+      (Thin2Cat.whisker-right
+        {C = C} {A = tt} {B = tt} {C' = tt}
+        {f = h} {g = f} {g' = g}
+        (lift fg))
+
+  whisker-right
+    : {f g h : Endo K}
+    → _≤₂_ K f g → _≤₂_ K (f ∘E h) (g ∘E h)
+  whisker-right {f} {g} {h} fg =
+    Lift.lower
+      (Thin2Cat.whisker-left
+        {C = C} {A = tt} {B = tt} {C' = tt}
+        {f = f} {f' = g} {g = h}
+        (lift fg))

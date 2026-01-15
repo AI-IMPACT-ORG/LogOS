@@ -7,9 +7,8 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Kernel.Hom2Cat where
 
--- Thin wrapper: the 2-categorical refinement calculus is defined once for the
--- CHL-facing `LogicKernel` interface, and ungraded kernels embed via
--- `LogicKernel.FromKernel.asLogicKernel`.
+-- Thin wrapper: instantiate the 2-categorical refinement calculus directly for
+-- ungraded kernels.
 
 open import LogOS.Prelude
 
@@ -17,121 +16,102 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
+open import LogOS.Minimal.Thin2Cat using (Thin2Cat; Thin2CatLaws)
 
 open import LogOS.Kernel
-open import LogOS.Kernel.LogicKernel
-open import LogOS.Kernel.LogicKernel.FromKernel as LKFrom
 import LogOS.Kernel.Hom as KH
-import LogOS.Kernel.LogicKernel.Hom as LKH
-import LogOS.Kernel.LogicKernel.Hom2Cat as LK2
+import LogOS.Kernel.Hom2Cat.Core as Core
+open import LogOS.Kernel.Hom2Cat.FlowSub2Cat as FlowSub
 
 private
   module GC = Truth.GuardedCore
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   private
-    asLK = LKFrom.asLogicKernel
+    Obj = Kernel Sig Q
 
-  -- 2-category (and ≈-quotient) structure: inherited from `LogicKernel.Hom2Cat`
-  -- by restricting objects to the image of `asLK`.
+    kit : Core.Kit Obj
+    kit =
+      record
+        { conAlgOf        = KH.conAlgOf
+        ; Code           = Kernel.Code
+        ; decode         = Kernel.decode
+        ; Hom            = KH.KernelHom
+        ; con-hom        = KH.KernelHom.con-hom
+        ; mapCode        = KH.KernelHom.mapCode
+        ; map-decode     = KH.KernelHom.map-decode
+        ; idHom          = KH.idKernelHom
+        ; composeHom     = KH.composeKernelHom
+        ; map∂-id        = λ {K} c → KH.map∂-id {K = K} c
+        ; map∂-compose   = λ {K₁} {K₂} {K₃} h₁ h₂ c →
+                             KH.map∂-compose {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} h₁ h₂ c
+        ; mapCode-id     = λ {K} γ → KH.mapCode-id {K = K} γ
+        ; mapCode-compose = λ {K₁} {K₂} {K₃} h₁ h₂ γ →
+                              KH.mapCode-compose {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} h₁ h₂ γ
+        }
 
-  KernelHom₁ : Kernel Sig Q → Kernel Sig Q → Set (lsuc (lsuc ℓ))
-  KernelHom₁ K₁ K₂ = LK2.LogicKernelHom₁ (asLK K₁) (asLK K₂)
+    module B = Core.Build kit
 
-  idKernelHom₁ : (K : Kernel Sig Q) → KernelHom₁ K K
-  idKernelHom₁ K = LK2.idLogicKernelHom₁ (asLK K)
+  open B public
+    renaming
+      ( Hom₁        to KernelHom₁
+      ; idHom₁      to idKernelHom₁
+      ; composeHom₁ to composeKernelHom₁
+      ; _∘₁_        to _∘₁_
+      ; _⇒_         to _⇒_
+      ; refl⇒       to refl⇒
+      ; trans⇒      to trans⇒
+      ; whiskerL    to whiskerL
+      ; whiskerR    to whiskerR
+      ; _⊙_         to _⊙_
+      ; _≈_         to _≈_
+      ; refl≈       to refl≈
+      ; sym≈        to sym≈
+      ; trans≈      to trans≈
+      ; cong-∘₁-≈   to cong-∘₁-≈
+      )
 
-  composeKernelHom₁
-    : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
-    → KernelHom₁ K₁ K₂ → KernelHom₁ K₂ K₃ → KernelHom₁ K₁ K₃
-  composeKernelHom₁ f g = LK2.composeLogicKernelHom₁ f g
+  KernelHomPoset
+    : Kernel Sig Q → Kernel Sig Q → ConPoset (lsuc (lsuc ℓ))
+  KernelHomPoset K₁ K₂ =
+    record
+      { Con = KernelHom₁ K₁ K₂
+      ; _⊑_ = λ f g → Lift (lsuc (lsuc ℓ)) (f ⇒ g)
+      ; refl = λ {f} → lift (refl⇒ f)
+      ; trans = λ {f} {g} {h} fg gh →
+          lift (trans⇒ {f = f} {g = g} {h = h} (Lift.lower fg) (Lift.lower gh))
+      }
 
-  infixr 9 _∘₁_
-  _∘₁_
-    : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
-    → KernelHom₁ K₂ K₃ → KernelHom₁ K₁ K₂ → KernelHom₁ K₁ K₃
-  _∘₁_ = LK2._∘₁_
+  -- Thin 2-cat view: kernel morphisms as 1-cells, refinement as 2-cells.
+  KernelThin2Cat : Thin2Cat (lsuc (lsuc ℓ)) (lsuc (lsuc ℓ))
+  KernelThin2Cat =
+    record
+      { Obj = Kernel Sig Q
+      ; Hom = KernelHomPoset
+      ; id  = λ {A} → idKernelHom₁ A
+      ; _∘_ = _∘₁_
+      ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} le →
+          lift (whisker-left {K₁ = A} {K₂ = B} {K₃ = C} {g = f} {g' = f'} g (Lift.lower le))
+      ; comp-mono-r = λ {A} {B} {C} {f} {g} {g'} le →
+          lift (whisker-right {K₁ = A} {K₂ = B} {K₃ = C} f {f = g} {f' = g'} (Lift.lower le))
+      }
 
-  infix 4 _⇒_
-  _⇒_
-    : ∀ {K₁ K₂ : Kernel Sig Q}
-    → KernelHom₁ K₁ K₂ → KernelHom₁ K₁ K₂ → Set ℓ
-  _⇒_ = LK2._⇒_
+  KernelThin2CatLaws : Thin2CatLaws KernelThin2Cat
+  KernelThin2CatLaws =
+    record
+      { id-left = λ f →
+          (lift (id-left⇒ f) , lift (id-left⇐ f))
+      ; id-right = λ f →
+          (lift (id-right⇒ f) , lift (id-right⇐ f))
+      ; assoc = λ f g h →
+          (lift (assoc⇒ h g f) , lift (assoc⇐ h g f))
+      }
 
-  refl⇒ : ∀ {K₁ K₂ : Kernel Sig Q} (f : KernelHom₁ K₁ K₂) → f ⇒ f
-  refl⇒ = LK2.refl⇒
-
-  trans⇒
-    : ∀ {K₁ K₂ : Kernel Sig Q} {f g h : KernelHom₁ K₁ K₂}
-    → f ⇒ g → g ⇒ h → f ⇒ h
-  trans⇒ {K₁ = K₁} {K₂ = K₂} {f = f} {g = g} {h = h} fg gh =
-    LK2.trans⇒ {K₁ = asLK K₁} {K₂ = asLK K₂} {f = f} {g = g} {h = h} fg gh
-
-  whiskerR
-    : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
-      {g g' : KernelHom₁ K₂ K₃}
-      (f : KernelHom₁ K₁ K₂)
-    → g ⇒ g' → (g ∘₁ f) ⇒ (g' ∘₁ f)
-  whiskerR {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {g = g} {g' = g'} f gg' =
-    LK2.whiskerR {K₁ = asLK K₁} {K₂ = asLK K₂} {K₃ = asLK K₃} {g = g} {g' = g'} f gg'
-
-  whiskerL
-    : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
-      (g : KernelHom₁ K₂ K₃)
-      {f f' : KernelHom₁ K₁ K₂}
-    → f ⇒ f' → (g ∘₁ f) ⇒ (g ∘₁ f')
-  whiskerL {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} g {f = f} {f' = f'} ff' =
-    LK2.whiskerL {K₁ = asLK K₁} {K₂ = asLK K₂} {K₃ = asLK K₃} g {f = f} {f' = f'} ff'
-
-  infixr 9 _⊙_
-  _⊙_
-    : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
-      {f f' : KernelHom₁ K₁ K₂}
-      {g g' : KernelHom₁ K₂ K₃}
-    → f ⇒ f' → g ⇒ g' → (g ∘₁ f) ⇒ (g' ∘₁ f')
-  _⊙_ {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {f = f} {f' = f'} {g = g} {g' = g'} ff' gg' =
-    LK2._⊙_ {K₁ = asLK K₁} {K₂ = asLK K₂} {K₃ = asLK K₃} {f = f} {f' = f'} {g = g} {g' = g'} ff' gg'
-
-  infix 4 _≈_
-  _≈_
-    : ∀ {K₁ K₂ : Kernel Sig Q}
-    → KernelHom₁ K₁ K₂ → KernelHom₁ K₁ K₂ → Set ℓ
-  _≈_ = LK2._≈_
-
-  refl≈ : ∀ {K₁ K₂ : Kernel Sig Q} (f : KernelHom₁ K₁ K₂) → f ≈ f
-  refl≈ = LK2.refl≈
-
-  sym≈ : ∀ {K₁ K₂ : Kernel Sig Q} {f g : KernelHom₁ K₁ K₂} → f ≈ g → g ≈ f
-  sym≈ {K₁ = K₁} {K₂ = K₂} {f = f} {g = g} fg =
-    LK2.sym≈ {K₁ = asLK K₁} {K₂ = asLK K₂} {f = f} {g = g} fg
-
-  trans≈
-    : ∀ {K₁ K₂ : Kernel Sig Q} {f g h : KernelHom₁ K₁ K₂}
-    → f ≈ g → g ≈ h → f ≈ h
-  trans≈ {K₁ = K₁} {K₂ = K₂} {f = f} {g = g} {h = h} fg gh =
-    LK2.trans≈ {K₁ = asLK K₁} {K₂ = asLK K₂} {f = f} {g = g} {h = h} fg gh
-
-  cong-∘₁-≈
-    : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
-      {f f' : KernelHom₁ K₁ K₂}
-      {g g' : KernelHom₁ K₂ K₃}
-    → f ≈ f' → g ≈ g' → (g ∘₁ f) ≈ (g' ∘₁ f')
-  cong-∘₁-≈ {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {f = f} {f' = f'} {g = g} {g' = g'} ff gg =
-    LK2.cong-∘₁-≈ {K₁ = asLK K₁} {K₂ = asLK K₂} {K₃ = asLK K₃} {f = f} {f' = f'} {g = g} {g' = g'} ff gg
-
-  -- Extract the underlying `KernelHom` from the logic-kernel-level 1-cell.
-
+  -- Extract the underlying `KernelHom` from the 1-cell.
   homKernel
     : ∀ {K₁ K₂ : Kernel Sig Q}
     → KernelHom₁ K₁ K₂ → KH.KernelHom K₁ K₂
-  homKernel h =
-    let hlk = LK2.LogicKernelHom₁.hom h in
-    record
-      { con-hom    = LKH.LogicKernelHom.con-hom hlk
-      ; mapCode    = LKH.LogicKernelHom.mapCode hlk
-      ; map-encode = LKH.LogicKernelHom.map-encode hlk
-      ; map-decode = LKH.LogicKernelHom.map-decode hlk
-      }
+  homKernel = KernelHom₁.hom
 
   -- Step-grade (i.e. unique-step) flow preservation, in a composable form.
   --
@@ -149,31 +129,11 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     field
       preserves-step : ∀ c →
         ConPoset._⊑_ CP₂
-          (LK2.LogicKernelHom₁.map∂₁ h (Flow₁ c))
-          (Flow₂ (LK2.LogicKernelHom₁.map∂₁ h c))
-      preserves-Th : ConPoset._⊑_ CP₂ (LK2.LogicKernelHom₁.map∂₁ h Th⋆₁) Th⋆₂
-
-    preserves-F = preserves-step
+          (KernelHom₁.map∂₁ h (Flow₁ c))
+          (Flow₂ (KernelHom₁.map∂₁ h c))
+      preserves-Th : ConPoset._⊑_ CP₂ (KernelHom₁.map∂₁ h Th⋆₁) Th⋆₂
 
   open KernelHomFlow₁ public
-
-  toLKFlow
-    : ∀ {K₁ K₂ : Kernel Sig Q} {h : KernelHom₁ K₁ K₂}
-    → KernelHomFlow₁ h → LK2.LogicKernelHomFlow₁ h
-  toLKFlow hf =
-    record
-      { preserves-step = KernelHomFlow₁.preserves-step hf
-      ; preserves-Th   = KernelHomFlow₁.preserves-Th hf
-      }
-
-  fromLKFlow
-    : ∀ {K₁ K₂ : Kernel Sig Q} {h : KernelHom₁ K₁ K₂}
-    → LK2.LogicKernelHomFlow₁ h → KernelHomFlow₁ h
-  fromLKFlow hf =
-    record
-      { preserves-step = LK2.LogicKernelHomFlow₁.preserves-step hf
-      ; preserves-Th   = LK2.LogicKernelHomFlow₁.preserves-Th hf
-      }
 
   fromKernelHomFlow
     : ∀ {K₁ K₂ : Kernel Sig Q}
@@ -191,25 +151,49 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       }
 
   idKernelHomFlow₁ : ∀ (K : Kernel Sig Q) → KernelHomFlow₁ (idKernelHom₁ K)
-  idKernelHomFlow₁ K = fromLKFlow (LK2.idLogicKernelHomFlow₁ (asLK K))
+  idKernelHomFlow₁ K =
+    record
+      { preserves-step = λ _ → ConPoset.refl (BulkBoundary.bnd (Kernel.BB K))
+      ; preserves-Th   = ConPoset.refl (BulkBoundary.bnd (Kernel.BB K))
+      }
 
   composeKernelHomFlow₁
     : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
       {f : KernelHom₁ K₁ K₂} {g : KernelHom₁ K₂ K₃}
     → KernelHomFlow₁ f → KernelHomFlow₁ g → KernelHomFlow₁ (g ∘₁ f)
-  composeKernelHomFlow₁ ff gg =
-    fromLKFlow (LK2.composeLogicKernelHomFlow₁ (toLKFlow ff) (toLKFlow gg))
+  composeKernelHomFlow₁ {K₃ = K₃} {f = f} {g = g} ff gg =
+    let
+      CP₃  = BulkBoundary.bnd (Kernel.BB K₃)
+      mapf = KernelHom₁.map∂₁ f
+    in
+    record
+      { preserves-step = λ c →
+          let
+            step₁ = KernelHomFlow₁.preserves-step ff c
+            step₁' = KernelHom₁.mono∂ g step₁
+            step₂ = KernelHomFlow₁.preserves-step gg (mapf c)
+          in ConPoset.trans CP₃ step₁' step₂
+      ; preserves-Th =
+          let
+            step₁ = KernelHomFlow₁.preserves-Th ff
+            step₁' = KernelHom₁.mono∂ g step₁
+            step₂ = KernelHomFlow₁.preserves-Th gg
+          in ConPoset.trans CP₃ step₁' step₂
+      }
 
-  -- Flow-preserving 1-cells: reuse the `LogicKernel` FlowSub 2-category and
-  -- restrict objects to the image of `asLK`.
+  module FlowSub₁ =
+    FlowSub.With
+      (Kernel Sig Q)
+      KernelHom₁
+      KernelHomFlow₁
+      idKernelHom₁
+      composeKernelHom₁
+      idKernelHomFlow₁
+      composeKernelHomFlow₁
 
-  KernelHom₁ᶠ : Kernel Sig Q → Kernel Sig Q → Set (lsuc (lsuc ℓ))
-  KernelHom₁ᶠ K₁ K₂ = LK2.LogicKernelHom₁ᶠ (asLK K₁) (asLK K₂)
-
-  idKernelHom₁ᶠ : (K : Kernel Sig Q) → KernelHom₁ᶠ K K
-  idKernelHom₁ᶠ K = LK2.idLogicKernelHom₁ᶠ (asLK K)
-
-  composeKernelHom₁ᶠ
-    : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
-    → KernelHom₁ᶠ K₁ K₂ → KernelHom₁ᶠ K₂ K₃ → KernelHom₁ᶠ K₁ K₃
-  composeKernelHom₁ᶠ f g = LK2.composeLogicKernelHom₁ᶠ f g
+  open FlowSub₁ public
+    renaming
+      ( Hom₁ᶠ        to KernelHom₁ᶠ
+      ; idHom₁ᶠ      to idKernelHom₁ᶠ
+      ; composeHom₁ᶠ to composeKernelHom₁ᶠ
+      )

@@ -44,6 +44,33 @@ ObsEq∂ : ∀ {ℓ}
        → Set ℓ
 ObsEq∂ B c d = c ≈∂[ B ] d
 
+ObsLe∂
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → BoundaryIO Sig Q W BB H
+  → BulkBoundary.Con_bnd BB
+  → BulkBoundary.Con_bnd BB
+  → Set ℓ
+ObsLe∂ B c d = Prop.ObsLeOn (BoundaryIO.Sat∂ B) c d
+
+ObsBndPoset
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → (B : BoundaryIO Sig Q W BB H)
+  → ConPoset ℓ
+ObsBndPoset {BB = BB} B =
+  let open BulkBoundary BB in
+  record
+    { Con = Con_bnd
+    ; _⊑_ = ObsLe∂ B
+    ; refl = λ {c} p sat → sat
+    ; trans = λ cd de p sat → de p (cd p sat)
+    }
+
 Respects≈∂[_] : ∀ {ℓ}
                 {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
                 {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
@@ -52,6 +79,66 @@ Respects≈∂[_] : ∀ {ℓ}
               → (BulkBoundary.Con_bnd BB → BulkBoundary.Con_bnd BB)
               → Set ℓ
 Respects≈∂[ B ] F = Prop.RespectsObsEqOn (BoundaryIO.Sat∂ B) F
+
+≈∂-refl
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → (B : BoundaryIO Sig Q W BB H)
+  → (c : BulkBoundary.Con_bnd BB)
+  → c ≈∂[ B ] c
+≈∂-refl B c = Prop.ObsEqOn-refl (BoundaryIO.Sat∂ B) c
+
+≈∂-sym
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → {B : BoundaryIO Sig Q W BB H}
+  → {c d : BulkBoundary.Con_bnd BB}
+  → c ≈∂[ B ] d
+  → d ≈∂[ B ] c
+≈∂-sym eq p = Prop.↔-sym (eq p)
+
+≈∂-trans
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → {B : BoundaryIO Sig Q W BB H}
+  → {a b c : BulkBoundary.Con_bnd BB}
+  → a ≈∂[ B ] b
+  → b ≈∂[ B ] c
+  → a ≈∂[ B ] c
+≈∂-trans ab bc p = Prop.↔-trans (ab p) (bc p)
+
+≈∂↔ObsLe
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → (B : BoundaryIO Sig Q W BB H)
+  → {c d : BulkBoundary.Con_bnd BB}
+  → Prop._↔_
+      (c ≈∂[ B ] d)
+      (Prop._∧_ (ObsLe∂ B c d) (ObsLe∂ B d c))
+≈∂↔ObsLe B {c} {d} =
+  Prop.ObsEqOn↔ObsLeOn {Sat = BoundaryIO.Sat∂ B} {x = c} {y = d}
+
+mono-ObsBnd-respects≈∂
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → {B : BoundaryIO Sig Q W BB H}
+  → {F : BulkBoundary.Con_bnd BB → BulkBoundary.Con_bnd BB}
+  → MonoOn (ObsBndPoset B) F
+  → Respects≈∂[ B ] F
+mono-ObsBnd-respects≈∂ {B = B} monoF eq =
+  Prop._↔_.from (≈∂↔ObsLe B)
+    (monoOn-respects≈ {CP = ObsBndPoset B} monoF
+      (Prop._↔_.to (≈∂↔ObsLe B) eq))
 
 -- External boundary “port”: a boundary semantics (export) plus an import leg.
 --

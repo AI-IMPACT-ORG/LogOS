@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Theorems.CategoryTheory.Kernel2Cat where
 
--- A lightweight 2-category packaging for kernels:
+-- A lightweight refinement-2-category interface for kernels (laws not bundled):
 -- - 1-cells: kernel morphisms equipped with boundary monotonicity
 -- - 2-cells: pointwise refinement on decoded code maps
 --

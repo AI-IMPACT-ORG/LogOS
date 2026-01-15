@@ -168,16 +168,16 @@ FlowTh⋆≤Th⋆ K = snd (GTier.Th*-fixed (LogicKernel.G K))
 FlowTh⋆≡Th⋆
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : LogicKernel Sig Q)
-    (po : BulkBoundaryPO (LogicKernel.BB K))
+    (po : BulkBoundaryPO (LogicKernel.BB K)) -- ANTISYM-OK
   → FlowTh⋆K K ≡ Th⋆K K
 FlowTh⋆≡Th⋆ K po =
-  let open BulkBoundaryPO po using (po-bnd)
-      open PartialOrder po-bnd using (antisym)
-  in antisym (FlowTh⋆≤Th⋆ K) (Th⋆≤FlowTh⋆ K)
+  let open BulkBoundaryPO po using (po-bnd) -- ANTISYM-OK
+      open PartialOrder po-bnd using (antisym) -- ANTISYM-OK
+  in antisym (FlowTh⋆≤Th⋆ K) (Th⋆≤FlowTh⋆ K) -- ANTISYM-OK
 
 -- Textbook alias: antisymmetry upgrades the fixed-point inequalities to an equation.
 
-fixedpoint-eq-under-antisym = FlowTh⋆≡Th⋆
+fixedpoint-eq-under-antisym = FlowTh⋆≡Th⋆ -- ANTISYM-OK
 
 Flow≤f→Th⋆≤fTh⋆
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -206,12 +206,12 @@ f≤Flow→fTh⋆≤Th⋆ K f f≤tf =
 Flow≃f→fTh⋆≡Th⋆
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : LogicKernel Sig Q)
-    (po : BulkBoundaryPO (LogicKernel.BB K))
+    (po : BulkBoundaryPO (LogicKernel.BB K)) -- ANTISYM-OK
     (f : Endo K)
   → _≤₂_ K (Flow-Endo K) f
   → _≤₂_ K f (Flow-Endo K)
   → Endo.fn f (Th⋆K K) ≡ Th⋆K K
 Flow≃f→fTh⋆≡Th⋆ K po f tf≤f f≤tf =
-  let open BulkBoundaryPO po using (po-bnd)
-      open PartialOrder po-bnd using (antisym)
-  in antisym (f≤Flow→fTh⋆≤Th⋆ K f f≤tf) (Flow≤f→Th⋆≤fTh⋆ K f tf≤f)
+  let open BulkBoundaryPO po using (po-bnd) -- ANTISYM-OK
+      open PartialOrder po-bnd using (antisym) -- ANTISYM-OK
+  in antisym (f≤Flow→fTh⋆≤Th⋆ K f f≤tf) (Flow≤f→Th⋆≤fTh⋆ K f tf≤f) -- ANTISYM-OK

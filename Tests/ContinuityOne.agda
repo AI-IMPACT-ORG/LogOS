@@ -103,7 +103,7 @@ K₁ = record
           ; bnd-I-lax = tt
           }
       ; HTruth = record { Sat_H = λ _ _ → ⊤ ; mono-Con = λ _ _ → tt ; mono-ctx = λ _ _ → tt }
-      ; HInv   = record { Inv_H = λ c → c ; infl = λ _ → tt ; idemp-lax = λ _ → tt }
+      ; HInv = record { Inv_H = λ c → c ; infl = λ _ → tt ; idemp-lax = λ _ → tt }
       ; Sat_H_bnd = λ _ _ → ⊤
       ; sat-coh = λ _ _ → record { to = λ x → x ; from = λ x → x }
       ; Fml = ⊤
@@ -113,17 +113,23 @@ K₁ = record
       ; Code = One
       ; encode = λ c → c
       ; decode = λ γ → γ
-      ; decode∘encode = λ _ → refl
       ; Guard = λ _ → •
       ; Body = λ γ → γ
       ; γ* = •
-      ; γ*-guard = (tt , tt)
       ; reify = λ γ → γ
-      ; reify-decode = λ _ → refl
       ; Body∂ = λ c → c
-      ; body-decode = λ _ → refl
       }
   ; GTruth = GTruth₁
-  ; guard-decode = λ _ → refl
-  ; decode-γ* = refl
+  ; laws = record
+      { shapeLaws = record
+          { decode∘encode = λ _ → refl
+          ; γ*-guard = (tt , tt)
+          ; reify-decode = λ _ → refl
+          ; body-decode = λ _ → refl
+          }
+      ; mono-Body∂ = λ _ → tt
+      ; mono-Flow = λ _ → tt
+      ; guard-decode = λ _ → refl
+      ; decode-γ* = refl
+      }
   }

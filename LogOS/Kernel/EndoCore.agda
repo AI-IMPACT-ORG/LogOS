@@ -12,6 +12,7 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
+import LogOS.Minimal.Thin2Cat as Thin2Cat
 open import LogOS.Kernel.LogicKernel
 open import LogOS.Kernel.EndoStepBridge as StepBridge
 import LogOS.Kernel.LogicKernel.Endo as LKEndo
@@ -80,15 +81,54 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
     let open LogicKernel (asLogicKernel K) in
     ConPoset.trans (BulkBoundary.bnd BB) (fg c) (gh c)
 
-  whisker-left
-    : ∀ (K : Obj) {f g h : Endo K}
-    → _≤₂_ K f g → _≤₂_ K (h ∘E f) (h ∘E g)
-  whisker-left _ {h = h} fg = λ c → Endo.mono h (fg c)
+  -- Endomaps form a one-object thin 2-category; whiskering is inherited.
 
-  whisker-right
-    : ∀ (K : Obj) {f g h : Endo K}
-    → _≤₂_ K f g → _≤₂_ K (f ∘E h) (g ∘E h)
-  whisker-right _ {h = h} fg = λ c → fg (Endo.fn h c)
+  EndoPoset : (K : Obj) → ConPoset (lsuc ℓ)
+  EndoPoset K =
+    record
+      { Con = Endo K
+      ; _⊑_ = λ f g → Lift (lsuc ℓ) (_≤₂_ K f g)
+      ; refl = λ {f} → lift (refl₂ K f)
+      ; trans = λ {f} {g} {h} fg gh →
+          lift (trans₂ K {f = f} {g = g} {h = h} (Lift.lower fg) (Lift.lower gh))
+      }
+
+  EndoThin2Cat : (K : Obj) → Thin2Cat.Thin2Cat ℓ (lsuc ℓ)
+  EndoThin2Cat K =
+    record
+      { Obj = ⊤
+      ; Hom = λ _ _ → EndoPoset K
+      ; id  = λ {A} → idEndo K
+      ; _∘_ = _∘E_
+      ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} fg →
+          lift (λ c → Lift.lower fg (Endo.fn g c))
+      ; comp-mono-r = λ {A} {B} {C} {f} {g} {g'} gg' →
+          lift (λ c → Endo.mono f (Lift.lower gg' c))
+      }
+
+  module Endo2Cat (K : Obj) where
+    private
+      C = EndoThin2Cat K
+
+    whisker-left
+      : {f g h : Endo K}
+      → _≤₂_ K f g → _≤₂_ K (h ∘E f) (h ∘E g)
+    whisker-left {f} {g} {h} fg =
+      Lift.lower
+        (Thin2Cat.whisker-right
+          {C = C} {A = tt} {B = tt} {C' = tt}
+          {f = h} {g = f} {g' = g}
+          (lift fg))
+
+    whisker-right
+      : {f g h : Endo K}
+      → _≤₂_ K f g → _≤₂_ K (f ∘E h) (g ∘E h)
+    whisker-right {f} {g} {h} fg =
+      Lift.lower
+        (Thin2Cat.whisker-left
+          {C = C} {A = tt} {B = tt} {C' = tt}
+          {f = f} {f' = g} {g = h}
+          (lift fg))
 
   -- Fixedness at a point in the boundary preorder, expressed in the LogOS style
   -- as mutual refinement (not definitional equality).
@@ -189,11 +229,11 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
 
   FlowTh⋆≡Th⋆
     : (K : Obj)
-      (po : BulkBoundaryPO (LogicKernel.BB (asLogicKernel K)))
+      (po : BulkBoundaryPO (LogicKernel.BB (asLogicKernel K))) -- ANTISYM-OK
     → FlowTh⋆K K ≡ Th⋆K K
   FlowTh⋆≡Th⋆ K po = LKEndo.FlowTh⋆≡Th⋆ (asLogicKernel K) po
 
-  fixedpoint-eq-under-antisym = FlowTh⋆≡Th⋆
+  fixedpoint-eq-under-antisym = FlowTh⋆≡Th⋆ -- ANTISYM-OK
 
   Flow≤f→Th⋆≤fTh⋆
     : (K : Obj)
@@ -215,7 +255,7 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
 
   Flow≃f→fTh⋆≡Th⋆
     : (K : Obj)
-      (po : BulkBoundaryPO (LogicKernel.BB (asLogicKernel K)))
+      (po : BulkBoundaryPO (LogicKernel.BB (asLogicKernel K))) -- ANTISYM-OK
       (f : Endo K)
     → _≤₂_ K (Flow-Endo K) f
     → _≤₂_ K f (Flow-Endo K)

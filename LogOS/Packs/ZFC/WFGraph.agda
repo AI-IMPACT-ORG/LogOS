@@ -24,9 +24,23 @@ open import LogOS.Domain.ZFC.SetTheory.LimitPack using (CumulativeHierarchy)
 open import LogOS.Domain.ZFC.SetTheory.Pack using (ZFAxioms; ZFCAxioms)
 
 open import LogOS.Domain.ZFC.WFGraph.Structure public using (WFGraphStructure)
+import LogOS.Domain.ZFC.MembershipGraphSemantics as MGS
 import LogOS.Domain.ZFC.WFGraph.Surface as Surf
 import LogOS.Domain.ZFC.WFGraph.ZFC as WFZFC
+import LogOS.Domain.ZFC.WFGraph.Mostowski as Mostowskiₜ
 import LogOS.Theorems.Meta.QuartetCore as Quartet
+
+private
+  zfᵈFromStructure
+    : ∀ {ℓ : Level}
+      (W : WFGraphStructure ℓ)
+    → let
+        open WFGraphStructure W
+        module Z = WFZFC.ForZFC G S Ext P Fnd
+      in ZFAxiomsᵈ Z.K
+  zfᵈFromStructure W =
+    let open WFGraphStructure W in
+    WFZFC.ForZFC.zfᵈ G S Ext P Fnd
 
 -- Standard pack skeleton (uniform API) for the WFGraph ZF/ZFC route.
 --
@@ -96,17 +110,6 @@ module FormulaCoded where
       A
 
 module Full where
-  zfᵈFromStructure
-    : ∀ {ℓ : Level}
-      (W : WFGraphStructure ℓ)
-    → let
-        open WFGraphStructure W
-        module Z = WFZFC.ForZFC G S Ext P Fnd
-      in ZFAxiomsᵈ Z.K
-  zfᵈFromStructure W =
-    let open WFGraphStructure W in
-    WFZFC.ForZFC.zfᵈ G S Ext P Fnd
-
   record Assumptions {ℓ : Level} : Set (lsuc (lsuc ℓ)) where
     field
       W  : WFGraphStructure ℓ
@@ -145,17 +148,6 @@ module Full where
       A
 
 module WithChoice where
-  zfᵈFromStructure
-    : ∀ {ℓ : Level}
-      (W : WFGraphStructure ℓ)
-    → let
-        open WFGraphStructure W
-        module Z = WFZFC.ForZFC G S Ext P Fnd
-      in ZFAxiomsᵈ Z.K
-  zfᵈFromStructure W =
-    let open WFGraphStructure W in
-    WFZFC.ForZFC.zfᵈ G S Ext P Fnd
-
   record Assumptions {ℓ : Level} : Set (lsuc (lsuc ℓ)) where
     field
       W  : WFGraphStructure ℓ
@@ -197,8 +189,22 @@ module WithChoice where
           })
       A
 
+-- Membership-is-edge packaging (thin, graph-first semantics).
+module MembershipGraph where
+  module For {ℓ : Level} (W : WFGraphStructure ℓ) where
+    MG : MGS.MembershipGraph {ℓ}
+    MG = MGS.fromStructure W
+
+    open MGS.MembershipGraph MG public using (G; S; Ext; Pow; Fnd)
+
+    module M = MGS.For MG
+    module Mostowski = Mostowskiₜ.For G S
+    open M public using (Sig; Q; K; zfᵈNoInf; zfᵈ; mem-graph; mem-graphᵈ)
+
 -- Semantic aliases for the three WFGraph layers.
 module ZFᶠ = Definable
 module ZFᶠ-Formula = FormulaCoded
 module ZF = Full
 module ZFC = WithChoice
+
+module Mostowski = Mostowskiₜ

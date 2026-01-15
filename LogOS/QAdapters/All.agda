@@ -21,6 +21,9 @@ module NatTop where
 module NatMul where
   open import LogOS.QAdapters.QNatMul public
 
+module Guards where
+  open import LogOS.QAdapters.Guards public
+
 -- Convenient top-level names (avoid `scaleOps` clashes).
 open import LogOS.QAdapters.QNat public using (QNat) renaming (scaleOps to scaleOpsQNat)
 open import LogOS.QAdapters.QNat2 public using (QNat2) renaming (scaleOps to scaleOpsQNat2)

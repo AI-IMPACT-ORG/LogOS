@@ -11,12 +11,12 @@ open import LogOS.Prelude
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 
--- A tiny, executable universality core. We give simple step semantics for each
+-- A minimal, executable universality core. We give simple step semantics for each
 -- paradigm and a unified sum type with a common step function. This is intended
 -- to be pristine: total, documented, and uniform.
 
--- Turing/Minsky: toy register machine state (pc, reg)
--- Turing/Minsky: toy register machine with a single register and program counter.
+-- Turing/Minsky: minimal register machine state (pc, reg)
+-- Turing/Minsky: minimal register machine with a single register and program counter.
 -- Step increments pc; if reg > 0, it decrements reg by 1 (simple progress).
 
 record TuringCode : Set where
@@ -43,16 +43,16 @@ stepC c with size c
 ... | (suc n) = mkC n
 
 -- Quantum: list length of gates; step pops one gate.
-record ToyQuantumCode : Set where
-  constructor mkToyQ
+record CoreQuantumCode : Set where
+  constructor mkCoreQ
   field gates : ℕ
 
-open ToyQuantumCode public
+open CoreQuantumCode public
 
-stepToyQ : ToyQuantumCode → ToyQuantumCode
-stepToyQ q with gates q
+stepCoreQ : CoreQuantumCode → CoreQuantumCode
+stepCoreQ q with gates q
 ... | zero    = q
-... | (suc n) = mkToyQ n
+... | (suc n) = mkCoreQ n
 
 -- Blockchain (EVM-like): program counter + gas; step increments pc and decrements gas.
 record ChainCode : Set where
@@ -68,18 +68,18 @@ stepB s with gas s
 
 -- Unified code and step
 
-data ToyUCode : Set where
-  ToyT : TuringCode     → ToyUCode
-  ToyC : ChurchCode     → ToyUCode
-  ToyQ : ToyQuantumCode → ToyUCode
-  ToyB : ChainCode      → ToyUCode
+data CoreUCode : Set where
+  CoreT : TuringCode     → CoreUCode
+  CoreC : ChurchCode     → CoreUCode
+  CoreQ : CoreQuantumCode → CoreUCode
+  CoreB : ChainCode      → CoreUCode
 
-stepToyU : ToyUCode → ToyUCode
-stepToyU (ToyT t) = ToyT (stepT t)
-stepToyU (ToyC c) = ToyC (stepC c)
-stepToyU (ToyQ q) = ToyQ (stepToyQ q)
-stepToyU (ToyB b) = ToyB (stepB b)
+stepCoreU : CoreUCode → CoreUCode
+stepCoreU (CoreT t) = CoreT (stepT t)
+stepCoreU (CoreC c) = CoreC (stepC c)
+stepCoreU (CoreQ q) = CoreQ (stepCoreQ q)
+stepCoreU (CoreB b) = CoreB (stepB b)
 
-simulateToy : ℕ → ToyUCode → ToyUCode
-simulateToy zero    u = u
-simulateToy (suc n) u = simulateToy n (stepToyU u)
+simulateCoreU : ℕ → CoreUCode → CoreUCode
+simulateCoreU zero    u = u
+simulateCoreU (suc n) u = simulateCoreU n (stepCoreU u)

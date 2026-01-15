@@ -44,6 +44,8 @@ open import LogOS.Minimal.Con       public
 open import LogOS.Minimal.Closure   public
 open import LogOS.Minimal.Adjunction public
 open import LogOS.Minimal.Truth     public
+open import LogOS.Minimal.Domain    public
+open import LogOS.Minimal.Thin2Cat  public
 open import LogOS.Algebra.ConAlg    public
 open import LogOS.Free.Constraints  public
 
@@ -94,7 +96,7 @@ open import LogOS.Boundary.Port       public
 --   -- Ready-made instances:
 --   --   `LogOS.QAdapters.QNat.QNat`    (steps/time as ℕ, with max/join)
 --   --   `LogOS.QAdapters.QNat2.QNat2`  (two-axis budgets: unitary + measurement)
---   --   `LogOS.QAdapters.QNatTop.QNatTop` (ℕ with an explicit top grade ω)
+--   --   `LogOS.QAdapters.QNatTop.QNatTop` (ℕ with an explicit top grade ω; budget readout is conventional)
 --   Q : QAdapter ℓ
 --   Q = LogOS.QAdapters.QNat.QNat
 --   

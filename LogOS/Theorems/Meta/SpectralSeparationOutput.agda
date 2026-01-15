@@ -16,7 +16,8 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
-open import LogOS.Theorems.Meta.Assumptions.Diagonal using (TruthDiagonal; TruthDiagonalC; TruthDiagonal→TruthDiagonalC)
+open import LogOS.Theorems.Meta.Assumptions.Diagonal using
+  (TruthDiagonal; TruthDiagonalC; TruthDiagonal→TruthDiagonalC; liar-witnessC; no-totalC; liar-witness; no-total)
 open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn)
 
 -- A partial “spectral separation output” surface: for each code, either produce
@@ -53,13 +54,7 @@ module Generic {ℓCode ℓDec : Level} (Code : Set ℓCode) (Dec : Set ℓDec) 
     : (SSO : SpectralSeparationOutputC)
       (TD  : TruthDiagonalC Code (SpectralSeparationOutputC.HasSeparation SSO))
     → ¬ (∀ γ → SpectralSeparationOutputC.HasSeparation SSO γ)
-  separation-output-not-totalC SSO TD all =
-    let open SpectralSeparationOutputC SSO
-        liar = TruthDiagonalC.liarForDecider TD (λ _ → ⊤) (λ _ → inj₁ tt)
-        γ    = proj₁ liar
-        eqv  = proj₂ liar
-        hγ   = all γ
-    in to eqv hγ tt
+  separation-output-not-totalC SSO TD = no-totalC TD
 
   separation-output-no-self-certificationC
     : (SSO : SpectralSeparationOutputC)
@@ -74,13 +69,13 @@ module Generic {ℓCode ℓDec : Level} (Code : Set ℓCode) (Dec : Set ℓDec) 
       (TD  : TruthDiagonalC Code (SpectralSeparationOutputC.HasSeparation SSO))
     → Σ Code (λ γ → SpectralSeparationOutputC.NoSeparation SSO γ)
   separation-output-diagonal-witnessC SSO TD =
-    let open SpectralSeparationOutputC SSO
-        liar = TruthDiagonalC.liarForDecider TD (λ _ → ⊤) (λ _ → inj₁ tt)
-        γ    = proj₁ liar
-        eqv  = proj₂ liar
-        nh   : ¬ HasSeparation γ
-        nh h = to eqv h tt
-    in (γ , ¬HasSeparation→NoSeparation nh)
+    let
+      open SpectralSeparationOutputC SSO
+      w  = liar-witnessC TD
+      γ  = proj₁ w
+      nh = proj₂ w
+    in
+    (γ , ¬HasSeparation→NoSeparation nh)
 
 record SpectralSeparationOutput {ℓ}
                                {Sig : LogOSSignature ℓ}
@@ -137,6 +132,67 @@ record SeparationTotalityClaim {ℓ}
     core : G.SeparationTotalityClaimC (SpectralSeparationOutput.core SSO)
 
   open G.SeparationTotalityClaimC core public
+
+-- ============================================================================
+-- General budget interface (graded/quantale friendly)
+--
+-- This variant does not build a filtered `infer≤` (which would require a
+-- decidable order on budgets). Instead it states “totality-within-budget” as a
+-- predicate and diagonalizes against it.
+-- ============================================================================
+
+module GeneralB
+  {ℓ}
+  {Sig : LogOSSignature ℓ}
+  {Q   : QAdapter ℓ}
+  {K   : Kernel Sig Q}
+  (O   : SpectralSeparationOutput K)
+  where
+
+  open Kernel K
+  open SpectralSeparationOutput O
+
+  record WitnessCostB (B : Set ℓ) : Set (lsuc ℓ) where
+    field
+      costB : Witness → B
+
+  module General
+    (B : Set ℓ)
+    (_≤B_ : B → B → Set ℓ)
+    (CB : WitnessCostB B)
+    where
+
+    open WitnessCostB CB using (costB)
+
+    WithinBudget
+      : (Bnd : Code → B)
+      → Code → Set ℓ
+    WithinBudget Bnd γ =
+      Σ Witness (λ w → infer γ ≡ inj₁ w × costB w ≤B Bnd γ)
+
+    no-total-within-budget
+      : ∀ (Bnd : Code → B)
+        → TruthDiagonalC Code (WithinBudget Bnd)
+        → ¬ (∀ γ → WithinBudget Bnd γ)
+    no-total-within-budget Bnd TD = no-totalC TD
+
+    no-total-within-budgetK
+      : ∀ (Bnd : Code → B)
+        → TruthDiagonal K (WithinBudget Bnd)
+        → ¬ (∀ γ → WithinBudget Bnd γ)
+    no-total-within-budgetK Bnd TD = no-total TD
+
+    diagonal-witness-within-budget
+      : ∀ (Bnd : Code → B)
+        → TruthDiagonalC Code (WithinBudget Bnd)
+        → Σ Code (λ γ → ¬ WithinBudget Bnd γ)
+    diagonal-witness-within-budget Bnd TD = liar-witnessC TD
+
+    diagonal-witness-within-budgetK
+      : ∀ (Bnd : Code → B)
+        → TruthDiagonal K (WithinBudget Bnd)
+        → Σ Code (λ γ → ¬ WithinBudget Bnd γ)
+    diagonal-witness-within-budgetK Bnd TD = liar-witness TD
 
 -- Anti-totality: with a diagonal-against-decidable-observers principle for
 -- HasSeparation, there cannot be a total separation output.

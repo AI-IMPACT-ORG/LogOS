@@ -16,7 +16,7 @@ open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
 
 open import LogOS.Ports.Semantic.PresentationCore public using (PresentationC)
-open import LogOS.Ports.Semantic.SatMor using (idSatMor)
+open import LogOS.Ports.Semantic.SatMor using (SatMor; idSatMor)
 import LogOS.Ports.Semantic.HeteroInterlinguaCore as Hetero
 
 -- Canonical presentation: take `Form = Con` and interpret by identity.
@@ -35,6 +35,45 @@ canonicalPresentation {Con = Con} SatC = record
   ; Import = λ x → x
   ; SatF≈C = λ _ _ → Prop.↔-refl
   }
+
+-- Canonical translation along a satisfaction morphism: for canonical
+-- presentations, the interlingua translation is exactly `mapCon`.
+
+canonical-translate-along
+  : ∀ {ℓCtx₁ ℓCon₁ ℓSat₁ ℓCtx₂ ℓCon₂ ℓSat₂ : Level}
+    {Ctx₁ : Set ℓCtx₁}
+    {Con₁ : Set ℓCon₁}
+    {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
+    {Ctx₂ : Set ℓCtx₂}
+    {Con₂ : Set ℓCon₂}
+    {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
+    (m : SatMor Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
+  → let P₁ = canonicalPresentation Sat₁
+        P₂ = canonicalPresentation Sat₂
+        module H = Hetero.For m P₁ P₂
+    in H.translate ≡ SatMor.mapCon m
+canonical-translate-along _ = refl
+
+canonical-translate≈mapCon
+  : ∀ {ℓCtx₁ ℓCon₁ ℓSat₁ ℓCtx₂ ℓCon₂ ℓSat₂ : Level}
+    {Ctx₁ : Set ℓCtx₁}
+    {Con₁ : Set ℓCon₁}
+    {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
+    {Ctx₂ : Set ℓCtx₂}
+    {Con₂ : Set ℓCon₂}
+    {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
+    (m : SatMor Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
+  → let P₁ = canonicalPresentation Sat₁
+        P₂ = canonicalPresentation Sat₂
+        module H = Hetero.For m P₁ P₂
+    in H._≈⇒_ H.translate (SatMor.mapCon m)
+canonical-translate≈mapCon {Sat₁ = Sat₁} {Sat₂ = Sat₂} m p c =
+  let
+    module H = Hetero.For m (canonicalPresentation Sat₁) (canonicalPresentation Sat₂)
+  in
+  Prop.↔-trans
+    (Prop.↔-sym (H.translate-preserves-Sat p c))
+    (SatMor.sat-↔ m p c)
 
 module ForPresentations
   {ℓCtx ℓCon ℓSat : Level}

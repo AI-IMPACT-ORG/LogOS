@@ -29,7 +29,7 @@ open import LogOS.Kernel.LogicKernel using (LogicKernel; module LogicKernel)
 open import LogOS.Kernel.LogicKernel.EndoCore
   using
     ( Endo; _≤₂_; idEndo; _∘E_
-    ; refl₂; trans₂; whisker-left; whisker-right
+    ; refl₂; trans₂
     )
 
 open Endo public

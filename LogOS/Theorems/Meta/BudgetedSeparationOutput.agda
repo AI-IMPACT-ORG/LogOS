@@ -19,7 +19,8 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 import LogOS.Theorems.Meta.SpectralSeparationOutput as SSO
-open import LogOS.Theorems.Meta.Assumptions.Diagonal using (TruthDiagonal; TruthDiagonalC; TruthDiagonal→TruthDiagonalC)
+open import LogOS.Theorems.Meta.Assumptions.Diagonal using
+  (TruthDiagonal; TruthDiagonalC; liar-witnessC; no-totalC; liar-witness; no-total)
 
 -- Quantitative upgrade of `SpectralSeparationOutput`:
 -- equip witnesses with a cost/size, and define a derived observer that only
@@ -35,81 +36,6 @@ record WitnessCost {ℓ} (Witness : Set ℓ) : Set (lsuc ℓ) where
   field
     cost : Witness → ℕ
 
--- ============================================================================
--- General budget interface (graded/quantale friendly)
---
--- This variant does not build a filtered `infer≤` (which would require a
--- decidable order on budgets). Instead it states “totality-within-budget” as a
--- predicate and diagonalizes against it.
---
--- It is parameterized only by the partial-output surface `O` (no ℕ cost needed).
--- ============================================================================
-
-module GeneralB
-  {ℓ}
-  {Sig : LogOSSignature ℓ}
-  {Q   : QAdapter ℓ}
-  {K   : Kernel Sig Q}
-  (O   : SSO.SpectralSeparationOutput K)
-  where
-
-  open Kernel K
-  open SSO.SpectralSeparationOutput O
-
-  record WitnessCostB (B : Set ℓ) : Set (lsuc ℓ) where
-    field
-      costB : Witness → B
-
-  module General
-    (B : Set ℓ)
-    (_≤B_ : B → B → Set ℓ)
-    (CB : WitnessCostB B)
-    where
-
-    open WitnessCostB CB using (costB)
-
-    WithinBudget
-      : (Bnd : Code → B)
-      → Code → Set ℓ
-    WithinBudget Bnd γ =
-      Σ Witness (λ w → infer γ ≡ inj₁ w × costB w ≤B Bnd γ)
-
-    no-total-within-budget
-      : ∀ (Bnd : Code → B)
-        → TruthDiagonalC Code (WithinBudget Bnd)
-        → ¬ (∀ γ → WithinBudget Bnd γ)
-    no-total-within-budget Bnd TD all =
-      let liar = TruthDiagonalC.liarForDecider TD (λ _ → ⊤) (λ _ → inj₁ tt)
-          γ    = proj₁ liar
-          eqv  = proj₂ liar
-          wγ   = all γ
-      in to eqv wγ tt
-
-    no-total-within-budgetK
-      : ∀ (Bnd : Code → B)
-        → TruthDiagonal K (WithinBudget Bnd)
-        → ¬ (∀ γ → WithinBudget Bnd γ)
-    no-total-within-budgetK Bnd TD =
-      no-total-within-budget Bnd (TruthDiagonal→TruthDiagonalC (WithinBudget Bnd) TD)
-
-    diagonal-witness-within-budget
-      : ∀ (Bnd : Code → B)
-        → TruthDiagonalC Code (WithinBudget Bnd)
-        → Σ Code (λ γ → ¬ WithinBudget Bnd γ)
-    diagonal-witness-within-budget Bnd TD =
-      let liar = TruthDiagonalC.liarForDecider TD (λ _ → ⊤) (λ _ → inj₁ tt)
-          γ    = proj₁ liar
-          eqv  = proj₂ liar
-          nh   : ¬ WithinBudget Bnd γ
-          nh h = to eqv h tt
-      in (γ , nh)
-
-    diagonal-witness-within-budgetK
-      : ∀ (Bnd : Code → B)
-        → TruthDiagonal K (WithinBudget Bnd)
-        → Σ Code (λ γ → ¬ WithinBudget Bnd γ)
-    diagonal-witness-within-budgetK Bnd TD =
-      diagonal-witness-within-budget Bnd (TruthDiagonal→TruthDiagonalC (WithinBudget Bnd) TD)
 
 module For
   {ℓ}
@@ -241,7 +167,3 @@ module For
   -- This variant does not build a filtered `infer≤`; instead it states
   -- “totality-within-budget” directly as a predicate and diagonalizes against it.
   -- ==========================================================================
-
-  module GB = GeneralB O
-  open GB public using (WitnessCostB)
-  module General = GB.General

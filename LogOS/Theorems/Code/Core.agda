@@ -14,10 +14,11 @@ module LogOS.Theorems.Code.Core where
 open import LogOS.Prelude
 
 open import LogOS.Kernel
-open import LogOS.Kernel.Core as KCore
+open import LogOS.Kernel.Core as KCore hiding (FlowCode)
 open import LogOS.Kernel.Endo
 open import LogOS.Kernel.Hom
 open import LogOS.Minimal.Con
+import LogOS.Minimal.Con.Rewrite as ConRewrite
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -234,3 +235,36 @@ decode-FlowCode-mono {Sig = Sig} {Q = Q} K bm {γ} {δ} le =
 -- Textbook alias: monotonicity of the operational step (FlowCode), under BodyMonotone.
 
 flowcode-mono-decode = decode-FlowCode-mono
+
+-- Code-level equivalence for reify (≈ in the code preorder).
+-- This is the refinement counterpart to `reify-decode-eq`.
+
+reify≈
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (γ : Kernel.Code K)
+  → KCore.Code≈ (Kernel.shape K) (Kernel.reify K γ) γ
+reify≈ K γ =
+  let
+    CP = BulkBoundary.bnd (Kernel.BB K)
+    module R = ConRewrite.For CP
+    eq = Kernel.reify-decode K γ
+    reflCP = ConPoset.refl CP
+  in
+  ( R.substL (sym eq) reflCP
+  , R.substR (sym eq) reflCP
+  )
+
+-- Code-level monotonicity for FlowCode (no extra assumptions for kernels).
+
+flowCode-mono
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+  → ∀ {γ δ}
+  → KCore.Code≤ (Kernel.shape K) γ δ
+  → KCore.Code≤ (Kernel.shape K) (FlowCode K γ) (FlowCode K δ)
+flowCode-mono K {γ} {δ} le =
+  let
+    bm : KCore.BodyMonotoneShape (Kernel.shape K)
+    bm = record { mono-Body∂ = Kernel.mono-Body∂ K }
+  in decode-FlowCode-mono K bm le

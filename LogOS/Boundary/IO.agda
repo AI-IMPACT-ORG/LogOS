@@ -15,6 +15,7 @@ open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Syntax.Prop as Prop
+open import LogOS.Kernel.Core as Core
 
 -- Swappable Boundary I/O interface.
 --
@@ -46,3 +47,18 @@ record BoundaryIO {ℓ : Level}
     sat-coh : ∀ (w : Cosp) (c : Con_bnd)
             → Prop._↔_ (HT.HLayer.Sat_H H w c)
                         (Sat∂ (to∂ w) c)
+
+-- Canonical BoundaryIO derived from a kernel shape.
+fromKernelShape
+  : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (S : Core.KernelShape Sig Q)
+  → BoundaryIO Sig Q (Core.KernelShape.HWorld S) (Core.KernelShape.BB S) (Core.KernelShape.HTruth S)
+fromKernelShape {Sig = Sig} S =
+  record
+    { to∂    = to∂Sig
+    ; from∂  = from∂Sig
+    ; Sat∂   = Core.KernelShape.Sat_H_bnd S
+    ; sat-coh = Core.KernelShape.sat-coh S
+    }
+  where
+  open LogOSSignature Sig renaming (to∂ to to∂Sig; from∂ to from∂Sig)

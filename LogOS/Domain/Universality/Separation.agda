@@ -20,7 +20,7 @@ open import LogOS.Domain.Universality.Physics
 
 record EncodingsCompat {ℓ : Level}
                        (CM : ComplexityModel {ℓ})
-                       (EO : EvolOperator {ℓH = ℓ} ToyUCode stepToyU)
+                       (EO : EvolOperator {ℓH = ℓ} CoreUCode stepCoreU)
                        : Set (lsuc (lsuc ℓ)) where
   open ComplexityModel CM
   open EvolOperator EO
@@ -28,7 +28,7 @@ record EncodingsCompat {ℓ : Level}
   -- Verifier acceptance witness: there exists a code/witness and a time bound
   -- such that the verifier runs within that time.
   VerAccepts : Input → Set lzero
-  VerAccepts x = Σ ℕ (λ n → Σ ToyUCode (λ w → TimeLeV n (encV x)))
+  VerAccepts x = Σ ℕ (λ n → Σ CoreUCode (λ w → TimeLeV n (encV x)))
 
   field
     DetSub : H → Set ℓ
@@ -43,7 +43,7 @@ record EncodingsCompat {ℓ : Level}
 
 record SeparationPack {ℓ : Level}
                       (CM : ComplexityModel {ℓ})
-                      (EO : EvolOperator {ℓH = ℓ} ToyUCode stepToyU)
+                      (EO : EvolOperator {ℓH = ℓ} CoreUCode stepCoreU)
                       (PP : PhysicalPostulates EO)
                       (EC : EncodingsCompat CM EO)
                       : Set (lsuc (lsuc ℓ)) where

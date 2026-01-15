@@ -173,17 +173,23 @@ module _ {ℓ : Level}
         ; Code   = Code
         ; encode = encode
         ; decode = decode
-        ; decode∘encode = decode∘encode
         ; Guard = Guard
         ; Body  = Body
         ; γ*    = γ*
-        ; γ*-guard = γ*-guard
         ; reify = reify
-        ; reify-decode = reify-decode
         ; Body∂ = Body∂
-        ; body-decode = body-decode
         }
     ; GTruth       = WF.GTruth G S Ext P Fnd
-    ; guard-decode = λ _ → refl
-    ; decode-γ*    = refl
+    ; laws = record
+        { shapeLaws = record
+            { decode∘encode = decode∘encode
+            ; γ*-guard      = γ*-guard
+            ; reify-decode  = reify-decode
+            ; body-decode   = body-decode
+            }
+        ; mono-Body∂    = λ {c} {d} _ → WF.refl⊑N G S Ext P Fnd emptyN
+        ; mono-Flow     = λ {c} {d} le → le
+        ; guard-decode  = λ _ → refl
+        ; decode-γ*     = refl
+        }
     }

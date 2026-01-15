@@ -19,7 +19,7 @@ import LogOS.Kernel.LogicKernel.Endo as LKEndo
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 import LogOS.Packs.Agents.Learning.Core as LearningCore
-open import LogOS.Theorems.Boundary.LogicKernel.Mu as LKMu
+import LogOS.Packs.Agents.EndoFixedPoint as EndoFP
 
 -- Learning fixed points via boundary Kleene mu.
 
@@ -37,32 +37,33 @@ module For
   open LearningCore.For Sock using (Policy; Update; apply; LearningStep)
 
   open LKEndo
-  module Kμ = LKMu.Kleene Sig Q LK ωCPO
-  open Kμ using (_⊑_; iter; μF; μF-unfold-left; μF-induction; ScottContinuous;
-                 μF-unfold-right; iter-mono-chain-infl; μF-unfold-right-infl)
+  module FP = EndoFP.LogicKernel.For LK ωCPO
+  open FP using (_⊑_; iterEndo; muEndo; muEndo-unfold-left; muEndo-induction;
+                 ScottContinuous; muEndo-unfold-right; iterEndo-mono-chain-infl;
+                 muEndo-unfold-right-infl)
 
   iterPolicy : Update → ℕ → Policy
-  iterPolicy U = iter (Endo.fn U)
+  iterPolicy U = iterEndo U
 
   μPolicy : Update → Policy
-  μPolicy U = μF (Endo.fn U)
+  μPolicy U = muEndo U
 
   μPolicy-unfold-left
     : (U : Update)
     → _⊑_ (μPolicy U) (apply U (μPolicy U))
-  μPolicy-unfold-left U = μF-unfold-left (Endo.fn U) (Endo.mono U)
+  μPolicy-unfold-left U = muEndo-unfold-left U
 
   μPolicy-induction
     : (U : Update) (c : Policy)
     → _⊑_ (apply U c) c
     → _⊑_ (μPolicy U) c
-  μPolicy-induction U c pre = μF-induction (Endo.fn U) (Endo.mono U) c pre
+  μPolicy-induction U c pre = muEndo-induction U c pre
 
   iterPolicy-mono-chain
     : (U : Update)
     → (inflU : ∀ c → _⊑_ c (apply U c))
     → ∀ n → _⊑_ (iterPolicy U n) (iterPolicy U (suc n))
-  iterPolicy-mono-chain U inflU = iter-mono-chain-infl (Endo.fn U) inflU
+  iterPolicy-mono-chain U inflU = iterEndo-mono-chain-infl U inflU
 
   μPolicy-unfold-right
     : (U : Update)
@@ -70,7 +71,7 @@ module For
     → (mono-chain : ∀ n → _⊑_ (iterPolicy U n) (iterPolicy U (suc n)))
     → _⊑_ (apply U (μPolicy U)) (μPolicy U)
   μPolicy-unfold-right U SC chain =
-    μF-unfold-right (Endo.fn U) SC chain
+    muEndo-unfold-right U SC chain
 
   μPolicy-unfold-right-infl
     : (U : Update)
@@ -78,7 +79,7 @@ module For
     → (inflU : ∀ c → _⊑_ c (apply U c))
     → _⊑_ (apply U (μPolicy U)) (μPolicy U)
   μPolicy-unfold-right-infl U SC inflU =
-    μF-unfold-right-infl (Endo.fn U) SC inflU
+    muEndo-unfold-right-infl U SC inflU
 
   stepUpdate : LearningStep → Update
   stepUpdate = ClosureStep.endo
@@ -100,3 +101,11 @@ module For
     → _⊑_ (apply (stepUpdate s) (μPolicy-step s)) (μPolicy-step s)
   μPolicy-step-unfold-right s SC =
     μPolicy-unfold-right-infl (stepUpdate s) SC (stepInfl s)
+
+  μPolicy-step-fixed
+    : (s : LearningStep)
+    → ScottContinuous (Endo.fn (stepUpdate s))
+    → _⊑_ (μPolicy-step s) (apply (stepUpdate s) (μPolicy-step s))
+      × _⊑_ (apply (stepUpdate s) (μPolicy-step s)) (μPolicy-step s)
+  μPolicy-step-fixed s SC =
+    (μPolicy-step-unfold-left s , μPolicy-step-unfold-right s SC)

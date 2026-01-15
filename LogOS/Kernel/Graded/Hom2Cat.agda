@@ -22,6 +22,7 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Algebra.ConAlg using (ConAlgHom≡)
+open import LogOS.Minimal.Thin2Cat using (Thin2Cat; Thin2CatLaws)
 
 open import LogOS.Kernel.Graded
 open import LogOS.Kernel.LogicKernel
@@ -155,6 +156,66 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       (toLKHom₁ g)
       {f = toLKHom₁ f} {f' = toLKHom₁ f'}
       ff'
+
+  -- Naming alignment with Thin2Cat: left/right refers to the varying 1-cell.
+  whisker-left
+    : ∀ {K₁ K₂ K₃ : GradedKernel Sig Q}
+      {g g' : GradedKernelHom₁ K₂ K₃}
+      (f : GradedKernelHom₁ K₁ K₂)
+    → g ⇒ g' → (g ∘₁ f) ⇒ (g' ∘₁ f)
+  whisker-left {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {g = g} {g' = g'} f gg' =
+    whiskerR {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {g = g} {g' = g'} f gg'
+
+  whisker-right
+    : ∀ {K₁ K₂ K₃ : GradedKernel Sig Q}
+      (g : GradedKernelHom₁ K₂ K₃)
+      {f f' : GradedKernelHom₁ K₁ K₂}
+    → f ⇒ f' → (g ∘₁ f) ⇒ (g ∘₁ f')
+  whisker-right {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} g {f = f} {f' = f'} ff' =
+    whiskerL {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} g {f = f} {f' = f'} ff'
+
+  GradedKernelHomPoset
+    : GradedKernel Sig Q → GradedKernel Sig Q → ConPoset (lsuc (lsuc ℓ))
+  GradedKernelHomPoset K₁ K₂ =
+    record
+      { Con = GradedKernelHom₁ K₁ K₂
+      ; _⊑_ = λ f g → Lift (lsuc (lsuc ℓ)) (f ⇒ g)
+      ; refl = λ {f} → lift (refl⇒ f)
+      ; trans = λ {f} {g} {h} fg gh →
+          lift (trans⇒ {f = f} {g = g} {h = h} (Lift.lower fg) (Lift.lower gh))
+      }
+
+  GradedKernelThin2Cat : Thin2Cat (lsuc (lsuc ℓ)) (lsuc (lsuc ℓ))
+  GradedKernelThin2Cat =
+    record
+      { Obj = GradedKernel Sig Q
+      ; Hom = GradedKernelHomPoset
+      ; id  = λ {A} → idGradedKernelHom₁ A
+      ; _∘_ = _∘₁_
+      ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} le →
+          lift (whisker-left {K₁ = A} {K₂ = B} {K₃ = C} {g = f} {g' = f'} g (Lift.lower le))
+      ; comp-mono-r = λ {A} {B} {C} {f} {g} {g'} le →
+          lift (whisker-right {K₁ = A} {K₂ = B} {K₃ = C} f {f = g} {f' = g'} (Lift.lower le))
+      }
+
+  GradedKernelThin2CatLaws : Thin2CatLaws GradedKernelThin2Cat
+  GradedKernelThin2CatLaws =
+    record
+      { id-left = λ {A} {B} f →
+          ( lift (LK2.id-left⇒ {K₁ = asLK A} {K₂ = asLK B} (toLKHom₁ f))
+          , lift (LK2.id-left⇐ {K₁ = asLK A} {K₂ = asLK B} (toLKHom₁ f))
+          )
+      ; id-right = λ {A} {B} f →
+          ( lift (LK2.id-right⇒ {K₁ = asLK A} {K₂ = asLK B} (toLKHom₁ f))
+          , lift (LK2.id-right⇐ {K₁ = asLK A} {K₂ = asLK B} (toLKHom₁ f))
+          )
+      ; assoc = λ {A} {B} {C} {D} f g h →
+          ( lift (LK2.assoc⇒ {K₁ = asLK A} {K₂ = asLK B} {K₃ = asLK C} {K₄ = asLK D}
+                    (toLKHom₁ h) (toLKHom₁ g) (toLKHom₁ f))
+          , lift (LK2.assoc⇐ {K₁ = asLK A} {K₂ = asLK B} {K₃ = asLK C} {K₄ = asLK D}
+                    (toLKHom₁ h) (toLKHom₁ g) (toLKHom₁ f))
+          )
+      }
 
   infixl 7 _⊙_
   _⊙_

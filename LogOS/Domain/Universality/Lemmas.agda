@@ -23,8 +23,8 @@ h : KernelHom FK UKR
 h = InitialKernel.foldK (build Sig Q HWorld) UKR
 
 -- Definitional reduction lemmas for mapped codes under the canonical fold
-eq-dT : KernelHom.mapCode h FreeC.I∂ ≡ U.ToyT (U.mkT 0 0)
+eq-dT : KernelHom.mapCode h FreeC.I∂ ≡ U.CoreT (U.mkT 0 0)
 eq-dT = refl
 
-eq-dF : KernelHom.mapCode h (FreeC.bnd FreeC.Ib) ≡ U.ToyC (U.mkC 0)
+eq-dF : KernelHom.mapCode h (FreeC.bnd FreeC.Ib) ≡ U.CoreC (U.mkC 0)
 eq-dF = refl

@@ -66,17 +66,17 @@ reindexKernelShape {Sig₁ = Sig₁} {Sig₂ = Sig₂} {Q = Q} σ S₂ =
 
     ; HTruth = record
         { Sat_H = λ w c →
-            HT₂.HLayer.Sat_H (Core.KernelShape.HTruth S₂) (SigHom.mapCosp σ w) c
+            HLayer.Sat_H (Core.KernelShape.HTruth S₂) (SigHom.mapCosp σ w) c
         ; mono-Con = λ {w} {c} {c'} c≤c' sat →
-            HT₂.HLayer.mono-Con (Core.KernelShape.HTruth S₂) c≤c' sat
+            HLayer.mono-Con (Core.KernelShape.HTruth S₂) c≤c' sat
         ; mono-ctx = λ {w} {w'} {c} w≤w' sat →
-            HT₂.HLayer.mono-ctx (Core.KernelShape.HTruth S₂) w≤w' sat
+            HLayer.mono-ctx (Core.KernelShape.HTruth S₂) w≤w' sat
         }
 
     ; HInv = record
-        { Inv_H     = HT₂.Invariance.Inv_H (Core.KernelShape.HInv S₂)
-        ; infl      = HT₂.Invariance.infl (Core.KernelShape.HInv S₂)
-        ; idemp-lax = HT₂.Invariance.idemp-lax (Core.KernelShape.HInv S₂)
+        { Inv_H     = Invariance.Inv_H (Core.KernelShape.HInv S₂)
+        ; infl      = Invariance.infl (Core.KernelShape.HInv S₂)
+        ; idemp-lax = Invariance.idemp-lax (Core.KernelShape.HInv S₂)
         }
 
     ; Sat_H_bnd = λ w c → Core.KernelShape.Sat_H_bnd S₂ (SigHom.map∂Cosp σ w) c
@@ -96,7 +96,7 @@ reindexKernelShape {Sig₁ = Sig₁} {Sig₂ = Sig₂} {Q = Q} σ S₂ =
     ; Fml    = Core.KernelShape.Fml S₂
     ; Strict = record
         { Sat_S = λ w φ →
-            ST₂.StrictLayer.Sat_S (Core.KernelShape.Strict S₂) (SigHom.mapCosp σ w) φ
+            StrictLayer.Sat_S (Core.KernelShape.Strict S₂) (SigHom.mapCosp σ w) φ
         }
     ; TransH = Core.KernelShape.TransH S₂
     ; coh-LH = λ w φ → Core.KernelShape.coh-LH S₂ (SigHom.mapCosp σ w) φ
@@ -104,19 +104,156 @@ reindexKernelShape {Sig₁ = Sig₁} {Sig₂ = Sig₂} {Q = Q} σ S₂ =
     ; Code          = Core.KernelShape.Code S₂
     ; encode        = Core.KernelShape.encode S₂
     ; decode        = Core.KernelShape.decode S₂
-    ; decode∘encode = Core.KernelShape.decode∘encode S₂
     ; Guard         = Core.KernelShape.Guard S₂
     ; Body          = Core.KernelShape.Body S₂
     ; γ*            = Core.KernelShape.γ* S₂
-    ; γ*-guard      = Core.KernelShape.γ*-guard S₂
     ; reify         = Core.KernelShape.reify S₂
-    ; reify-decode  = Core.KernelShape.reify-decode S₂
     ; Body∂         = Core.KernelShape.Body∂ S₂
-    ; body-decode   = Core.KernelShape.body-decode S₂
     }
   where
     WH₁ : Worlds.WorldH Sig₁ Q
     WH₁ = reindexWorldH σ (Core.KernelShape.HWorld S₂)
 
     module HT₂ = Truth.HomotypicalTruth Sig₂ Q (Core.KernelShape.HWorld S₂)
+    open HT₂
     module ST₂ = Truth.StrictTruth Sig₂
+    open ST₂
+
+-- Reindex a kernel shape along a signature map, while translating formulas.
+--
+-- This adds an explicit sentence-translation layer (Σ-morphism on syntax) on top
+-- of the world reindexing: formulas are mapped into the target kernel’s syntax
+-- and then interpreted there. Constraints and code stay on-the-nose.
+
+reindexKernelShapeWithFml
+  : ∀ {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (σ : SigHom Sig₁ Sig₂)
+    (S₂ : Core.KernelShape Sig₂ Q)
+    {Fml₁ : Set ℓ}
+  → (Fml₁ → Core.KernelShape.Fml S₂)
+  → Core.KernelShape Sig₁ Q
+reindexKernelShapeWithFml {Sig₁ = Sig₁} {Sig₂ = Sig₂} {Q = Q} σ S₂ {Fml₁} mapFml =
+  let
+    S = reindexKernelShape σ S₂
+    module ST₂ = Truth.StrictTruth Sig₂
+  in
+  record
+    { HWorld = Core.KernelShape.HWorld S
+    ; BB     = Core.KernelShape.BB S
+    ; MBulk  = Core.KernelShape.MBulk S
+    ; MBnd   = Core.KernelShape.MBnd S
+    ; Holo   = Core.KernelShape.Holo S
+
+    ; HTruth = Core.KernelShape.HTruth S
+    ; HInv   = Core.KernelShape.HInv S
+
+    ; Sat_H_bnd = Core.KernelShape.Sat_H_bnd S
+    ; sat-coh   = Core.KernelShape.sat-coh S
+
+    ; Fml    = Fml₁
+    ; Strict = record
+        { Sat_S = λ w φ →
+            ST₂.StrictLayer.Sat_S (Core.KernelShape.Strict S₂) (SigHom.mapCosp σ w) (mapFml φ)
+        }
+    ; TransH = λ φ → Core.KernelShape.TransH S₂ (mapFml φ)
+    ; coh-LH = λ w φ → Core.KernelShape.coh-LH S₂ (SigHom.mapCosp σ w) (mapFml φ)
+
+    ; Code          = Core.KernelShape.Code S
+    ; encode        = Core.KernelShape.encode S
+    ; decode        = Core.KernelShape.decode S
+    ; Guard         = Core.KernelShape.Guard S
+    ; Body          = Core.KernelShape.Body S
+    ; γ*            = Core.KernelShape.γ* S
+    ; reify         = Core.KernelShape.reify S
+    ; Body∂         = Core.KernelShape.Body∂ S
+    }
+
+reindexKernelShapeLaws
+  : ∀ {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (σ : SigHom Sig₁ Sig₂)
+    (S₂ : Core.KernelShape Sig₂ Q)
+  → Core.KernelShapeLaws S₂
+  → Core.KernelShapeLaws (reindexKernelShape σ S₂)
+reindexKernelShapeLaws σ S₂ laws₂ =
+  let open Core.KernelShapeLaws laws₂ renaming
+        ( decode∘encode to decode∘encode₂
+        ; γ*-guard to γ*-guard₂
+        ; reify-decode to reify-decode₂
+        ; body-decode to body-decode₂
+        )
+  in record
+    { decode∘encode = decode∘encode₂
+    ; γ*-guard      = γ*-guard₂
+    ; reify-decode  = reify-decode₂
+    ; body-decode   = body-decode₂
+    }
+
+reindexKernelShapeLawsWithFml
+  : ∀ {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (σ : SigHom Sig₁ Sig₂)
+    (S₂ : Core.KernelShape Sig₂ Q)
+    {Fml₁ : Set ℓ}
+  → (mapFml : Fml₁ → Core.KernelShape.Fml S₂)
+  → Core.KernelShapeLaws S₂
+  → Core.KernelShapeLaws (reindexKernelShapeWithFml σ S₂ mapFml)
+reindexKernelShapeLawsWithFml σ S₂ _ laws₂ =
+  let open Core.KernelShapeLaws laws₂ renaming
+        ( decode∘encode to decode∘encode₂
+        ; γ*-guard to γ*-guard₂
+        ; reify-decode to reify-decode₂
+        ; body-decode to body-decode₂
+        )
+  in record
+    { decode∘encode = decode∘encode₂
+    ; γ*-guard      = γ*-guard₂
+    ; reify-decode  = reify-decode₂
+    ; body-decode   = body-decode₂
+    }
+
+reindexKernelLaws
+  : ∀ {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (σ : SigHom Sig₁ Sig₂)
+    (S₂ : Core.KernelShape Sig₂ Q)
+    (G  : Truth.GuardedCore.GuardedClosure (BulkBoundary.bnd (Core.KernelShape.BB S₂)))
+  → Core.KernelLaws S₂ G
+  → Core.KernelLaws (reindexKernelShape σ S₂) G
+reindexKernelLaws σ S₂ G laws₂ =
+  let open Core.KernelLaws laws₂ renaming
+        ( shapeLaws to shapeLaws₂
+        ; mono-Body∂ to mono-Body∂₂
+        ; mono-Flow to mono-Flow₂
+        ; guard-decode to guard-decode₂
+        ; decode-γ* to decode-γ*₂
+        )
+  in record
+    { shapeLaws    = reindexKernelShapeLaws σ S₂ shapeLaws₂
+    ; mono-Body∂    = mono-Body∂₂
+    ; mono-Flow     = mono-Flow₂
+    ; guard-decode  = guard-decode₂
+    ; decode-γ*     = decode-γ*₂
+    }
+
+reindexKernelLawsWithFml
+  : ∀ {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (σ : SigHom Sig₁ Sig₂)
+    (S₂ : Core.KernelShape Sig₂ Q)
+    (G  : Truth.GuardedCore.GuardedClosure (BulkBoundary.bnd (Core.KernelShape.BB S₂)))
+    {Fml₁ : Set ℓ}
+  → (mapFml : Fml₁ → Core.KernelShape.Fml S₂)
+  → Core.KernelLaws S₂ G
+  → Core.KernelLaws (reindexKernelShapeWithFml σ S₂ mapFml) G
+reindexKernelLawsWithFml σ S₂ G mapFml laws₂ =
+  let open Core.KernelLaws laws₂ renaming
+        ( shapeLaws to shapeLaws₂
+        ; mono-Body∂ to mono-Body∂₂
+        ; mono-Flow to mono-Flow₂
+        ; guard-decode to guard-decode₂
+        ; decode-γ* to decode-γ*₂
+        )
+  in record
+    { shapeLaws    = reindexKernelShapeLawsWithFml σ S₂ mapFml shapeLaws₂
+    ; mono-Body∂    = mono-Body∂₂
+    ; mono-Flow     = mono-Flow₂
+    ; guard-decode  = guard-decode₂
+    ; decode-γ*     = decode-γ*₂
+    }

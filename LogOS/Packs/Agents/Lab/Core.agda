@@ -21,12 +21,9 @@ open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 import LogOS.Packs.Agents.Learning.Core as LearningCore
 import LogOS.Packs.Agents.Learning.FixedPoint as LearningMu
 import LogOS.Packs.Agents.Learning.SoftPolicy as Soft
-import LogOS.Packs.Agents.Learning.RGFlow as RGFlow
-import LogOS.Packs.Agents.Physics.MaxwellAgent as MaxwellAgent
-import LogOS.Packs.Agents.Physics.LearningCost as LearningCost
 import LogOS.Packs.Agents.Networks.Roles as Roles
 
--- A lab surface: socket + learning + physics + network observability.
+-- A lab surface: socket + learning + network observability.
 
 module For
   {ℓ ℓTask : Level}
@@ -39,8 +36,6 @@ module For
   open AgentSocket Sock public
 
   module Learning = LearningCore.For Sock
-  module Physics  = LearningCost.For Sock
-  module Maxwell  = MaxwellAgent.For Sock
 
   module WithMu
     (ωCPO : (let module GT = Truth.GuardedCore in GT.OmegaCPO)
@@ -57,8 +52,3 @@ module For
 
   module Graded (K : GK.GradedKernel Sig Q) where
     module SoftPolicy = Soft.For K
-    module LC = LearningCost.For Sock
-    module SoftPhysics = LC.Graded K
-    module RG (ωCPO : (let module GT = Truth.GuardedCore in GT.OmegaCPO)
-                      (BulkBoundary.bnd (GK.GradedKernel.BB K))) where
-      module Flow = RGFlow.For K ωCPO

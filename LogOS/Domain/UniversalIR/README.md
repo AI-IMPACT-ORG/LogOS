@@ -76,8 +76,13 @@ Algorithm vs implementation
 Guardrails (meta theorems)
 --------------------------
 - Representation invariance for grade-indexed execution: `run≤-map` / `run≤-meaning-comm` in `LogOS/Computation/SchemeCategory.agda`.
-- No total observers/deciders under diagonalization: `LogOS/Theorems/Meta/NoOmniscience.agda`.
-- No total certificate oracle within any fixed (or code-indexed) budget: `LogOS/Theorems/Meta/BudgetedSeparationOutput.agda`.
+- No total observers/deciders under diagonalization:
+  `LogOS/Theorems/Meta/SpectralSeparationOutput.agda` (event-horizon witnesses),
+  `LogOS/Theorems/Meta/Tarski.agda` (`undef-classical`), and
+  `LogOS/Theorems/Meta/Assumptions/Diagonal.agda` (`noOmniscientDeciderC`).
+- No total certificate oracle within any fixed (or code-indexed) budget:
+  `LogOS/Theorems/Meta/BudgetedSeparationOutput.agda` (ℕ budgets) and
+  `LogOS/Theorems/Meta/SpectralSeparationOutput.agda` (`GeneralB.WitnessCostB` for abstract budgets).
 
 Naming note (Quantum)
 ---------------------

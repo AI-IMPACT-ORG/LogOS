@@ -44,6 +44,34 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ; map-body-decode  to map-body-decode
       )
 
+  map∂-id
+    : ∀ {K} (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+    → ConAlgHom≡.map∂ (KernelHom.con-hom (idKernelHom K)) c ≡ c
+  map∂-id _ = refl
+
+  map∂-compose
+    : ∀ {K₁ K₂ K₃}
+      (h₁ : KernelHom K₁ K₂)
+      (h₂ : KernelHom K₂ K₃)
+      (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+    → ConAlgHom≡.map∂ (KernelHom.con-hom (composeKernelHom h₁ h₂)) c
+      ≡ ConAlgHom≡.map∂ (KernelHom.con-hom h₂) (ConAlgHom≡.map∂ (KernelHom.con-hom h₁) c)
+  map∂-compose _ _ _ = refl
+
+  mapCode-id
+    : ∀ {K} (γ : Kernel.Code K)
+    → KernelHom.mapCode (idKernelHom K) γ ≡ γ
+  mapCode-id _ = refl
+
+  mapCode-compose
+    : ∀ {K₁ K₂ K₃}
+      (h₁ : KernelHom K₁ K₂)
+      (h₂ : KernelHom K₂ K₃)
+      (γ : Kernel.Code K₁)
+    → KernelHom.mapCode (composeKernelHom h₁ h₂) γ
+      ≡ KernelHom.mapCode h₂ (KernelHom.mapCode h₁ γ)
+  mapCode-compose _ _ _ = refl
+
 -- Optional strengthening: preservation of Flow and Th* on boundary constraints.
 
 record KernelHomFlow {ℓ : Level}

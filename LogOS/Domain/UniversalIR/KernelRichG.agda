@@ -124,15 +124,17 @@ GUKR = record
       ; Code   = UCode
       ; encode = λ γ → γ
       ; decode = λ γ → γ
-      ; decode∘encode = λ _ → refl
       ; Guard  = stepU
       ; Body   = λ γ → γ
       ; γ*     = UM (mkM 0 0 0 0 0 [])
-      ; γ*-guard = (tt , tt)
       ; reify  = λ γ → γ
-      ; reify-decode = λ _ → refl
       ; Body∂  = λ c → c
-      ; body-decode = λ _ → refl
+      }
+  ; shapeLaws = record
+      { decode∘encode = λ _ → refl
+      ; γ*-guard      = (tt , tt)
+      ; reify-decode  = λ _ → refl
+      ; body-decode   = λ _ → refl
       }
   ; GTruth = GTruth
   ; step-grade = fin (suc zero)

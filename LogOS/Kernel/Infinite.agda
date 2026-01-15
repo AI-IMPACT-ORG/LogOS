@@ -35,7 +35,7 @@ record InfiniteKernel {ℓ : Level}
   open Kernel K public
 
   field
-    po   : BulkBoundaryPO BB
+    po   : BulkBoundaryPO BB -- ANTISYM-OK
 
     ωCPO : GT∞.OmegaCPO (BulkBoundary.bnd BB)
     FF   : GT∞.FiniteFirst (BulkBoundary.bnd BB) GTruth ωCPO
@@ -55,7 +55,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
 
   KernelPO
     : (IK : InfiniteKernel Sig Q)
-    → BulkBoundaryPO (Kernel.BB (InfiniteKernel.K IK))
+    → BulkBoundaryPO (Kernel.BB (InfiniteKernel.K IK)) -- ANTISYM-OK
   KernelPO IK = InfiniteKernel.po IK
 
   OmegaCPO∂

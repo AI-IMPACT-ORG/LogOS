@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Agents.Surface where
 
--- Surface lock for the Agents storyline.
+-- Surface lock for the stable Agents storyline.
 
 open import LogOS.Packs.Agents.All public
 -- Keep this surface namespaced via `All` to avoid collisions with core tier names

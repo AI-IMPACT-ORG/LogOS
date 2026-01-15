@@ -24,6 +24,7 @@ HOST_SURFACE_FILES=(
   "Data/Bool.agda"
   "Data/List.agda"
   "Data/Maybe.agda"
+  "Data/String.agda"
   "Data/Relation/Binary/PropositionalEquality.agda"
 )
 

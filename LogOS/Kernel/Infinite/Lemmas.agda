@@ -136,10 +136,10 @@ module For {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     → _≤₂_ K f (Flow-Endo K)
     → Endo.fn f Th⋆ ≡ Th⋆
   sandwich-fixed-at-Th⋆ f infl f≤tf =
-    let open BulkBoundaryPO po using (po-bnd)
-        open PartialOrder po-bnd using (antisym)
+    let open BulkBoundaryPO po using (po-bnd) -- ANTISYM-OK
+        open PartialOrder po-bnd using (antisym) -- ANTISYM-OK
         p = sandwich-bounds-at-Th⋆ f infl f≤tf
-    in antisym (snd p) (fst p)
+    in antisym (snd p) (fst p) -- ANTISYM-OK
 
   -- Handy corollaries for endomaps (mostly re-exports in a convenient shape).
 

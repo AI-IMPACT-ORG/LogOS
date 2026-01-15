@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.ObserverCore where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (_↔_; intro; to; from)
+open import LogOS.Syntax.Prop using (_↔_; intro; to; from; ¬_)
 open import Data.Product using (Σ; _,_; _×_)
 
 -- Generic “observer semantics” core:
@@ -44,6 +44,21 @@ record Admissible
     stable : ∀ γ → P γ ↔ P (step γ)
 
 open Admissible public
+
+-- Non-vacuity guard for observer semantics: TruthK is neither trivial nor
+-- entirely insensitive to decoding.
+
+record NonVacuousObserver
+  {ℓCode ℓDec ℓT : Level}
+  (Code   : Set ℓCode)
+  (Dec    : Set ℓDec)
+  (decode : Code → Dec)
+  (TruthK : Code → Set ℓT)
+  : Set (ℓCode ⊔ ℓDec ⊔ ℓT) where
+  field
+    trueWitness  : Σ Code (λ γ → TruthK γ)
+    falseWitness : Σ Code (λ γ → ¬ TruthK γ)
+    decodeDistinct : Σ Code (λ γ₁ → Σ Code (λ γ₂ → ¬ (decode γ₁ ≡ decode γ₂)))
 
 -- “Largest admissible predicate” (a la Comm⋆ / Obs⋆): P⋆ γ holds iff there
 -- exists some admissible predicate P that contains γ.
@@ -134,3 +149,17 @@ Pred⋆-largest
   → ∀ γ → P γ → Pred⋆ {ℓP = ℓP} decode step TruthK γ
 Pred⋆-largest decode step TruthK P AP γ p =
   Pred⋆-contains decode step TruthK P AP p
+
+-- Safe reflection aliases (generic, semantically polymorphic in TruthK).
+-- In the reflection literature, "soundness" is the reflection principle
+-- (safe predicates imply truth), and "stability" is the modal safety guard.
+
+SafeAdmissible = Admissible
+
+Safe⋆ = Pred⋆
+
+safe⋆-sound = Pred⋆-sound
+safe⋆-ext = Pred⋆-ext
+safe⋆-stable = Pred⋆-stable
+safe⋆-admissible = Pred⋆-admissible
+safe⋆-largest = Pred⋆-largest

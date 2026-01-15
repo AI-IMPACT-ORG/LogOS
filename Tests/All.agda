@@ -26,12 +26,16 @@ import LogOS.Theorems.Reflection.All as ReflectionTheorems
 import LogOS.Kernel.Graded.All as GradedKernelAll
 import LogOS.Theorems.Boundary.Graded.All as GradedBoundaryTheorems
 import LogOS.Free.All as FreeAll
+import LogOS.Theorems.Meta.Bootstrapping as Bootstrapping
 
 -- Publication-facing packs should stay typecheckable from a single entrypoint.
 import LogOS.Packs.ZFC.All as PacksZFC
 
 -- Proof-theoretic layer (FOL + ZFC façade).
 import LogOS.ObjectLogic.ZFC.All as LogicZFC
+
+-- While small-step meta-theory (progress/preservation/determinism).
+import LogOS.Domain.UniversalIR.While.SmallStep as WhileSmallStep
 
 -- Kernel extension sanity checks
 import Tests.Kernel.Graded

@@ -11,4 +11,4 @@ module LogOS.Ports.All where
 -- boundary presentations + canonical interlingua translations + ported closure laws.
 
 open import LogOS.Ports.Semantic.All public
-
+open import LogOS.Ports.Telemetry.All public

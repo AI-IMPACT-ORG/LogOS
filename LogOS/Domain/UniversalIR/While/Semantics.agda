@@ -69,3 +69,40 @@ data Exec : Stmt → Store → Store → Set where
     Exec body σ σ₁ →
     Exec (whileNZ v body) σ₁ σ₂ →
     Exec (whileNZ v body) σ σ₂
+
+-- Determinism: big-step evaluation yields a unique final store.
+
+exec-deterministic
+  : ∀ {s σ σ₁ σ₂}
+  → Exec s σ σ₁
+  → Exec s σ σ₂
+  → σ₁ ≡ σ₂
+exec-deterministic exec-skip exec-skip = refl
+exec-deterministic exec-inc exec-inc = refl
+exec-deterministic exec-dec exec-dec = refl
+exec-deterministic exec-mulAB exec-mulAB = refl
+exec-deterministic
+  (exec-seq {t = t} {σ₁ = σ₁} {σ₂ = σ₂} e₁ e₂)
+  (exec-seq {σ₁ = σ₁'} {σ₂ = σ₂'} e₁' e₂') =
+  let
+    ih₁ : σ₁ ≡ σ₁'
+    ih₁ = exec-deterministic e₁ e₁'
+    e₂'' : Exec t σ₁ σ₂'
+    e₂'' = subst (λ σ' → Exec t σ' σ₂') (sym ih₁) e₂'
+  in
+  exec-deterministic e₂ e₂''
+exec-deterministic (exec-while-zero eq₀) (exec-while-zero _) = refl
+exec-deterministic (exec-while-zero eq₀) (exec-while-step eq₁ _ _) with trans (sym eq₀) eq₁
+... | ()
+exec-deterministic (exec-while-step eq₁ _ _) (exec-while-zero eq₀) with trans (sym eq₀) eq₁
+... | ()
+exec-deterministic
+  (exec-while-step {v = v} {body = body} {σ₁ = σ₁} {σ₂ = σ₂} e q₁ q₂)
+  (exec-while-step {σ₁ = σ₁'} {σ₂ = σ₂'} e' q₁' q₂') =
+  let
+    ih₁ : σ₁ ≡ σ₁'
+    ih₁ = exec-deterministic q₁ q₁'
+    q₂'' : Exec (whileNZ v body) σ₁ σ₂'
+    q₂'' = subst (λ σ' → Exec (whileNZ v body) σ' σ₂') (sym ih₁) q₂'
+  in
+  exec-deterministic q₂ q₂''

@@ -13,7 +13,7 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Kernel.Core as Core
+open import LogOS.Kernel.Core as Core hiding (FlowCode)
 
 open Truth.GuardedCore public using
   ( GradedClosure
@@ -29,6 +29,10 @@ record GradedKernel {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
   field
     shape : Core.KernelShape Sig Q
   open Core.KernelShape shape public
+
+  field
+    shapeLaws : Core.KernelShapeLaws shape
+  open Core.KernelShapeLaws shapeLaws public
 
   field
     -- G-tier: graded guarded closure on boundary constraints
@@ -48,7 +52,7 @@ record GradedKernel {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
 FlowCode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q) → GradedKernel.Code K → GradedKernel.Code K
-FlowCode K = Core.FlowCodeShape (GradedKernel.shape K)
+FlowCode K = Core.FlowCode (GradedKernel.shape K)
 
 decode-FlowCode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}

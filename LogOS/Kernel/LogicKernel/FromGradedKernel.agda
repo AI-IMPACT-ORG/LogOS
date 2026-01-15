@@ -15,29 +15,16 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
-open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel.Graded
 open import LogOS.Kernel.LogicKernel
-
-private
-  module GC = Truth.GuardedCore
+open import LogOS.Kernel.LogicKernel.GuardedTier as GT
 
 GTier-of-GradedKernel
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
   → GTier Q (BulkBoundary.bnd (GradedKernel.BB K))
-GTier-of-GradedKernel {Q = Q} K =
-  record
-    { Step      = QAdapter.Scale Q
-    ; step      = GradedKernel.step-grade K
-    ; sat       = GradedClosure.sat (GradedKernel.GTruth K)
-    ; Flow      = GradedClosure.Flow (GradedKernel.GTruth K)
-    ; mono      = GradedClosure.mono (GradedKernel.GTruth K)
-    ; infl-sat  = GradedClosure.infl-sat (GradedKernel.GTruth K)
-    ; idemp-sat = GradedClosure.idemp-sat (GradedKernel.GTruth K)
-    ; Th*       = GradedClosure.Th* (GradedKernel.GTruth K)
-    ; Th*-fixed = GradedClosure.Th*-fixed (GradedKernel.GTruth K)
-    }
+GTier-of-GradedKernel K =
+  GT.fromGradedClosure (GradedKernel.GTruth K) (GradedKernel.step-grade K)
 
 asLogicKernel
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -46,8 +33,8 @@ asLogicKernel
 asLogicKernel K =
   record
     { shape       = GradedKernel.shape K
+    ; shapeLaws   = GradedKernel.shapeLaws K
     ; G           = GTier-of-GradedKernel K
     ; guard-decode = GradedKernel.guard-decode K
     ; decode-γ*    = GradedKernel.decode-γ* K
     }
-

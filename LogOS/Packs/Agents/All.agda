@@ -7,7 +7,12 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Agents.All where
 
--- Unified lab surface (socket + learning + physics + networks + frameworks).
--- Re-exported here for backward-compatible pack entrypoints.
+-- Stable lab surface (socket + learning + networks + frameworks).
+-- Experimental extensions live under `LogOS.Packs.Agents.Experimental.All`.
+
+open import LogOS.Packs.Trust using (PackTrust; stable)
+
+packTrust : PackTrust
+packTrust = record { level = stable }
 
 open import LogOS.Packs.Agents.Lab.All public

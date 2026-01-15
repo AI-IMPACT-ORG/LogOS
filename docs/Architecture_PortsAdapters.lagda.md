@@ -55,6 +55,14 @@ points in a network, rather than stateful records with methods.**
 - `LogOS/Kernel.agda`
 - `LogOS/Kernel/Reindex.agda`
 - `LogOS/Kernel/HomOverSig.agda`
+- Optional sentence-translation reindexing:
+  `reindexKernelWithFml` / `reindexLogicKernelWithFml` (syntax view change over the same semantics).
+- Canonical strict-syntax translation along reindexing:
+  `LogOS/Ports/Semantic/InterlinguaStrictReindex.agda` (interlingua = `mapFml`).
+- Canonical heterogeneous adapter across changing satisfactions:
+  `LogOS/Ports/Semantic/Interoperability.agda` (`heteroCanonicalAdapter`, `heteroAdapter-unique`).
+- Strict reindexing adapter (one-liner):
+  `LogOS/Ports/Semantic/Interoperability.agda` (`strictReindexAdapter`).
 
 ## Layer 3: boundary I/O (communicable meaning)
 
@@ -92,6 +100,23 @@ Theorems (names):
 - `translate-preserves-Sat` (preserves and reflects satisfaction (`↔`) by construction)
 - `translate-unique` (uniqueness up to satisfaction‑equivalence `Trans≈`/`≈⇒`)
 - `ported-closure-naturality` (closure/extension commutes with translation, given `Respects≈∂[ B ]` for the closure map)
+- `composeAdapter-respects-ObsEqF` (ObsEqF preserved by adapter composition)
+- `simulator-preserves-ObsEqF` (ObsEqF transported by any adapter)
+- `adapter-confluent` (any two adapters between the same ports are ObsEq‑equivalent)
+
+### Bootstrapping = canonical interlingua
+The bootstrapping map is the **canonical** translation between two ports over the
+same boundary satisfaction:
+
+- `CodePort` (formulas are `Kernel.Code`, interpretation is `decode`)
+- `BoundaryPort∂` (canonical port with `Form = Con_bnd`)
+  Both are defined in `LogOS/Ports/Semantic/CanonicalPorts.agda`.
+
+This is not a separate compiler or transpiler: `bootstrap` is the interlingua
+translation, and `unbootstrap` is the export back to code (`encode`). The
+round‑trip facts are instances of `translate-comp` + `translate-id`. The
+packaged equivalence lives in `LogOS/Theorems/Meta/Bootstrapping.agda`
+(`bootstrap-iso`).
 
 ## Layer 5b: interoperability across changing logics
 

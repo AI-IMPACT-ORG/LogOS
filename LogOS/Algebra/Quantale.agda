@@ -18,7 +18,7 @@ module LogOS.Algebra.Quantale where
 -- `-W all -W error`. Prefer qualifying with `Quantale.*` or opening locally.
 
 open import LogOS.Prelude hiding (refl; trans) renaming (_⊔_ to _⊔ℓ_)
-import Agda.Builtin.Equality as Eq
+import LogOS.Prelude as Prelude
 
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPoset; MonoOn)
@@ -121,10 +121,10 @@ quantaleFromQAdapter {ℓ} Q =
         }
 
     eq→≤ : ∀ {x y : QA.Scale} → x ≡ y → QA._≤s_ x y
-    eq→≤ {x = x} Eq.refl = QA.≤s-refl {a = x}
+    eq→≤ {x = x} Prelude.refl = QA.≤s-refl {a = x}
 
     eq→≈ : ∀ {x y : QA.Scale} → x ≡ y → (QA._≤s_ x y × QA._≤s_ y x)
-    eq→≈ eq = eq→≤ eq , eq→≤ (sym eq)
+    eq→≈ eq = eq→≤ eq , eq→≤ (Prelude.sym eq)
 
 -- --------------------------------------------------------------------------
 -- Quantale morphisms (structure-preserving maps)
@@ -150,4 +150,3 @@ _≈Mor_
   : ∀ {ℓ₁ ℓ₂ : Level} {Q₁ : Quantale {ℓ₁}} {Q₂ : Quantale {ℓ₂}}
   → QuantaleMor Q₁ Q₂ → QuantaleMor Q₁ Q₂ → Set (ℓ₁ ⊔ℓ ℓ₂)
 _≈Mor_ {Q₂ = Q₂} f g = ∀ x → Quantale._≈_ Q₂ (QuantaleMor.map f x) (QuantaleMor.map g x)
-

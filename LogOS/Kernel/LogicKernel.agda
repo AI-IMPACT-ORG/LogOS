@@ -20,7 +20,7 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Kernel.Core as Core
+open import LogOS.Kernel.Core as Core hiding (FlowCode)
 
 -- A minimal, “step-indexed” guarded tier over a boundary constraint poset.
 --
@@ -61,6 +61,10 @@ record LogicKernel {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
   open Core.KernelShape shape public
 
   field
+    shapeLaws : Core.KernelShapeLaws shape
+  open Core.KernelShapeLaws shapeLaws public
+
+  field
     G : GTier Q (BulkBoundary.bnd (Core.KernelShape.BB shape))
 
     guard-decode
@@ -78,7 +82,7 @@ FlowCode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : LogicKernel Sig Q)
   → LogicKernel.Code K → LogicKernel.Code K
-FlowCode K = Core.FlowCodeShape (LogicKernel.shape K)
+FlowCode K = Core.FlowCode (LogicKernel.shape K)
 
 decode-FlowCode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}

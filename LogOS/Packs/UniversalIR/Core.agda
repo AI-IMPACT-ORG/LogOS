@@ -16,8 +16,10 @@ open import LogOS.Domain.UniversalIR.Core public
 open import LogOS.Domain.UniversalIR.Std public
 open import LogOS.Domain.UniversalIR.Blum public
 open import LogOS.Domain.UniversalIR.Task public
+open import LogOS.Domain.UniversalIR.CompilerCorrectness public
 open import LogOS.Domain.UniversalIR.Schemes public
 open import LogOS.Domain.UniversalIR.Universality public
+open import LogOS.Packs.UniversalIR.RefinementInitiality public
 
 -- Recommended runner for grade-indexed execution (“machines as schemes”).
 open import LogOS.Computation.Scheme public using (run≤)
@@ -36,13 +38,15 @@ module Guardrails where
   --
   -- - `run≤-map` / `run≤-meaning-comm`: representation invariance for
   --   grade-indexed execution (categorical sneak peek).
-  -- - `NoOmniscience`: diagonal obstruction to total observers/deciders.
+  -- - `Tarski`/`Diagonal`: diagonal obstruction to total observers/deciders.
   -- - `BudgetedSeparationOutput`: quantitative “no total oracle within budget”.
   open import LogOS.Computation.SchemeCategory public
     using (run≤-map; run≤-meaning-comm; ComputesWithin-map; ComputesTo-map; module ProcessCategory; module Semantics)
   open import LogOS.Computation.Scheme public
     using (FuelHalts; module Bridge)
-  open import LogOS.Theorems.Meta.NoOmniscience public
+  open import LogOS.Theorems.Meta.SpectralSeparationOutput public
+  open import LogOS.Theorems.Meta.Tarski public using (undef-classical)
+  open import LogOS.Theorems.Meta.Assumptions.Diagonal public using (noOmniscientDeciderC)
   open import LogOS.Theorems.Meta.BudgetedSeparationOutput public
 
 module Languages where

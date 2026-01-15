@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Theorems.CategoryTheory.Kernel2CatGraded where
 
--- Graded analogue of `LogOS.Theorems.CategoryTheory.Kernel2Cat`.
+-- Graded analogue of `LogOS.Theorems.CategoryTheory.Kernel2Cat` (interface only).
 
 open import LogOS.Prelude
 

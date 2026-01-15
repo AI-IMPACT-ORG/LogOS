@@ -16,8 +16,8 @@ is now presented as **Opacity**, with GRH kept as an explicit application surfac
 Publication-facing entrypoints
 ------------------------------
 
-- Narrative spine: `docs/Application_Opacity.lagda.md`
-- Curated model surface: `LogOS/Packs/Opacity/Core.agda`
+- Narrative spine: `docs/Applications/Opacity.lagda.md`
+- Curated model surface: `LogOS/Packs/Opacity/Experimental/Core.agda`
 
 Core modules (this directory)
 -----------------------------
@@ -31,7 +31,7 @@ GRH application surface
 -----------------------
 
 - Domain-level wrapper: `LogOS/Domain/Opacity/Applications/GRH.agda`
-- Curated model wrapper: `LogOS/Packs/Opacity/Applications/GRH.agda`
+- Curated model wrapper: `LogOS/Packs/Opacity/Experimental/Applications/GRH.agda`
 
 Build
 -----

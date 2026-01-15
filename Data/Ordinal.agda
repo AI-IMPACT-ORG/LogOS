@@ -11,7 +11,7 @@ open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (⊥; ¬_)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.NatOrder public
-  using (_≤ℕ_; z≤n; s≤s)
+  using (_≤ℕ_; z≤n; s≤s; ¬suc≤self)
   renaming (≤ℕ-refl to ≤ℕ-reflᵢ; trans≤ℕ to ≤ℕ-transᵢ)
 
 maxℕ : ℕ → ℕ → ℕ
@@ -19,7 +19,8 @@ maxℕ zero n = n
 maxℕ (suc m) zero = suc m
 maxℕ (suc m) (suc n) = suc (maxℕ m n)
 
--- Simple bounded ordinals: either a finite level (ℕ) or a designated limit ω.
+-- Simple bounded ordinals: either a finite level (ℕ) or a designated top ω.
+-- Note: ω is a cap, so `succ ω = ω` (bounded successor).
 
 data Ord : Set where
   fin : ℕ → Ord
@@ -50,6 +51,18 @@ isLimit (fin zero) = ⊥
 isLimit (fin (suc _)) = ⊥
 isLimit ω = ⊤
 
+≤ℕ-suc : ∀ n → n ≤ℕ suc n
+≤ℕ-suc zero = z≤n
+≤ℕ-suc (suc n) = s≤s (≤ℕ-suc n)
+
+-- Bounded successor facts.
+
+succ-ω-fixed : succ ω ≡ ω
+succ-ω-fixed = refl
+
+succ-fin-strict : ∀ n → fin n ≺ succ (fin n)
+succ-fin-strict n = ≤ℕ-suc n , ¬suc≤self
+
 ≤ℕ-refl : ∀ n → n ≤ℕ n
 ≤ℕ-refl n = ≤ℕ-reflᵢ
 
@@ -65,7 +78,3 @@ isLimit ω = ⊤
 ≤ℕ-max-right zero n = ≤ℕ-refl n
 ≤ℕ-max-right (suc m) zero = z≤n
 ≤ℕ-max-right (suc m) (suc n) = s≤s (≤ℕ-max-right m n)
-
-≤ℕ-suc : ∀ n → n ≤ℕ suc n
-≤ℕ-suc zero = z≤n
-≤ℕ-suc (suc n) = s≤s (≤ℕ-suc n)

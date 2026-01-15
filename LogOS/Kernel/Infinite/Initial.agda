@@ -80,7 +80,7 @@ module Build∞ {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ) wher
 
   build∞
     : (HW  : Worlds.WorldH Sig Q)
-    → (poF   : BulkBoundaryPO (Kernel.BB (Init.InitialKernel.FreeK (Init.build Sig Q HW))))
+    → (poF   : BulkBoundaryPO (Kernel.BB (Init.InitialKernel.FreeK (Init.build Sig Q HW)))) -- ANTISYM-OK
     → (ωCPOF : GT∞.OmegaCPO
                 (BulkBoundary.bnd (Kernel.BB (Init.InitialKernel.FreeK (Init.build Sig Q HW)))))
     → (FFF   : GT∞.FiniteFirst

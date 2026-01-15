@@ -11,7 +11,7 @@ Publication-facing entrypoint
 -----------------------------
 
 - Narrative spine: `docs/DeepDive/Complexity.lagda.md`
-- Namespaced wrapper (safe surface): `LogOS/Packs/Complexity/Core.agda`
+- Namespaced wrapper (experimental surface): `LogOS/Packs/Complexity/Experimental/Core.agda`
 
 Main modules (this directory)
 -----------------------------
@@ -20,7 +20,7 @@ Main modules (this directory)
 - Minimal proof-system interface: `LogOS/Domain/Complexity/ProofSystem.agda`
 - Proof-search boundary (verification vs bounded search vs unbounded search): `LogOS/Domain/Complexity/ProofSearchBoundary.agda`
 - Proof-search opacity spine (shared with GRH/opacity machinery): `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda`
-  (general budgets via `ProofSearchOpacitySpine.For.Budgeted.GeneralB`;
+  (general budgets via `ProofSearchOpacitySpine.For.Budgeted.General`;
    decode-ext budgets via `ProofSearchOpacitySpine.For.BudgetBy`;
    non-vacuity guard via `ProofSearchOpacitySpine.For.VacuityGuards`)
 - Capstone (grade-native): `LogOS/Domain/Complexity/ProofSearchCapstoneGraded.agda`
@@ -39,19 +39,20 @@ P/NP interfaces and bridges
 These modules do **not** provide a ZFC proof of classical `P ≠ NP`. All separation
 claims are explicitly conditional on the stated assumptions in each pack.
 
-- Recommended stable surface: `LogOS/Packs/Complexity/Core.agda`
-- Safe P/NP-only surface: `LogOS/Packs/Complexity/PvsNP/Public.agda`
+- Recommended experimental surface: `LogOS/Packs/Complexity/Experimental/Core.agda`
+- Safe P/NP-only surface: `LogOS/Packs/Complexity/Experimental/PvsNP/Public.agda`
 - Meta note: `LogOS/Theorems/Meta/SpectralSeparationOutput.agda`
 
 - Conditional P/NP-shaped pack (grade-native interface): `LogOS/Domain/Complexity/PvsNP_Grade_Only.agda`
 - Canonical minimal route (info-theory): `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda`
   (`Assumptions`, `mkPack`)
 - ℕ polynomial predicates can be lifted via `PvsNPFromInfo_Grade_Only.FromNat` (`PolyGrade.FromNat`).
-- Legacy P/NP pack (language-relative, packaging only): `LogOS/Domain/Complexity/Legacy/PvsNP.agda`
+- Legacy P/NP pack (language-relative, packaging only): `LogOS/Domain/Legacy/Complexity/PvsNP.agda`
+  (legacy surface aggregator: `LogOS/Domain/Legacy/All.agda`, see `docs/Legacy.md`)
 - Classical P/NP interface (literature-aligned, ℕ-bound): `LogOS/Domain/Complexity/ClassicalPvsNP.agda`
 - Truth-route family: `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda` (grade-only, canonical).
   ℕ-bounded interfaces live in `TruthRoute_Grade_Only.ForNat` (witness-size refinement in `TruthRoute_Grade_Only.ForNat.WithWitnessSize`).
-- Optional non-degeneracy laws: `LogOS/Domain/Complexity/StandardCMLaws.agda`
+- Optional non-degeneracy laws: `LogOS/Domain/Complexity/Model.agda` (module `StandardCMLaws`)
 
 Information/physics routes
 --------------------------
@@ -59,11 +60,10 @@ Information/physics routes
 - Physics-of-information axiom packs:
   `LogOS/Domain/Complexity/LCUToLandauer.agda`,
   `LogOS/Domain/Complexity/SecondLaw.agda`,
-  `LogOS/Domain/Complexity/MeasurementCapacity.agda`,
-  `LogOS/Domain/Complexity/NonUnitaryCapacity.agda`,
+  `LogOS/Domain/Complexity/MeasurementCapacity.agda` (record `NonUnitaryCapacity`),
   `LogOS/Domain/Complexity/DataProcessingInequality.agda`,
   `LogOS/Domain/Complexity/InfoProcessingBounds.agda`
-  (curated surface: `LogOS/Packs/Complexity/PhysicsOfInformation.agda`)
+  (curated surface: `LogOS/Packs/Complexity/Experimental/PhysicsOfInformation.agda`)
 
 - Polynomial predicate + arithmetic helpers:
   `LogOS/Domain/Complexity/Poly.agda`, `LogOS/Domain/Complexity/PolyGrade.agda`,
@@ -89,7 +89,7 @@ Examples
 --------
 
 - End-to-end info-route skeleton: `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda`
-- Example UniversalIR instantiation shell: `LogOS/Domain/Complexity/Examples/InfoRouteChainIR.agda`
+- Example UniversalIR instantiation shell: `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda` (module `UniversalIR`)
 - Golden-path scaffold (grade-native → bridge → classical): `LogOS/Domain/Complexity/Examples/GoldenPath.agda`
 - Minsky scheme instantiation (machines-as-schemes factoring; Flow g = simulate (budget g)):
-  `LogOS/Domain/Complexity/Examples/GoldenPathMinsky.agda` (includes `ScaleOps`-based budget hardening)
+  `LogOS/Domain/Complexity/Examples/GoldenPath.agda` (module `Minsky`, includes `ScaleOps`-based budget hardening)

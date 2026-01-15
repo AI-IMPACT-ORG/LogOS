@@ -17,7 +17,7 @@ open import LogOS.Kernel
 open import LogOS.Kernel.Endo
 open import Data.Product using (fst)
 open import LogOS.Domain.ZFC.SetTheory.Pack as ZFC
-open import LogOS.Theorems.Meta.Diagonal as Diag
+open import LogOS.Theorems.Meta.Assumptions.Diagonal as Diag
 open import LogOS.Theorems.Meta.GRHBridge as GRHB
 
 open import LogOS.Domain.Opacity.TruthSeparation as TruthSep

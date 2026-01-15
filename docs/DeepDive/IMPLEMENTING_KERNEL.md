@@ -34,5 +34,5 @@ application pack that *instantiates* the Kernel and proves additional structure.
 ## Where to look (current docs)
 
 - Architecture and entrypoints: `docs/Definition.lagda.md`
-- Formal spec (multi-institution view): `docs/View_MultiInstitution.lagda.md`
-- Three-level HoTT view (host-facing): `docs/View_HoTT_3Level.lagda.md`
+- Formal spec (multi-institution view): `docs/Views/MultiInstitution.lagda.md`
+- 3-level HoTT-style view (host-facing): `docs/Views/HoTT_3Level.lagda.md`

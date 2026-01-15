@@ -66,35 +66,171 @@ record KernelShape {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     Code   : Set ℓ
     encode : (ConPoset.Con (BulkBoundary.bnd BB)) → Code
     decode : Code → (ConPoset.Con (BulkBoundary.bnd BB))
-    decode∘encode : ∀ c → decode (encode c) ≡ c
 
     Guard         : Code → Code
     Body          : Code → Code
 
     -- Guarded fixpoint witness at the code level.
     γ*            : Code
-    γ*-guard      : (ConPoset._⊑_ (BulkBoundary.bnd BB)
-                      (decode γ*)
-                      (decode (Guard (Body γ*))))
-                    × (ConPoset._⊑_ (BulkBoundary.bnd BB)
-                        (decode (Guard (Body γ*)))
-                        (decode γ*))
 
     -- Safe self-reflection (observational)
     reify         : Code → Code
-    reify-decode  : ∀ γ → decode (reify γ) ≡ decode γ
 
     -- Boundary view of code body
     Body∂         : (ConPoset.Con (BulkBoundary.bnd BB)) → (ConPoset.Con (BulkBoundary.bnd BB))
-    body-decode   : ∀ γ → decode (Body γ) ≡ Body∂ (decode γ)
 
 open KernelShape public
 
+-- Boundary satisfaction inherits H-tier monotonicity via `sat-coh`.
+
+Sat_H_bnd-mono
+  : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (S : KernelShape Sig Q)
+  → ∀ {w c c'}
+  → ConPoset._⊑_ (BulkBoundary.bnd (KernelShape.BB S)) c c'
+  → KernelShape.Sat_H_bnd S (LogOSSignature.to∂ Sig w) c
+  → KernelShape.Sat_H_bnd S (LogOSSignature.to∂ Sig w) c'
+Sat_H_bnd-mono {Sig = Sig} {Q = Q} S {w} {c} {c'} c≤c' sat =
+  let
+    module HT = Truth.HomotypicalTruth Sig Q (KernelShape.HWorld S)
+    open HT
+    open HLayer (KernelShape.HTruth S)
+    coh  = KernelShape.sat-coh S w c
+    coh' = KernelShape.sat-coh S w c'
+  in
+  Prop.to coh' (mono-Con c≤c' (Prop.from coh sat))
+
+Sat_H_bnd-mono-ctx
+  : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (S : KernelShape Sig Q)
+  → ∀ {w w' c}
+  → Worlds.WorldH._≤ctx_ (KernelShape.HWorld S) w w'
+  → KernelShape.Sat_H_bnd S (LogOSSignature.to∂ Sig w) c
+  → KernelShape.Sat_H_bnd S (LogOSSignature.to∂ Sig w') c
+Sat_H_bnd-mono-ctx {Sig = Sig} {Q = Q} S {w} {w'} {c} w≤w' sat =
+  let
+    module HT = Truth.HomotypicalTruth Sig Q (KernelShape.HWorld S)
+    open HT
+    open HLayer (KernelShape.HTruth S)
+    coh  = KernelShape.sat-coh S w c
+    coh' = KernelShape.sat-coh S w' c
+  in
+  Prop.to coh' (mono-ctx w≤w' (Prop.from coh sat))
+
+record KernelShapeLaws
+  {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (S : KernelShape Sig Q)
+  : Set (lsuc (lsuc ℓ)) where
+  open KernelShape S renaming
+    ( γ* to γ*ₛ
+    ; decode to decodeₛ
+    ; encode to encodeₛ
+    ; Guard to Guardₛ
+    ; Body to Bodyₛ
+    ; reify to reifyₛ
+    ; Body∂ to Body∂ₛ
+    )
+  private
+    BBₛ = KernelShape.BB S
+  open ConPoset (BulkBoundary.bnd BBₛ)
+  field
+    decode∘encode : ∀ c → decodeₛ (encodeₛ c) ≡ c
+    γ*-guard      : (_⊑_ (decodeₛ γ*ₛ) (decodeₛ (Guardₛ (Bodyₛ γ*ₛ))))
+                  × (_⊑_ (decodeₛ (Guardₛ (Bodyₛ γ*ₛ))) (decodeₛ γ*ₛ))
+    reify-decode  : ∀ γ → decodeₛ (reifyₛ γ) ≡ decodeₛ γ
+    body-decode   : ∀ γ → decodeₛ (Bodyₛ γ) ≡ Body∂ₛ (decodeₛ γ)
+
+record KernelLaws
+  {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (S : KernelShape Sig Q)
+  (G : Truth.GuardedCore.GuardedClosure (BulkBoundary.bnd (KernelShape.BB S)))
+  : Set (lsuc (lsuc ℓ)) where
+  open KernelShape S renaming
+    ( γ* to γ*ₛ
+    ; decode to decodeₛ
+    ; encode to encodeₛ
+    ; Guard to Guardₛ
+    ; Body to Bodyₛ
+    ; reify to reifyₛ
+    ; Body∂ to Body∂ₛ
+    )
+  private
+    BBₛ = KernelShape.BB S
+  open ConPoset (BulkBoundary.bnd BBₛ)
+  field
+    shapeLaws    : KernelShapeLaws S
+    mono-Body∂    : ∀ {c d} → _⊑_ c d → _⊑_ (Body∂ₛ c) (Body∂ₛ d)
+    mono-Flow     : ∀ {c d} → _⊑_ c d → _⊑_ (Truth.GuardedCore.GuardedClosure.Flow G c)
+                                        (Truth.GuardedCore.GuardedClosure.Flow G d)
+    guard-decode  : ∀ γ → decodeₛ (Guardₛ γ)
+                  ≡ Truth.GuardedCore.GuardedClosure.Flow G (decodeₛ γ)
+    decode-γ*     : decodeₛ γ*ₛ ≡ Truth.GuardedCore.GuardedClosure.Th* G
+
+  open KernelShapeLaws shapeLaws public
+
+FlowCode
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (S : KernelShape Sig Q)
+  → KernelShape.Code S → KernelShape.Code S
+FlowCode S γ = KernelShape.Guard S (KernelShape.Body S γ)
+
+-- Backwards-compatible alias.
 FlowCodeShape
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (S : KernelShape Sig Q)
   → KernelShape.Code S → KernelShape.Code S
-FlowCodeShape S γ = KernelShape.Guard S (KernelShape.Body S γ)
+FlowCodeShape = FlowCode
+
+-- Refinement on code via decode into boundary constraints.
+
+Code≤
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  → (S : KernelShape Sig Q)
+  → KernelShape.Code S → KernelShape.Code S → Set ℓ
+Code≤ S γ δ =
+  ConPoset._⊑_ (BulkBoundary.bnd (KernelShape.BB S))
+    (KernelShape.decode S γ)
+    (KernelShape.decode S δ)
+
+CodePoset
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  → (S : KernelShape Sig Q)
+  → ConPoset ℓ
+CodePoset S =
+  record
+    { Con = KernelShape.Code S
+    ; _⊑_ = Code≤ S
+    ; refl = ConPoset.refl (BulkBoundary.bnd (KernelShape.BB S))
+    ; trans = ConPoset.trans (BulkBoundary.bnd (KernelShape.BB S))
+    }
+
+Code≈
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  → (S : KernelShape Sig Q)
+  → KernelShape.Code S → KernelShape.Code S → Set ℓ
+Code≈ S = _≈CP_ (CodePoset S)
+
+decode-mono
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  → (S : KernelShape Sig Q)
+  → MonoMap (CodePoset S) (BulkBoundary.bnd (KernelShape.BB S)) (KernelShape.decode S)
+decode-mono S le = le
+
+decode-respects≈
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  → (S : KernelShape Sig Q)
+  → ∀ {γ δ}
+  → Code≈ S γ δ
+  → _≈CP_ (BulkBoundary.bnd (KernelShape.BB S))
+      (KernelShape.decode S γ)
+      (KernelShape.decode S δ)
+decode-respects≈ S {γ} {δ} eq =
+  monoMap-respects≈
+    {CP₁ = CodePoset S}
+    {CP₂ = BulkBoundary.bnd (KernelShape.BB S)}
+    {f = KernelShape.decode S}
+    (decode-mono S)
+    eq
 
 record BodyMonotoneShape
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}

@@ -13,9 +13,22 @@ open import LogOS.Syntax.Prop using (¬_)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
-open import LogOS.Theorems.Meta.Assumptions.Core public using (Provability; ProvabilityOps; ImpRules; HBLClassic)
+open import LogOS.Theorems.Meta.Assumptions.Core public using
+  ( Provability
+  ; ProvabilityOps
+  ; ProvabilityOpsC
+  ; ImpRules
+  ; ImpRulesC
+  ; HBLClassic
+  ; HBLClassicC
+  ; toOpsC
+  ; toImpRulesC
+  ; toHBLClassicC
+  )
 open import LogOS.Theorems.Meta.Assumptions.Diagonal public using
   ( Diagonalization
+  ; DiagonalizationC
+  ; Diagonalization→C
   ; InternalHomWitness
   ; QuoteSubst
   ; DecodeImp⊑
@@ -23,7 +36,83 @@ open import LogOS.Theorems.Meta.Assumptions.Diagonal public using
   ; Diagonalization-from-InternalHom
   ; Diagonalization-from-QuoteSubst
   )
-import LogOS.Theorems.Meta.LobCore as Core
+
+module Core where
+  -- A kernel-independent core: Löb from HBL + diagonalisation.
+  record LoebAxiomC {ℓCode ℓPr : Level}
+                    {Code : Set ℓCode}
+                    (⊢    : Code → Set ℓPr)
+                    (Op   : ProvabilityOpsC Code)
+                    : Set (lsuc (ℓCode ⊔ ℓPr)) where
+    open ProvabilityOpsC Op
+    field
+      loeb
+        : (φ : Code)
+        → ⊢ (Imp (Box φ) φ)
+        → ⊢ φ
+
+  loebAxiom-from-HBL
+    : ∀ {ℓCode ℓPr : Level}
+      {Code : Set ℓCode}
+      (⊢  : Code → Set ℓPr)
+      (Op : ProvabilityOpsC Code)
+      (Ir : ImpRulesC ⊢ Op)
+      (Hb : HBLClassicC ⊢ Op)
+      (Dl : DiagonalizationC ⊢ Op)
+    → LoebAxiomC ⊢ Op
+  loebAxiom-from-HBL {Code = Code} ⊢ Op Ir Hb Dl = record { loeb = loeb }
+    where
+      open ProvabilityOpsC Op
+      open ImpRulesC Ir
+      open HBLClassicC Hb
+      open DiagonalizationC Dl
+
+      loeb
+        : (φ : Code)
+        → ⊢ (Imp (Box φ) φ)
+        → ⊢ φ
+      loeb φ prf =
+        let
+          f : Code → Code
+          f x = Imp (Box x) φ
+
+          ψ : Code
+          ψ = diag f
+
+          diag→ψ : ⊢ (Imp ψ (Imp (Box ψ) φ))
+          diag→ψ = diag→ f
+
+          ψ→diag : ⊢ (Imp (Imp (Box ψ) φ) ψ)
+          ψ→diag = →diag f
+
+          step : ⊢ (Box ψ) → ⊢ φ
+          step pBoxψ =
+            let
+              pBoxBoxψ : ⊢ (Box (Box ψ))
+              pBoxBoxψ = Four ψ pBoxψ
+
+              pBox-diag→ : ⊢ (Box (Imp ψ (Imp (Box ψ) φ)))
+              pBox-diag→ = Necessitation (Imp ψ (Imp (Box ψ) φ)) diag→ψ
+
+              pBox-ImpBoxψφ : ⊢ (Box (Imp (Box ψ) φ))
+              pBox-ImpBoxψφ =
+                Kdist ψ (Imp (Box ψ) φ) pBox-diag→ pBoxψ
+
+              pBoxφ : ⊢ (Box φ)
+              pBoxφ = Kdist (Box ψ) φ pBox-ImpBoxψφ pBoxBoxψ
+            in
+            mp prf pBoxφ
+
+          pImpBoxψφ : ⊢ (Imp (Box ψ) φ)
+          pImpBoxψφ = impI step
+
+          pψ : ⊢ ψ
+          pψ = mp ψ→diag pImpBoxψφ
+
+          pBoxψ : ⊢ (Box ψ)
+          pBoxψ = Necessitation ψ pψ
+        in
+        step pBoxψ
 
 -- Packaging for Löb’s theorem (assumption‑based, schematic):
 -- We intentionally do not fix a concrete syntax or evaluator. Instead, models
@@ -69,7 +158,7 @@ record LoebFromHBL {ℓ}
 
 -- Textbook corollary:
 -- Under HBLClassic + Diagonalization (already packaged), and assuming `ImpRules`,
--- we can construct `LoebAxiom`. The proof itself is factored out in `Meta/LobCore`.
+-- we can construct `LoebAxiom`. The proof itself is factored out in `Core` below.
 
 loebAxiom-from-HBL
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -85,31 +174,17 @@ loebAxiom-from-HBL K Pr Op Ir Hb Dl =
     open Kernel K
     open Provability Pr renaming (Prov to ⊢)
 
-    coreOp : Core.ProvabilityOpsC Code
-    coreOp = record
-      { Imp = ProvabilityOps.Imp Op
-      ; Box = ProvabilityOps.Box Op
-      }
+    coreOp : ProvabilityOpsC Code
+    coreOp = toOpsC Op
 
-    coreIr : Core.ImpRulesC ⊢ coreOp
-    coreIr = record
-      { mp   = ImpRules.mp Ir
-      ; impI = ImpRules.impI Ir
-      }
+    coreIr : ImpRulesC ⊢ coreOp
+    coreIr = toImpRulesC Ir
 
-    coreHb : Core.HBLClassicC ⊢ coreOp
-    coreHb = record
-      { Necessitation = HBLClassic.Necessitation Hb
-      ; Kdist         = HBLClassic.Kdist Hb
-      ; Four          = HBLClassic.Four Hb
-      }
+    coreHb : HBLClassicC ⊢ coreOp
+    coreHb = toHBLClassicC Hb
 
-    coreDl : Core.DiagonalizationC ⊢ coreOp
-    coreDl = record
-      { diag  = Diagonalization.diag Dl
-      ; diag→ = Diagonalization.diag→ Dl
-      ; →diag = Diagonalization.→diag Dl
-      }
+    coreDl : DiagonalizationC ⊢ coreOp
+    coreDl = Diagonalization→C Dl
 
     Lc : Core.LoebAxiomC ⊢ coreOp
     Lc = Core.loebAxiom-from-HBL ⊢ coreOp coreIr coreHb coreDl

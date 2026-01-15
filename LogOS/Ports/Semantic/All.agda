@@ -13,6 +13,12 @@ open import LogOS.Ports.Semantic.Core public
 open import LogOS.Ports.Semantic.SatMor public
 open import LogOS.Ports.Semantic.InterlinguaCore public
 open import LogOS.Ports.Semantic.Interlingua public
+open import LogOS.Ports.Semantic.VacuityGuards public
+import LogOS.Ports.Semantic.Interoperability as Interoperabilityₛ
+import LogOS.Ports.Semantic.CanonicalPorts as CanonicalPortsₛ
+
+module Interoperability = Interoperabilityₛ
+module CanonicalPorts = CanonicalPortsₛ
 
 module Hetero where
   open import LogOS.Ports.Semantic.HeteroInterlinguaCore public
@@ -23,3 +29,12 @@ module IO where
 module Systems where
   open import LogOS.Ports.Semantic.SystemIO public
   open import LogOS.Ports.Semantic.BoundarySystemIO public
+
+module StrictReindex where
+  open import LogOS.Ports.Semantic.InterlinguaStrictReindex public
+
+module StrictKernel where
+  open import LogOS.Ports.Semantic.InterlinguaStrictKernel public
+
+module CodeKernel where
+  open import LogOS.Ports.Semantic.InterlinguaCodeKernel public

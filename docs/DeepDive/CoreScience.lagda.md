@@ -10,13 +10,14 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.DeepDive.CoreScience where
 
--- Core science “headline” surfaces (small and stable).
-import LogOS.Packs.Complexity.PhysicsOfInformation as POI
+-- Core science “headline” surfaces (small, checked, still experimental on the
+-- complexity side).
+import LogOS.Packs.Complexity.Experimental.PhysicsOfInformation as POI
 import LogOS.Packs.UniversalIR.Agreement as UAgree
 
 open POI public
 open UAgree public
 ```
 
-This page is a stable pointer to two small, “headline” results used by the
-public narrative.
+This page is a checked pointer to two small, “headline” results used by the
+public narrative; the complexity/physics piece is still experimental.

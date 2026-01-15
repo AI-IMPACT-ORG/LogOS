@@ -172,8 +172,9 @@ QNatTop = record
     +o-mono {a = fin m} {b = fin n} {c = fin p} {d = fin q} ab cd =
       +-mono ab cd
 
--- Operational view: interpret finite grades as step budgets; ω as “unbounded”.
--- The `steps` projection remains total by choosing a conventional finite readout.
+-- Operational view: interpret finite grades as step budgets.
+-- Note: `budgetOrd` is a finite readout; it collapses ω to 0, while the order
+-- on `Ord` still treats ω as the top grade.
 
 budgetOrd : Ord → ℕ
 budgetOrd (fin n) = n

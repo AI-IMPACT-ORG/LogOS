@@ -42,3 +42,32 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ; map-reify-decode to map-reify-decode
       ; map-body-decode  to map-body-decode
       )
+
+  map∂-id
+    : ∀ {K} (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K)))
+    → ConAlgHom≡.map∂ (LogicKernelHom.con-hom (idLogicKernelHom K)) c ≡ c
+  map∂-id _ = refl
+
+  map∂-compose
+    : ∀ {K₁ K₂ K₃}
+      (h₁ : LogicKernelHom K₁ K₂)
+      (h₂ : LogicKernelHom K₂ K₃)
+      (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
+    → ConAlgHom≡.map∂ (LogicKernelHom.con-hom (composeLogicKernelHom h₁ h₂)) c
+      ≡ ConAlgHom≡.map∂ (LogicKernelHom.con-hom h₂)
+          (ConAlgHom≡.map∂ (LogicKernelHom.con-hom h₁) c)
+  map∂-compose _ _ _ = refl
+
+  mapCode-id
+    : ∀ {K} (γ : LogicKernel.Code K)
+    → LogicKernelHom.mapCode (idLogicKernelHom K) γ ≡ γ
+  mapCode-id _ = refl
+
+  mapCode-compose
+    : ∀ {K₁ K₂ K₃}
+      (h₁ : LogicKernelHom K₁ K₂)
+      (h₂ : LogicKernelHom K₂ K₃)
+      (γ : LogicKernel.Code K₁)
+    → LogicKernelHom.mapCode (composeLogicKernelHom h₁ h₂) γ
+      ≡ LogicKernelHom.mapCode h₂ (LogicKernelHom.mapCode h₁ γ)
+  mapCode-compose _ _ _ = refl

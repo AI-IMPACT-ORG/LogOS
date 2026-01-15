@@ -25,5 +25,5 @@ module Algorithms where
 module MetaLanguage where
   open import LogOS.MetaLanguage.All public
 
-module Toy where
+module Core where
   open import LogOS.Packs.Universality.Core public
