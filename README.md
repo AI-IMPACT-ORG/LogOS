@@ -113,7 +113,6 @@ Recommended import surfaces:
 
 Host surface (portability):
 - Direct imports from `Agda.Primitive` / `Agda.Builtin.*` are intentionally restricted to a small allowlist:
-  - `Data/Level.agda`
   - `Data/Nat.agda`
   - `Data/Bool.agda`
   - `Data/List.agda`
