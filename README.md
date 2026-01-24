@@ -6,11 +6,13 @@ SPDX-License-Identifier: GPL-3.0-only
 
 # LogOS: AI-driven, machine-verified, human-on-the-loop logical reasoning
 
-This Agda library forms an effective development environment for human-AI collaboration to develop formal logical models and heterogeneous formal model networks as a formal logical model of basically anything that can be modelled ("coded") in software. It relies on some pretty fundamental and interesting mathematics, but can already be used today without knowing too much about underlying math for AI-driven, machine-verified, human-on-the-loop logical reasoning. 
+This Agda library forms an effective development environment for human-AI collaboration to develop formal logical models and heterogeneous formal model networks as a formal logical model of basically anything that can be modelled ("coded") in software. It relies on some pretty fundamental and interesting mathematics, but can already be used today through coding agents for AI-driven, machine-verified, human-on-the-loop logical reasoning.
 
 ## Dive right in
 
 Just download the library, ask your favorite code assistant (Codex, Claude Code, OpenCode, Cursor, etc.) to familiarise itself with the content of the library folders as a priming prompt. Watch it churn. Then start exploring, learning and building. Falsification is your friend: try to push hard against logical models to try to make them fall - this is the fastest route to improvement. 
+
+A word of warning: LLMs become generally more coherent, but also sometimes more unstable for concentrated logic due to the presence of contextualised homonimy and polysemy in their training data. As a result, they confuse "literally" and "analogously", more or less like a human could. The logic literature on the other hand is perhaps the most coherent data source on the planet. The guardrails mentioned below have been designed to safely and incrementally increase information coherence and consistency inside the repository.
 
 
 ## High level overview
@@ -22,6 +24,47 @@ We prove this logic system is sufficient to state and prove a generalisation of 
 We demonstrate the power of the approach with curated application packs: ZF(C) set theory via a well-founded membership-graph semantics, computational universality as **executable universal logic** (via scheme presentations and observational equivalence), and heterogeneous networks of bounded, self-improving agent models, among other results. Our results provide a foundational logic connecting different domains of science through their shared internal logic. This strongly supports an effective AI-powered consilience through controllable, formal-methods based engineering that seems profoundly powerful.
 
 What seems to have happened is that the same set of ideas covered in this repository has been formalised several times in several domains. Church & Turing, Curry-Howard, Lawvere, universal logic, Deutsch's work: they all resonate strongly and are formalised to an extent inside the library. What is novel here as an idea is to apply modern software architecture and engineering patterns to foundational logic. The precise synthesis highlighting parallels and especially differences seems to be new.
+
+
+## Guardrails for AI-assisted development
+
+The epistemic status of the repository is somewhat unusual due to extensive use of coding agents. On the one hand, it contains very little human input channeled through people who are certainly not academic experts in *all* of the scientific areas the code touches (#understatement). On the other side, it is verified to a standard that is rare in academia through machine-checked code and a conscious choice to cover a very broad variety of re-derivations and formalisations of known results. In this section we show which guardrails have been deployed to guarantee a measure of epistemic safety.
+
+### Agda
+Agda is a dependently typed programming language with tooling to act as a proof assistant. It is an extension of the  programming language Haskell (named after Haskell Curry), and can actually use that as a backend. Agda comes with some options for levels of type checking. We use the following compiler flags: 
+
+- —W all —W error : all warnings turned on, all warnings are halting error for some measure of code quality.
+ - —safe : turns of “pragmas” for placeholders inside Agda. This prevents AI from some forms of vacuous programs. This flag is set at the file level. - —no-libraries : we aim for a barebones logic system
+
+### Continuous Integration
+We use a continuous integration approach where after each major code change the whole codebase is checked by agda, and some manual checks for code issues we surfaced in real life are performed. This is also visible in the GitHub repository: every upload triggers a CI run that verifies that the code compiles in Agda.
+
+### Software Quality
+Architecture and code quality are continuous concerns. We take the view that we rather solve explicit coding issues based on domain concerns than impose a rigid architecture.  In this repository code quality concerns correlate with particular concerns in mathematics of information science. To make this work we refactor often, including breaking refactors. Code architecture reviews are used to identify larger issues. A core pattern we use are ports and adapters from hexagonal architecture (See Cockburns blo). The original motivation for this was isolating logic inside code components, which is exactly what we use this for here. We use it especially to separate “kernels” from “applications” for foundational logic.
+
+A key insight to operationalise this is to let the agent focus on inconsistencies, instead of asking it to make things consistent. The latter invites hallucinations. The first almost always finds something. A clear tell you are getting somewhere is when the coding agent, after several rounds of improvements starts to focus only on the documentation. An interesting prompt is to ask to identify “bad code smells” or “bad architecture smells”. This works as it points the chatbot to the “refactoring to patterns” framework. Asking for focussed code improvements also works, as long as the agent gets some idea of where to push towards. The user is still responsible for the vision and supervision. 
+
+### Multipassing
+An underrated technique to get a coding agent to perform larger scale operations to the end is to simply ask for the same thing several times. This resembles multi-passing for code optimisation for compiler. A variant of this involves resetting the coding agents memory, basically simulating getting a fresh “reviewer” to get a look. A more involved variant of multi-passing requires humans asking questions any developer would be asked by product owners, e.g. questions of performance, security and reliance. Regular architecture reviews using SOTA deep research is also part of a wider safety net.
+
+### Documentation
+We document in terms of documentation-as-code. There is a special file format for mixtures of text and code called literate Agda, by the file extension .lagda. We use this to institute some integration checking, as well as semantic scaffolding for the coding agents to have a “big picture” to orient along. We spend a fair portion each cycle at removing inconsistencies from the documentation. 
+
+### Literature
+We view existing literature as part of the wider safety net for especially scientific models. Especially important “textbook” results are useful as they are reflected deeply into the training corpus of chatbots. This is noticeable as chatbots tend to revert to the original, older literature somewhat over newer results. To surface newer results one typically has to dig deeper. We use literature results partly as a class of “integration tests” that fail when a breaking change hits.  
+
+There are many links to the literature. Some concepts for this repository are especially the Curry-Howard-Lambek correspondence, the idea of "universal logic", Futumura's projections, Lawvere's fixed point theorem, the holographic renormalisation and renormalisation theory, especially the Connes-Kreimer variant. We have used these partly as goals, partly as analogs. See however the Limitations below.
+
+### The Operator
+The operator of a coding agent has in this framework the role as the ultimate arbiter of architecture and truth. In practice this is mostly steering, with exceptions when a hard decision has to be made. These hard decisions get less the clearer the framework becomes inside the repository. Also, the coding agent can help clarify decision parameters and, to an extend, impact on the codebase. 
+
+### Limitations to guardrailing
+
+No guardrailing on a software system of this level of complexity is perfect. The current speed of safe development bottleneck seems to be the ability of an operator to learn about this system and push through the resulting refactors. 
+
+The biggest risk remaining is that of semantic divergence: the code not doing what the documentation says that its doing. By compartimenatilising concerns through architecture this is mitigated and blast radii reduced, but it is certainly not eliminated. This can only be fixed by external semantic peer-review. 
+
+The list of links to concepts in the literature should be seen as a list of suggestions for further validation. 
 
 
 ## Repository overview
@@ -117,6 +160,7 @@ Recommended import surfaces:
 
 Host surface (portability):
 - Direct imports from `Agda.Primitive` / `Agda.Builtin.*` are intentionally restricted to a small allowlist:
+  - `Data/Level.agda`
   - `Data/Nat.agda`
   - `Data/Bool.agda`
   - `Data/List.agda`
@@ -141,8 +185,6 @@ Host surface (portability):
 
 <details>
 <summary>Agda library setup (optional)</summary>
-
-This library ships `LogOS.agda-lib`.
 
 This library ships `LogOS.agda-lib`.
 
