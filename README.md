@@ -4,9 +4,9 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-# LogOS: AI-driven, machine-verified, human-on-the-loop logical reasoning
+# LogOS: a platform for AI-driven, machine-verified, human-on-the-loop logical reasoning
 
-This Agda library forms an effective development environment for human-AI collaboration to develop formal logical models and heterogeneous formal model networks as a formal logical model of basically anything that can be modelled ("coded") in software. It relies on some pretty fundamental and interesting mathematics, but can already be used today through coding agents for AI-driven, machine-verified, human-on-the-loop logical reasoning.
+The Agda library in this repository forms an effective development environment for human-AI collaboration to develop formal logical models and heterogeneous formal model networks as a formal logical model of basically anything that can be modelled ("coded") in software. It relies on some pretty fundamental and interesting mathematics, but can already be used today through coding agents for AI-driven, machine-verified, human-on-the-loop logical reasoning.
 
 ## Dive right in
 
