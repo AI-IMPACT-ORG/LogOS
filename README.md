@@ -27,15 +27,15 @@ The key meta-insight in this library is that epistemic limitations are much more
 
 Science provides formal tooling to distill information in formal models. As AI is among the most powerful technologies for information processing invented, it has the potential to revolutionise science, for instance by leveraging the cross-domain insights encoded in its training data. We show it is possible to operationalise core science model building by using COTS AI coding agents in a carefully designed environment grounded in Agda, a programming language for mathematical proofs. 
 
-The main advance is an architecture for reflective logic systems, grounded in simple mathematical primitives (thin categories, lax operators and quantale-valued parameters), with a 3-tiered truth system. Novel is a truth notion as “stability under resource-constrained communication” in an observer semantics. The environment allows current gen AI agents to build, evaluate and refactor axiomatic dependencies of theories and theorems under human guidance. 
+The main advance is an architecture for reflective logic systems, grounded in simple mathematical primitives (thin categories, lax operators and quantale-valued parameters), with a [3-tiered truth system](docs/Kernel/ClaimRegister.lagda.md). Novel is a truth notion as "stability under resource-constrained communication" in an [observer semantics](docs/Views/ObserverSemantics.lagda.md). The environment allows current gen AI agents to build, evaluate and refactor axiomatic dependencies of theories and theorems under human guidance. 
 
-To showcase proof of value, we generalise hexagonal architecture patterns to foundational logic to separate a “OS kernel” from common axioms that form the basis of “application packs” with more specialised axiom sets. We showcase a constructive model of ZFC set theory as a legacy application, as well as a universal model of constrained computing that is remarkably closely aligned to the Church-Turing-Deutsch principle. Interestingly, these applications involve only slightly differing axiom packs. An agents pack provides an indication of immediate relevance to real-world design problems. 
+To showcase proof of value, we generalise hexagonal architecture patterns to foundational logic to separate a "OS kernel" from common axioms that form the basis of "application packs" with more specialised axiom sets. We showcase a constructive model of [ZFC set theory](docs/Applications/ZFC.lagda.md) as a legacy application, as well as a universal model of constrained computing that is remarkably closely aligned to the [Church-Turing-Deutsch principle](docs/Applications/Universality.lagda.md). Interestingly, these applications involve only slightly differing axiom packs. An agents pack provides an indication of immediate relevance to real-world design problems. 
 
-We briefly investigate similar “reverse mathematics” applications to open problems, highlighting non-standard axiom sets that form conditional proofs. For complexity separation this formalises an argument by Aaronson up to semantic checks. Our results connect to known models across different domains, times and communities, showing a remarkable consilience across science and technology.
+We briefly investigate similar ["reverse mathematics"](docs/Applications/Complexity.lagda.md) applications to open problems, highlighting non-standard axiom sets that form conditional proofs. For complexity separation this formalises an argument by Aaronson up to semantic checks. Our results connect to known models across different domains, times and communities, showing a remarkable consilience across science and technology.
 
 ## Meta-Conjecture
 
-A conjecture supported by the results in this repository is that ithe repository contains the core of a novel effective, axiomatic theory of information. This could have very broad impact in science ranging from fundamental physics to sociology. More immediate is that it explains the myriad of connections to core information technology (IT) and, by extension, to AI. 
+A conjecture supported by the results in this repository is that ithe repository contains the core of a novel effective, [axiomatic theory of information](docs/Applications/InfoTheory.lagda.md). This could have very broad impact in science ranging from fundamental physics to sociology. More immediate is that it explains the myriad of connections to core information technology (IT) and, by extension, to AI. 
 
 
 ## Guardrails for AI-assisted development
@@ -57,7 +57,7 @@ Continous integration is a development praxis where each new feature is immediat
 ### Software Quality
 Architecture and code quality are continuous concerns. We take the view that we rather solve explicit coding issues based on domain concerns than impose a rigid architecture.  In this repository code quality concerns correlate with particular concerns in mathematics of information science. To make this work we refactor often, including breaking refactors. A key goal is to keep the codebase as small as possible. Coding agents tend to prefer new development over reworking older parts - the user has to steer (hard) against this, otherwise spaghetti code is the result. 
 
-Code architecture reviews are used to identify larger issues. A core pattern we use are ports and adapters from hexagonal architecture (See Cockburn's blog). The original motivation for this was isolating logic inside code components, which is the role we use it for here. We use it especially to separate “kernels” from “applications” for foundational logic.
+Code architecture reviews are used to identify larger issues. A core pattern we use are [ports and adapters](docs/DeepDive/Architecture_PortsAdapters.lagda.md) from hexagonal architecture (See Cockburn's blog). The original motivation for this was isolating logic inside code components, which is the role we use it for here. We use it especially to separate "kernels" from "applications" for foundational logic. See `docs/Architecture_Diagram.md` for a one-page visual overview of the architecture.
 
 A key insight to operationalise this is to let the agent focus on inconsistencies, instead of asking it to make things consistent. The latter invites hallucinations. The first almost always finds something actionable. A clear sign of convergence is when the coding agent, after several rounds of improvements starts to focus only on the documentation. An interesting prompt is to ask to identify “bad code smells” or “bad architecture smells”. This works as it points the chatbot to the “refactoring to patterns” framework. Asking for focussed code improvements also works, as long as the agent gets some idea of where to push towards. The operator remains responsible for the vision and supervision. 
 
@@ -70,7 +70,7 @@ We employ documentation-as-code. There is a special file format for mixtures of 
 ### Literature
 We view existing literature as part of the wider safety net for especially scientific models. Especially important “textbook” results are useful as they are reflected deeply into the training corpus of chatbots. This is noticeable as chatbots tend to revert to the original, older literature somewhat over newer results. To surface newer results one typically has to dig deeper. We use literature results partly as a class of “integration tests” that fail when a breaking change hits.  
 
-There are many, many links to the literature. Some concepts relevant for this repository are especially the Curry-Howard-Lambek correspondence, the idea of "universal logic", Futamura's projections, Lawvere's fixed point theorem, holographic renormalisation and renormalisation theory, especially the Connes-Kreimer variant, Analytic S-matrix theory as well as basic notions of quantum mechanics. We have used these partly as goals, partly as analogs and throughout as scaffolding to find the next refinement.
+There are many, many links to the literature. Some concepts relevant for this repository are especially the [Curry-Howard-Lambek correspondence](docs/Views/CurryHowardLambek.lagda.md), the idea of "universal logic", Futamura's projections, Lawvere's fixed point theorem, holographic renormalisation and renormalisation theory, especially the Connes-Kreimer variant, Analytic S-matrix theory as well as basic notions of quantum mechanics. We have used these partly as goals, partly as analogs and throughout as scaffolding to find the next refinement.
 
 ### The Operator
 The operator of a coding agent has in this framework the role as the ultimate arbiter of architecture and truth. In practice this is mostly steering, with exceptions when a hard decision has to be made. These hard decisions get less the clearer the framework becomes inside the repository. Also, the coding agent can help clarify decision parameters and, to an extent, impact on the codebase. 
@@ -89,11 +89,11 @@ The main documentation lives in `/docs`. Uploading `docs/Definition_Spec.lagda.m
 
 ## Usage tips
 
-Interpretation (analogy): you can view the library as an “OS-style” abstraction
+Interpretation (analogy): you can view the library as an ["OS-style" abstraction](docs/Architecture_Diagram.md)
 for composing logic-system components (kernels + ports + adapters). The literal
 content is the Agda API and the curated packs.
 
-Always ensure good coding architecture (clean code, clean architecture for starters) in any new model for optimal results. Refactor almost constantly for presentation, and double and triple check results, ideally resetting chatbot memory to mitigate confirmation bias. Ask for better integration of kernel functions - their use is not always optimal downstream, especially if the result you are after is not in the literature. Best results are obtained usually with SOTA reasoning models, but these come with a hefty cost of time. Note that developments that align with classical literature are noticeably easier as the coding agents roughly know what to build. Directions perpendicular to the knowledge coded into the chatbots require more human supervision.
+Always ensure good coding architecture (clean code, clean architecture for starters) in any new model for optimal results. Refactor almost constantly for presentation, and double and triple check results, ideally resetting chatbot memory to mitigate confirmation bias. Ask for better integration of [kernel functions](docs/Definition.lagda.md) - their use is not always optimal downstream, especially if the result you are after is not in the literature. Best results are obtained usually with SOTA reasoning models, but these come with a hefty cost of time. Note that developments that align with classical literature are noticeably easier as the coding agents roughly know what to build. Directions perpendicular to the knowledge coded into the chatbots require more human supervision.
 
 ## Some features
 
@@ -152,7 +152,7 @@ HTML docs (Agda HTML backend):
 Recommended import surfaces:
 - Minimal API: `LogOS/API/Minimal.agda`
 - LogicKernel API (CHL unified interface): `LogOS/API/LogicKernel.agda`
-- Architecture map (ports/adapters spine): `LogOS/API/Architecture.agda`
+- Architecture map (ports/adapters spine): `LogOS/API/Architecture.agda` (see also [`docs/DeepDive/Architecture_PortsAdapters.lagda.md`](docs/DeepDive/Architecture_PortsAdapters.lagda.md))
 - One-page architecture diagram: `docs/Architecture_Diagram.md`
 - QAdapter instances: `LogOS/QAdapters/All.agda`
 - Core theorem surface: `LogOS/Theorems/Core.agda`
@@ -175,7 +175,7 @@ Recommended import surfaces:
 - Pack surfaces export `packTrust : PackTrust` (see `LogOS/Packs/Trust.agda`) to flag `stable`/`experimental`/`scaffold`/`deprecated`.
 - CI enforces pack-trust metadata via `make pack-trust-check` (included in `make ci-policy` / `make ci`).
 - Experimental surfaces are under evaluation and should be considered less stable than the rest of the repository.
-- This repo does not claim classical proofs of famous conjectures (e.g. GRH/RH, P vs NP). Those strands are modeled as conditional ledgers and proof templates that isolate minimal assumptions (reverse mathematics), and are interesting even without new classical proofs.
+- This repo does not claim classical proofs of famous conjectures (e.g. GRH/RH, P vs NP). Those strands are modeled as conditional ledgers and proof templates that isolate minimal assumptions ([reverse mathematics](docs/Applications/Complexity.lagda.md)), and are interesting even without new classical proofs.
 - This repository is AI-generated; use the Agda checker and the stated trust levels as your primary guardrails.
 
 Host surface (portability):
