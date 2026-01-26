@@ -19,7 +19,7 @@ A word of warning: LLMs become generally more coherent, but also occasionally mo
 
 The guardrails mentioned below have been designed to safely and incrementally increase information coherence and consistency inside the repository. Note that the operator of the repository is included in this list. 
 
-To set expectations: this repository is the result of several months worth of COTS inference compute, mostly spent in dialog and mostly spent on correcting and improving previous results. This is science, do not expect instant magic, even if the results feel like it. 
+To set expectations: this repository is the result of several months worth of COTS inference compute, mostly spent in dialog and mostly spent on correcting and improving previous results. Do not expect instant magic, even if the results feel like it. 
 
 The key meta-insight in this library is that epistemic limitations are much more important than typically appreciated. The rather urgent question of interpretation of this insight is left out of scope here, as that seems to be a question of uncommunicable belief more than one of science. 
 
@@ -33,13 +33,14 @@ To showcase proof of value, we generalise hexagonal architecture patterns to fou
 
 We briefly investigate similar “reverse mathematics” applications to open problems, highlighting non-standard axiom sets that form conditional proofs. For complexity separation this formalises an argument by Aaronson up to semantic checks. Our results connect to known models across different domains, times and communities, showing a remarkable consilience across science and technology.
 
-A plausible conjecture supported by the results in this repository is that it contains an effective, axiomatic theory of information. This could have very broad impact in science, but also in information technology (IT). 
+## Meta-Conjecture
 
+A conjecture supported by the results in this repository is that ithe repository contains the core of a novel effective, axiomatic theory of information. This could have very broad impact in science ranging from fundamental physics to sociology. More immediate is that it explains the myriad of connections to core information technology (IT) and, by extension, to AI. 
 
 
 ## Guardrails for AI-assisted development
 
-The epistemic status of the repository is somewhat unusual due to extensive use of coding agents. On the one hand, verifying all of these results requires a full research university worth of experts - this verification has not taken place yet (#understatement). On the other hand, it is verified to a standard that is very rare in academia or in industry through machine-checked code as well as a very broad variety of re-derivations and formalisations of known results. In this section we briefly show which guardrails have been deployed to guarantee epistemic safety, and indicate some limitations.
+The epistemic status of the repository is somewhat unusual due to extensive use of coding agents. On the one hand, verifying all of these results requires a full research university worth of experts - this verification has not taken place yet (#understatement). On the other hand, it is verified to a standard that is very rare in academia or in industry through machine-checked code as well as through a very broad variety of re-derivations and formalisations of known results. In this section we briefly show which guardrails have been deployed to guarantee epistemic safety, and indicate some limitations.
 
 ### Agda
 Agda is a dependently typed programming language with tooling to act as a proof assistant.
