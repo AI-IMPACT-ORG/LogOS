@@ -17,4 +17,3 @@ Structure:
 - Deep dives and implementation notes: `docs/DeepDive/`
 - Application narratives: `docs/Applications/`
 - Views (semantic readings + CHL): `docs/Views/`
-- Paper sources: `docs/Paper/`
