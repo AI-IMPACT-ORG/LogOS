@@ -4,62 +4,68 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-# LogOS: a model for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 
 This repository contains **LogOS**, a host-minimal Agda library that treats logic systems as interface-bearing components in a network, with explicit ports/adapters for translation and interoperability. 
 
-The way it was constructed, as well as its output can both be argued to be a model for AI-driven, human-on-the-loop, machine-checked formal reasoning, albeit for different meanings of the word model. This dual interpretation is ultimately made possible by the controlled self-referential character of the core logic contained within the repository, which leads to semantic polymorphism throughout the project.
+The way it was constructed, the content of the repository itself as well as the promise contained therein can all be interpreted as "models" for AI-driven, human-on-the-loop, machine-checked formal reasoning. 
+
+This "semantic polymorphism" of co-existing, overlapping interpretations is deeply related to the core mechanism described in this repository, which is partial self-reference. 
 
 
 ## Dive right in
 
-Download the repository. Ask your favorite code assistant (Codex, Claude Code, OpenCode, Cursor, etc.) to familiarise itself with the content of the repository folders as a priming prompt. Watch it churn. Then start exploring, learning and building. 
+Getting started could not be easier as the repository is made to be use with code agents. 
 
-A word of warning: LLMs become generally more coherent, but also occasionally more unstable context involving concentrated logic due to the presence of contextualised homonymy and polysemy in their training data. The coherence originates in the extreme coherence of the logic literature across papers. Aligning prompts with that literature raises bias, but reduces variance. Provocative questions raise variance, but reduce bias, or grounding in the literature. Semantic polymorphism makes this harder to navigate - chatbots cannot distinguish well between "literally" and "figuratively".
+Download the repository. Ask your favorite code assistant (Codex, Claude Code, OpenCode, Cursor, etc.) to familiarise itself with the content of the repository folders as a'priming' prompt. Watch it churn for a while. Then start exploring, learning and building. For instance, ask to explain what is interesting. Or why this is an "unusally" broad model of information and information processing. 
 
-The guardrails mentioned below have been designed to safely and incrementally increase information coherence and consistency inside the repository. Note that the operator of the repository is included in this list. 
+A word of warning: LLMs become generally more coherent, but occasionally also more unstable for context involving concentrated logic due to the presence of contextualised homonymy and polysemy in their training data. The coherence likely originates in the extreme coherence of the logic literature across papers. Aligning prompts with that literature raises bias, but reduces variance. Provocative questions and drives for particular interpretations or results raise variance, but reduce bias having less coverage in the literature. Semantic polymorphism makes all of this harder to navigate - chatbots need to spend tokens to distinguish between "literally" and "figuratively", or, related, syntax and semantics.
 
-To set expectations: this repository is the result of several months worth of COTS inference compute, mostly spent in dialog and mostly spent on correcting and improving previous results. Do not expect instant magic, even if the results feel like it. 
+The guardrails mentioned below have been designed to incrementally increase information coherence and consistency inside the repository. Note that the operator of the agents is included in this list - this repository is more a cybernetic armor than a golem. 
 
-The key meta-insight in this library is that epistemic limitations are much more important than typically appreciated. The rather urgent question of interpretation of this insight is left out of scope here, as that seems to be a question of uncommunicable belief more than one of science. 
+To set expectations: this repository is the result of several months worth of COTS inference compute, mostly spent in dialog and mostly spent on understanding, correcting and improving previous results. Do not expect instant magic, even if the reported results feel like it. 
+
+The key meta-insight in this library is that epistemic limitations and cost ("the boundaries") are much more of an opportunity than typically appreciated in foundational science. The rather urgent question of interpretation of this insight is left out of scope here, as that seems to be a question of (uncommunicable) belief more than one of science. 
 
 ## High level motivation and overview of results
 
-Science provides formal tooling to distill information in formal models. As AI is among the most powerful technologies for information processing invented, it has the potential to revolutionise science, for instance by leveraging the cross-domain insights encoded in its training data. We show it is possible to operationalise core science model building by using COTS AI coding agents in a carefully designed environment grounded in Agda, a programming language for mathematical proofs. 
+Science provides formal tooling to distill information in formal models. As AI is among the most powerful technologies for information processing invented, it has the potential to revolutionise science, for instance by leveraging the cross-domain insights encoded in its training data. We show it is possible to operationalise core formal model building by using COTS AI coding agents in a carefully designed environment grounded in Agda, a programming language for mathematical proofs. This environment and its meta-rules allow carefull extension of logic coherence to large-scale systems.
 
-The main advance is an architecture for reflective logic systems, grounded in simple mathematical primitives (thin categories, lax operators and quantale-valued parameters), with a [3-tiered truth system](docs/Kernel/ClaimRegister.lagda.md). Novel is a truth notion as "stability under resource-constrained communication" in an [observer semantics](docs/Views/ObserverSemantics.lagda.md). The environment allows current gen AI agents to build, evaluate and refactor axiomatic dependencies of theories and theorems under human guidance. 
+The main advance is an architecture for partially-reflective logic systems, grounded in simple mathematical primitives (thin categories, lax operators and quantale-valued parameters), with a [3-tiered truth system](docs/Kernel/ClaimRegister.lagda.md). Novel is a truth notion as "stability under resource-constrained communication" in an [observer semantics](docs/Views/ObserverSemantics.lagda.md). The environment allows current generation AI agents to build, evaluate and refactor axiomatic dependencies of theories and theorems under human guidance. 
 
-To showcase proof of value, we generalise hexagonal architecture patterns to foundational logic to separate a "OS kernel" from common axioms that form the basis of "application packs" with more specialised axiom sets. We showcase a constructive model of [ZFC set theory](docs/Applications/ZFC.lagda.md) as a legacy application, as well as a universal model of constrained computing that is remarkably closely aligned to the [Church-Turing-Deutsch principle](docs/Applications/Universality.lagda.md). Interestingly, these applications involve only slightly differing axiom packs. An agents pack provides an indication of immediate relevance to real-world design problems. 
+To showcase proof of value, we generalise hexagonal architecture patterns to foundational logic to separate an abstraction we term "OS kernel" from common axioms that form the basis of "application packs" with more specialised axiom sets. We showcase a constructive model of [ZFC set theory](docs/Applications/ZFC.lagda.md) as a legacy application, as well as a universal model of constrained computing that is remarkably closely aligned to the [Church-Turing-Deutsch principle](docs/Applications/Universality.lagda.md). Interestingly, these applications involve only slightly differing axiom packs. An agents pack provides an indication of immediate relevance to real-world design problems. 
 
 We briefly investigate similar ["reverse mathematics"](docs/Applications/Complexity.lagda.md) applications to open problems, highlighting non-standard axiom sets that form conditional proofs. For complexity separation this formalises an argument by Aaronson up to semantic checks. Our results connect to known models across different domains, times and communities, showing a remarkable consilience across science and technology.
 
 ## Meta-Conjecture
 
-A conjecture supported by the results in this repository is that ithe repository contains the core of a novel effective, [axiomatic theory of information](docs/Applications/InfoTheory.lagda.md). This could have very broad impact in science ranging from fundamental physics to sociology. More immediate is that it explains the myriad of connections to core information technology (IT) and, by extension, to AI. 
+A conjecture in science supported by the results in this repository is that the repository contains the core of a novel effective, [axiomatic theory of information](docs/Applications/InfoTheory.lagda.md). This could have very broad impact in science ranging from fundamental physics to sociology. Of immediate use is that it explains the myriad of connections to core information technology (IT) and, by extension, to AI. In a sense the conjecture is the information theory is a canonical model of the logic in this repository.
 
 
 ## Guardrails for AI-assisted development
 
-The epistemic status of the repository is somewhat unusual due to extensive use of coding agents. On the one hand, verifying all of these results requires a full research university worth of experts - this verification has not taken place yet (#understatement). On the other hand, it is verified to a standard that is very rare in academia or in industry through machine-checked code as well as through a very broad variety of re-derivations and formalisations of known results. In this section we briefly show which guardrails have been deployed to guarantee epistemic safety, and indicate some limitations.
+The epistemic status of the repository is somewhat unusual due to extensive use of coding agents. On the one hand, verifying all of these results requires a full research university worth of experts - this verification has not taken place yet (#understatement). On the other hand, it is verified to a standard that is very rare in academia (or in industry) through machine-checked code as well as through a very broad variety of re-derivations and formalisations of known results. Not many articles mechanise ZFC Set Theory just to show a core technology is sane. In this section we briefly show which guardrails have been deployed to guarantee epistemic safety, and indicate some limitations.
 
 ### Agda
 Agda is a dependently typed programming language with tooling to act as a proof assistant.
-Agda comes with some options for levels of type checking. This repo uses:
+Agda comes with some options for levels of type checking for its compiler. This repo uses:
 
 - `-W all -W error` — all warnings turned on; warnings are treated as errors.
-- `--safe` — disallow unsafe pragmas/placeholders (still relative to the Agda checker).
-- `--no-libraries -i .` — build without stdlib (host-minimal surface).
+- `--safe` — disallow certain unsafe pragmas/placeholders (still relative to the Agda checker).
+- `--no-libraries -i .` — build a external-minimal surface.
+
+These flags show intent - they are however not a garuantee. 
 
 ### Continuous Integration
 Continous integration is a development praxis where each new feature is immediately checked in a testing harness. Here the coding agents run CI after each bigger refactoring project. Currently, CI runs `make check-all` (policy checks + full typecheck of all `*.agda` and
 `*.lagda.md`) plus a library-file smoke test (`make agda-lib-check`). See`.github/workflows/ci.yml`.
 
 ### Software Quality
-Architecture and code quality are continuous concerns. We take the view that we rather solve explicit coding issues based on domain concerns than impose a rigid architecture.  In this repository code quality concerns correlate with particular concerns in mathematics of information science. To make this work we refactor often, including breaking refactors. A key goal is to keep the codebase as small as possible. Coding agents tend to prefer new development over reworking older parts - the user has to steer (hard) against this, otherwise spaghetti code is the result. 
+Architecture and code quality are continuous concerns. We take the view that we rather solve explicit coding issues based on domain concerns than impose a rigid architecture upfront.  In this repository code quality concerns correlate with particular concerns in mathematics of information science. To make this work we refactor often, including breaking refactors. A key goal is to keep the codebase as small as possible. Coding agents tend to prefer new development over reworking older parts - the user has to steer (hard) against this, otherwise spaghetti code is the result. 
 
-Code architecture reviews are used to identify larger issues. A core pattern we use are [ports and adapters](docs/DeepDive/Architecture_PortsAdapters.lagda.md) from hexagonal architecture (See Cockburn's blog). The original motivation for this was isolating logic inside code components, which is the role we use it for here. We use it especially to separate "kernels" from "applications" for foundational logic. See `docs/Architecture_Diagram.md` for a one-page visual overview of the architecture.
+Code architecture reviews are used to identify larger issues. A core pattern we use are [ports and adapters](docs/DeepDive/Architecture_PortsAdapters.lagda.md) from hexagonal architecture. The original motivation for this was isolating logic inside code components, which is the role we use it for here. We use it especially to separate "kernels" from "applications" for foundational logic. See [`docs/Architecture_Diagram.md`](docs/Architecture_Diagram.md) for a one-page visual overview of the architecture.
 
-A key insight to operationalise this is to let the agent focus on inconsistencies, instead of asking it to make things consistent. The latter invites hallucinations. The first almost always finds something actionable. A clear sign of convergence is when the coding agent, after several rounds of improvements starts to focus only on the documentation. An interesting prompt is to ask to identify “bad code smells” or “bad architecture smells”. This works as it points the chatbot to the “refactoring to patterns” framework. Asking for focussed code improvements also works, as long as the agent gets some idea of where to push towards. The operator remains responsible for the vision and supervision. 
+A key insight to operationalise this is to let the agent focus on inconsistencies, instead of asking it to make things more consistent. The latter invites hallucinations. The first almost always finds something actionable. A clear sign of convergence is when the coding agent, after several rounds of improvements starts to focus only on the documentation. An interesting prompt is to ask to identify “bad code smells” or “bad architecture smells”. This works as it points the chatbot to the “refactoring to patterns” framework. Asking for focussed code improvements is also valuable, as long as the agent gets some idea of where to push towards. The operator remains responsible for vision and supervision. 
 
 ### Multipassing
 An underrated technique to get a coding agent to perform larger scale operations to the end is to simply ask for the same thing several times. This resembles multi-passing for code optimisation in compilers. A variant of this involves resetting the coding agents memory, basically simulating getting a fresh “peer reviewer” to get a look. A more involved variant of multi-passing requires humans asking questions any developer would be asked by product owners, e.g. questions of performance, security and reliance. Regular architecture reviews using SOTA deep research is also part of a wider safety net.
@@ -68,9 +74,9 @@ An underrated technique to get a coding agent to perform larger scale operations
 We employ documentation-as-code. There is a special file format for mixtures of text and code called literate Agda, by the file extension .lagda. We use this to institute some integration checking, as well as semantic scaffolding for the coding agents to have a "big picture" to orient along. A fair portion each cycle is spent removing inconsistencies from the documentation. 
 
 ### Literature
-We view existing literature as part of the wider safety net for especially scientific models. Especially important “textbook” results are useful as they are reflected deeply into the training corpus of chatbots. This is noticeable as chatbots tend to revert to the original, older literature somewhat over newer results. To surface newer results one typically has to dig deeper. We use literature results partly as a class of “integration tests” that fail when a breaking change hits.  
+We view existing literature as part of the wider safety net for especially scientific models. Especially important “textbook” results are useful as they are reflected deeply into the training corpus of chatbots. This is noticeable as chatbots tend to revert to the original, older literature somewhat over newer results. To surface newer results one typically has to push harder and more specifically. We use literature results partly as a class of “integration tests” that fail when a breaking change occurs.  
 
-There are many, many links to the literature. Some concepts relevant for this repository are especially the [Curry-Howard-Lambek correspondence](docs/Views/CurryHowardLambek.lagda.md), the idea of "universal logic", Futamura's projections, Lawvere's fixed point theorem, holographic renormalisation and renormalisation theory, especially the Connes-Kreimer variant, Analytic S-matrix theory as well as basic notions of quantum mechanics. We have used these partly as goals, partly as analogs and throughout as scaffolding to find the next refinement.
+There are many, many links to the literature due to fundamental semantic polymorphy. Some concepts relevant for this repository during its development were especially the [Curry-Howard-Lambek correspondence](docs/Views/CurryHowardLambek.lagda.md), the idea of "universal logic", Futamura's projections, Lawvere's fixed point theorem, holographic renormalisation and renormalisation theory, especially the Connes-Kreimer variant, Analytic S-matrix theory as well as basic notions of quantum mechanics. We have used these partly as goals, partly as analogs and throughout as scaffolding to find the next refinement.
 
 ### The Operator
 The operator of a coding agent has in this framework the role as the ultimate arbiter of architecture and truth. In practice this is mostly steering, with exceptions when a hard decision has to be made. These hard decisions get less the clearer the framework becomes inside the repository. Also, the coding agent can help clarify decision parameters and, to an extent, impact on the codebase. 
@@ -153,7 +159,7 @@ Recommended import surfaces:
 - Minimal API: `LogOS/API/Minimal.agda`
 - LogicKernel API (CHL unified interface): `LogOS/API/LogicKernel.agda`
 - Architecture map (ports/adapters spine): `LogOS/API/Architecture.agda` (see also [`docs/DeepDive/Architecture_PortsAdapters.lagda.md`](docs/DeepDive/Architecture_PortsAdapters.lagda.md))
-- One-page architecture diagram: `docs/Architecture_Diagram.md`
+- One-page architecture diagram: [`docs/Architecture_Diagram.md`](docs/Architecture_Diagram.md)
 - QAdapter instances: `LogOS/QAdapters/All.agda`
 - Core theorem surface: `LogOS/Theorems/Core.agda`
 - Transpiler pass calculus: `LogOS/Theorems/Meta/Transpiler.agda` (operational layer: `LogOS/Theorems/Meta/Transpiler/Operational.agda`)
