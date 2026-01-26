@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -40,8 +40,8 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
   record Endo (K : Obj) : Set (lsuc ℓ) where
     open LogicKernel (asLogicKernel K)
     private
-      Con∂ = ConPoset.Con (BulkBoundary.bnd BB)
-      _≤_  = ConPoset._⊑_ (BulkBoundary.bnd BB)
+      Con∂ = ConPreorder.Con (BulkBoundary.bnd BB)
+      _≤_  = ConPreorder._⊑_ (BulkBoundary.bnd BB)
     field
       fn   : Con∂ → Con∂
       mono : ∀ {x y} → x ≤ y → fn x ≤ fn y
@@ -57,7 +57,7 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
   toLK∘fromLK-fn
     : ∀ {K : Obj}
       (e : LKEndo.Endo (asLogicKernel K))
-      (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
+      (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
     → LKEndo.Endo.fn (toLKEndo (fromLKEndo e)) c ≡ LKEndo.Endo.fn e c
   toLK∘fromLK-fn _ _ = refl
 
@@ -79,12 +79,12 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
     → _≤₂_ K f g → _≤₂_ K g h → _≤₂_ K f h
   trans₂ K fg gh = λ c →
     let open LogicKernel (asLogicKernel K) in
-    ConPoset.trans (BulkBoundary.bnd BB) (fg c) (gh c)
+    ConPreorder.trans (BulkBoundary.bnd BB) (fg c) (gh c)
 
   -- Endomaps form a one-object thin 2-category; whiskering is inherited.
 
-  EndoPoset : (K : Obj) → ConPoset (lsuc ℓ)
-  EndoPoset K =
+  EndoPreorder : (K : Obj) → ConPreorder (lsuc ℓ)
+  EndoPreorder K =
     record
       { Con = Endo K
       ; _⊑_ = λ f g → Lift (lsuc ℓ) (_≤₂_ K f g)
@@ -97,7 +97,7 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
   EndoThin2Cat K =
     record
       { Obj = ⊤
-      ; Hom = λ _ _ → EndoPoset K
+      ; Hom = λ _ _ → EndoPreorder K
       ; id  = λ {A} → idEndo K
       ; _∘_ = _∘E_
       ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} fg →
@@ -136,12 +136,12 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
   FixedAt
     : ∀ {K : Obj}
       (f : Endo K)
-      (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
+      (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
     → Set ℓ
   FixedAt {K = K} f c =
     let open LogicKernel (asLogicKernel K) in
-    ConPoset._⊑_ (BulkBoundary.bnd BB) (Endo.fn f c) c
-      × ConPoset._⊑_ (BulkBoundary.bnd BB) c (Endo.fn f c)
+    ConPreorder._⊑_ (BulkBoundary.bnd BB) (Endo.fn f c) c
+      × ConPreorder._⊑_ (BulkBoundary.bnd BB) c (Endo.fn f c)
 
   fixedAt-transport
     : ∀ (K : Obj) {f g : Endo K}
@@ -154,8 +154,8 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
         gc≤fc = gf c
         fc≤gc = fg c
     in
-    ( ConPoset.trans CP gc≤fc fc≤c
-    , ConPoset.trans CP c≤fc fc≤gc
+    ( ConPreorder.trans CP gc≤fc fc≤c
+    , ConPreorder.trans CP c≤fc fc≤gc
     )
 
   Flow-Endo : (K : Obj) → Endo K
@@ -211,20 +211,20 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
   Flow∘Flow≤Flow : (K : Obj) → _≤₂_ K ((Flow-Endo K) ∘E (Flow-Endo K)) (Flow-Endo K)
   Flow∘Flow≤Flow K = LKEndo.Flow∘Flow≤Flow (asLogicKernel K)
 
-  Th⋆K : (K : Obj) → ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K)))
+  Th⋆K : (K : Obj) → ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K)))
   Th⋆K K = LKEndo.Th⋆K (asLogicKernel K)
 
-  FlowTh⋆K : (K : Obj) → ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K)))
+  FlowTh⋆K : (K : Obj) → ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K)))
   FlowTh⋆K K = LKEndo.FlowTh⋆K (asLogicKernel K)
 
   Th⋆≤FlowTh⋆
     : (K : Obj)
-    → ConPoset._⊑_ (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))) (Th⋆K K) (FlowTh⋆K K)
+    → ConPreorder._⊑_ (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))) (Th⋆K K) (FlowTh⋆K K)
   Th⋆≤FlowTh⋆ K = LKEndo.Th⋆≤FlowTh⋆ (asLogicKernel K)
 
   FlowTh⋆≤Th⋆
     : (K : Obj)
-    → ConPoset._⊑_ (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))) (FlowTh⋆K K) (Th⋆K K)
+    → ConPreorder._⊑_ (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))) (FlowTh⋆K K) (Th⋆K K)
   FlowTh⋆≤Th⋆ K = LKEndo.FlowTh⋆≤Th⋆ (asLogicKernel K)
 
   FlowTh⋆≡Th⋆
@@ -239,7 +239,7 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
     : (K : Obj)
       (f : Endo K)
     → _≤₂_ K (Flow-Endo K) f
-    → ConPoset._⊑_ (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K)))
+    → ConPreorder._⊑_ (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K)))
         (Th⋆K K) (Endo.fn f (Th⋆K K))
   Flow≤f→Th⋆≤fTh⋆ K f tf≤f =
     LKEndo.Flow≤f→Th⋆≤fTh⋆ (asLogicKernel K) (toLKEndo f) tf≤f
@@ -248,7 +248,7 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
     : (K : Obj)
       (f : Endo K)
     → _≤₂_ K f (Flow-Endo K)
-    → ConPoset._⊑_ (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K)))
+    → ConPreorder._⊑_ (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K)))
         (Endo.fn f (Th⋆K K)) (Th⋆K K)
   f≤Flow→fTh⋆≤Th⋆ K f f≤tf =
     LKEndo.f≤Flow→fTh⋆≤Th⋆ (asLogicKernel K) (toLKEndo f) f≤tf

@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,6 +10,22 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.Applications.Complexity where
 
+-- Sync guard: these imports anchor the pack surfaces referenced below.
+-- If they drift, the docs build fails.
+import LogOS.Packs.Complexity.Experimental.Core
+import LogOS.Packs.Complexity.Experimental.PvsNP.Public
+import LogOS.Packs.Complexity.Experimental.Applications.All
+
+-- Identifier sync guards (claim-heavy): these names are referenced in the prose.
+import LogOS.Domain.Complexity.PvsNPLedger as PvsNP
+import LogOS.Domain.Complexity.ProofSearchOpacitySpine as PSOS
+import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TR
+open import LogOS.Theorems.Meta.BudgetedSeparationOutput using (WitnessCost)
+
+module PvsNPFor = PvsNP.For
+module PvsNPFromTruthRoute = PvsNP.FromTruthRoute
+module PSOSFor = PSOS.For
+module TRUniformNatFromRuns = TR.UniformNatFromRuns
 
 ```
 
@@ -17,28 +33,53 @@ Trust level: **experimental**. This pack is under evaluation and should be
 considered less stable than the rest of the repository. It is a conditional,
 model-driven complexity story; do not read it as a ZFC proof claim.
 
+Interpretation (analogy):
+the “physics” wording in this note is a label for explicit resource/cost assumption records.
+No physical semantics is imported by default; only the cited Agda assumptions and theorems apply.
+
 > **What this is / isn't**
 > - **Not** a ZFC proof of classical complexity separation.
 > - **Conditional:** if the stated physical/verification assumptions hold in a model, the separation claim follows.
-> - **Generic route:** the graded-flow interface (`DetPolyTimeBoundedG` / `PolyWitnessedTotalVerificationG`) is P/NP-shaped, not language-relative NP.
+> - **Generic route:** the graded-flow interface (`DetPolyTimeBoundedG` / `PolyTotalWitnessedVerificationG`) is P/NP-shaped and total, not language-relative NP.
+> - **Uniformity:** the canonical surface is `TruthRoute_Grade_Only.Uniform` / `UniformNat`
+>   (explicit encodings + fixed endomaps). `UniformNatFromRuns` is a convenience adapter and
+>   is only uniform when the run functions are fixed programs composed with the explicit
+>   encodings. Non-uniform adapters are explicit.
 > **Reviewer quick-check**
 > - **Where does hardness come from?** It is an explicit axiom (`InfoHardness` or `ProofLowerBound`), not derived.
-> - **Is this classical P≠NP?** No; classical alignment is only via `TruthRoute_Grade_Only.ForNat` + `ClassicalPvsNP`.
+> - **Is this classical P≠NP?** No; classical alignment is via
+>   `TruthRoute_Grade_Only.UniformNatFromRuns` + `PvsNPLedger` (non-uniform variants are explicit).
 > - **What is the minimal meaningful target?** SAT + non-degeneracy laws.
+
+**Terminology note**
+- “P/NP-shaped” here refers to total verification interfaces (`PolyTotalWitnessedVerificationG`),
+  not language-relative NP. Classical NP is only via `PvsNPLedger`.
 
 This note is the single, publication-facing entrypoint for the “complexity from
 physics” story in the production library.
 
 Safe import (curated experimental complexity surfaces only): `LogOS/Packs/Complexity/Experimental/PvsNP/Public.agda`.
 
+## SAT as the canonical target
+
+- Definition + witness system: `LogOS/Domain/Complexity/Targets/SAT.agda`
+- SAT as proof search: `LogOS/Domain/Complexity/Targets/SATProofSearch.agda` (module `Graded`)
+- Conditional separation pipeline (SAT + proof lower bound):
+  `LogOS/Domain/Complexity/Targets/SAT.agda` (module `CostGuardsGraded`)
+- NP-completeness axiom pack (reduction-based): `LogOS/Domain/Complexity/Targets/SAT.agda`
+  (module `ClassicalNPComplete`, provides “SAT ∈ P ⇒ NP ⊆ P” via reduction transport)
+  This is the standard Cook–Levin/Karp argument, stated as an explicit axiom pack.
+  Under the physics-aligned hardness assumptions in this pack, the *ledger yields*
+  a SAT∉P-shaped conclusion for the chosen encoding/budget notion, so the antecedent
+  does not hold in those models.
+- SAT-from-physics assumption ledger:
+  `LogOS/Domain/Complexity/Targets/SAT.agda` (module `CostGuardsGraded.For.SATFromProof`)
+
 The claim is deliberately **conditional**: LogOS does not assert a proof of
 classical separation in ZFC. What it *does* provide is a clean pipeline:
 
 > physically aligned bottleneck axioms + universal computation surface  
 > ⇒ a sufficient condition for a separation claim
-
-The legacy PvsNP language-relative pack is a **wrapper**: its `Assumptions` already
-contain `InNP L` and `¬ InP L`, and `mkPack` only rewraps that data.
 
 Proof-search opacity spine (opacity core, reused here):
 - `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda`
@@ -49,6 +90,8 @@ Proof-search opacity spine (opacity core, reused here):
 
 Many-one reductions (literature-aligned baseline):
 - `LogOS/Domain/Complexity/Reduction.agda` (many-one + poly-bounded reductions, decider transport).
+  Use `Reduction.Classical.inPFromPolyReduction` and
+  `Reduction.Classical.notInPFromPolyReduction` for transport along reductions.
 
 ## Two layers: “proof-search separation” and “classical-looking complexity”
 
@@ -63,13 +106,9 @@ to standard P/NP-style time/correctness predicates.
 
 - Bridge (grade reindexing): `LogOS/Domain/Complexity/PhysToTruthRouteBridge.agda`
 
-Legacy wrapper (packaging-only, not part of the curated surface; see `docs/Legacy.md`):
-
-- `LogOS/Domain/Legacy/Complexity/PvsNP.agda` (repackages `InNP` + `¬ InP`, no derivation)
-
 For a literature-aligned classical interface (ℕ-bound compat; cost = time), use:
 
-- `LogOS/Domain/Complexity/ClassicalPvsNP.agda` (namespaced as `LogOS.Packs.Complexity.Experimental.Core.ClassicalPvsNP`)
+- `LogOS/Domain/Complexity/PvsNPLedger.agda` (namespaced as `LogOS.Packs.Complexity.Experimental.Core.PvsNPLedger`)
 
 For the minimal info-theory route (kernel-native, conditional), use:
 
@@ -83,12 +122,12 @@ following explicit assumptions in a record (ledger):
 1) Diagonalization (metalogical, opacity-style)
    - `TruthDiagonalC Code (ProofSearchOpacitySpine.For.Budgeted.WithinBudgetBy ...)`
    - This is the same metalogical assumption used in opacity; it is explicit.
-2) Proof-search oracle (partial, decode-extensional)
+2) Proof-search oracle (partial, decode-extensional up to `_≈K_`)
    - `ProofSearchOpacitySpine.For.ProofSearchOracle`
    - This does not assume totality.
-3) Budget function is decode-extensional
+3) Budget function is decode-extensional up to `_≈K_`
    - `ProofSearchOpacitySpine.For.BudgetBy` (budget + extensionality)
-   - Keeps budget discipline aligned with the kernel's decode-equality.
+   - Keeps budget discipline aligned with the kernel's decoded observational equality (`_≈K_` / mutual refinement).
 4) Witness cost / physical budget
    - ℕ-cost surface: `BudgetedSeparationOutput.WitnessCost`
    - General budgets: `SpectralSeparationOutput.GeneralB.WitnessCostB`
@@ -100,7 +139,7 @@ following explicit assumptions in a record (ledger):
      `ProofSearchGraded` or `LanguageWitnessW`), and the standard non-degeneracy
      guardrails from `LogOS/Domain/Complexity/Model.agda` (module `StandardCMLaws`).
 7) Classical alignment (literature-aligned)
-   - Use `LogOS/Domain/Complexity/ClassicalPvsNP.agda` with `QNat` and `gradeBound = τ`
+   - Use `LogOS/Domain/Complexity/PvsNPLedger.agda` with `QNat` and `gradeBound = τ`
    - This is the explicit alignment bridge to standard time-bound P/NP definitions (cost := time).
 
 All of these are already present as explicit record fields in the codebase; no
@@ -136,6 +175,8 @@ complexity strands, while keeping assumptions explicit:
 - `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda` (`NonDegenerate`)
 - `LogOS/Domain/Complexity/Examples/GoldenPath.agda` (`Minsky.For.SizeBudget`, `Minsky.For.cost≤budget`)
 - `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (`VacuityGuards`)
+- `LogOS/Domain/Complexity/MeasurementCapacity.agda` (`MeasurementCapacityGuards`, `NonUnitaryCapacityGuards`)
+- `LogOS/Domain/Complexity/SecondLaw.agda` (`SecondLawGuards`)
 
 These keep the ledger honest by ruling out degenerate encodings and vacuous
 resource bounds.
@@ -145,13 +186,23 @@ resource bounds.
 - Info‑hardness route (DetBottleneck + InfoHardness):
   `LogOS/Domain/Complexity/InfoHardnessBridge.agda`,
   `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda`
+- ETH-shaped assumption (uniform, ℕ-bound):
+  `TruthRoute_Grade_Only.UniformNat.ETHAssumption` and
+  `LogOS/Domain/Complexity/Targets/SAT.agda` (module `ClassicalETH`)
+- Proof-complexity lower bounds (verification vs search):
+  `LogOS/Domain/Complexity/PhysProofBridgeWGraded.agda` (`ProofLowerBound`)
+  + `LogOS/Domain/Complexity/Targets/SATProofSearch.agda`
 - Physical axiom packs:
   `LogOS/Domain/Complexity/LCUToLandauer.agda`,
-  `LogOS/Domain/Complexity/MeasurementCapacity.agda` (record `NonUnitaryCapacity`),
+  `LogOS/Domain/Complexity/MeasurementCapacity.agda`
+  (records `MeasurementCapacity`, `NonUnitaryCapacity` with optional non-vacuity guards),
+  `LogOS/Domain/Complexity/SecondLaw.agda` (record `SecondLawAssumptions` with `SecondLawGuards`),
   `LogOS/Domain/Complexity/InfoProcessingBounds.agda`
 - Classical alignment pipeline:
-  `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda` →
-  `LogOS/Domain/Complexity/ClassicalPvsNP.agda`
+  `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda` (module `UniformNatFromRuns`) →
+  `LogOS/Domain/Complexity/PvsNPLedger.agda`
+  (uniform encodings live in `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda`
+  (module `UniformNat`; non-uniform adapter: `NonUniformNat`))
 - UniversalIR substrate and examples:
   `LogOS/Domain/UniversalIR/`,
   `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda`,
@@ -160,6 +211,15 @@ resource bounds.
   `LogOS/Domain/Complexity/Targets/SAT.agda`
   - Kernel route: `LogOS/Domain/Complexity/Targets/SAT.agda` (module `CostGuardsGraded.Kernel`)
 - SAT as proof search (proofs = assignments): `LogOS/Domain/Complexity/Targets/SATProofSearch.agda`
+
+## Barrier-aware framing
+
+This is a conditional separation inside a model, not a ZFC proof of P≠NP.
+Classical barrier results still apply to ZFC proofs:
+
+- Relativization (Baker–Gill–Solovay, 1975)
+- Natural proofs (Razborov–Rudich, 1997)
+- Algebrization (2008)
 
 ## Bibliography pointers (not exhaustive)
 
@@ -170,6 +230,10 @@ resource bounds.
 - R. Landauer (1961), "Irreversibility and Heat Generation in the Computing Process".
 - C. H. Bennett (1982), "The Thermodynamics of Computation - A Review".
 - S. Arora and B. Barak (2009), "Computational Complexity: A Modern Approach".
+- S. Aaronson (2005), "NP-complete Problems and Physical Reality".
+- T. Baker, J. Gill, R. Solovay (1975), "Relativizations of the P = ? N P Question".
+- A. Razborov, S. Rudich (1997), "Natural Proofs".
+- S. Aaronson, A. Wigderson (2008), "Algebrization: A New Barrier in Complexity Theory".
 
 ## Audit build (one command)
 

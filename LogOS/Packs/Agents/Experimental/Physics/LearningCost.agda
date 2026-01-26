@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,19 +11,24 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature; module LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.NatOrder using (_≤ℕ_; trans≤ℕ)
-open import Data.Product using (_×_; _,_)
-open import Data.List using (List; []; _∷_)
+open import LogOS.Boundary.Telemetry using (TelemetryTrace; ProgramTelemetryPort)
+open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; trans≤ℕ)
+open import LogOS.Prelude.Product using (Σ; _×_; _,_)
+open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 import LogOS.Packs.Agents.Experimental.Physics.MaxwellAgent as Maxwell
 import LogOS.Theorems.Meta.LandauerIO as LIO
 import LogOS.Domain.Complexity.MeasurementCapacity as MC
+import LogOS.Domain.Complexity.SecondLaw as SL
+import LogOS.Domain.Complexity.LCUToLandauer as LCU
 import LogOS.Domain.Complexity.DataProcessingInequality as DPI
 import LogOS.Domain.Complexity.InfoProcessingBounds as IPB
 open import LogOS.Kernel.Graded using (GradedKernel)
 import LogOS.Packs.Agents.Learning.SoftPolicy as Soft
+import LogOS.Packs.Agents.Learning.Core as LearningCore
 
 -- Capstone theorems: learning is possible, but any learning event costs energy.
 -- Universal evaluation inherits the same lower bound.
@@ -41,13 +46,20 @@ module For
 
   module MX = Maxwell.For Sock
   open MX using (LandauerForSocket)
+  module L = LearningCore.For Sock
+  open L using (LearningStep)
 
   record LearningAssumptions : Set (lsuc (lsuc ℓ)) where
     field
       landauer : LandauerForSocket
       Learns : Cosp → Set ℓ
-      learns→merges
-        : ∀ f → Learns f → LIO.LandauerIOAssumptions.MergesIO landauer f
+      learns-ref : SatRefinement₀ Cosp
+                    (λ _ f → Learns f)
+                    (λ _ f → LIO.LandauerIOAssumptions.MergesIO landauer f)
+
+    learns→merges
+      : ∀ f → Learns f → LIO.LandauerIOAssumptions.MergesIO landauer f
+    learns→merges f pr = sat-→₀ learns-ref f pr
 
   learning-cost-lower-bound
     : (A : LearningAssumptions)
@@ -58,6 +70,34 @@ module For
   learning-cost-lower-bound A f pr =
     LIO.landauer-io boundaryIO (LearningAssumptions.landauer A) f
       (LearningAssumptions.learns→merges A f pr)
+
+  record EntropyAssumptions : Set (lsuc (lsuc ℓ)) where
+    field
+      secondLaw : SL.SecondLawAssumptions Sig Q
+      Learns : Cosp → Set ℓ
+      learns-ref : SatRefinement₀ Cosp
+                    (λ _ f → Learns f)
+                    (λ _ f → LCU.Merges (SL.SecondLawAssumptions.LCUA secondLaw) f)
+
+    learns→merges
+      : ∀ f → Learns f
+        → LCU.Merges (SL.SecondLawAssumptions.LCUA secondLaw) f
+    learns→merges f pr = sat-→₀ learns-ref f pr
+
+  learning-entropy-increase
+    : (A : EntropyAssumptions)
+    → ∀ f → EntropyAssumptions.Learns A f
+    → Σ (LCU.LCUObsAssumptions.Obs (SL.SecondLawAssumptions.LCUA (EntropyAssumptions.secondLaw A)))
+        (λ x →
+          QAdapter._≤s_ Q
+            (QAdapter._·_ Q
+              (SL.SecondLawAssumptions.Entropy (EntropyAssumptions.secondLaw A) x)
+              (LCU.LCUObsAssumptions.L (SL.SecondLawAssumptions.LCUA (EntropyAssumptions.secondLaw A))))
+            (SL.SecondLawAssumptions.Entropy (EntropyAssumptions.secondLaw A)
+              (LCU.LCUObsAssumptions.act (SL.SecondLawAssumptions.LCUA (EntropyAssumptions.secondLaw A)) f x)))
+  learning-entropy-increase A f pr =
+    SL.merge→entropy+ (EntropyAssumptions.secondLaw A) f
+      (EntropyAssumptions.learns→merges A f pr)
 
   record UniversalEval : Set (lsuc ℓ) where
     field
@@ -81,6 +121,40 @@ module For
               ≤ℕ
               MC.MeasurementCapacity.info capacity f
 
+  record CondensationFromTelemetry {ℓT : Level} (T : TelemetryTrace ℓT)
+                                  : Set (lsuc (lsuc (ℓ ⊔ ℓT))) where
+    field
+      capacity : MC.MeasurementCapacity Sig Q
+      telemetry : ProgramTelemetryPort
+        Sig Q _ _ _ boundaryIO T
+      bridge : MC.TelemetryCapacityBridge
+        Sig Q boundaryIO T telemetry capacity
+      traceInfoMono
+        : MC.TraceInfoMono T (MC.TelemetryCapacityBridge.trace→info bridge)
+      contract
+        : ∀ (C : DPI.Channel Cosp) (f : Cosp)
+        → TelemetryTrace._⊑T_ T
+            (ProgramTelemetryPort.observe-∂ telemetry
+              (LogOSSignature.to∂ Sig (DPI.Channel.run C f)))
+            (ProgramTelemetryPort.observe-∂ telemetry
+              (LogOSSignature.to∂ Sig f))
+
+  condensation-from-telemetry
+    : ∀ {ℓT} {T : TelemetryTrace ℓT}
+    → CondensationFromTelemetry T
+    → CondensationAssumptions
+  condensation-from-telemetry {T = T} A =
+    record
+      { capacity = CondensationFromTelemetry.capacity A
+      ; dpi = MC.dpiFromTelemetry
+          boundaryIO T
+          (CondensationFromTelemetry.telemetry A)
+          (CondensationFromTelemetry.capacity A)
+          (CondensationFromTelemetry.bridge A)
+          (CondensationFromTelemetry.traceInfoMono A)
+          (CondensationFromTelemetry.contract A)
+      }
+
   condensation-bound
     : (A : CondensationAssumptions)
     → ∀ (C : DPI.Channel Cosp) (f : Cosp)
@@ -95,25 +169,40 @@ module For
         open MC.MeasurementCapacity capacity
     in trans≤ℕ (dpi C f) (info≤κ·meas f)
 
-  record MaxwellLearningAssumptions : Set (lsuc (lsuc ℓ)) where
+  record MaxwellLearningAssumptions {ℓT : Level} (T : TelemetryTrace ℓT)
+    : Set (lsuc (lsuc (ℓ ⊔ ℓT))) where
     field
       landauer : LandauerForSocket
-      condensation : CondensationAssumptions
+      condensation : CondensationFromTelemetry T
       Learns : Cosp → Set ℓ
-      learns→merges
-        : ∀ f → Learns f → LIO.LandauerIOAssumptions.MergesIO landauer f
+      learns-ref : SatRefinement₀ Cosp
+                    (λ _ f → Learns f)
+                    (λ _ f → LIO.LandauerIOAssumptions.MergesIO landauer f)
+
+    learns→merges
+      : ∀ f → Learns f → LIO.LandauerIOAssumptions.MergesIO landauer f
+    learns→merges f pr = sat-→₀ learns-ref f pr
+
+  maxwell-condensation
+    : ∀ {ℓT} {T : TelemetryTrace ℓT}
+    → MaxwellLearningAssumptions T
+    → CondensationAssumptions
+  maxwell-condensation A =
+    condensation-from-telemetry (MaxwellLearningAssumptions.condensation A)
 
   learning-from-maxwell
-    : MaxwellLearningAssumptions
+    : ∀ {ℓT} {T : TelemetryTrace ℓT}
+    → MaxwellLearningAssumptions T
     → LearningAssumptions
   learning-from-maxwell A = record
     { landauer = MaxwellLearningAssumptions.landauer A
     ; Learns = MaxwellLearningAssumptions.Learns A
-    ; learns→merges = MaxwellLearningAssumptions.learns→merges A
+    ; learns-ref = MaxwellLearningAssumptions.learns-ref A
     }
 
   maxwell-learning-cost
-    : (A : MaxwellLearningAssumptions)
+    : ∀ {ℓT} {T : TelemetryTrace ℓT}
+    → (A : MaxwellLearningAssumptions T)
     → ∀ f → MaxwellLearningAssumptions.Learns A f
     → QAdapter._≤s_ Q
         (LIO.LandauerIOAssumptions.L (MaxwellLearningAssumptions.landauer A))
@@ -122,20 +211,22 @@ module For
     learning-cost-lower-bound (learning-from-maxwell A) f pr
 
   maxwell-learning-condensation
-    : (A : MaxwellLearningAssumptions)
+    : ∀ {ℓT} {T : TelemetryTrace ℓT}
+    → (A : MaxwellLearningAssumptions T)
     → ∀ (C : DPI.Channel Cosp) (f : Cosp)
     → MaxwellLearningAssumptions.Learns A f
-    → MC.MeasurementCapacity.info (CondensationAssumptions.capacity (MaxwellLearningAssumptions.condensation A))
+    → MC.MeasurementCapacity.info (CondensationAssumptions.capacity (maxwell-condensation A))
         (DPI.Channel.run C f)
       ≤ℕ
       MC.mul
-        (MC.MeasurementCapacity.κ (CondensationAssumptions.capacity (MaxwellLearningAssumptions.condensation A)))
-        (MC.MeasurementCapacity.meas (CondensationAssumptions.capacity (MaxwellLearningAssumptions.condensation A)) f)
+        (MC.MeasurementCapacity.κ (CondensationAssumptions.capacity (maxwell-condensation A)))
+        (MC.MeasurementCapacity.meas (CondensationAssumptions.capacity (maxwell-condensation A)) f)
   maxwell-learning-condensation A C f _ =
-    condensation-bound (MaxwellLearningAssumptions.condensation A) C f
+    condensation-bound (maxwell-condensation A) C f
 
   maxwell-universal-learning-cost
-    : (A : MaxwellLearningAssumptions) (U : UniversalEval)
+    : ∀ {ℓT} {T : TelemetryTrace ℓT}
+    → (A : MaxwellLearningAssumptions T) (U : UniversalEval)
     → ∀ f → MaxwellLearningAssumptions.Learns A (UniversalEval.eval U f)
     → QAdapter._≤s_ Q
         (LIO.LandauerIOAssumptions.L (MaxwellLearningAssumptions.landauer A))
@@ -145,21 +236,123 @@ module For
     universal-learning-cost (learning-from-maxwell A) U f pr
 
   maxwell-learning-summary
-    : (A : MaxwellLearningAssumptions)
+    : ∀ {ℓT} {T : TelemetryTrace ℓT}
+    → (A : MaxwellLearningAssumptions T)
     → ∀ (C : DPI.Channel Cosp) (f : Cosp)
     → MaxwellLearningAssumptions.Learns A f
     → QAdapter._≤s_ Q
         (LIO.LandauerIOAssumptions.L (MaxwellLearningAssumptions.landauer A))
         (LIO.LandauerIOAssumptions.cost (MaxwellLearningAssumptions.landauer A) f)
       ×
-      MC.MeasurementCapacity.info (CondensationAssumptions.capacity (MaxwellLearningAssumptions.condensation A))
+      MC.MeasurementCapacity.info (CondensationAssumptions.capacity (maxwell-condensation A))
         (DPI.Channel.run C f)
         ≤ℕ
       MC.mul
-        (MC.MeasurementCapacity.κ (CondensationAssumptions.capacity (MaxwellLearningAssumptions.condensation A)))
-        (MC.MeasurementCapacity.meas (CondensationAssumptions.capacity (MaxwellLearningAssumptions.condensation A)) f)
+        (MC.MeasurementCapacity.κ (CondensationAssumptions.capacity (maxwell-condensation A)))
+        (MC.MeasurementCapacity.meas (CondensationAssumptions.capacity (maxwell-condensation A)) f)
   maxwell-learning-summary A C f pr =
     maxwell-learning-cost A f pr , maxwell-learning-condensation A C f pr
+
+  -- -----------------------------------------------------------------------
+  -- Step-level bridges: learning updates as programs.
+  -- -----------------------------------------------------------------------
+
+  record StepLearningAssumptions : Set (lsuc (lsuc ℓ)) where
+    field
+      learning : LearningAssumptions
+      stepProg : LearningStep → Cosp
+      stepLearns : ∀ s → LearningAssumptions.Learns learning (stepProg s)
+
+  step-learning-cost
+    : (A : StepLearningAssumptions)
+    → ∀ s
+    → QAdapter._≤s_ Q
+        (LIO.LandauerIOAssumptions.L (LearningAssumptions.landauer (StepLearningAssumptions.learning A)))
+        (LIO.LandauerIOAssumptions.cost
+          (LearningAssumptions.landauer (StepLearningAssumptions.learning A))
+          (StepLearningAssumptions.stepProg A s))
+  step-learning-cost A s =
+    learning-cost-lower-bound (StepLearningAssumptions.learning A)
+      (StepLearningAssumptions.stepProg A s)
+      (StepLearningAssumptions.stepLearns A s)
+
+  record StepEntropyAssumptions : Set (lsuc (lsuc ℓ)) where
+    field
+      entropy : EntropyAssumptions
+      stepProg : LearningStep → Cosp
+      stepLearns : ∀ s → EntropyAssumptions.Learns entropy (stepProg s)
+
+  step-learning-entropy
+    : (A : StepEntropyAssumptions)
+    → ∀ s
+    → Σ (LCU.LCUObsAssumptions.Obs
+          (SL.SecondLawAssumptions.LCUA
+            (EntropyAssumptions.secondLaw (StepEntropyAssumptions.entropy A))))
+        (λ x →
+          QAdapter._≤s_ Q
+            (QAdapter._·_ Q
+              (SL.SecondLawAssumptions.Entropy
+                (EntropyAssumptions.secondLaw (StepEntropyAssumptions.entropy A)) x)
+              (LCU.LCUObsAssumptions.L
+                (SL.SecondLawAssumptions.LCUA
+                  (EntropyAssumptions.secondLaw (StepEntropyAssumptions.entropy A)))))
+            (SL.SecondLawAssumptions.Entropy
+              (EntropyAssumptions.secondLaw (StepEntropyAssumptions.entropy A))
+              (LCU.LCUObsAssumptions.act
+                (SL.SecondLawAssumptions.LCUA
+                  (EntropyAssumptions.secondLaw (StepEntropyAssumptions.entropy A)))
+                (StepEntropyAssumptions.stepProg A s) x)))
+  step-learning-entropy A s =
+    learning-entropy-increase (StepEntropyAssumptions.entropy A)
+      (StepEntropyAssumptions.stepProg A s)
+      (StepEntropyAssumptions.stepLearns A s)
+
+  record StepMaxwellLearningAssumptions {ℓT : Level} (T : TelemetryTrace ℓT)
+    : Set (lsuc (lsuc (ℓ ⊔ ℓT))) where
+    field
+      maxwell : MaxwellLearningAssumptions T
+      stepProg : LearningStep → Cosp
+      stepLearns : ∀ s → MaxwellLearningAssumptions.Learns maxwell (stepProg s)
+
+  step-maxwell-learning-cost
+    : ∀ {ℓT} {T : TelemetryTrace ℓT}
+    → (A : StepMaxwellLearningAssumptions T)
+    → ∀ s
+    → QAdapter._≤s_ Q
+        (LIO.LandauerIOAssumptions.L
+          (MaxwellLearningAssumptions.landauer (StepMaxwellLearningAssumptions.maxwell A)))
+        (LIO.LandauerIOAssumptions.cost
+          (MaxwellLearningAssumptions.landauer (StepMaxwellLearningAssumptions.maxwell A))
+          (StepMaxwellLearningAssumptions.stepProg A s))
+  step-maxwell-learning-cost A s =
+    maxwell-learning-cost (StepMaxwellLearningAssumptions.maxwell A)
+      (StepMaxwellLearningAssumptions.stepProg A s)
+      (StepMaxwellLearningAssumptions.stepLearns A s)
+
+  step-maxwell-learning-condensation
+    : ∀ {ℓT} {T : TelemetryTrace ℓT}
+    → (A : StepMaxwellLearningAssumptions T)
+    → ∀ (C : DPI.Channel Cosp) s
+    → MC.MeasurementCapacity.info
+        (CondensationAssumptions.capacity
+          (maxwell-condensation
+            (StepMaxwellLearningAssumptions.maxwell A)))
+        (DPI.Channel.run C (StepMaxwellLearningAssumptions.stepProg A s))
+      ≤ℕ
+      MC.mul
+        (MC.MeasurementCapacity.κ
+          (CondensationAssumptions.capacity
+            (maxwell-condensation
+              (StepMaxwellLearningAssumptions.maxwell A))))
+        (MC.MeasurementCapacity.meas
+          (CondensationAssumptions.capacity
+            (maxwell-condensation
+              (StepMaxwellLearningAssumptions.maxwell A)))
+          (StepMaxwellLearningAssumptions.stepProg A s))
+  step-maxwell-learning-condensation A C s =
+    maxwell-learning-condensation (StepMaxwellLearningAssumptions.maxwell A)
+      C (StepMaxwellLearningAssumptions.stepProg A s)
+      (StepMaxwellLearningAssumptions.stepLearns A s)
 
   blackbox-eval-bound
     : (A : CondensationAssumptions)
@@ -291,17 +484,22 @@ module For
 
   module Graded (K : GradedKernel Sig Q) where
 
-    module L = Soft.For K
-    open L using (SoftUpdate)
+    module SoftL = Soft.For K
+    open SoftL using (SoftUpdate)
 
     record SoftLearningAssumptions : Set (lsuc (lsuc ℓ)) where
       field
         landauer : LandauerForSocket
         stepProgram : ∀ {g} → SoftUpdate g → Cosp
         Learns : Cosp → Set ℓ
-        learns→merges
-          : ∀ f → Learns f → LIO.LandauerIOAssumptions.MergesIO landauer f
+        learns-ref : SatRefinement₀ Cosp
+                      (λ _ f → Learns f)
+                      (λ _ f → LIO.LandauerIOAssumptions.MergesIO landauer f)
         stepLearns : ∀ {g} (s : SoftUpdate g) → Learns (stepProgram s)
+
+      learns→merges
+        : ∀ f → Learns f → LIO.LandauerIOAssumptions.MergesIO landauer f
+      learns→merges f pr = sat-→₀ learns-ref f pr
 
     soft-learning-cost
       : (A : SoftLearningAssumptions)
@@ -315,24 +513,33 @@ module For
         (SoftLearningAssumptions.stepProgram A s)
         (SoftLearningAssumptions.learns→merges A _ (SoftLearningAssumptions.stepLearns A s))
 
-    record SoftLearningCondensationAssumptions : Set (lsuc (lsuc ℓ)) where
+    record SoftLearningCondensationAssumptions {ℓT : Level} (T : TelemetryTrace ℓT)
+      : Set (lsuc (lsuc (ℓ ⊔ ℓT))) where
       field
-        condensation : CondensationAssumptions
+        condensation : CondensationFromTelemetry T
         stepProgram : ∀ {g} → SoftUpdate g → Cosp
 
+    soft-condensation
+      : ∀ {ℓT} {T : TelemetryTrace ℓT}
+      → SoftLearningCondensationAssumptions T
+      → CondensationAssumptions
+    soft-condensation A =
+      condensation-from-telemetry (SoftLearningCondensationAssumptions.condensation A)
+
     soft-learning-condensation
-      : (A : SoftLearningCondensationAssumptions)
+      : ∀ {ℓT} {T : TelemetryTrace ℓT}
+      → (A : SoftLearningCondensationAssumptions T)
       → ∀ {g} (C : DPI.Channel Cosp) (s : SoftUpdate g)
-      → MC.MeasurementCapacity.info (CondensationAssumptions.capacity (SoftLearningCondensationAssumptions.condensation A))
+      → MC.MeasurementCapacity.info (CondensationAssumptions.capacity (soft-condensation A))
           (DPI.Channel.run C (SoftLearningCondensationAssumptions.stepProgram A s))
         ≤ℕ
         MC.mul
-          (MC.MeasurementCapacity.κ (CondensationAssumptions.capacity (SoftLearningCondensationAssumptions.condensation A)))
-          (MC.MeasurementCapacity.meas (CondensationAssumptions.capacity (SoftLearningCondensationAssumptions.condensation A))
+          (MC.MeasurementCapacity.κ (CondensationAssumptions.capacity (soft-condensation A)))
+          (MC.MeasurementCapacity.meas (CondensationAssumptions.capacity (soft-condensation A))
             (SoftLearningCondensationAssumptions.stepProgram A s))
     soft-learning-condensation A C s =
       condensation-bound
-        (SoftLearningCondensationAssumptions.condensation A)
+        (soft-condensation A)
         C
         (SoftLearningCondensationAssumptions.stepProgram A s)
 
@@ -342,9 +549,14 @@ module For
         throughput : IPB.ThroughputAssumptions Sig Q
         stepProgram : ∀ {g} → SoftUpdate g → Cosp
         Learns : Cosp → Set ℓ
-        learns→merges
-          : ∀ f → Learns f → LIO.LandauerIOAssumptions.MergesIO landauer f
+        learns-ref : SatRefinement₀ Cosp
+                      (λ _ f → Learns f)
+                      (λ _ f → LIO.LandauerIOAssumptions.MergesIO landauer f)
         stepLearns : ∀ {g} (s : SoftUpdate g) → Learns (stepProgram s)
+
+      learns→merges
+        : ∀ f → Learns f → LIO.LandauerIOAssumptions.MergesIO landauer f
+      learns→merges f pr = sat-→₀ learns-ref f pr
 
     soft-learning-from-throughput
       : SoftLearningThroughputAssumptions
@@ -353,7 +565,7 @@ module For
       { landauer = SoftLearningThroughputAssumptions.landauer A
       ; stepProgram = SoftLearningThroughputAssumptions.stepProgram A
       ; Learns = SoftLearningThroughputAssumptions.Learns A
-      ; learns→merges = SoftLearningThroughputAssumptions.learns→merges A
+      ; learns-ref = SoftLearningThroughputAssumptions.learns-ref A
       ; stepLearns = SoftLearningThroughputAssumptions.stepLearns A
       }
 

@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,6 +10,9 @@ Information Theory (finite, facts-pack style)
 This domain provides an information-theory layer in the same “facts-pack” style as
 other LogOS application packs: analytic commitments (ℝ, ln/exp, inequalities) are
 explicit fields of a record, and theorems are derived from those fields.
+
+Interpretation (analogy):
+terms like “RG” / “Landauer” in this domain are motivational labels; theorems are exactly those proved from the stated `ShannonFacts` fields.
 
 Shannon (finite)
 - Facts pack: `LogOS/Domain/InfoTheory/Shannon/Facts.agda`

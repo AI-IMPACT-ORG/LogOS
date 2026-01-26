@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ open import LogOS.Syntax.Prop using (_↔_)
 -- using Kuratowski pairs for the graph of a choice function.
 --
 -- This is intentionally distinct from LogOS's *domain-theoretic* ω-supremum
--- selectors (used to build `OmegaCPO` for boundary posets). Those live under
+-- selectors (used to build `OmegaCPO` for boundary preorders). Those live under
 -- `LogOS.Axioms.*` and should not be conflated with ZFC's AC.
 
 PairingAxiom

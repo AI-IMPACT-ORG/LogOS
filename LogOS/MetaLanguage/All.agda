@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,8 +14,6 @@ module LogOS.MetaLanguage.All where
 --
 -- This is core infrastructure (not an “application pack”); it is used by the
 -- Universality story but is not specific to it.
-
-open import LogOS.API.Minimal public
 
 module Scheme where
   open import LogOS.Computation.Scheme public

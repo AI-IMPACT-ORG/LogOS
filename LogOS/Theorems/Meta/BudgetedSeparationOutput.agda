@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,13 +10,14 @@ module LogOS.Theorems.Meta.BudgetedSeparationOutput where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_; ⊥; ⊥-elim; _↔_; to)
 
-open import Data.Nat using (ℕ)
-open import Data.NatOrder using (_≤ℕ_; dec≤ℕ)
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; dec≤ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Minimal.Con
 open import LogOS.Kernel
 import LogOS.Theorems.Meta.SpectralSeparationOutput as SSO
 open import LogOS.Theorems.Meta.Assumptions.Diagonal using
@@ -74,13 +75,17 @@ module For
         }
     }
     where
-      ext≤ : ∀ b γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → infer≤ b γ₁ ≡ infer≤ b γ₂
-      ext≤ b γ₁ γ₂ decEq = cong (filter≤ b) (ext γ₁ γ₂ decEq)
+      ext≤
+        : ∀ b γ₁ γ₂
+          → _≈CP_ (BulkBoundary.bnd BB) (decode γ₁) (decode γ₂)
+          → infer≤ b γ₁ ≡ infer≤ b γ₂
+      ext≤ b γ₁ γ₂ dec≈ = cong (filter≤ b) (ext γ₁ γ₂ dec≈)
 
   -- Derived partial-output surface for a budget function B : Code → ℕ.
   --
-  -- Note: to preserve decode-extensionality, the budget function must itself be
-  -- decode-extensional (e.g. depend only on `decode γ` or its `size`).
+  -- Note: to preserve extensionality, the budget function must itself be
+  -- decode-extensional up to decoded observational equality (e.g. depend only on
+  -- `decode γ` or its `size`).
 
   filterBudget : ℕ → (Witness ⊎ ⊤ {ℓ = lzero}) → (Witness ⊎ ⊤ {ℓ = lzero})
   filterBudget b (inj₂ ttℓ) = inj₂ ttℓ
@@ -92,7 +97,10 @@ module For
   infer≤ᵇ B γ = filterBudget (B γ) (infer γ)
 
   BudgetedBy : (B : Code → ℕ)
-              → (Bext : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → B γ₁ ≡ B γ₂)
+              → (Bext
+                  : ∀ γ₁ γ₂
+                    → _≈CP_ (BulkBoundary.bnd BB) (decode γ₁) (decode γ₂)
+                    → B γ₁ ≡ B γ₂)
               → SSO.SpectralSeparationOutput K
   BudgetedBy B Bext = record
     { core = record
@@ -102,9 +110,12 @@ module For
         }
     }
     where
-      extᵇ : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → infer≤ᵇ B γ₁ ≡ infer≤ᵇ B γ₂
-      extᵇ γ₁ γ₂ decEq =
-        cong₂ filterBudget (Bext γ₁ γ₂ decEq) (ext γ₁ γ₂ decEq)
+      extᵇ
+        : ∀ γ₁ γ₂
+          → _≈CP_ (BulkBoundary.bnd BB) (decode γ₁) (decode γ₂)
+          → infer≤ᵇ B γ₁ ≡ infer≤ᵇ B γ₂
+      extᵇ γ₁ γ₂ dec≈ =
+        cong₂ filterBudget (Bext γ₁ γ₂ dec≈) (ext γ₁ γ₂ dec≈)
 
   -- A stronger “total observability” claim: the original oracle always returns a
   -- witness within budget `b`.
@@ -146,7 +157,10 @@ module For
   -- forced to stay within `B γ` on each input γ.
   no-total-within
     : ∀ (B : Code → ℕ)
-      → (Bext : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → B γ₁ ≡ B γ₂)
+      → (Bext
+          : ∀ γ₁ γ₂
+            → _≈CP_ (BulkBoundary.bnd BB) (decode γ₁) (decode γ₂)
+            → B γ₁ ≡ B γ₂)
       → TruthDiagonal K (SSO.SpectralSeparationOutput.HasSeparation (BudgetedBy B Bext))
       → ¬ (∀ γ → SSO.SpectralSeparationOutput.HasSeparation (BudgetedBy B Bext) γ)
   no-total-within B Bext TD =
@@ -167,3 +181,25 @@ module For
   -- This variant does not build a filtered `infer≤`; instead it states
   -- “totality-within-budget” directly as a predicate and diagonalizes against it.
   -- ==========================================================================
+
+-- Convenience re-exports: expose the main budgeted lemmas at the top-level
+-- (parameterised by `O` and `C`) so downstream modules and literate docs can
+-- import them without manually opening `For`.
+module _
+  {ℓ}
+  {Sig : LogOSSignature ℓ}
+  {Q   : QAdapter ℓ}
+  {K   : Kernel Sig Q}
+  (O   : SSO.SpectralSeparationOutput K)
+  (C   : WitnessCost (SSO.SpectralSeparationOutput.Witness O))
+  where
+  open For O C public using
+    ( Witness≤
+    ; Budgeted
+    ; BudgetedBy
+    ; UniformBudget
+    ; uniformBudget→budgetedTotal
+    ; budgeted-diagonal-witness
+    ; no-uniform-budget
+    ; no-total-within
+    )

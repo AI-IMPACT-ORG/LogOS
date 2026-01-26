@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Packs.Agents.Examples.ReindexedNetwork where
 
 open import LogOS.Prelude
-open import Data.Bool using (Bool; true; false)
+open import LogOS.Prelude.Bool using (Bool; true; false)
 
 open import LogOS.Base.Signature
 open import LogOS.Base.Signature.Hom using (SigHom)
@@ -60,8 +60,8 @@ SigBool = record
 σ : SigHom SigBool KR.Sig
 σ = record
   { mapIface  = λ _ → tt
-  ; mapCosp   = λ _ → tt
-  ; map∂Cosp  = λ _ → tt
+  ; mapCosp   = λ _ → zero
+  ; map∂Cosp  = λ _ → zero
   ; src-pres  = λ _ → refl
   ; tgt-pres  = λ _ → refl
   ; idC-pres  = λ _ → refl
@@ -180,7 +180,7 @@ edge = record
 portL = AgentSocket.canonicalBoundaryPort socketBool
 portR = AgentSocket.canonicalBoundaryPort socketUnit
 
-module LR = Interop.For network edge portL portR
+module LR = Interop.ForEquiv network edge portL portR
 
 translateLeftToRight : Net.Con left → Net.Con right
 translateLeftToRight = LR.translate

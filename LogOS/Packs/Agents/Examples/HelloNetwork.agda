@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -60,7 +60,7 @@ module For
     portL = AgentSocket.canonicalBoundaryPort (Net.Sock left)
     portR = AgentSocket.canonicalBoundaryPort (Net.Sock right)
 
-    module LR = Interop.For network edgeLR portL portR
+    module LR = Interop.ForEquiv network edgeLR portL portR
 
     -- Canonical edge translation on formulas (here: boundary constraints).
     translateLeftToRight : Net.Con left → Net.Con right

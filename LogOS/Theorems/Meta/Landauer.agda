@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,6 +16,7 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
 
 -- Assumptions for a Landauer-style bound
 
@@ -32,8 +33,17 @@ record LandauerAssumptions {ℓ : Level}
     cost  : Cosp → S
     -- Predicate capturing “bit erasure” (or any irreversible merge) at the program level
     Merges : Cosp → Set ℓ
-    -- Core lower bound: any merge forces at least L units of cost
-    merges→lower : ∀ f → Merges f → _≤E_ L (cost f)
+
+    -- Core lower bound as a refinement on program semantics.
+    --
+    -- This makes the assumption an explicit one-way adapter in the satisfaction
+    -- layer: merges refine into a cost lower bound.
+    merge-ref : SatRefinement₀ Cosp
+                  (λ _ f → Merges f)
+                  (λ _ f → _≤E_ L (cost f))
+
+  merges→lower : ∀ f → Merges f → _≤E_ L (cost f)
+  merges→lower f m = sat-→₀ merge-ref f m
 
 -- Landauer lower bound theorem: immediate from the pack, kept as a named lemma.
 
@@ -44,4 +54,3 @@ landauer
   → LandauerAssumptions.Merges A f
   → QAdapter._≤s_ Q (LandauerAssumptions.L A) (LandauerAssumptions.cost A f)
 landauer A f pr = LandauerAssumptions.merges→lower A f pr
-

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,8 +14,8 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
-open import LogOS.Kernel
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 import LogOS.Kernel.Hom2Cat as K2
 import LogOS.Theorems.CategoryTheory.WrapperCore as Wrap
 
@@ -28,7 +28,7 @@ module For
       ( KernelThin2Cat
       ; KernelThin2CatLaws
       ; KernelHom₁
-      ; KernelHomPoset
+      ; KernelHomPreorder
       ; idKernelHom₁
       ; _∘₁_
       ; _⇒_
@@ -50,7 +50,7 @@ module For
       {f g : KernelHom₁ K₁ K₂}
     → f ⇒ g
     → ∀ gamma
-    → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
+    → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
         (Kernel.decode K₂ (KernelHom₁.mapCode₁ f gamma))
         (Kernel.decode K₂ (KernelHom₁.mapCode₁ g gamma))
   refines-at r gamma = r gamma

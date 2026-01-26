@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -20,6 +20,9 @@ import LogOS.Ports.Semantic.CanonicalPorts as CanonicalPortsₛ
 module Interoperability = Interoperabilityₛ
 module CanonicalPorts = CanonicalPortsₛ
 
+-- Limit/stabilisation transport (μ-level) lives in the interoperability spine.
+module Limit = Interoperabilityₛ.Limit
+
 module Hetero where
   open import LogOS.Ports.Semantic.HeteroInterlinguaCore public
 
@@ -38,3 +41,9 @@ module StrictKernel where
 
 module CodeKernel where
   open import LogOS.Ports.Semantic.InterlinguaCodeKernel public
+
+module KernelLayer where
+  open import LogOS.Ports.Semantic.InterlinguaKernelLayer public
+
+module SignaturePushoutHub where
+  open import LogOS.Ports.Semantic.SignaturePushoutHub public

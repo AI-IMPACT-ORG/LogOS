@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,8 +18,8 @@ open import LogOS.Minimal.Adjunction
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel
 
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Domain.ZFC.SetU.WFGraphCore as Core using (WFGraph)
 open import LogOS.Domain.ZFC.SetU.GraphTreeBridge as Bridge using (SupStructure)
@@ -229,8 +229,8 @@ module _ {ℓ : Level}
     ; wflow-trans = λ _ _ _ → ttℓ
     }
 
-  conPoset : ConPoset ℓ
-  conPoset = record
+  conPreorder : ConPreorder ℓ
+  conPreorder = record
     { Con  = N
     ; _⊑_ = _⊑N_
     ; refl = refl⊑N _
@@ -238,9 +238,9 @@ module _ {ℓ : Level}
     }
 
   BB : BulkBoundary ℓ
-  BB = record { bulk = conPoset ; bnd = conPoset }
+  BB = record { bulk = conPreorder ; bnd = conPreorder }
 
-  mon : MonoidalPoset conPoset
+  mon : MonoidalOps conPreorder
   mon = record
     { _⊗_ = λ x _ → x
     ; I   = emptyN
@@ -272,6 +272,10 @@ module _ {ℓ : Level}
     ; mono-ctx = λ _ _ → ttℓ
     }
 
+  -- Explicit degeneracy witness: H-tier truth is vacuous (always satisfied).
+  vacuousHTruth : HT.VacuousHLayer HTruth
+  vacuousHTruth = record { satAll = λ _ _ → ttℓ }
+
   HInv : HT.Invariance BB
   HInv = record
     { Inv_H = λ c → c
@@ -289,7 +293,7 @@ module _ {ℓ : Level}
   Strict = record { Sat_S = λ _ _ → Topℓ {ℓ} }
 
   -- Guarded closure/flow: take the identity endomap (closed, idempotent-lax).
-  GTruth : GT.GuardedClosure conPoset
+  GTruth : GT.GuardedClosure conPreorder
   GTruth = record
     { Flow = λ c → c
     ; mono = λ p → p

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,7 +15,7 @@ open import LogOS.Syntax.Prop using (_↔_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Kernel using (Kernel)
+open import LogOS.Kernel using (Kernel; kernelLike-fromKernel)
 
 import LogOS.Domain.ZFC.SetTheory.Pack as Pack
 import LogOS.Domain.ZFC.SetTheory.FormulaPack as Formula
@@ -23,7 +23,7 @@ import LogOS.Domain.ZFC.SetTheory.FormulaPack as Formula
 module ZF
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   (K : Kernel Sig Q)
-  (A : Pack.ZFAxioms K)
+  (A : Pack.ZFAxioms (kernelLike-fromKernel K))
   where
   open Pack.ZFAxioms A public
 
@@ -40,7 +40,7 @@ module ZF
 module ZFC
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   (K : Kernel Sig Q)
-  (A : Pack.ZFCAxioms K)
+  (A : Pack.ZFCAxioms (kernelLike-fromKernel K))
   where
   open Pack.ZFCAxioms A public
   module ZFBase = ZF K zf

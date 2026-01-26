@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,8 +10,8 @@ module LogOS.Domain.Complexity.PhysSeparationPipelineWCostGuardsGraded where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ)
-open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (_×_; _,_; proj₁; proj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter using (QAdapter)
@@ -20,16 +20,16 @@ open import LogOS.Domain.Complexity.Poly using (PolyPred)
 import LogOS.Domain.Complexity.PhysicsClassesWCostGuardsGraded as PCWCG
 import LogOS.Domain.Complexity.PhysProofBridgeWCostGuardsGraded as PBWCG
 import LogOS.Domain.Complexity.PolyGrade as PG
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- Cost-guard physical separation pipeline (grade-native):
--- PhysNPwCostGuards + proof lower bound ⇒ PhysNPwCostGuards × ¬ PhysPCostGuards.
+-- PhysTotalNPwCostGuards + proof lower bound ⇒ PhysTotalNPwCostGuards × ¬ PhysPCostGuards.
 
 -- Shared quartet scaffolding (used by both `Kernel` and `KernelG` routes).
 module Scaffold
   {ℓCon ℓNP ℓP ℓMM : Level}
   (Con : Set ℓCon)
-  (PhysNPwCostGuards : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓNP ⊔ ℓA))
+  (PhysTotalNPwCostGuards : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓNP ⊔ ℓA))
   (PhysPCostGuards   : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓP ⊔ ℓA))
   (MergeMeasure      : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (lsuc (lsuc (ℓMM ⊔ ℓA))))
   (ProofLowerBound
@@ -46,29 +46,26 @@ module Scaffold
   record Assumptions {ℓA} (Acc : Con → Set ℓA)
     : Set (lsuc (lsuc (ℓNP ⊔ ℓP ⊔ ℓMM ⊔ ℓA))) where
     field
-      inNPwCostGuards : PhysNPwCostGuards Acc
+      inTotalNPwCostGuards : PhysTotalNPwCostGuards Acc
       MM     : MergeMeasure Acc
       PLB    : ProofLowerBound Acc MM
 
   record Claim {ℓA} (Acc : Con → Set ℓA)
     : Set (lsuc (lsuc (ℓNP ⊔ ℓP ⊔ ℓMM ⊔ ℓA))) where
     field
-      NP-holds : PhysNPwCostGuards Acc
+      total-holds : PhysTotalNPwCostGuards Acc
       notP     : ¬ PhysPCostGuards Acc
 
-  module Q {ℓA} {Acc : Con → Set ℓA} =
-    Quartet.Make (Assumptions Acc) (λ _ → Claim Acc)
-  open Q public using (Pack; assumptionsOf; claimOf)
+  derive : ∀ {ℓA} {Acc : Con → Set ℓA} → Assumptions Acc → Claim Acc
+  derive {Acc = Acc} A =
+    record
+      { total-holds = Assumptions.inTotalNPwCostGuards A
+      ; notP     = mkNotP {Acc = Acc} (Assumptions.MM A) (Assumptions.PLB A)
+      }
 
-  mkPack : ∀ {ℓA} {Acc : Con → Set ℓA} → (A : Assumptions Acc) → Pack {ℓA} {Acc}
-  mkPack {Acc = Acc} A =
-    Q.mkPack
-      (λ A →
-        record
-          { NP-holds = Assumptions.inNPwCostGuards A
-          ; notP     = mkNotP {Acc = Acc} (Assumptions.MM A) (Assumptions.PLB A)
-          })
-      A
+  module Q {ℓA} {Acc : Con → Set ℓA} =
+    AppKit.MakeConstPack (Assumptions Acc) (Claim Acc) derive
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
 module For {ℓI ℓW ℓ ℓQ : Level}
            (Input : Set ℓI)
@@ -89,7 +86,7 @@ module For {ℓI ℓW ℓ ℓQ : Level}
 
   record Claim (L : C.Language) : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓW ⊔ ℓQ))) where
     field
-      NP-holds : C.PhysNPwCostGuards L
+      total-holds : C.PhysNPwCostGuards L
       notP     : ¬ C.PhysPCostGuards L
 
   notPhysPCostGuards : ∀ {L} → B.SuperPolyCostDet L → ¬ (C.PhysPCostGuards L)
@@ -97,20 +94,17 @@ module For {ℓI ℓW ℓ ℓQ : Level}
     let ex = sp pd in
     proj₂ ex (C.Base.PhysDecider.cost≤ (B.PD₀ pd) (proj₁ ex))
 
-  module Q {L : C.Language} = Quartet.Make (Assumptions L) (λ _ → Claim L)
-  open Q public using (Pack; assumptionsOf; claimOf)
+  derive : ∀ {L} → Assumptions L → Claim L
+  derive A =
+    record
+      { total-holds = Assumptions.inNPwCostGuards A
+      ; notP     = notPhysPCostGuards
+                    (B.superPolyCostFromProof (Assumptions.MM A)
+                                              (Assumptions.PLB A))
+      }
 
-  mkPack : ∀ {L} → (A : Assumptions L) → Pack {L}
-  mkPack A =
-    Q.mkPack
-      (λ A →
-        record
-          { NP-holds = Assumptions.inNPwCostGuards A
-          ; notP     = notPhysPCostGuards
-                        (B.superPolyCostFromProof (Assumptions.MM A)
-                                                  (Assumptions.PLB A))
-          })
-      A
+  module Q {L : C.Language} = AppKit.MakeConstPack (Assumptions L) (Claim L) derive
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
 -- Kernel-native separation pipeline (TruthRoute-based).
 
@@ -142,7 +136,7 @@ module Kernel
 
   module S =
     Scaffold {ℓCon = ℓ} {ℓNP = ℓ ⊔ ℓI ⊔ ℓP} {ℓP = ℓI ⊔ ℓP} {ℓMM = ℓ ⊔ ℓI ⊔ ℓP}
-      C.Con C.PhysNPwCostGuards C.PhysPCostGuards
+      C.Con C.PhysTotalNPwCostGuards C.PhysPCostGuards
       B.MergeMeasure B.ProofLowerBound mkNotP
   open S public
 
@@ -176,6 +170,6 @@ module KernelG
 
   module S =
     Scaffold {ℓCon = ℓ} {ℓNP = ℓ ⊔ ℓI} {ℓP = ℓ ⊔ ℓI} {ℓMM = ℓ ⊔ ℓI}
-      C.Con C.PhysNPwCostGuards C.PhysPCostGuards
+      C.Con C.PhysTotalNPwCostGuards C.PhysPCostGuards
       B.MergeMeasure B.ProofLowerBound mkNotP
   open S public

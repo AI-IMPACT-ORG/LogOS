@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,7 +11,11 @@ open import LogOS.Prelude
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
+open import LogOS.Prelude.Product using (_×_; _,_)
+import LogOS.Domain.Opacity.GRH_Vacuity_Guards as GRH
+import LogOS.Domain.Opacity.Meaningfulness as Meaning
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- Weil criterion route (schematic, explicit-formula positivity):
 -- A “Weil functional” W on a space of test objects is assumed positive
@@ -38,16 +42,27 @@ record WeilPositivityAssumptions {ℓT ℓW : Level}
     -- as ≥ 0 for a quadratic form W(t⋆t*), or positive semidefiniteness, etc.)
     W-pos : Test → Set ℓW
 
-    -- Global positivity axiom: W-pos holds for every admissible test.
-    positivity : ∀ t → W-pos t
+    -- Global positivity axiom as a refinement on tests.
+    positivity-ref : SatRefinement₀ Test
+                      (λ _ _ → ⊤ {ℓ = lzero})
+                      (λ _ t → W-pos t)
 
     -- A probe extracted from a spectral point (intuitively: a test isolating that zero).
     probe : Spectral → Test
 
     -- ζ-specific analytic lemma (schematic): for a nontrivial zero, positivity of the
     -- associated probe forces the critical-line property.
-    probe-pos→OnLine
-      : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
+    probe-pos-ref : SatRefinement₀ Spectral
+                     (λ _ s → NontrivialZero s × W-pos (probe s))
+                     (λ _ s → OnLine s)
+
+  positivity : ∀ t → W-pos t
+  positivity t = sat-→₀ positivity-ref t tt
+
+  probe-pos→OnLine
+    : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
+  probe-pos→OnLine s nz pos =
+    sat-→₀ probe-pos-ref s (nz , pos)
 
 -- Consequence: GRH_Without_Vacuity_Guards (for the chosen OnLine predicate) from Weil's criterion.
 
@@ -59,6 +74,15 @@ GRH_Without_Vacuity_Guards_from_WeilPositivity
 GRH_Without_Vacuity_Guards_from_WeilPositivity RS A s nz =
   let open WeilPositivityAssumptions A in
   probe-pos→OnLine s nz (positivity (probe s))
+
+GRH_from_WeilPositivity
+  : ∀ {ℓT ℓW}
+    (RS : RiemannSpectral)
+    (A  : WeilPositivityAssumptions {ℓT} {ℓW} RS)
+  → Meaning.VacuityGuards RS
+  → GRH.GRH RS
+GRH_from_WeilPositivity RS A guards =
+  GRH.mkGRH guards (GRH_Without_Vacuity_Guards_from_WeilPositivity RS A)
 
 -- Observer-facing variant: positivity is only assumed for a designated class of
 -- tests (e.g. computable/constructible/finite-budget probes), and each relevant
@@ -73,12 +97,28 @@ record WeilPositivityObservable {ℓT ℓW ℓObs : Level}
     W-pos : Test → Set ℓW
 
     Observable : Test → Set ℓObs
-    positivity : ∀ t → Observable t → W-pos t
+    positivity-ref : SatRefinement₀ Test
+                      (λ _ t → Observable t)
+                      (λ _ t → W-pos t)
 
     probe : Spectral → Test
-    probe-observable : ∀ s → NontrivialZero s → Observable (probe s)
+    probe-observable-ref : SatRefinement₀ Spectral
+                            (λ _ s → NontrivialZero s)
+                            (λ _ s → Observable (probe s))
 
-    probe-pos→OnLine : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
+    probe-pos-ref : SatRefinement₀ Spectral
+                     (λ _ s → NontrivialZero s × W-pos (probe s))
+                     (λ _ s → OnLine s)
+
+  positivity : ∀ t → Observable t → W-pos t
+  positivity t obs = sat-→₀ positivity-ref t obs
+
+  probe-observable : ∀ s → NontrivialZero s → Observable (probe s)
+  probe-observable s nz = sat-→₀ probe-observable-ref s nz
+
+  probe-pos→OnLine : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
+  probe-pos→OnLine s nz pos =
+    sat-→₀ probe-pos-ref s (nz , pos)
 
 GRH_Without_Vacuity_Guards_from_WeilPositivityObservable
   : ∀ {ℓT ℓW ℓObs}
@@ -88,6 +128,15 @@ GRH_Without_Vacuity_Guards_from_WeilPositivityObservable
 GRH_Without_Vacuity_Guards_from_WeilPositivityObservable RS A s nz =
   let open WeilPositivityObservable A in
   probe-pos→OnLine s nz (positivity (probe s) (probe-observable s nz))
+
+GRH_from_WeilPositivityObservable
+  : ∀ {ℓT ℓW ℓObs}
+    (RS : RiemannSpectral)
+    (A  : WeilPositivityObservable {ℓT} {ℓW} {ℓObs} RS)
+  → Meaning.VacuityGuards RS
+  → GRH.GRH RS
+GRH_from_WeilPositivityObservable RS A guards =
+  GRH.mkGRH guards (GRH_Without_Vacuity_Guards_from_WeilPositivityObservable RS A)
 
 -- Literature-aligned naming aliases: “Weil criterion” rather than “Weil positivity”.
 
@@ -110,8 +159,7 @@ module QuartetObservable {ℓT ℓW ℓObs : Level} (RS : RiemannSpectral) where
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
-
-  mkPack : (A : Assumptions) → Pack
-  mkPack = Q.mkPack (GRH_Without_Vacuity_Guards_from_WeilPositivityObservable RS)
+  module Q =
+    AppKit.MakeDerived Assumptions Claim
+      (GRH_Without_Vacuity_Guards_from_WeilPositivityObservable RS)
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

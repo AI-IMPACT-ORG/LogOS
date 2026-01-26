@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module LogOS.Domain.Complexity.SecondLaw where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Product using (Σ; _,_; _×_; fst; snd; proj₁; proj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_; fst; snd; proj₁; proj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -58,6 +58,19 @@ record SecondLawAssumptions {ℓ : Level}
             → ∀ x → _≤E_ (Entropy x ⊙ LCUObsAssumptions.L LCUA)
                           (Entropy (LCUObsAssumptions.act LCUA f x))
 
+-- Non-vacuity guards: require an explicit merge witness so the 2nd law cannot
+-- be satisfied only by degenerate (fully unitary or empty-observable) models.
+
+record SecondLawGuards {ℓ : Level}
+                       (Sig : LogOSSignature ℓ)
+                       (Q   : QAdapter ℓ)
+                       (A   : SecondLawAssumptions Sig Q)
+                       : Set (lsuc (lsuc ℓ)) where
+  field
+    mergeWitness
+      : Σ (LogOSSignature.Cosp Sig)
+          (λ f → LCU.Merges (SecondLawAssumptions.LCUA A) f)
+
 -- Derived “merge forces entropy increase” theorem (2nd law in a form aligned with Landauer).
 
 merge→entropy+
@@ -80,6 +93,46 @@ merge→entropy+ {Sig = Sig} {Q = Q} A f m =
     x : LCUObsAssumptions.Obs base
     x = proj₁ m
   in x , SecondLawAssumptions.nonUnitary→entropy+ A f nu x
+
+nonvacuous-entropy+
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (A : SecondLawAssumptions Sig Q)
+    (G : SecondLawGuards Sig Q A)
+  → Σ (LogOSSignature.Cosp Sig)
+      (λ f →
+        Σ (LCUObsAssumptions.Obs (SecondLawAssumptions.LCUA A))
+          (λ x → QAdapter._≤s_ Q
+                   (QAdapter._·_ Q
+                     (SecondLawAssumptions.Entropy A x)
+                     (LCUObsAssumptions.L (SecondLawAssumptions.LCUA A)))
+                   (SecondLawAssumptions.Entropy A
+                     (LCUObsAssumptions.act (SecondLawAssumptions.LCUA A) f x))))
+nonvacuous-entropy+ {Sig = Sig} {Q = Q} A G =
+  let
+    f , m = SecondLawGuards.mergeWitness G
+    x , le = merge→entropy+ {Sig = Sig} {Q = Q} A f m
+  in
+  f , (x , le)
+
+-- Observational equivalence on observables defaults to definitional equality.
+-- This keeps entropy well-behaved under (trivial) observation equality without
+-- committing to a richer observational semantics.
+
+ObsEq
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  → (A : SecondLawAssumptions Sig Q)
+  → LCUObsAssumptions.Obs (SecondLawAssumptions.LCUA A)
+  → LCUObsAssumptions.Obs (SecondLawAssumptions.LCUA A)
+  → Set ℓ
+ObsEq _ x y = x ≡ y
+
+entropy-respects-ObsEq
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  → (A : SecondLawAssumptions Sig Q)
+  → {x y : LCUObsAssumptions.Obs (SecondLawAssumptions.LCUA A)}
+  → ObsEq A x y
+  → SecondLawAssumptions.Entropy A x ≡ SecondLawAssumptions.Entropy A y
+entropy-respects-ObsEq A eq = cong (SecondLawAssumptions.Entropy A) eq
 
 -- Landauer pack is derivable from the underlying LCU assumptions (already provided).
 

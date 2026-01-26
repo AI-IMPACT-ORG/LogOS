@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -88,11 +88,15 @@ build {ℓ} Sig Q HWorld₀ = record
     ; mono-ctx = λ _ x → x
     }
 
+  -- Explicit degeneracy witness: H-tier truth is vacuous (always satisfied).
+  vacuousHTruth₀ : HT₀.VacuousHLayer HTruth₀
+  vacuousHTruth₀ = record { satAll = λ _ _ → ttℓ }
+
   HInv₀ : HT₀.Invariance BB₀
   HInv₀ = record
     { Inv_H = λ c → c
-    ; infl  = λ c → ConPoset.refl (BulkBoundary.bnd BB₀)
-    ; idemp-lax = λ c → ConPoset.refl (BulkBoundary.bnd BB₀)
+    ; infl  = λ c → ConPreorder.refl (BulkBoundary.bnd BB₀)
+    ; idemp-lax = λ c → ConPreorder.refl (BulkBoundary.bnd BB₀)
     }
 
   -- S-tier: trivial strict layer
@@ -101,7 +105,7 @@ build {ℓ} Sig Q HWorld₀ = record
   module ST₀ = Truth.StrictTruth Sig
   Strict₀ : ST₀.StrictLayer Fml₀
   Strict₀ = record { Sat_S = λ _ _ → Topℓ }
-  TransH₀ : Fml₀ → ConPoset.Con (BulkBoundary.bnd BB₀)
+  TransH₀ : Fml₀ → ConPreorder.Con (BulkBoundary.bnd BB₀)
   TransH₀ = λ _ → I∂
 
   -- G-tier: trivial closure and fixed point
@@ -110,21 +114,21 @@ build {ℓ} Sig Q HWorld₀ = record
   GTruth₀ = record
     { Flow = λ c → c
     ; mono = λ p → p
-    ; infl = λ c → ConPoset.refl (BulkBoundary.bnd BB₀)
-    ; idemp-lax = λ c → ConPoset.refl (BulkBoundary.bnd BB₀)
+    ; infl = λ c → ConPreorder.refl (BulkBoundary.bnd BB₀)
+    ; idemp-lax = λ c → ConPreorder.refl (BulkBoundary.bnd BB₀)
     ; Th* = I∂
-    ; Th*-fixed = ( ConPoset.refl (BulkBoundary.bnd BB₀) , ConPoset.refl (BulkBoundary.bnd BB₀) )
+    ; Th*-fixed = ( ConPreorder.refl (BulkBoundary.bnd BB₀) , ConPreorder.refl (BulkBoundary.bnd BB₀) )
     }
 
   -- Code layer as constraints
   Code₀ : Set ℓ
-  Code₀ = ConPoset.Con (BulkBoundary.bnd BB₀)
-  encode₀ : ConPoset.Con (BulkBoundary.bnd BB₀) → Code₀
+  Code₀ = ConPreorder.Con (BulkBoundary.bnd BB₀)
+  encode₀ : ConPreorder.Con (BulkBoundary.bnd BB₀) → Code₀
   encode₀ = λ c → c
-  decode₀ : Code₀ → ConPoset.Con (BulkBoundary.bnd BB₀)
+  decode₀ : Code₀ → ConPreorder.Con (BulkBoundary.bnd BB₀)
   decode₀ = λ γ → γ
   Guard₀ : Code₀ → Code₀
-  Guard₀ = λ γ → encode₀ (GT₀.GuardedClosure.Flow GTruth₀ (decode₀ γ))
+  Guard₀ = GT₀.GuardedClosure.Flow GTruth₀
   Body₀ : Code₀ → Code₀
   Body₀ = λ γ → γ
 
@@ -158,8 +162,8 @@ build {ℓ} Sig Q HWorld₀ = record
         { shapeLaws = record
             { decode∘encode = λ _ → refl
             ; γ*-guard =
-                (ConPoset.refl (BulkBoundary.bnd BB₀) {c = decode₀ I∂})
-              , (ConPoset.refl (BulkBoundary.bnd BB₀) {c = decode₀ I∂})
+                (ConPreorder.refl (BulkBoundary.bnd BB₀) {c = decode₀ I∂})
+              , (ConPreorder.refl (BulkBoundary.bnd BB₀) {c = decode₀ I∂})
             ; reify-decode  = λ _ → refl
             ; body-decode   = λ _ → refl
             }
@@ -179,18 +183,29 @@ build {ℓ} Sig Q HWorld₀ = record
     ; map-decode = λ γ → Kernel.decode∘encode K (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) (Kernel.decode freeK γ))
     }
 
-  -- Optional promotion: Flow-preserving hom (KernelHomFlow) from FreeK to any K
-  -- Requires only the inflation law at K for preserves-F; preserves-Th needs a base lemma
-  foldFlow : ∀ (K : Kernel Sig Q)
-           → (base : ConPoset._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
-                                   (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) (GT₀.GuardedClosure.Th* GTruth₀))
-                                   (Th⋆K K))
-           → KernelHomFlow freeK K (foldHom K)
-  foldFlow K base = record
+  -- Optional promotion: Flow-preserving hom (KernelHomFlow) from FreeK to any K.
+  --
+  -- This is “step preservation” only: Th* transport is an additional (optional)
+  -- strengthening (`KernelHomFlowStable`).
+  foldFlow : ∀ (K : Kernel Sig Q) → KernelHomFlow freeK K (foldHom K)
+  foldFlow K = record
     { flow-hom = record
         { preserves-F  = λ c →
             GT₀.GuardedClosure.infl (Kernel.GTruth K)
               (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) c)
+        }
+    }
+
+  -- Stable variant: add an explicit `Th*` transport inequality.
+  foldFlowStable
+    : ∀ (K : Kernel Sig Q)
+    → (base : ConPreorder._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
+                            (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) (GT₀.GuardedClosure.Th* GTruth₀))
+                            (Th⋆K K))
+    → KernelHomFlowStable freeK K (foldHom K)
+  foldFlowStable K base = record
+    { stable-hom = record
+        { flow-hom     = KernelHomFlow.flow-hom (foldFlow K)
         ; preserves-Th = base
         }
     }
@@ -200,11 +215,11 @@ build {ℓ} Sig Q HWorld₀ = record
     : ∀ (K : Kernel Sig Q)
       (ωCPO : GT₀.OmegaCPO (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
       (eq-bot : ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) I∂ ≡ GT₀.OmegaCPO.⊥ ωCPO)
-      → KernelHomFlow freeK K (foldHom K)
-  foldFlow-auto K ωCPO eq-bot = foldFlow K base
+      → KernelHomFlowStable freeK K (foldHom K)
+  foldFlow-auto K ωCPO eq-bot = foldFlowStable K base
     where
       module FB = FlowBase.For freeK
-      base : ConPoset._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
+      base : ConPreorder._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
                (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) (GT₀.GuardedClosure.Th* GTruth₀))
                (GT₀.GuardedClosure.Th* (Kernel.GTruth K))
       base = FB.base-from-eq-bot K (foldHom K) ωCPO eq-bot refl
@@ -213,19 +228,19 @@ build {ℓ} Sig Q HWorld₀ = record
   foldFlow-auto-ineq
     : ∀ (K : Kernel Sig Q)
       (ωCPO : GT₀.OmegaCPO (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
-      (le-bot : ConPoset._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
+      (le-bot : ConPreorder._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
                               (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) I∂)
                               (GT₀.OmegaCPO.⊥ ωCPO))
-      → KernelHomFlow freeK K (foldHom K)
-  foldFlow-auto-ineq K ωCPO le-bot = foldFlow K base
+      → KernelHomFlowStable freeK K (foldHom K)
+  foldFlow-auto-ineq K ωCPO le-bot = foldFlowStable K base
     where
       base =
-        ConPoset.trans
+        ConPreorder.trans
           (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
           le-bot
           (GT₀.OmegaCPO.isBot ωCPO (GT₀.GuardedClosure.Th* (Kernel.GTruth K)))
 
--- Top-level convenience: construct a Flow-preserving hom (KernelHomFlow)
+-- Top-level convenience: construct a Flow-stable hom (`KernelHomFlowStable`)
 -- from the initial kernel built at (Sig, Q, HWorld).
 
 module FoldFlowBuildAuto {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ) where
@@ -238,7 +253,7 @@ module FoldFlowBuildAuto {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter 
     → (ωCPO : GT.OmegaCPO (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
     → (eq-bot : ConAlgHom≡.map∂ (KernelHom.con-hom (InitialKernel.foldK (build Sig Q HWorld) K)) I∂
                 ≡ GT.OmegaCPO.⊥ ωCPO)
-    → KernelHomFlow (InitialKernel.FreeK (build Sig Q HWorld)) K
+    → KernelHomFlowStable (InitialKernel.FreeK (build Sig Q HWorld)) K
         (InitialKernel.foldK (build Sig Q HWorld) K)
   foldFlow-build-auto HW K ωCPO eq-bot =
     let IK   = build Sig Q HW
@@ -246,10 +261,13 @@ module FoldFlowBuildAuto {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter 
         module FB = FlowBase.For (InitialKernel.FreeK IK)
         base = FB.base-from-eq-bot K h ωCPO eq-bot refl
     in record
-      { flow-hom = record
-          { preserves-F  = λ c →
-              GT.GuardedClosure.infl (Kernel.GTruth K)
-                (ConAlgHom≡.map∂ (KernelHom.con-hom h) c)
+      { stable-hom = record
+          { flow-hom =
+              record
+                { preserves-F  = λ c →
+                    GT.GuardedClosure.infl (Kernel.GTruth K)
+                      (ConAlgHom≡.map∂ (KernelHom.con-hom h) c)
+                }
           ; preserves-Th = base
           }
       }

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -33,14 +33,14 @@ ObsLe∂Cosp
 ObsLe∂Cosp B p q =
   Prop.ObsLeOn (λ c p' → BoundaryIO.Sat∂ B p' c) p q
 
-ObsCospPoset
+ObsCospPreorder
   : ∀ {ℓ}
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
     {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
   → (B : BoundaryIO Sig Q W BB H)
-  → ConPoset ℓ
-ObsCospPoset {Sig = Sig} B =
+  → ConPreorder ℓ
+ObsCospPreorder {Sig = Sig} B =
   let open LogOSSignature Sig in
   record
     { Con = ∂Cosp
@@ -122,12 +122,12 @@ Respects≈∂Cosp[_]
 Respects≈∂Cosp[ B ] F =
   Prop.RespectsObsEqOn (λ c p → BoundaryIO.Sat∂ B p c) F
 
--- Telemetry trace preorder (full ConPoset).
+-- Telemetry trace preorder (full ConPreorder).
 
 record TelemetryTrace (ℓT : Level) : Set (lsuc ℓT) where
   field
-    trace : ConPoset ℓT
-  open ConPoset trace public
+    trace : ConPreorder ℓT
+  open ConPreorder trace public
     renaming (Con to Trace; _⊑_ to _⊑T_; refl to reflT; trans to transT)
 
 Trace≈
@@ -217,7 +217,7 @@ record ProgramTelemetryPort {ℓ ℓT}
   field
     observe-∂ : ∂Cosp → Trace
     observe-∂-mono
-      : MonoMap (ObsCospPoset B) (TelemetryTrace.trace T) observe-∂
+      : MonoMap (ObsCospPreorder B) (TelemetryTrace.trace T) observe-∂
     observe-∂-respects
       : ∀ {p q}
       → p ≈∂Cosp[ B ] q
@@ -245,7 +245,7 @@ observe-∂-respects-from-mono
     {B : BoundaryIO Sig Q W BB H}
     {T : TelemetryTrace ℓT}
   → (obs : LogOSSignature.∂Cosp Sig → TelemetryTrace.Trace T)
-  → MonoMap (ObsCospPoset B) (TelemetryTrace.trace T) obs
+  → MonoMap (ObsCospPreorder B) (TelemetryTrace.trace T) obs
   → {p q : LogOSSignature.∂Cosp Sig}
   → p ≈∂Cosp[ B ] q
   → Trace≈ T (obs p) (obs q)

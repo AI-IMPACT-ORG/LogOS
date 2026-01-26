@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ open import LogOS.Syntax.Prop using (_↔_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (BulkBoundary)
+open import LogOS.Minimal.Con using (BulkBoundary; ConPreorder)
 open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel.Graded using (GradedKernel)
@@ -40,6 +40,11 @@ module For
 
   open QAdapter Q using (_≤s_)
   open GradedKernel K renaming (Code to Codeₖ; decode to decodeₖ; reify to reifyₖ)
+
+  CP : ConPreorder ℓ
+  CP = BulkBoundary.bnd (GradedKernel.BB K)
+
+  open ConPreorder CP using (_⊑_)
 
   -- Observables at the least RG-stable policy are minimal among stable points.
   obs-μ≤stable
@@ -86,6 +91,15 @@ module For
       eq
       bound
 
+  -- More general: transport ScalingBound along refinement of decoded policies.
+  scalingBound-mono
+    : ∀ {g} {s : RGStep g} {D : ScalingDimension s} γ δ
+    → decodeₖ γ ⊑ decodeₖ δ
+    → ScalingBound s D γ
+    → ScalingBound s D δ
+  scalingBound-mono {s = s} {D = D} γ δ le bound =
+    QAdapter.≤s-trans Q bound (ScalingDimension.mono D le)
+
   -- Reflection closure: reify is observationally inert for ScalingBound.
   scalingBound-reify
     : ∀ {g} {s : RGStep g} {D : ScalingDimension s} γ
@@ -115,16 +129,16 @@ module For
       : ∀ {g} {s : RGStep g} {D : ScalingDimension s}
       → Comm.DecodeExtensional′ K₀ (ScalingBoundK s D)
     scalingBound-extK {s = s} {D = D} γ₁ γ₂ eq bound =
-      scalingBound-ext {s = s} {D = D} γ₁ γ₂ eq bound
+      scalingBound-mono {s = s} {D = D} γ₁ γ₂ (fst eq) bound
 
     scalingBound-public
       : ∀ {g} (s : RGStep g) (D : ScalingDimension s)
-      → (stable : ∀ γ →
-          ScalingBoundK s D γ ↔ ScalingBoundK s D (Kernel.FlowCode K₀ γ))
+      → (stableBoxBody : ∀ γ →
+          ScalingBoundK s D γ ↔ ScalingBoundK s D (Kernel.Box K₀ (Kernel.Body K₀ γ)))
       → ∀ {γ} → ScalingBoundK s D γ
       → LP.LimitPublicisation K₀ (ScalingBoundK s D) γ
-    scalingBound-public s D stable bound =
-      LP.TruthK→Pr K₀ (ScalingBoundK s D) (scalingBound-extK {s = s} {D = D}) stable bound
+    scalingBound-public s D stableBoxBody bound =
+      LP.TruthK→Pr-BoxBody K₀ (ScalingBoundK s D) (scalingBound-extK {s = s} {D = D}) stableBoxBody bound
 
     scalingBound-public-reify
       : ∀ {ℓC} {g} (s : RGStep g) (D : ScalingDimension s)

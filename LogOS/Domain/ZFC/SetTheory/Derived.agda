@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,8 +14,8 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_)
 
 open import LogOS.Domain.ZFC.SetTheory.Pack using (ZFAxioms)
 
@@ -23,7 +23,7 @@ open import LogOS.Domain.ZFC.SetTheory.Pack using (ZFAxioms)
 -- These are “library-level” conveniences that keep downstream code from
 -- re-proving the same 2–3 line equivalences.
 
-module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) (zf : ZFAxioms K) where
+module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : KernelLike Sig Q) (zf : ZFAxioms K) where
   open ZFAxioms zf
 
   singleton : SetU → SetU

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,22 +12,24 @@ module LogOS.Prelude where
 -- Curated foundation layer for the LogOS logic system.
 -- Provides common imports in one place.
 --
--- This prelude curates common stdlib imports in one place. It re-exports a
--- minimal set of levels, equality, and data combinators used across the
--- library. Prefer importing via `LogOS.API.Minimal` to avoid name clashes
--- (or fully qualify imports).
+-- This prelude curates common foundational imports in one place. It
+-- re-exports a minimal set of levels, equality, and data combinators used
+-- across the library (stdlib-independent via `LogOS.Host.*`).
+--
+-- Prefer importing via `LogOS.API.Minimal` / `LogOS.API.Architecture` to avoid
+-- name clashes (or fully qualify imports).
 -- ============================================================================
 
 -- Foundation: Level polymorphism
-open import Host.Level public
+open import LogOS.Host.Level public
 
 -- Equality: Propositional equality
-open import Data.Relation.Binary.PropositionalEquality public
+open import LogOS.Host.Relation.Binary.PropositionalEquality public
 
 -- Data types: Core algebraic structures
-open import Data.Nat public
-open import Data.Sum public
-open import Data.Product public
+open import LogOS.Host.Nat public
+open import LogOS.Host.Sum public
+open import LogOS.Host.Product public
 
 -- Universe-polymorphic unit type at arbitrary level ℓ
 data Topℓ {ℓ : Level} : Set ℓ where

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -28,7 +28,7 @@ telemetry-indistinguishable
     {B : BoundaryIO Sig Q W BB H}
     {T : TelemetryTrace ℓT}
   → (obs : LogOSSignature.∂Cosp Sig → TelemetryTrace.Trace T)
-  → MonoMap (ObsCospPoset B) (TelemetryTrace.trace T) obs
+  → MonoMap (ObsCospPreorder B) (TelemetryTrace.trace T) obs
   → {p q : LogOSSignature.∂Cosp Sig}
   → p ≈∂Cosp[ B ] q
   → Trace≈ T (obs p) (obs q)

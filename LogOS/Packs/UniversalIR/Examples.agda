@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -38,6 +38,18 @@ module SchemeChoices where
 
 module LambdaShowcase where
   open import LogOS.Domain.UniversalIR.Examples.LambdaShowcase public
+
+module ArbitraryTasks where
+  open import LogOS.Domain.UniversalIR.Examples.ArbitraryTasks public
+
+module KernelDecodeLaxTasks where
+  open import LogOS.Domain.UniversalIR.Examples.KernelDecodeLaxTasks public
+
+module KernelSaturationLaxTasks where
+  open import LogOS.Domain.UniversalIR.Examples.KernelSaturationLaxTasks public
+
+module KernelSaturationLaxTasksNontrivial where
+  open import LogOS.Domain.UniversalIR.Examples.KernelSaturationLaxTasksNontrivial public
 
 module WhileExamples where
   module Factorial where

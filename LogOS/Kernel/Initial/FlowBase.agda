@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,7 +11,7 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Minimal.Adjunction using (MonoidalPoset)
+open import LogOS.Minimal.Adjunction using (MonoidalOps)
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Algebra.ConAlg
@@ -27,7 +27,7 @@ module For
 
   private
     module GT = Truth.GuardedTruth Sig Q
-    I∂₀ = MonoidalPoset.I (Kernel.MBnd K₀)
+    I∂₀ = MonoidalOps.I (Kernel.MBnd K₀)
 
   base-from-eq-bot
     : ∀ (K : Kernel Sig Q)
@@ -35,13 +35,13 @@ module For
       (ωCPO : GT.OmegaCPO (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
       (eq-bot : ConAlgHom≡.map∂ (KernelHom.con-hom h) I∂₀ ≡ GT.OmegaCPO.⊥ ωCPO)
       (th⋆≡I∂ : GT.GuardedClosure.Th* (Kernel.GTruth K₀) ≡ I∂₀)
-    → ConPoset._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
+    → ConPreorder._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
         (ConAlgHom≡.map∂ (KernelHom.con-hom h)
           (GT.GuardedClosure.Th* (Kernel.GTruth K₀)))
         (GT.GuardedClosure.Th* (Kernel.GTruth K))
   base-from-eq-bot K h ωCPO eq-bot th⋆≡I∂ =
     let
-      le : ConPoset._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
+      le : ConPreorder._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
              (GT.OmegaCPO.⊥ ωCPO)
              (GT.GuardedClosure.Th* (Kernel.GTruth K))
       le = GT.OmegaCPO.isBot ωCPO (GT.GuardedClosure.Th* (Kernel.GTruth K))
@@ -54,6 +54,6 @@ module For
       eqBoth = trans eqTh eq-bot
     in
     subst
-      (λ x → ConPoset._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))) x
+      (λ x → ConPreorder._⊑_ (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))) x
               (GT.GuardedClosure.Th* (Kernel.GTruth K)))
       (sym eqBoth) le

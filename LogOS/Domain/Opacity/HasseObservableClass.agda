@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Opacity.HasseObservableClass where
 
 open import LogOS.Prelude
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Product using (Σ; _,_)
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
@@ -22,8 +22,9 @@ import LogOS.Domain.Opacity.WeilCriterionLedger as WCL
 --
 -- Key design choice: membership in the generated class is stated up to a chosen
 -- “semantic equality” relation `_≈_` on tests. In code-based instantiations,
--- `_≈_` should be decode-level equality, so downstream lemmas only need
--- `decode (mkTest r) ≡ decode t` rather than literal code equality.
+-- `_≈_` should be decoded observational equality (prefer mutual refinement in the
+-- boundary preorder), so downstream lemmas only need decoded equivalence rather
+-- than literal code equality.
 
 record HasseObservableClass {ℓT ℓW ℓObs ℓ≈ : Level}
                             (TPo : TP.TruthPositivity {ℓT} {ℓW} {ℓObs})

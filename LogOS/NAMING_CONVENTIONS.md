@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -14,6 +14,11 @@ LogOS uses a consistent naming pattern to distinguish bulk (full) and boundary (
 
 - **Bulk**: Base name (e.g., `Cosp`, `idC`, `RG`, `NF̂`)
 - **Boundary**: Add `∂` suffix (e.g., `∂Cosp`, `id∂`, `RG∂`, `NF̂∂`)
+
+Note: identifiers in this document are illustrative; not every example name appears verbatim in the current tree.
+
+Interpretation (analogy):
+some example identifiers (e.g. `RG`) use cross-domain terminology as motivation; this file only defines naming conventions, not theorems.
 
 ### Examples
 
@@ -50,4 +55,3 @@ When adding new operations or types that have both bulk and boundary variants:
 1. Use the base name for the bulk version
 2. Add `∂` suffix for the boundary version
 3. Maintain consistency with existing naming
-

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,11 +9,12 @@ module LogOS.Domain.Complexity.Examples.InfoRouteChain where
 
 open import LogOS.Prelude
 
-open import Data.NatOrder using (_≤ℕ_)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel.Graded
+import LogOS.Kernel.Graded.Endo as GEndo
 
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
 import LogOS.Domain.Complexity.PolyGrade as PG
@@ -21,7 +22,7 @@ import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TRG
 import LogOS.Domain.Complexity.InfoBottleneckAdaptersG as IBG
 import LogOS.Domain.Complexity.ObservabilityBudgetG as OB
 import LogOS.Domain.Complexity.PvsNPFromInfo_Grade_Only as PFI
-import LogOS.Domain.Complexity.ClassicalPvsNP as CP
+import LogOS.Domain.Complexity.PvsNPLedger as CP
 
 -- End-to-end skeleton for the minimal info-theory route:
 -- LOB → DetBottleneck → InfoHardness → PvsNPFromInfo.
@@ -40,7 +41,16 @@ module For
   (PGG : PG.PolyPredG (QAdapter.Scale Q))
   where
 
-  module R = TRG.For K Input Size DetRun VerRun VerRunWith
+  open GradedKernel K
+
+  module R =
+    TRG.Uniform
+      K Input Size
+      (λ x → decode (DetRun x))
+      decode
+      (GEndo.idEndo K)
+      (GEndo.idEndo K)
+      (GEndo.idEndo K)
   module G = R.GradeBounded PGG
 
   module WithAcc {ℓA} (Acc : R.Con → Set ℓA) where
@@ -59,7 +69,7 @@ module For
     detBottleneckFromLOB lob dr = B.detBottleneck lob dr
 
     claimFromLOB
-      : G.PolyWitnessedTotalVerificationG Acc
+      : G.PolyTotalWitnessedVerificationG Acc
       → (lob : O.LOB)
       → (dr : B.DetRunAsQTimeG)
       → A.InfoHardness (detBottleneckFromLOB lob dr)
@@ -68,13 +78,13 @@ module For
       A.Pack.claim
         (A.mkPack
           (record
-            { NP-witnessG = np
+            { total-witnessG = np
             ; BtlG        = detBottleneckFromLOB lob dr
             ; hardG       = hard
             }))
 
     claimFromLOB-nondegenerate
-      : G.PolyWitnessedTotalVerificationG Acc
+      : G.PolyTotalWitnessedVerificationG Acc
       → (lob : O.LOB)
       → (sizeGrade : ℕ → R.Grade)
       → NonDegenerate lob sizeGrade
@@ -95,7 +105,7 @@ module For
     (polyOk : ∀ {p : ℕ → ℕ} → IsPoly p → PolyPred.isPoly Pℕ p)
     where
 
-    module Rℕ = TRG.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+    module Rℕ = TRG.UniformNatFromRuns K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
     module Wℕ = Rℕ.WithWitnessSize WSize
 
     module CS = CP.FromTruthRoute

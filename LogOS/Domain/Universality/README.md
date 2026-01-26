@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -15,17 +15,18 @@ We present four paradigms as different instantiations of one core, with differen
 - Quantum (gates/circuits)
 - Blockchain (EVM-like, gas-based)
 
+Interpretation (analogy):
+this README references “physics of information” vocabulary as motivation; any formal content is only what is stated in the cited Agda modules and their explicit assumptions.
+
 Core: `LogOS/Domain/Universality/Core.agda`
 - CoreUCode: sum type of codes (TuringCode, ChurchCode, CoreQuantumCode, ChainCode)
 - stepCoreU: one-step semantics for each branch
 - simulateCoreU: iterate stepCoreU n times
 
-Adapter surface: `LogOS/Domain/Universality/Adapter.agda`
-- Re-export the bridge tooling: canonical adapter, Rice/BodyEq transports,
-  Flow universality lemmas, and the core-spectrum complexity/separation scaffolding.
-
 Umbrella surface: `LogOS/Domain/Universality/All.agda`
-- Adapter surface plus scheme presentation and lemma bundles.
+- Unified surface: bridge tooling (Rice/BodyEq transports), Flow universality
+  lemmas, and the core-spectrum complexity/separation scaffolding, plus scheme
+  presentation and lemma bundles.
 
 Physics-of-information packs (Landauer / DPI / measurement-capacity) live in:
 - `LogOS/Domain/Complexity/LCUToLandauer.agda`
@@ -35,13 +36,16 @@ Physics-of-information packs (Landauer / DPI / measurement-capacity) live in:
 
 Curated surface: `LogOS/Packs/Universality/Core.agda`
 - Recommended stable import surface (no demos). It re-exports only the core
-  executable code plus the `CoreScheme` wrapper.
+  executable code plus the `CoreScheme` wrapper and the canonical port view
+  (`Core.Ports`).
 
-This directory intentionally does not provide a large `All` umbrella module; import
-`Core`/`Adapters` directly when you want the minimal ingredients.
+`LogOS/Domain/Universality/All.agda` exists as a convenience umbrella; when you want
+the minimal ingredients, import `LogOS/Domain/Universality/Core.agda` directly (and
+only the bridge modules you need).
 
-Making it executable
-- The stepCoreU function is total and simulateCoreU executes a code for n steps.
+Executable universal logic
+- The stepCoreU function is total and simulateCoreU (alias: execCoreU) executes
+  a code for n steps.
 - These simple models are intentionally minimal, but already demonstrate the
   unifying pattern: each paradigm is a code + step pair.
 
@@ -49,6 +53,10 @@ Hooking into Kernel
 - `LogOS/Domain/Universality/Kernel.agda` provides a concrete Kernel instance `UK` with
   `Code = CoreUCode` and `Guard = stepCoreU`, so the guarded reflection layer talks about
   the same stepper executable via `simulateCoreU`.
+ - `LogOS/Domain/Universality/KernelRich.agda` refines the **boundary preorder** to
+   observational equality (`observeCore`) and uses canonicalization as `Flow`.
+   Its H-tier truth is intentionally vacuous, so canonical ports are best read as
+   structural wiring unless you add separate non-vacuity/meaningfulness assumptions.
 Same PA computation across schemes
 - See `LogOS/Domain/Universality/PAExample.agda`:
   - `encodeT/encodeC/encodeQ/encodeB` map the same input `n` to each scheme.

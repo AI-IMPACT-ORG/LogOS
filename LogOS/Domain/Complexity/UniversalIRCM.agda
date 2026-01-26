@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -95,7 +95,16 @@ module TR
     verRunWithK : Inputᵀ → CodeK → CodeK
     verRunWithK x w = toCodeK (encVWᵀ x (fromCodeK w))
 
-  module G = TruthRoute.ForNat
+  DetRun : Inputᵀ → CodeK
+  DetRun = detRunK
+
+  VerRun : Inputᵀ → CodeK
+  VerRun = verRunK
+
+  VerRunWith : Inputᵀ → CodeK → CodeK
+  VerRunWith = verRunWithK
+
+  module G = TruthRoute.UniformNatFromRuns
     K
     Inputᵀ
     sizeᵀ

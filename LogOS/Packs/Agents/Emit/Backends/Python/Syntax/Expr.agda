@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,9 +7,9 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Agents.Emit.Backends.Python.Syntax.Expr where
 
-open import Data.List using (List; []; _∷_; _++_)
-open import Data.Maybe using (Maybe; nothing; just)
-open import Data.String using (String; _++s_; intercalateS; showString)
+open import LogOS.Prelude.List using (List; []; _∷_; _++_)
+open import LogOS.Prelude.Maybe using (Maybe; nothing; just)
+open import LogOS.Prelude.String using (String; _++s_; intercalateS; showString)
 
 mutual
   data PyExpr : Set where

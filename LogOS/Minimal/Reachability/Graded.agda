@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,7 +22,7 @@ import LogOS.Minimal.Truth as Truth
 module For
   {ℓ : Level}
   {Q : QAdapter ℓ}
-  {CP : ConPoset ℓ}
+  {CP : ConPreorder ℓ}
   (G : Truth.GuardedCore.GradedClosure Q CP)
   where
 
@@ -32,11 +32,11 @@ module For
     ; _⊔s_ to _⊔g_
     ; _·_  to _∙_
     )
-  open ConPoset CP
+  open ConPreorder CP
   open Truth.GuardedCore.GradedClosure G
 
   trans⊑ : ∀ {x y z} → _⊑_ x y → _⊑_ y z → _⊑_ x z
-  trans⊑ = ConPoset.trans CP
+  trans⊑ = ConPreorder.trans CP
 
   infix 4 _⟶[_]_
 

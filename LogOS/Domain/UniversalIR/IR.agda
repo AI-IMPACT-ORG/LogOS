@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,7 +11,7 @@ open import LogOS.Prelude
 open import LogOS.Domain.UniversalIR.Core
 open import LogOS.Domain.UniversalIR.Encoding public using (take; double; bitsToNat)
 
-open import Data.List using (List; []; _∷_)
+open import LogOS.Prelude.List using (List; []; _∷_)
 
 -- Canonical lowering: map any brand-specific UCode variant to the universal IR
 -- (the lambda/Church-numeral branch), extracting an "answer" from each brand.

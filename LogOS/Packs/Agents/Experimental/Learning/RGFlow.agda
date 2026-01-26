@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,11 +13,13 @@ open import LogOS.Base.Signature using (LogOSSignature; module LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
-open import Data.Nat using (ℕ; zero; suc) renaming (_+_ to _+ℕ_)
-open import Data.NatOrder using (_≤ℕ_)
+open import LogOS.Boundary.Telemetry using (TelemetryTrace; ProgramTelemetryPort)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc) renaming (_+_ to _+ℕ_)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_)
 
 open import LogOS.Kernel.Graded using (GradedKernel)
 import LogOS.Kernel.Graded.Endo as GEndo
+import LogOS.Kernel.Graded.Boundary as GBoundary
 open import LogOS.Kernel.Graded.ConAlgOf using (conAlgOf)
 open import LogOS.Algebra.ConAlg using (ConAlg)
 import LogOS.Packs.Agents.Experimental.Physics.LearningCost as LearningCost
@@ -47,6 +49,8 @@ module For
   open GradedKernel K using (BB)
   open BulkBoundary BB using (Con_bnd)
   open GEndo
+
+  boundaryIO = GBoundary.boundaryIO K
 
   module FP = EndoFP.Graded.For K ωCPO
   open FP using (_⊑_; iterEndo; muEndo; muEndo-unfold-left; muEndo-induction;
@@ -522,6 +526,52 @@ module For
              ≤ℕ
              MC.MeasurementCapacity.info capacity f
 
+  record InfoCFunctionFromTelemetry {g : QAdapter.Scale Q} (s : RGStep g)
+                                    {ℓT : Level} (T : TelemetryTrace ℓT)
+                                    : Set (lsuc (lsuc (ℓ ⊔ ℓT))) where
+    field
+      capacity : MC.MeasurementCapacity Sig Q
+      telemetry : ProgramTelemetryPort Sig Q _ _ _ boundaryIO T
+      bridge : MC.TelemetryCapacityBridge Sig Q boundaryIO T telemetry capacity
+      traceInfoMono : MC.TraceInfoMono T (MC.TelemetryCapacityBridge.trace→info bridge)
+      channel : DPI.Channel Cosp
+      obs : Policy → Cosp
+      obs-step : ∀ c → obs (applyRG s c) ≡ DPI.Channel.run channel (obs c)
+      mono : ∀ {c d}
+           → _⊑_ c d
+           → MC.MeasurementCapacity.info capacity (obs c)
+             ≤ℕ
+             MC.MeasurementCapacity.info capacity (obs d)
+      contract
+        : ∀ f
+        → TelemetryTrace._⊑T_ T
+            (ProgramTelemetryPort.observe-∂ telemetry
+              (LogOSSignature.to∂ Sig (DPI.Channel.run channel f)))
+            (ProgramTelemetryPort.observe-∂ telemetry
+              (LogOSSignature.to∂ Sig f))
+
+  infoC-from-telemetry
+    : ∀ {g} {s : RGStep g} {ℓT : Level} {T : TelemetryTrace ℓT}
+    → InfoCFunctionFromTelemetry s T
+    → InfoCFunction s
+  infoC-from-telemetry {s = s} {T = T} F =
+    record
+      { capacity = InfoCFunctionFromTelemetry.capacity F
+      ; channel = InfoCFunctionFromTelemetry.channel F
+      ; obs = InfoCFunctionFromTelemetry.obs F
+      ; obs-step = InfoCFunctionFromTelemetry.obs-step F
+      ; mono = InfoCFunctionFromTelemetry.mono F
+      ; dpi = λ f →
+          MC.dpiFromTelemetryChannel boundaryIO T
+            (InfoCFunctionFromTelemetry.telemetry F)
+            (InfoCFunctionFromTelemetry.capacity F)
+            (InfoCFunctionFromTelemetry.bridge F)
+            (InfoCFunctionFromTelemetry.traceInfoMono F)
+            (InfoCFunctionFromTelemetry.channel F)
+            (InfoCFunctionFromTelemetry.contract F)
+            f
+      }
+
   infoC-step
     : ∀ {g} {s : RGStep g}
     → (F : InfoCFunction s)
@@ -551,6 +601,30 @@ module For
         (InfoCFunction.obs F (rg-iter s n))
   infoC-iter {s = s} F n = infoC-step F (rg-iter s n)
 
+  infoC-step-from-telemetry
+    : ∀ {g} {s : RGStep g} {ℓT : Level} {T : TelemetryTrace ℓT}
+    → (F : InfoCFunctionFromTelemetry s T)
+    → ∀ c
+    → MC.MeasurementCapacity.info (InfoCFunctionFromTelemetry.capacity F)
+        (InfoCFunctionFromTelemetry.obs F (applyRG s c))
+      ≤ℕ
+      MC.MeasurementCapacity.info (InfoCFunctionFromTelemetry.capacity F)
+        (InfoCFunctionFromTelemetry.obs F c)
+  infoC-step-from-telemetry F c =
+    infoC-step (infoC-from-telemetry F) c
+
+  infoC-iter-from-telemetry
+    : ∀ {g} {s : RGStep g} {ℓT : Level} {T : TelemetryTrace ℓT}
+    → (F : InfoCFunctionFromTelemetry s T)
+    → ∀ n
+    → MC.MeasurementCapacity.info (InfoCFunctionFromTelemetry.capacity F)
+        (InfoCFunctionFromTelemetry.obs F (rg-iter s (suc n)))
+      ≤ℕ
+      MC.MeasurementCapacity.info (InfoCFunctionFromTelemetry.capacity F)
+        (InfoCFunctionFromTelemetry.obs F (rg-iter s n))
+  infoC-iter-from-telemetry F n =
+    infoC-iter (infoC-from-telemetry F) n
+
   c-from-info
     : ∀ {g} {s : RGStep g}
     → InfoToTime
@@ -566,6 +640,14 @@ module For
       ; step = λ c →
           InfoToTime.mono IT (infoC-step F c)
       }
+
+  c-from-info-telemetry
+    : ∀ {g} {s : RGStep g} {ℓT : Level} {T : TelemetryTrace ℓT}
+    → InfoToTime
+    → InfoCFunctionFromTelemetry s T
+    → CFunction s
+  c-from-info-telemetry IT F =
+    c-from-info IT (infoC-from-telemetry F)
 
   record InfoAFunction {g : QAdapter.Scale Q} (s : RGStep g) : Set (lsuc (lsuc ℓ)) where
     field

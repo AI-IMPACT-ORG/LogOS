@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Domain.UniversalIR.Std where
 
 open import LogOS.Prelude
 open import LogOS.Domain.UniversalIR.Core
-open import Data.Bool using (Bool; true; false)
+open import LogOS.Prelude.Bool using (Bool; true; false)
 
 -- Tiny “standard library” lemmas used throughout UniversalIR.
 

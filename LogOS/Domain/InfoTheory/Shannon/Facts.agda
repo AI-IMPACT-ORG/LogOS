@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,8 @@ module LogOS.Domain.InfoTheory.Shannon.Facts where
 
 open import LogOS.Prelude hiding (_+_; _*_)
 
-open import Data.Nat using (ℕ)
-open import Data.Fin using (Fin)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Fin using (Fin)
 
 -- A “facts pack” for finite Shannon information theory:
 -- it isolates analytic commitments (carrier, ln/exp, inequalities) as explicit fields.

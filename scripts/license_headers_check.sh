@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# LogOS: an Agda research library for foundational logic system architecture.
+# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -15,7 +15,7 @@ LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 cd "${LIB_ROOT}"
 
-TITLE_LINE="LogOS: an Agda research library for foundational logic system architecture."
+TITLE_LINE="LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning"
 COPY_LINE="Copyright (C) 2026 AI.IMPACT GmbH"
 SPDX_LINE="SPDX-License-Identifier: GPL-3.0-only"
 

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,9 +10,9 @@ module LogOS.Domain.UniversalIR.Core.Ethereum where
 open import LogOS.Prelude
 open import LogOS.Domain.UniversalIR.Core.Utils
 
-open import Data.Bool using (Bool; true; false)
-open import Data.List using (List; []; _∷_)
-open import Data.Maybe using (Maybe; just; nothing)
+open import LogOS.Prelude.Bool using (Bool; true; false)
+open import LogOS.Prelude.List using (List; []; _∷_)
+open import LogOS.Prelude.Maybe using (Maybe; just; nothing)
 
 -- 3) EVM-like stack machine (unbounded memory, jumps) ------------------------
 
@@ -107,3 +107,20 @@ stepEInstr MSTORE s with pop2 (stack s)
 
 stepE : EVMCode → EVMCode
 stepE s = stepEInstr (lookupDefault STOP (code s) (pc s)) s
+
+-- Observer-facing boundary (default: top of stack, if present).
+
+observeTop : EVMCode → Maybe ℕ
+observeTop s with stack s
+... | []      = nothing
+... | x ∷ _   = just x
+
+boundaryTop : BoundaryObs EVMCode
+boundaryTop = record { Obs = Maybe ℕ ; observe = observeTop }
+
+Effect : Set₁
+Effect = EffectAt boundaryTop
+
+infix 4 _⊨_
+_⊨_ : EVMCode → Effect → Set
+s ⊨ E = (s ⊨ᵇ boundaryTop) E

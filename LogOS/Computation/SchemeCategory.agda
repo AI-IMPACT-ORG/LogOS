@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,36 +9,82 @@ module LogOS.Computation.SchemeCategory where
 
 open import LogOS.Prelude
 
-open import LogOS.Minimal.Con using (ConPoset; MonoOn)
+open import LogOS.Minimal.Con using (ConPreorder; MonoOn)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.ScaleOps using (ScaleOps)
+open import LogOS.Minimal.ScaleOps using (ScaleOps; BudgetOps)
 import LogOS.Minimal.Truth as Truth
 
 import LogOS.Computation.Scheme as Sch
 open import LogOS.Computation.Core using (iterate; iterate-mono)
+import LogOS.Computation.Core as CompCore
+module StepSim = CompCore.StepSimulation
+open import LogOS.Boundary.Telemetry using (TelemetryTrace)
 
 -- A “process” is the part of a `Scheme` that is shared by many paradigms:
--- state carrier + dynamics + renormaliser + observation + cost algebra.
+-- state carrier + dynamics + closure operator + observation + cost algebra.
 --
 -- A “choice” then supplies a compiler + a fuel bound into that shared process.
 
 record Process {ℓO ℓC ℓQ : Level} (Output : Set ℓO) : Set (lsuc (ℓO ⊔ ℓC ⊔ ℓQ)) where
   field
-    CP       : ConPoset ℓC
-    Step     : ConPoset.Con CP → ConPoset.Con CP
-    Norm     : Sch.Closure CP
-    decode   : ConPoset.Con CP → Output
+    CP       : ConPreorder ℓC
+    Step     : ConPreorder.Con CP → ConPreorder.Con CP
+    Close     : Sch.Closure CP
+    decode   : ConPreorder.Con CP → Output
     Q        : QAdapter ℓQ
-    stepCost : ConPoset.Con CP → QAdapter.Scale Q
+    stepCost : ConPreorder.Con CP → QAdapter.Scale Q
 
-  open ConPoset CP public using (Con; _⊑_; refl; trans)
-  open Sch.Closure Norm public renaming
-    ( cl        to normalize
-    ; mono      to normalize-mono
-    ; infl      to normalize-infl
-    ; idemp-lax to normalize-idemp-lax
+  open ConPreorder CP public using (Con; _⊑_; refl; trans)
+  open Sch.Closure Close public renaming
+    ( cl        to close
+    ; mono      to close-mono
+    ; infl      to close-infl
+    ; idemp-lax to close-idemp-lax
     )
   open QAdapter Q public using (Scale; _≤s_; _·_; e)
+
+scalePreorder
+  : ∀ {ℓQ : Level}
+    (Q : QAdapter ℓQ)
+  → ConPreorder ℓQ
+scalePreorder Q =
+  record
+    { Con = QAdapter.Scale Q
+    ; _⊑_ = QAdapter._≤s_ Q
+    ; refl = QAdapter.≤s-refl Q
+    ; trans = QAdapter.≤s-trans Q
+    }
+
+costExecP
+  : ∀ {ℓO ℓC ℓQ} {Output : Set ℓO}
+    (P : Process {ℓO} {ℓC} {ℓQ} Output)
+  → ℕ → Process.Con P → QAdapter.Scale (Process.Q P)
+costExecP P zero    c = QAdapter.e (Process.Q P)
+costExecP P (suc n) c =
+  QAdapter._·_ (Process.Q P) (Process.stepCost P c) (costExecP P n (Process.Step P c))
+
+processTelemetry
+  : ∀ {ℓO ℓC ℓQ : Level}
+    {Output : Set ℓO}
+  → Process {ℓO} {ℓC} {ℓQ} Output
+  → TelemetryTrace ℓQ
+processTelemetry P =
+  record { trace = scalePreorder (Process.Q P) }
+
+execTelemetry
+  : ∀ {ℓO ℓC ℓQ : Level}
+    {Output : Set ℓO}
+    (P : Process {ℓO} {ℓC} {ℓQ} Output)
+  → ℕ → Process.Con P → TelemetryTrace.Trace (processTelemetry P)
+execTelemetry P = costExecP P
+
+withinBudget
+  : ∀ {ℓO ℓC ℓQ : Level}
+    {Output : Set ℓO}
+    (P : Process {ℓO} {ℓC} {ℓQ} Output)
+  → ℕ → Process.Con P → QAdapter.Scale (Process.Q P) → Set ℓQ
+withinBudget P n c b =
+  QAdapter._≤s_ (Process.Q P) (execTelemetry P n c) b
 
 processOf
   : ∀ {ℓI ℓO ℓC ℓQ}
@@ -49,10 +95,43 @@ processOf S =
   record
     { CP       = Sch.Scheme.CP S
     ; Step     = Sch.Scheme.Step S
-    ; Norm     = Sch.Scheme.Norm S
+    ; Close     = Sch.Scheme.Close S
     ; decode   = Sch.Scheme.decode S
     ; Q        = Sch.Scheme.Q S
     ; stepCost = Sch.Scheme.stepCost S
+    }
+
+processWithDecode
+  : ∀ {ℓO ℓO' ℓC ℓQ}
+    {Output : Set ℓO} {Output' : Set ℓO'}
+    → (P : Process {ℓO} {ℓC} {ℓQ} Output)
+    → (Process.Con P → Output')
+    → Process {ℓO'} {ℓC} {ℓQ} Output'
+processWithDecode P decode' =
+  record
+    { CP       = Process.CP P
+    ; Step     = Process.Step P
+    ; Close     = Process.Close P
+    ; decode   = decode'
+    ; Q        = Process.Q P
+    ; stepCost = Process.stepCost P
+    }
+
+processWithCost
+  : ∀ {ℓO ℓC ℓQ ℓQ'}
+    {Output : Set ℓO}
+    → (P : Process {ℓO} {ℓC} {ℓQ} Output)
+    → (Q' : QAdapter ℓQ')
+    → (Process.Con P → QAdapter.Scale Q')
+    → Process {ℓO} {ℓC} {ℓQ'} Output
+processWithCost P Q' stepCost' =
+  record
+    { CP       = Process.CP P
+    ; Step     = Process.Step P
+    ; Close     = Process.Close P
+    ; decode   = Process.decode P
+    ; Q        = Q'
+    ; stepCost = stepCost'
     }
 
 record Choice
@@ -76,7 +155,7 @@ schemeFromChoice P C =
   record
     { CP       = Process.CP P
     ; Step     = Process.Step P
-    ; Norm     = Process.Norm P
+    ; Close     = Process.Close P
     ; compile  = Choice.compile C
     ; fuel     = Choice.fuel C
     ; decode   = Process.decode P
@@ -93,14 +172,29 @@ record ProcessHom
   (P₁ : Process {ℓO} {ℓC₁} {ℓQ₁} Output)
   (P₂ : Process {ℓO} {ℓC₂} {ℓQ₂} Output)
   : Set (lsuc (ℓO ⊔ ℓC₁ ⊔ ℓQ₁ ⊔ ℓC₂ ⊔ ℓQ₂)) where
-  open Process P₁ renaming (Con to Con₁; _⊑_ to _⊑₁_; Step to Step₁; normalize to norm₁; decode to decode₁)
-  open Process P₂ renaming (Con to Con₂; _⊑_ to _⊑₂_; Step to Step₂; normalize to norm₂; decode to decode₂)
+  open Process P₁ renaming (Con to Con₁; _⊑_ to _⊑₁_; Step to Step₁; close to norm₁; decode to decode₁)
+  open Process P₂ renaming (Con to Con₂; _⊑_ to _⊑₂_; Step to Step₂; close to norm₂; decode to decode₂)
   field
     map     : Con₁ → Con₂
     mono    : ∀ {x y} → x ⊑₁ y → map x ⊑₂ map y
     step-comm : ∀ c → map (Step₁ c) ≡ Step₂ (map c)
     norm-comm : ∀ c → map (norm₁ c) ≡ norm₂ (map c)
     decode-comm : ∀ c → decode₂ (map c) ≡ decode₁ c
+
+ProcessHom→StepSim
+  : ∀ {ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂ : Level}
+    {Output : Set ℓO}
+    {P₁ : Process {ℓO} {ℓC₁} {ℓQ₁} Output}
+    {P₂ : Process {ℓO} {ℓC₂} {ℓQ₂} Output}
+  → ProcessHom P₁ P₂
+  → StepSim.StepSim
+      (Process.Con P₁) (Process.Con P₂)
+      (Process.Step P₁) (Process.Step P₂)
+ProcessHom→StepSim h =
+  record
+    { map       = ProcessHom.map h
+    ; step-comm = ProcessHom.step-comm h
+    }
 
 -- Lax process morphism: commute with step/normalisation up to the target preorder.
 --
@@ -113,8 +207,8 @@ record ProcessHomLax
   (P₁ : Process {ℓO} {ℓC₁} {ℓQ₁} Output)
   (P₂ : Process {ℓO} {ℓC₂} {ℓQ₂} Output)
   : Set (lsuc (ℓO ⊔ ℓC₁ ⊔ ℓQ₁ ⊔ ℓC₂ ⊔ ℓQ₂)) where
-  open Process P₁ renaming (Con to Con₁; _⊑_ to _⊑₁_; Step to Step₁; normalize to norm₁; decode to decode₁)
-  open Process P₂ renaming (Con to Con₂; _⊑_ to _⊑₂_; Step to Step₂; normalize to norm₂; decode to decode₂)
+  open Process P₁ renaming (Con to Con₁; _⊑_ to _⊑₁_; Step to Step₁; close to norm₁; decode to decode₁)
+  open Process P₂ renaming (Con to Con₂; _⊑_ to _⊑₂_; Step to Step₂; close to norm₂; decode to decode₂)
   field
     map       : Con₁ → Con₂
     mono      : ∀ {x y} → x ⊑₁ y → map x ⊑₂ map y
@@ -140,7 +234,7 @@ ProcessHom→Lax {ℓC₂ = ℓC₂} {P₁ = P₁} {P₂ = P₂} h =
     { map        = map
     ; mono       = mono
     ; step-comm≤ = λ c → subst (λ z → le₂ (map (Process.Step P₁ c)) z) (step-comm c) refl₂
-    ; norm-comm≤ = λ c → subst (λ z → le₂ (map (Process.normalize P₁ c)) z) (norm-comm c) refl₂
+    ; norm-comm≤ = λ c → subst (λ z → le₂ (map (Process.close P₁ c)) z) (norm-comm c) refl₂
     ; decode-comm = decode-comm
     }
 
@@ -351,6 +445,15 @@ run≤
 run≤ P Ops g c =
   iterStep P (ScaleOps.steps Ops (ScaleOps.budget Ops g)) c
 
+run≤ᵇ
+  : ∀ {ℓO ℓC ℓQ} {Output : Set ℓO}
+    (P : Process {ℓO} {ℓC} {ℓQ} Output)
+    (Ops : BudgetOps (Process.Q P))
+  → QAdapter.Scale (Process.Q P)
+  → Process.Con P
+  → Process.Con P
+run≤ᵇ P Ops = run≤ P (BudgetOps.Ops Ops)
+
 -- If two grades induce the same step budget, they induce the same execution.
 --
 -- This is the precise form of “time and additional resource axes are
@@ -372,11 +475,8 @@ iterStep-map
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ₂} Output}
     (h : ProcessHom P₁ P₂)
   → ∀ n c → ProcessHom.map h (iterStep P₁ n c) ≡ iterStep P₂ n (ProcessHom.map h c)
-iterStep-map {P₁ = P₁} {P₂ = P₂} h zero    _ = refl
-iterStep-map {P₁ = P₁} {P₂ = P₂} h (suc n) c =
-  LogOS.Prelude.trans
-    (iterStep-map {P₁ = P₁} {P₂ = P₂} h n (Process.Step P₁ c))
-    (cong (iterStep P₂ n) (ProcessHom.step-comm h c))
+iterStep-map {P₁ = P₁} {P₂ = P₂} h n c =
+  StepSim.iterateStep-map (Process.Step P₁) (Process.Step P₂) (ProcessHom→StepSim h) n c
 
 iterStep-map≤
   : ∀ {ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂} {Output : Set ℓO}
@@ -437,17 +537,17 @@ run≤-meaning-comm
       (g : QAdapter.Scale (Process.Q P₁))
       (c : Process.Con P₁)
   → Process.decode P₂
-      (Process.normalize P₂
+      (Process.close P₂
         (run≤ P₂
           (castOps→ hc Ops)
           (castScale→ hc g)
           (ProcessHom.map (ProcessHomCost.hom hc) c)))
-    ≡ Process.decode P₁ (Process.normalize P₁ (run≤ P₁ Ops g c))
+    ≡ Process.decode P₁ (Process.close P₁ (run≤ P₁ Ops g c))
 run≤-meaning-comm {P₁ = P₁} {P₂ = P₂}
   hc@(record { hom = h ; Q-comm = refl ; stepCost-comm = _ }) Ops g c =
   let
-    open Process P₁ renaming (normalize to norm₁; decode to dec₁) hiding (refl; trans)
-    open Process P₂ renaming (normalize to norm₂; decode to dec₂) hiding (refl; trans)
+    open Process P₁ renaming (close to norm₁; decode to dec₁) hiding (refl; trans)
+    open Process P₂ renaming (close to norm₂; decode to dec₂) hiding (refl; trans)
     r = run≤ P₁ Ops g c
   in
   LogOS.Prelude.trans
@@ -455,14 +555,6 @@ run≤-meaning-comm {P₁ = P₁} {P₂ = P₂}
     (LogOS.Prelude.trans
       (cong dec₂ (sym (ProcessHom.norm-comm h r)))
       (ProcessHom.decode-comm h (norm₁ r)))
-
-costExecP
-  : ∀ {ℓO ℓC ℓQ} {Output : Set ℓO}
-    (P : Process {ℓO} {ℓC} {ℓQ} Output)
-  → ℕ → Process.Con P → QAdapter.Scale (Process.Q P)
-costExecP P zero    c = QAdapter.e (Process.Q P)
-costExecP P (suc n) c =
-  QAdapter._·_ (Process.Q P) (Process.stepCost P c) (costExecP P n (Process.Step P c))
 
 costExecP≡costExec
   : ∀ {ℓI ℓO ℓC ℓQ}
@@ -577,7 +669,7 @@ costExecP-map {P₁ = P₁} {P₂ = P₂}
 -- ==========================================================================
 -- Budgeted execution transport (new: operational, “machines are schemes”)
 --
--- `ComputesWithin-map` transports a full normalize+decode story.
+-- `ComputesWithin-map` transports a full close+decode story.
 -- Here we expose the lower-level operational layer:
 -- - reachability after n steps, and
 -- - the accumulated cost of those n steps within a budget.
@@ -827,12 +919,12 @@ ComputesWithin-map-grade {P₁ = P₁} {P₂ = P₂} hc C x b y proof =
             (sym (ProcessHom.step-comm h c'))
             (cong (ProcessHom.map h) halt₁)
 
-        outEq₂ : Sch.Scheme.decode S₂ (Sch.Scheme.normalize S₂ c₂) ≡ y
+        outEq₂ : Sch.Scheme.decode S₂ (Sch.Scheme.close S₂ c₂) ≡ y
         outEq₂ =
           trans
             (cong (Sch.Scheme.decode S₂) (sym (ProcessHom.norm-comm h c')))
             (trans
-              (ProcessHom.decode-comm h (Sch.Scheme.normalize S₁ c'))
+              (ProcessHom.decode-comm h (Sch.Scheme.close S₁ c'))
               outEq)
 
 -- Simulation preserves semantics (unbounded, fuel-free):
@@ -879,12 +971,12 @@ ComputesTo-map {P₁ = P₁} {P₂ = P₂} h C x y proof =
             (sym (ProcessHom.step-comm h c'))
             (cong (ProcessHom.map h) halt₁)
 
-        outEq₂ : Sch.Scheme.decode S₂ (Sch.Scheme.normalize S₂ c₂) ≡ y
+        outEq₂ : Sch.Scheme.decode S₂ (Sch.Scheme.close S₂ c₂) ≡ y
         outEq₂ =
           trans
             (cong (Sch.Scheme.decode S₂) (sym (ProcessHom.norm-comm h c')))
             (trans
-              (ProcessHom.decode-comm h (Sch.Scheme.normalize S₁ c'))
+              (ProcessHom.decode-comm h (Sch.Scheme.close S₁ c'))
               outEq)
 
 idProcessHom
@@ -999,8 +1091,8 @@ run-comm {P₁ = P₁} {P₂ = P₂} h C x = lemma
     S₁ = schemeFromChoice P₁ C
     S₂ = schemeFromChoice P₂ (mapChoice h C)
 
-    open Process P₁ renaming (Con to Con₁; Step to Step₁; normalize to norm₁; decode to decode₁) hiding (refl; trans)
-    open Process P₂ renaming (Con to Con₂; Step to Step₂; normalize to norm₂; decode to decode₂) hiding (refl; trans)
+    open Process P₁ renaming (Con to Con₁; Step to Step₁; close to norm₁; decode to decode₁) hiding (refl; trans)
+    open Process P₂ renaming (Con to Con₂; Step to Step₂; close to norm₂; decode to decode₂) hiding (refl; trans)
 
     iterate-map
       : ∀ n c → ProcessHom.map h (iterate (Sch.Scheme.Comp S₁) n c)

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,7 +13,7 @@ module LogOS.Theorems.Meta.Bootstrapping where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
-open import Data.Product using (_×_; _,_)
+open import LogOS.Prelude.Product using (_×_; _,_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
@@ -232,6 +232,21 @@ module For
     Prop.↔-trans (I.adapter-unique A p c)
       (Prop.↔-sym (unbootstrap≈canonical p c))
 
+  -- Confluence: any two adapters between stages are ObsEq-equivalent.
+  stage1→stage0-confluent
+    : ∀ {A A' : Interop.PortAdapter B Stage1Port Stage0Port}
+    → Interop.For.Adapter≈ B Stage1Port Stage0Port A A'
+  stage1→stage0-confluent {A} {A'} =
+    let module I = Interop.For B Stage1Port Stage0Port in
+    I.adapter-confluent {A = A} {A' = A'}
+
+  stage0→stage1-confluent
+    : ∀ {A A' : Interop.PortAdapter B Stage0Port Stage1Port}
+    → Interop.For.Adapter≈ B Stage0Port Stage1Port A A'
+  stage0→stage1-confluent {A} {A'} =
+    let module I = Interop.For B Stage0Port Stage1Port in
+    I.adapter-confluent {A = A} {A' = A'}
+
   -- Refinement view: stage semantics agree via the adapters.
   stage1-refines-stage0
     : ∀ p γ
@@ -254,6 +269,17 @@ module For
     module P = Transpiler.Pipeline B Stage1Port P₂ P₃
     open P public
 
+  module Stage0Pipeline = Transpiler.Pipeline B Stage0Port Stage1Port Stage0Port
+  module Stage1Pipeline = Transpiler.Pipeline B Stage1Port Stage0Port Stage1Port
+
+  bootstrap∘unbootstrap≡pipeline
+    : bootstrap∘unbootstrap ≡ Stage0Pipeline.pipeline unbootstrap bootstrap
+  bootstrap∘unbootstrap≡pipeline = refl
+
+  unbootstrap∘bootstrap≡pipeline
+    : unbootstrap∘bootstrap ≡ Stage1Pipeline.pipeline bootstrap unbootstrap
+  unbootstrap∘bootstrap≡pipeline = refl
+
   -- 2-category packaging: bootstrap as a 1-cell with a named 2-cell.
   module Port2Cat where
     module P = Port2Catₜ.For {ℓForm = ℓ} B
@@ -270,6 +296,17 @@ module For
     module I = Interlingua.For B Stage1Port Stage0Port
     open I public using (Respects≈∂)
 
+    bootstrap-closure-naturality-ObsEndo
+      : (endo : ObsEndo∂ B)
+      → ∀ p γ
+      → BoundaryPort.SatF Stage0Port p
+          (I.translate (BoundaryPort.Extend Stage1Port (ObsEndo∂.fn endo) γ))
+          ↔
+        BoundaryPort.SatF Stage0Port p
+          (BoundaryPort.Extend Stage0Port (ObsEndo∂.fn endo) (I.translate γ))
+    bootstrap-closure-naturality-ObsEndo endo p γ =
+      I.ported-closure-naturality-ObsEndo endo p γ
+
     bootstrap-closure-naturality
       : ∀ (F : Con_bnd → Con_bnd)
       → Respects≈∂ F
@@ -277,8 +314,8 @@ module For
       → BoundaryPort.SatF Stage0Port p (I.translate (BoundaryPort.Extend Stage1Port F γ))
           ↔
         BoundaryPort.SatF Stage0Port p (BoundaryPort.Extend Stage0Port F (I.translate γ))
-    bootstrap-closure-naturality F extF p γ =
-      I.ported-closure-naturality F extF p γ
+    bootstrap-closure-naturality F extF =
+      bootstrap-closure-naturality-ObsEndo (record { fn = F; respects = extF })
 
   -- Vacuity guard: encode is injective (uses decode∘encode).
   encode-injective : ∀ {c d}
@@ -303,7 +340,6 @@ module For
         ; φ₁ = φ₁
         ; sat₀ = sat₀
         ; unsat₁ = unsat₁
-        ; φ₀≢φ₁ = import-distinct
         ; map-distinct = λ eq → import-distinct (encode-injective eq)
         }
 

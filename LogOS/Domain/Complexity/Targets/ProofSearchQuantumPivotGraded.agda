@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,15 +10,15 @@ module LogOS.Domain.Complexity.Targets.ProofSearchQuantumPivotGraded where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop using (NoWitness)
 
-open import Data.Nat using (ℕ)
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
 import LogOS.Domain.Complexity.Targets.ProofSearchGraded as PS
 import LogOS.Domain.Complexity.ResourceSchemaGraded as QTB
 import LogOS.Domain.Complexity.ObservabilityBudgetGraded as OB
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- Route B semantic pivot for proof search (grade-native):
 -- swap the missing premise from merge-count lower bounds to throughput+capacity
@@ -65,7 +65,7 @@ module For {ℓI ℓ ℓQ : Level}
                     (Assumptions.hard A)
 
     module QPack {P : Input → Set ℓ} {Sys : L.ProofSystem P} =
-      Quartet.MakeConstPack (Assumptions Sys) (Claim Sys) derive
+      AppKit.MakeConstPack (Assumptions Sys) (Claim Sys) derive
     open QPack public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module G where
@@ -89,7 +89,7 @@ module For {ℓI ℓ ℓQ : Level}
                         (Assumptions.hard A)
 
     module QPack {P : Input → Set ℓ} {Sys : L.ProofSystem P} =
-      Quartet.MakeConstPack (Assumptions Sys) (Claim Sys) derive
+      AppKit.MakeConstPack (Assumptions Sys) (Claim Sys) derive
     open QPack public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module LOB where
@@ -112,7 +112,7 @@ module For {ℓI ℓ ℓQ : Level}
                     (Assumptions.hard A)
 
     module QPack {P : Input → Set ℓ} {Sys : L.ProofSystem P} =
-      Quartet.MakeConstPack (Assumptions Sys) (Claim Sys) derive
+      AppKit.MakeConstPack (Assumptions Sys) (Claim Sys) derive
     open QPack public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module LOBG where
@@ -135,5 +135,5 @@ module For {ℓI ℓ ℓQ : Level}
                         (Assumptions.hard A)
 
     module QPack {P : Input → Set ℓ} {Sys : L.ProofSystem P} =
-      Quartet.MakeConstPack (Assumptions Sys) (Claim Sys) derive
+      AppKit.MakeConstPack (Assumptions Sys) (Claim Sys) derive
     open QPack public using (Pack; assumptionsOf; claimOf; mkPack)

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -96,7 +96,7 @@ record DecodeBridge {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 mkDecodeBridge
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q) {U∞ : Set}
-    (f : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)) → U∞)
+    (f : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)) → U∞)
   → DecodeBridge K U∞
 mkDecodeBridge K f = record
   { ⟦_⟧       = λ γ → f (Kernel.decode K γ)
@@ -106,7 +106,7 @@ mkDecodeBridge K f = record
 record StageToCH {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) : Set (lsuc (lsuc ℓ)) where
   open Kernel K
   private
-    module Bnd = ConPoset (BulkBoundary.bnd BB)
+    module Bnd = ConPreorder (BulkBoundary.bnd BB)
   field
     S   : StageIndex
     SS  : StageSet {ℓ} S

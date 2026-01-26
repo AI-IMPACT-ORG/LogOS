@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,15 +19,15 @@ module LogOS.Theorems.Reflection.Projector where
 
 open import LogOS.Prelude
 
-open import LogOS.Minimal.Con using (ConPoset; MonoOn)
+open import LogOS.Minimal.Con using (ConPreorder; PartialOrder; MonoOn; _≈CP_)
 open import LogOS.Minimal.Closure using (ClosureOp)
 
 -- A (lax) projector on a constraint preorder: inflationary and idempotent-lax.
 -- Monotonicity is intentionally not required: some reflection steps are only
 -- assumed to satisfy the stabilisation laws.
 
-record Projector {ℓ : Level} (CP : ConPoset ℓ) : Set (lsuc ℓ) where
-  open ConPoset CP
+record Projector {ℓ : Level} (CP : ConPreorder ℓ) : Set (lsuc ℓ) where
+  open ConPreorder CP
   field
     P         : Con → Con
     infl      : ∀ c → _⊑_ c (P c)
@@ -40,8 +40,8 @@ open Projector public
 -- The direction of “deflation” is reversed: I c ⊑ c. As with `Projector`,
 -- we do not require monotonicity here; only the stabilisation laws.
 
-record Coreflector {ℓ : Level} (CP : ConPoset ℓ) : Set (lsuc ℓ) where
-  open ConPoset CP
+record Coreflector {ℓ : Level} (CP : ConPreorder ℓ) : Set (lsuc ℓ) where
+  open ConPreorder CP
   field
     I         : Con → Con
     defl      : ∀ c → _⊑_ (I c) c
@@ -52,9 +52,9 @@ open Coreflector public
 -- Fixed points of a coreflector (stable interiors), again packaged via both
 -- inequalities to avoid antisymmetry requirements.
 
-record FixedI {ℓ} {CP : ConPoset ℓ} (Co : Coreflector CP) : Set (lsuc ℓ) where
+record FixedI {ℓ} {CP : ConPreorder ℓ} (Co : Coreflector CP) : Set (lsuc ℓ) where
   infix 4 _⊑ᶠᶦ_
-  open ConPoset CP
+  open ConPreorder CP
   field
     Conᶠᶦ   : Set ℓ
     _⊑ᶠᶦ_   : Conᶠᶦ → Conᶠᶦ → Set ℓ
@@ -67,27 +67,27 @@ record FixedI {ℓ} {CP : ConPoset ℓ} (Co : Coreflector CP) : Set (lsuc ℓ) w
 open FixedI public
 
 fixedPointsI
-  : ∀ {ℓ} {CP : ConPoset ℓ} (Co : Coreflector CP)
+  : ∀ {ℓ} {CP : ConPreorder ℓ} (Co : Coreflector CP)
   → FixedI Co
 fixedPointsI {CP = CP} Co = record
-  { Conᶠᶦ  = Σ (ConPoset.Con CP)
-               (λ c → ConPoset._⊑_ CP (Coreflector.I Co c) c
-                      × ConPoset._⊑_ CP c (Coreflector.I Co c))
-  ; _⊑ᶠᶦ_   = λ x y → ConPoset._⊑_ CP (proj₁ x) (proj₁ y)
-  ; reflᶠᶦ  = ConPoset.refl CP
-  ; transᶠᶦ = ConPoset.trans CP
+  { Conᶠᶦ  = Σ (ConPreorder.Con CP)
+               (λ c → ConPreorder._⊑_ CP (Coreflector.I Co c) c
+                      × ConPreorder._⊑_ CP c (Coreflector.I Co c))
+  ; _⊑ᶠᶦ_   = λ x y → ConPreorder._⊑_ CP (proj₁ x) (proj₁ y)
+  ; reflᶠᶦ  = ConPreorder.refl CP
+  ; transᶠᶦ = ConPreorder.trans CP
   ; toConᶦ  = proj₁
   ; fixedLᶦ = λ x → fst (proj₂ x)
   ; fixedRᶦ = λ x → snd (proj₂ x)
   }
 
--- Fixed points of a projector as a poset (inherit order from CP).
+-- Fixed points of a projector as a preorder (inherit order from CP).
 --
 -- We package both inequalities to avoid needing antisymmetry.
 
-record Fixed {ℓ} {CP : ConPoset ℓ} (Pr : Projector CP) : Set (lsuc ℓ) where
+record Fixed {ℓ} {CP : ConPreorder ℓ} (Pr : Projector CP) : Set (lsuc ℓ) where
   infix 4 _⊑ᶠ_
-  open ConPoset CP
+  open ConPreorder CP
   field
     Conᶠ   : Set ℓ
     _⊑ᶠ_   : Conᶠ → Conᶠ → Set ℓ
@@ -99,18 +99,18 @@ record Fixed {ℓ} {CP : ConPoset ℓ} (Pr : Projector CP) : Set (lsuc ℓ) wher
 
 open Fixed public
 
--- Build the fixed-point poset by packaging both inequalities as the witness.
+-- Build the fixed-point preorder by packaging both inequalities as the witness.
 
 fixedPoints
-  : ∀ {ℓ} {CP : ConPoset ℓ} (Pr : Projector CP)
+  : ∀ {ℓ} {CP : ConPreorder ℓ} (Pr : Projector CP)
   → Fixed Pr
 fixedPoints {CP = CP} Pr = record
-  { Conᶠ  = Σ (ConPoset.Con CP)
-               (λ c → ConPoset._⊑_ CP (Projector.P Pr c) c
-                      × ConPoset._⊑_ CP c (Projector.P Pr c))
-  ; _⊑ᶠ_   = λ x y → ConPoset._⊑_ CP (proj₁ x) (proj₁ y)
-  ; reflᶠ  = ConPoset.refl CP
-  ; transᶠ = ConPoset.trans CP
+  { Conᶠ  = Σ (ConPreorder.Con CP)
+               (λ c → ConPreorder._⊑_ CP (Projector.P Pr c) c
+                      × ConPreorder._⊑_ CP c (Projector.P Pr c))
+  ; _⊑ᶠ_   = λ x y → ConPreorder._⊑_ CP (proj₁ x) (proj₁ y)
+  ; reflᶠ  = ConPreorder.refl CP
+  ; transᶠ = ConPreorder.trans CP
   ; toCon  = proj₁
   ; fixedL = λ x → fst (proj₂ x)
   ; fixedR = λ x → snd (proj₂ x)
@@ -125,7 +125,7 @@ fixedPoints {CP = CP} Pr = record
 -- --------------------------------------------------------------------------
 
 projectorOfClosureOp
-  : ∀ {ℓ} {CP : ConPoset ℓ}
+  : ∀ {ℓ} {CP : ConPreorder ℓ}
   → ClosureOp CP → Projector CP
 projectorOfClosureOp C =
   record
@@ -135,7 +135,7 @@ projectorOfClosureOp C =
     }
 
 closureOpOfProjector
-  : ∀ {ℓ} {CP : ConPoset ℓ}
+  : ∀ {ℓ} {CP : ConPreorder ℓ}
   → (Pr : Projector CP)
   → MonoOn CP (Projector.P Pr)
   → ClosureOp CP
@@ -146,3 +146,65 @@ closureOpOfProjector Pr monoP =
     ; infl      = Projector.infl Pr
     ; idemp-lax = Projector.idemp-lax Pr
     }
+
+-- Convenience bundles --------------------------------------------------------
+
+-- A projector together with monotonicity. This is enough to view it as a
+-- `ClosureOp` (nucleus) without threading a separate `MonoOn` argument.
+
+record ProjectorMono {ℓ : Level} (CP : ConPreorder ℓ) : Set (lsuc ℓ) where
+  field
+    core   : Projector CP
+    mono-P : MonoOn CP (Projector.P core)
+
+  open Projector core public
+
+  asClosureOp : ClosureOp CP
+  asClosureOp = closureOpOfProjector core mono-P
+
+  -- Derived idempotence as mutual refinement (no antisymmetry needed).
+
+  idemp≈
+    : ∀ c → _≈CP_ CP (Projector.P core c) (Projector.P core (Projector.P core c))
+  idemp≈ c =
+    ( mono-P (Projector.infl core c)
+    , Projector.idemp-lax core c
+    )
+
+-- A coreflector together with monotonicity (the “interior” analogue).
+
+record CoreflectorMono {ℓ : Level} (CP : ConPreorder ℓ) : Set (lsuc ℓ) where
+  field
+    core    : Coreflector CP
+    mono-I  : MonoOn CP (Coreflector.I core)
+
+  open Coreflector core public
+
+-- Any `ClosureOp` yields a monotone projector immediately.
+
+projectorMonoOfClosureOp
+  : ∀ {ℓ} {CP : ConPreorder ℓ}
+  → ClosureOp CP
+  → ProjectorMono CP
+projectorMonoOfClosureOp C =
+  record
+    { core = projectorOfClosureOp C
+    ; mono-P = ClosureOp.mono C
+    }
+
+-- Antisymmetry upgrades mutual refinement on `ProjectorMono` to equality.
+
+idemp≡
+  : ∀ {ℓ} {CP : ConPreorder ℓ}
+  → PartialOrder CP
+  → (PM : ProjectorMono CP)
+  → ∀ c → Projector.P (ProjectorMono.core PM) (Projector.P (ProjectorMono.core PM) c)
+        ≡ Projector.P (ProjectorMono.core PM) c
+idemp≡ {CP = CP} po PM c =
+  let
+    open ConPreorder CP
+    open Projector (ProjectorMono.core PM)
+  in
+  PartialOrder.antisym po
+    (Projector.idemp-lax (ProjectorMono.core PM) c)
+    (ProjectorMono.mono-P PM (Projector.infl (ProjectorMono.core PM) c))

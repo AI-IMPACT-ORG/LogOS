@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -121,3 +121,107 @@ composeSigHom σ τ = record
         (cong (SigHom.map∂Cosp τ) (SigHom.to∂-pres σ w))
         (SigHom.to∂-pres τ (SigHom.mapCosp σ w))
   }
+
+-- ============================================================================
+-- SIGNATURE SPANS, COCONES, AND PUSHOUTS (UNIVERSAL LOGIC STORY)
+--
+-- We avoid function extensionality by using pointwise equality of `SigHom`.
+-- These structures are intentionally lightweight: they fit the existing
+-- reindexing and interlingua tooling without forcing extra laws on signatures.
+-- ============================================================================
+
+record SigHomEq {ℓ : Level}
+                {Sig₁ Sig₂ : LogOSSignature ℓ}
+                (σ τ : SigHom Sig₁ Sig₂)
+                : Set (lsuc ℓ) where
+  field
+    mapIface≡ : ∀ A → SigHom.mapIface σ A ≡ SigHom.mapIface τ A
+    mapCosp≡  : ∀ w → SigHom.mapCosp σ w ≡ SigHom.mapCosp τ w
+    map∂Cosp≡ : ∀ w → SigHom.map∂Cosp σ w ≡ SigHom.map∂Cosp τ w
+
+sigHomEq-refl
+  : ∀ {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ}
+    (σ : SigHom Sig₁ Sig₂)
+  → SigHomEq σ σ
+sigHomEq-refl _ =
+  record
+    { mapIface≡ = λ _ → refl
+    ; mapCosp≡  = λ _ → refl
+    ; map∂Cosp≡ = λ _ → refl
+    }
+
+sigHomEq-sym
+  : ∀ {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ}
+    {σ τ : SigHom Sig₁ Sig₂}
+  → SigHomEq σ τ → SigHomEq τ σ
+sigHomEq-sym eq =
+  record
+    { mapIface≡ = λ A → sym (SigHomEq.mapIface≡ eq A)
+    ; mapCosp≡  = λ w → sym (SigHomEq.mapCosp≡ eq w)
+    ; map∂Cosp≡ = λ w → sym (SigHomEq.map∂Cosp≡ eq w)
+    }
+
+sigHomEq-trans
+  : ∀ {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ}
+    {σ τ υ : SigHom Sig₁ Sig₂}
+  → SigHomEq σ τ → SigHomEq τ υ → SigHomEq σ υ
+sigHomEq-trans eq₁ eq₂ =
+  record
+    { mapIface≡ = λ A →
+        trans (SigHomEq.mapIface≡ eq₁ A) (SigHomEq.mapIface≡ eq₂ A)
+    ; mapCosp≡  = λ w →
+        trans (SigHomEq.mapCosp≡ eq₁ w) (SigHomEq.mapCosp≡ eq₂ w)
+    ; map∂Cosp≡ = λ w →
+        trans (SigHomEq.map∂Cosp≡ eq₁ w) (SigHomEq.map∂Cosp≡ eq₂ w)
+    }
+
+record SigSpan {ℓ : Level}
+               (Sig₀ Sig₁ Sig₂ : LogOSSignature ℓ)
+               : Set (lsuc ℓ) where
+  field
+    left  : SigHom Sig₀ Sig₁
+    right : SigHom Sig₀ Sig₂
+
+record SigCocone {ℓ : Level}
+                 {Sig₀ Sig₁ Sig₂ : LogOSSignature ℓ}
+                 (span : SigSpan Sig₀ Sig₁ Sig₂)
+                 (SigX : LogOSSignature ℓ)
+                 : Set (lsuc ℓ) where
+  field
+    inl : SigHom Sig₁ SigX
+    inr : SigHom Sig₂ SigX
+    commute
+      : SigHomEq
+          (composeSigHom (SigSpan.left span) inl)
+          (composeSigHom (SigSpan.right span) inr)
+
+record SigPushout {ℓ : Level}
+                  {Sig₀ Sig₁ Sig₂ : LogOSSignature ℓ}
+                  (span : SigSpan Sig₀ Sig₁ Sig₂)
+                  : Set (lsuc ℓ) where
+  field
+    SigP   : LogOSSignature ℓ
+    cocone : SigCocone span SigP
+    ump
+      : ∀ {SigX : LogOSSignature ℓ}
+      → (c : SigCocone span SigX)
+      → Σ (SigHom SigP SigX)
+          (λ h →
+            SigHomEq (composeSigHom (SigCocone.inl cocone) h) (SigCocone.inl c)
+            × SigHomEq (composeSigHom (SigCocone.inr cocone) h) (SigCocone.inr c))
+
+record SigCoproduct {ℓ : Level}
+                    (Sig₁ Sig₂ : LogOSSignature ℓ)
+                    : Set (lsuc ℓ) where
+  field
+    SigΣ : LogOSSignature ℓ
+    inl  : SigHom Sig₁ SigΣ
+    inr  : SigHom Sig₂ SigΣ
+    ump
+      : ∀ {SigX : LogOSSignature ℓ}
+      → (f₁ : SigHom Sig₁ SigX)
+      → (f₂ : SigHom Sig₂ SigX)
+      → Σ (SigHom SigΣ SigX)
+          (λ h →
+            SigHomEq (composeSigHom inl h) f₁
+            × SigHomEq (composeSigHom inr h) f₂)

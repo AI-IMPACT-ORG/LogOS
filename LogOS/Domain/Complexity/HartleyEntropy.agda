@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,9 +9,9 @@ module LogOS.Domain.Complexity.HartleyEntropy where
 
 open import LogOS.Prelude
 
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.NatOrder using (_≤ℕ_)
-open import Data.NatLog2 using
+open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_)
+open import LogOS.Prelude.NatLog2 using
   ( exp₂
   ; log₂
   ; exp₂-log₂≤

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,19 +11,29 @@ module LogOS.Packs.Universality.All where
 -- - UniversalIR core + multi-paradigm agreement
 -- - a meta-language refinement (schemes/processes + functorial contracts)
 
-open import LogOS.API.Minimal public
+open import LogOS.Packs.Trust using (PackTrust; stable)
+
+packTrust : PackTrust
+packTrust = record { level = stable }
+
+module AssumptionBundles where
+  open import LogOS.Packs.Assumptions.Universality public
 
 module UniversalIR where
-  open import LogOS.Packs.UniversalIR.Core public
-
-module Agreement where
-  open import LogOS.Packs.UniversalIR.Agreement public
-
-module Algorithms where
-  open import LogOS.Packs.UniversalIR.Pack public
+  -- Re-export the full UniversalIR pack (umbrella).
+  open import LogOS.Packs.UniversalIR.All public
 
 module MetaLanguage where
   open import LogOS.MetaLanguage.All public
 
 module Core where
   open import LogOS.Packs.Universality.Core public
+
+module Applications where
+  open import LogOS.Packs.Universality.Applications.All public
+
+module VacuityGuards where
+  open import LogOS.Packs.Universality.VacuityGuards public
+
+-- Common discoverability alias: “meaningfulness” here is “non-vacuity”.
+module Meaningfulness = VacuityGuards

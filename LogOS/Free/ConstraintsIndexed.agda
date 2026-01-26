@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -20,7 +20,7 @@ module LogOS.Free.ConstraintsIndexed where
 -- ============================================================================
 
 open import LogOS.Prelude
-open import Data.Product using (_×_; _,_)
+open import LogOS.Prelude.Product using (_×_; _,_)
 
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Adjunction
@@ -70,23 +70,23 @@ module With
       ext-⊗    : ∀ {x y} → ext (x ⊗∂ y) ≤b (ext x ⊗b ext y)
       ext-I    : ext I∂ ≤b Ib
 
-  conPoset∂ : (i : Idx) → ConPoset ℓ
-  conPoset∂ i = record { Con = Con∂ i ; _⊑_ = _≤∂_ ; refl = refl∂ ; trans = trans∂ }
+  conPreorder∂ : (i : Idx) → ConPreorder ℓ
+  conPreorder∂ i = record { Con = Con∂ i ; _⊑_ = _≤∂_ ; refl = refl∂ ; trans = trans∂ }
 
-  conPosetb : (i : Idx) → ConPoset ℓ
-  conPosetb i = record { Con = Conb i ; _⊑_ = _≤b_ ; refl = reflb ; trans = transb }
+  conPreorderb : (i : Idx) → ConPreorder ℓ
+  conPreorderb i = record { Con = Conb i ; _⊑_ = _≤b_ ; refl = reflb ; trans = transb }
 
   BBfree : (i : Idx) → BulkBoundary ℓ
-  BBfree i = record { bulk = conPosetb i ; bnd = conPoset∂ i }
+  BBfree i = record { bulk = conPreorderb i ; bnd = conPreorder∂ i }
 
-  MBulkfree : (i : Idx) → MonoidalPoset (BulkBoundary.bulk (BBfree i))
+  MBulkfree : (i : Idx) → MonoidalOps (BulkBoundary.bulk (BBfree i))
   MBulkfree i = record
     { _⊗_ = _⊗b_
     ; I   = Ib
     ; mono⊗ = λ {x} {x'} {y} {y'} px py → cong⊗b px py
     }
 
-  MBndfree : (i : Idx) → MonoidalPoset (BulkBoundary.bnd (BBfree i))
+  MBndfree : (i : Idx) → MonoidalOps (BulkBoundary.bnd (BBfree i))
   MBndfree i = record
     { _⊗_ = _⊗∂_
     ; I   = I∂
@@ -140,12 +140,12 @@ module With
         {x y : Con∂ i}
       → x ≤∂ y
       → ConAlg._⊑bnd_ A (interp∂ i A val x) (interp∂ i A val y)
-    interp∂-mono i A val refl∂ = ConPoset.refl (BulkBoundary.bnd (ConAlg.BB A))
+    interp∂-mono i A val refl∂ = ConPreorder.refl (BulkBoundary.bnd (ConAlg.BB A))
     interp∂-mono i A val (trans∂ p q) =
-      ConPoset.trans (BulkBoundary.bnd (ConAlg.BB A))
+      ConPreorder.trans (BulkBoundary.bnd (ConAlg.BB A))
         (interp∂-mono i A val p) (interp∂-mono i A val q)
     interp∂-mono i A val (cong⊗∂ px py) =
-      let open MonoidalPoset (ConAlg.MBnd A) in
+      let open MonoidalOps (ConAlg.MBnd A) in
       mono⊗ (interp∂-mono i A val px) (interp∂-mono i A val py)
     interp∂-mono i A val (unitbnd {c = c}) =
       ConAlg.unit-lax A (interp∂ i A val c)
@@ -159,12 +159,12 @@ module With
         {x y : Conb i}
       → x ≤b y
       → ConAlg._⊑bulk_ A (interpb i A val x) (interpb i A val y)
-    interpb-mono i A val reflb = ConPoset.refl (BulkBoundary.bulk (ConAlg.BB A))
+    interpb-mono i A val reflb = ConPreorder.refl (BulkBoundary.bulk (ConAlg.BB A))
     interpb-mono i A val (transb p q) =
-      ConPoset.trans (BulkBoundary.bulk (ConAlg.BB A))
+      ConPreorder.trans (BulkBoundary.bulk (ConAlg.BB A))
         (interpb-mono i A val p) (interpb-mono i A val q)
     interpb-mono i A val (cong⊗b px py) =
-      let open MonoidalPoset (ConAlg.MBulk A) in
+      let open MonoidalOps (ConAlg.MBulk A) in
       mono⊗ (interpb-mono i A val px) (interpb-mono i A val py)
     interpb-mono i A val (counit {d = d}) =
       ConAlg.counit-lax A (interpb i A val d)

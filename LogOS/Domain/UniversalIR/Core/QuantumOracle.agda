@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,8 +11,9 @@ open import LogOS.Prelude
 open import LogOS.Domain.UniversalIR.Core.Minsky using (Reg; R0; R1; R2; R3)
 open import LogOS.Domain.UniversalIR.Core.Utils
 
-open import Data.Bool using (Bool; true; false)
-open import Data.List using (List; []; _∷_)
+open import LogOS.Prelude.Bool using (Bool; true; false)
+open import LogOS.Prelude.List using (List; []; _∷_)
+open import LogOS.Prelude.Product using (_×_; _,_)
 
 -- 4) Oracle-with-classical-control (oracle tape) -----------------------------
 
@@ -63,3 +64,25 @@ stepQInstr (MEASURE _ j k) q with oracle q
 
 stepQ : QuantumCode → QuantumCode
 stepQ q = stepQInstr (lookupDefault QHALT (prog q) (pc q)) q
+
+-- --------------------------------------------------------------------------
+-- Observer-facing interface (registers only; oracle tape is hidden).
+--
+-- This makes the observational boundary explicit: `MEASURE` can influence
+-- control flow and consume oracle bits, but observers see only the registers.
+
+Regs : Set
+Regs = ℕ × ℕ × ℕ × ℕ
+
+observeRegs : QuantumCode → Regs
+observeRegs q = (r0 q , r1 q , r2 q , r3 q)
+
+boundaryRegs : BoundaryObs Regs
+boundaryRegs = record { Obs = Regs ; observe = λ r → r }
+
+Effect : Set₁
+Effect = EffectAt boundaryRegs
+
+infix 4 _⊨_
+_⊨_ : QuantumCode → Effect → Set
+q ⊨ E = (observeRegs q ⊨ᵇ boundaryRegs) E

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module Tests.All where
 -- Minimal library test aggregator:
 -- typecheck the public API and the core theorem surfaces.
 
-open import LogOS.API.Minimal
+open import LogOS.API.Kernel
 open import LogOS.API.LogicKernel
 open import LogOS.Kernel
 open import LogOS.Kernel.Endo
@@ -39,6 +39,19 @@ import LogOS.Domain.UniversalIR.While.SmallStep as WhileSmallStep
 
 -- Kernel extension sanity checks
 import Tests.Kernel.Graded
+import Tests.ObservedKernel
+import Tests.BoxModality
+import Tests.BudgetedCommunicableTruth
+import Tests.ObserverStepInvariance
+import Tests.CategoryTheoryCoherence
+import Tests.AssumptionsBundles
+import Tests.AssumptionsSeparation
+import Tests.PacksThreading
+import Tests.PortSpineOnly
+import Tests.InterlinguaMu
+import Tests.InterlinguaMuNontrivial
+import Tests.MuInterlinguaWrappers
+import Tests.ProcessLimitMuFusion
 
 -- Coherence regression: curated public surfaces stay stable.
 import Tests.CoherenceSurfaces

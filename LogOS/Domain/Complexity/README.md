@@ -1,11 +1,14 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
 Complexity Layout
 =================
+
+Interpretation (analogy):
+this directory sometimes uses “physics of information” vocabulary (e.g. Landauer/RG) as motivation; the formal content is only what is stated in the referenced Agda modules.
 
 Publication-facing entrypoint
 -----------------------------
@@ -17,7 +20,7 @@ Main modules (this directory)
 -----------------------------
 
 - Narrative-first aggregator: `LogOS/Domain/Complexity/ProofSearchSeparation.agda`
-- Minimal proof-system interface: `LogOS/Domain/Complexity/ProofSystem.agda`
+- Minimal proof-system interface: `LogOS/Syntax/ProofSystem.agda`
 - Proof-search boundary (verification vs bounded search vs unbounded search): `LogOS/Domain/Complexity/ProofSearchBoundary.agda`
 - Proof-search opacity spine (shared with GRH/opacity machinery): `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda`
   (general budgets via `ProofSearchOpacitySpine.For.Budgeted.General`;
@@ -47,11 +50,15 @@ claims are explicitly conditional on the stated assumptions in each pack.
 - Canonical minimal route (info-theory): `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda`
   (`Assumptions`, `mkPack`)
 - ℕ polynomial predicates can be lifted via `PvsNPFromInfo_Grade_Only.FromNat` (`PolyGrade.FromNat`).
-- Legacy P/NP pack (language-relative, packaging only): `LogOS/Domain/Legacy/Complexity/PvsNP.agda`
-  (legacy surface aggregator: `LogOS/Domain/Legacy/All.agda`, see `docs/Legacy.md`)
-- Classical P/NP interface (literature-aligned, ℕ-bound): `LogOS/Domain/Complexity/ClassicalPvsNP.agda`
+- Classical P/NP interface (literature-aligned, ℕ-bound): `LogOS/Domain/Complexity/PvsNPLedger.agda`
+- Reduction transport (many-one, poly-bounded): `LogOS/Domain/Complexity/Reduction.agda`
+  (`Reduction.Classical.inPFromPolyReduction`, `Reduction.Classical.notInPFromPolyReduction`)
 - Truth-route family: `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda` (grade-only, canonical).
-  ℕ-bounded interfaces live in `TruthRoute_Grade_Only.ForNat` (witness-size refinement in `TruthRoute_Grade_Only.ForNat.WithWitnessSize`).
+  Uniform route: `TruthRoute_Grade_Only.Uniform`, `TruthRoute_Grade_Only.UniformNat`,
+  and run-based `TruthRoute_Grade_Only.UniformNatFromRuns`;
+  non-uniform adapters live in `TruthRoute_Grade_Only.NonUniform` / `TruthRoute_Grade_Only.NonUniformNat`.
+- ETH-shaped assumption (uniform, ℕ-bound): `TruthRoute_Grade_Only.UniformNat.ETHAssumption`
+  (SAT pack: `LogOS/Domain/Complexity/Targets/SAT.agda` module `ClassicalETH`).
 - Optional non-degeneracy laws: `LogOS/Domain/Complexity/Model.agda` (module `StandardCMLaws`)
 
 Information/physics routes
@@ -93,3 +100,6 @@ Examples
 - Golden-path scaffold (grade-native → bridge → classical): `LogOS/Domain/Complexity/Examples/GoldenPath.agda`
 - Minsky scheme instantiation (machines-as-schemes factoring; Flow g = simulate (budget g)):
   `LogOS/Domain/Complexity/Examples/GoldenPath.agda` (module `Minsky`, includes `ScaleOps`-based budget hardening)
+- SAT target surface: `LogOS/Domain/Complexity/Targets/SAT.agda` (includes `ClassicalETH`)
+- SAT NP-completeness axiom pack: `LogOS/Domain/Complexity/Targets/SAT.agda`
+  (module `ClassicalNPComplete`)

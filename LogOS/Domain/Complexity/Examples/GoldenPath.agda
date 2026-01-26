@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,12 +14,13 @@ open import LogOS.Minimal.Adapter
 import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel.Graded
 open import LogOS.Kernel.Graded.Hom
+import LogOS.Kernel.Graded.Endo as GEndo
 
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
 import LogOS.Domain.Complexity.PolyGrade as PG
 import LogOS.Domain.Complexity.PvsNPFromInfo_Grade_Only as PFI
 import LogOS.Domain.Complexity.PhysToTruthRouteBridge as Bridge
-import LogOS.Domain.Complexity.ClassicalPvsNP as CP
+import LogOS.Domain.Complexity.PvsNPLedger as CP
 import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TR
 
 -- Golden path skeleton:
@@ -109,7 +110,18 @@ module ClassicalAlignment
   IsPoly : (ℕ → ℕ) → Set
   IsPoly = PolyPred.isPoly Pℕ
 
-  module Rℕ = TR.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  open GradedKernel K
+
+  module Rℕ =
+    TR.UniformNat
+      K Input Size
+      (λ x → decode (DetRun x))
+      decode
+      (GEndo.idEndo K)
+      (GEndo.idEndo K)
+      (GEndo.idEndo K)
+      IsPoly
+      gradeBound
   module Wℕ = Rℕ.WithWitnessSize WSize
 
   module CS =
@@ -131,7 +143,7 @@ module ClassicalAlignment
 -- -------------------------------------------------------------------------
 
 module Minsky (Pℕ : PolyPred) where
-  open import Data.NatOrder using (_≤ℕ_; ≤ℕ-refl; z≤n; s≤s; weakenRight; trans≤ℕ)
+  open import LogOS.Prelude.NatOrder using (_≤ℕ_; ≤ℕ-refl; z≤n; s≤s; weakenRight; trans≤ℕ)
 
   open import LogOS.Minimal.ScaleOps using (ScaleOps)
   import LogOS.Domain.Complexity.UniversalIRCM as UIR

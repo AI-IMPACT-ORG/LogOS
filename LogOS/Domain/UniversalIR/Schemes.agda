@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,23 +9,25 @@ module LogOS.Domain.UniversalIR.Schemes where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
-open import Data.Nat using (ℕ; suc; zero; _+_)
-open import Data.List using (List; []; _∷_)
-open import Data.Product using (_×_; _,_)
+open import LogOS.Prelude.Nat using (ℕ; suc; zero; _+_)
+open import LogOS.Prelude.List using (List; []; _∷_)
+open import LogOS.Prelude.Product using (_×_; _,_)
 
 open import LogOS.QAdapters.QNat2 using (QNat2)
-open import LogOS.QAdapters.QNat2 as Q2 using (scaleOps; steps-budget-τ; μ; μ-+; μ-zero; τ-mono; μ-mono)
-open import Data.NatExtra using (⊔ℕ-zeroʳ)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl)
+open import LogOS.QAdapters.QNat2 as Q2 using (budgetOps; steps-budget-τ; μ; μ-+; μ-zero; τ-mono; μ-mono)
+open import LogOS.Prelude.NatExtra using (⊔ℕ-zeroʳ)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset)
-open import LogOS.Minimal.ScaleOps using (ScaleOps)
+open import LogOS.Minimal.Con using (ConPreorder)
+open import LogOS.Minimal.ScaleOps using (ScaleOps; BudgetOps)
 open import LogOS.Computation.Scheme using (Scheme; Closure)
 import LogOS.Computation.Scheme as Sch
 import LogOS.Computation.SchemeCategory as Cat
 
 import LogOS.Domain.UniversalIR.Core.QuantumCircuitAmp
 
+open import LogOS.Domain.UniversalIR.Core.Utils using (BoundaryObs)
+import LogOS.Domain.UniversalIR.ObservedKernel as ObsKernel
 open import LogOS.Domain.UniversalIR.Core
   using
     ( QScalars
@@ -59,8 +61,11 @@ QSteps = QNat2
 
 open QAdapter QSteps using (τ; _⊔s_; _≤s_; ≤s-trans; ⊔s-ub₁; ⊔s-ub₂; ⊔s-least; _·_; e; ·-mono)
 
+BudgetOpsSteps : BudgetOps QSteps
+BudgetOpsSteps = Q2.budgetOps
+
 OpsSteps : ScaleOps QSteps
-OpsSteps = Q2.scaleOps
+OpsSteps = BudgetOps.Ops BudgetOpsSteps
 
 Budget : Set lzero
 Budget = QAdapter.Scale QSteps
@@ -163,7 +168,7 @@ infix 4 _⊑ᵁ_
 _⊑ᵁ_ : UCode → UCode → Set
 u ⊑ᵁ v = lowerToIR u ≡ lowerToIR v
 
-CPᵁ : ConPoset lzero
+CPᵁ : ConPreorder lzero
 CPᵁ = record
   { Con  = UCode
   ; _⊑_  = _⊑ᵁ_
@@ -173,6 +178,10 @@ CPᵁ = record
 
 -- Plan B semantics center: keep the closure trivial, and push canonicalisation
 -- into the observation function `observeU`.
+--
+-- Note: `observeU` is a semantic center, not assumed to commute with `stepU`.
+-- For a kernel-aligned observation (step-homomorphic), use `ObsKit` in
+-- `LogOS/Domain/UniversalIR/ObservedKernel.agda`.
 --
 -- This makes it easy to treat each concrete paradigm as a *scheme* in its own
 -- right (its own state + step + cost profile) while still sharing the same
@@ -358,11 +367,62 @@ UProcess =
   record
     { CP       = CPᵁ
     ; Step     = stepU
-    ; Norm     = IdNormᵁ
+    ; Close     = IdNormᵁ
     ; decode   = observeU
     ; Q        = QSteps
     ; stepCost = stepCostᵁ
     }
+
+-- Generic observation on the universal carrier.
+-- This keeps `UProcess` as the default ℕ-center, but exposes a parameterized
+-- view for arbitrary observation spaces.
+UProcessAt : ∀ {ℓO} {Obs : Set ℓO} → (UCode → Obs) → Cat.Process Obs
+UProcessAt obs = Cat.processWithDecode UProcess obs
+
+UProcessObs : ∀ {ℓO} (B : BoundaryObs {ℓO = ℓO} UCode) → Cat.Process (BoundaryObs.Obs B)
+UProcessObs B = UProcessAt (BoundaryObs.observe B)
+
+-- Kernel-aligned universal processes: derived from the kernel observation kits.
+-- These use KernelUniversalProcess so the code/boundary linkage is explicit.
+
+module KernelAligned (K : ObsKernel.ObsKit) where
+  module OK = ObsKernel.ForObsKit K
+
+  UProcessKernel : Cat.Process OK.CP.Con
+  UProcessKernel = OK.Process.CodeProcess
+
+  UProcessKernelBoundary : Cat.Process OK.CP.Con
+  UProcessKernelBoundary = OK.Process.BoundaryProcess
+
+  UProcessKernelDecodeHom : Cat.ProcessHom UProcessKernel UProcessKernelBoundary
+  UProcessKernelDecodeHom = OK.Process.decodeHom
+
+module KernelCode = KernelAligned ObsKernel.CodeObsKit
+
+UProcessKernel : Cat.Process KernelCode.OK.CP.Con
+UProcessKernel = KernelCode.UProcessKernel
+
+UProcessKernelBoundary : Cat.Process KernelCode.OK.CP.Con
+UProcessKernelBoundary = KernelCode.UProcessKernelBoundary
+
+UProcessKernelDecodeHom : Cat.ProcessHom UProcessKernel UProcessKernelBoundary
+UProcessKernelDecodeHom = KernelCode.UProcessKernelDecodeHom
+
+processFromObsKit
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (K : ObsKernel.ObsKit)
+  → (UCode → Obs)
+  → (ObsKernel.ObsKit.Con K → Budget)
+  → Cat.Process Obs
+processFromObsKit K obs stepCost =
+  let
+    module OK = ObsKernel.ForObsKit K
+    encodeK = ObsKernel.ObsKit.encodeObs K
+  in
+  Cat.processWithCost
+    (Cat.processWithDecode OK.Process.BoundaryProcess (λ q → obs (encodeK q)))
+    QSteps
+    stepCost
 
 -- Iterated envelope: the cost of n steps is bounded by n-fold multiplication of
 -- the per-step envelope.
@@ -604,7 +664,7 @@ run≤-fuel≡run-choice
     ≡ Sch.run (Cat.schemeFromChoice UProcess C) t
 run≤-fuel≡run-choice C t =
   cong
-    (λ k → Sch.decode S (Sch.normalize S (Sch.exec S k t)))
+    (λ k → Sch.decode S (Sch.close S (Sch.exec S k t)))
     (sym (Q2.steps-budget-τ (Cat.Choice.fuel C t)))
   where
     S = Cat.schemeFromChoice UProcess C
@@ -630,49 +690,50 @@ run≤-fuel≡run-quantumCircuit t = run≤-fuel≡run-choice quantumCircuitChoi
 -- (own state + own step + own cost profile) and mapped into the universal one.
 --
 -- The universal process is the semantic center; concrete machines are just
--- presentations with their own resource/cost models.
+-- presentations with their own resource/cost models. For alternative
+-- observation spaces, use the `*ProcessAt` constructors and map into
+-- `UProcessAt` with the corresponding `*→UAt` morphisms.
 -- ============================================================================
 
-EqCP : ∀ {ℓ} (A : Set ℓ) → ConPoset ℓ
+EqCP : ∀ {ℓ} (A : Set ℓ) → ConPreorder ℓ
 EqCP A = record { Con = A ; _⊑_ = _≡_ ; refl = refl ; trans = trans }
 
-IdClosure : ∀ {ℓ} (CP : ConPoset ℓ) → Closure CP
+IdClosure : ∀ {ℓ} (CP : ConPreorder ℓ) → Closure CP
 IdClosure CP = record
   { cl        = λ c → c
   ; mono      = λ p → p
-  ; infl      = λ _ → ConPoset.refl CP
-  ; idemp-lax = λ _ → ConPoset.refl CP
+  ; infl      = λ _ → ConPreorder.refl CP
+  ; idemp-lax = λ _ → ConPreorder.refl CP
   }
 
+MinskyProcessAt : ∀ {ℓO} {Obs : Set ℓO} → (UCode → Obs) → Cat.Process Obs
+MinskyProcessAt obs =
+  processFromObsKit ObsKernel.MinskyObsKit obs stepCostM
+
 MinskyProcess : Cat.Process ℕ
-MinskyProcess =
-  record
-    { CP       = EqCP MinskyCode
-    ; Step     = stepM
-    ; Norm     = IdClosure (EqCP MinskyCode)
-    ; decode   = λ m → observeU (UM m)
-    ; Q        = QSteps
-    ; stepCost = stepCostM
-    }
+MinskyProcess = MinskyProcessAt observeU
 
 -- “One-stroke” coverage of Minsky variants:
 -- any alternative resource accounting (step-cost function) for the same Minsky
 -- small-step semantics can be wrapped as a `Process` and still factors through
 -- the universal semantic center via the same injection `UM`.
 
-MinskyProcessWith : (MinskyCode → Budget) → Cat.Process ℕ
-MinskyProcessWith stepCost =
-  record
-    { CP       = EqCP MinskyCode
-    ; Step     = stepM
-    ; Norm     = IdClosure (EqCP MinskyCode)
-    ; decode   = λ m → observeU (UM m)
-    ; Q        = QSteps
-    ; stepCost = stepCost
-    }
+MinskyProcessWithAt
+  : (MinskyCode → Budget)
+  → ∀ {ℓO} {Obs : Set ℓO}
+  → (UCode → Obs)
+  → Cat.Process Obs
+MinskyProcessWithAt stepCost obs =
+  processFromObsKit ObsKernel.MinskyObsKit obs stepCost
 
-Minsky→U-With : ∀ stepCost → Cat.ProcessHom (MinskyProcessWith stepCost) UProcess
-Minsky→U-With _ =
+MinskyProcessWith : (MinskyCode → Budget) → Cat.Process ℕ
+MinskyProcessWith stepCost = MinskyProcessWithAt stepCost observeU
+
+Minsky→U-WithAt
+  : ∀ stepCost {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHom (MinskyProcessWithAt stepCost obs) (UProcessAt obs)
+Minsky→U-WithAt _ _ =
   record
     { map        = UM
     ; mono       = λ {refl → refl}
@@ -681,55 +742,45 @@ Minsky→U-With _ =
     ; decode-comm = λ _ → refl
     }
 
+Minsky→U-With : ∀ stepCost → Cat.ProcessHom (MinskyProcessWith stepCost) UProcess
+Minsky→U-With stepCost = Minsky→U-WithAt stepCost observeU
+
+EthereumProcessAt : ∀ {ℓO} {Obs : Set ℓO} → (UCode → Obs) → Cat.Process Obs
+EthereumProcessAt obs =
+  processFromObsKit ObsKernel.EthereumObsKit obs stepCostE
+
 EthereumProcess : Cat.Process ℕ
-EthereumProcess =
-  record
-    { CP       = EqCP EVMCode
-    ; Step     = stepE
-    ; Norm     = IdClosure (EqCP EVMCode)
-    ; decode   = λ e → observeU (UE e)
-    ; Q        = QSteps
-    ; stepCost = stepCostE
-    }
+EthereumProcess = EthereumProcessAt observeU
+
+LambdaProcessAt : ∀ {ℓO} {Obs : Set ℓO} → (UCode → Obs) → Cat.Process Obs
+LambdaProcessAt obs =
+  processFromObsKit ObsKernel.LambdaObsKit obs (λ _ → work one)
 
 LambdaProcess : Cat.Process ℕ
-LambdaProcess =
-  record
-    { CP       = EqCP LambdaCode
-    ; Step     = stepLC
-    ; Norm     = IdClosure (EqCP LambdaCode)
-    ; decode   = λ l → observeU (UL l)
-    ; Q        = QSteps
-    ; stepCost = λ _ → work one
-    }
+LambdaProcess = LambdaProcessAt observeU
+
+QuantumOracleProcessAt : ∀ {ℓO} {Obs : Set ℓO} → (UCode → Obs) → Cat.Process Obs
+QuantumOracleProcessAt obs =
+  processFromObsKit ObsKernel.QuantumOracleObsKit obs stepCostQ
 
 QuantumOracleProcess : Cat.Process ℕ
-QuantumOracleProcess =
-  record
-    { CP       = EqCP QuantumCode
-    ; Step     = stepQ
-    ; Norm     = IdClosure (EqCP QuantumCode)
-    ; decode   = λ q → observeU (UQ q)
-    ; Q        = QSteps
-    ; stepCost = stepCostQ
-    }
+QuantumOracleProcess = QuantumOracleProcessAt observeU
+
+QuantumCircuitProcessAt : ∀ {ℓO} {Obs : Set ℓO} → (UCode → Obs) → Cat.Process Obs
+QuantumCircuitProcessAt obs =
+  processFromObsKit ObsKernel.QuantumCircuitObsKit obs stepCostQC
 
 QuantumCircuitProcess : Cat.Process ℕ
-QuantumCircuitProcess =
-  record
-    { CP       = EqCP QuantumCircuitCode
-    ; Step     = stepQC
-    ; Norm     = IdClosure (EqCP QuantumCircuitCode)
-    ; decode   = λ q → observeU (UQC q)
-    ; Q        = QSteps
-    ; stepCost = stepCostQC
-    }
+QuantumCircuitProcess = QuantumCircuitProcessAt observeU
 
 module QuantumCircuitAmpSchemes {ℓ} (S : QScalars {ℓ}) where
   module A = LogOS.Domain.UniversalIR.Core.QuantumCircuitAmp.For S
 
   open QScalars S using (Carrier)
-  open A using (QuantumCircuitAmpPCode; QCInstrP; DistList; Wires; stepDistQCA; observeDistList)
+  open A using
+    ( QuantumCircuitAmpPCode; QCInstrP; DistList; Wires
+    ; stepDistQCA; observeDistList; observeDistListAt; MeasurementObs
+    )
   open A.QuantumCircuitAmpPCode using (pc; prog)
   open A.DistList using (support)
 
@@ -756,11 +807,16 @@ module QuantumCircuitAmpSchemes {ℓ} (S : QScalars {ℓ}) where
     record
       { CP       = EqCP (DistList (QuantumCircuitAmpPCode n))
       ; Step     = stepDistQCA
-      ; Norm     = IdClosure (EqCP (DistList (QuantumCircuitAmpPCode n)))
+      ; Close     = IdClosure (EqCP (DistList (QuantumCircuitAmpPCode n)))
       ; decode   = observeDistList
       ; Q        = QSteps
       ; stepCost = stepCostDistQCA
       }
+
+  QuantumCircuitAmpProcessAt
+    : ∀ {n ℓO} (M : MeasurementObs {ℓO} n) → Cat.Process (DistList (MeasurementObs.Obs M))
+  QuantumCircuitAmpProcessAt {n} M =
+    Cat.processWithDecode QuantumCircuitAmpProcess (observeDistListAt M)
 
 module QuantumCircuitAmpFree where
   open import LogOS.Domain.UniversalIR.Quantum.Scalars.Free using (formalScalars)
@@ -833,8 +889,11 @@ quantumCircuitFamily-run bt =
 
 -- Process morphisms into the universal semantic center.
 
-Minsky→U : Cat.ProcessHom MinskyProcess UProcess
-Minsky→U =
+Minsky→UAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHom (MinskyProcessAt obs) (UProcessAt obs)
+Minsky→UAt _ =
   record
     { map        = UM
     ; mono       = λ {refl → refl}
@@ -843,16 +902,28 @@ Minsky→U =
     ; decode-comm = λ _ → refl
     }
 
-Minsky→UCost : Cat.ProcessHomCost MinskyProcess UProcess
-Minsky→UCost =
+Minsky→UCostAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHomCost (MinskyProcessAt obs) (UProcessAt obs)
+Minsky→UCostAt obs =
   record
-    { hom = Minsky→U
+    { hom = Minsky→UAt obs
     ; Q-comm = refl
     ; stepCost-comm = λ _ → refl
     }
 
-Ethereum→U : Cat.ProcessHom EthereumProcess UProcess
-Ethereum→U =
+Minsky→U : Cat.ProcessHom MinskyProcess UProcess
+Minsky→U = Minsky→UAt observeU
+
+Minsky→UCost : Cat.ProcessHomCost MinskyProcess UProcess
+Minsky→UCost = Minsky→UCostAt observeU
+
+Ethereum→UAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHom (EthereumProcessAt obs) (UProcessAt obs)
+Ethereum→UAt _ =
   record
     { map        = UE
     ; mono       = λ {refl → refl}
@@ -861,16 +932,28 @@ Ethereum→U =
     ; decode-comm = λ _ → refl
     }
 
-Ethereum→UCost : Cat.ProcessHomCost EthereumProcess UProcess
-Ethereum→UCost =
+Ethereum→UCostAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHomCost (EthereumProcessAt obs) (UProcessAt obs)
+Ethereum→UCostAt obs =
   record
-    { hom = Ethereum→U
+    { hom = Ethereum→UAt obs
     ; Q-comm = refl
     ; stepCost-comm = λ _ → refl
     }
 
-Lambda→U : Cat.ProcessHom LambdaProcess UProcess
-Lambda→U =
+Ethereum→U : Cat.ProcessHom EthereumProcess UProcess
+Ethereum→U = Ethereum→UAt observeU
+
+Ethereum→UCost : Cat.ProcessHomCost EthereumProcess UProcess
+Ethereum→UCost = Ethereum→UCostAt observeU
+
+Lambda→UAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHom (LambdaProcessAt obs) (UProcessAt obs)
+Lambda→UAt _ =
   record
     { map        = UL
     ; mono       = λ {refl → refl}
@@ -879,16 +962,28 @@ Lambda→U =
     ; decode-comm = λ _ → refl
     }
 
-Lambda→UCost : Cat.ProcessHomCost LambdaProcess UProcess
-Lambda→UCost =
+Lambda→UCostAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHomCost (LambdaProcessAt obs) (UProcessAt obs)
+Lambda→UCostAt obs =
   record
-    { hom = Lambda→U
+    { hom = Lambda→UAt obs
     ; Q-comm = refl
     ; stepCost-comm = λ _ → refl
     }
 
-Oracle→U : Cat.ProcessHom QuantumOracleProcess UProcess
-Oracle→U =
+Lambda→U : Cat.ProcessHom LambdaProcess UProcess
+Lambda→U = Lambda→UAt observeU
+
+Lambda→UCost : Cat.ProcessHomCost LambdaProcess UProcess
+Lambda→UCost = Lambda→UCostAt observeU
+
+Oracle→UAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHom (QuantumOracleProcessAt obs) (UProcessAt obs)
+Oracle→UAt _ =
   record
     { map        = UQ
     ; mono       = λ {refl → refl}
@@ -897,16 +992,28 @@ Oracle→U =
     ; decode-comm = λ _ → refl
     }
 
-Oracle→UCost : Cat.ProcessHomCost QuantumOracleProcess UProcess
-Oracle→UCost =
+Oracle→UCostAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHomCost (QuantumOracleProcessAt obs) (UProcessAt obs)
+Oracle→UCostAt obs =
   record
-    { hom = Oracle→U
+    { hom = Oracle→UAt obs
     ; Q-comm = refl
     ; stepCost-comm = λ _ → refl
     }
 
-Circuit→U : Cat.ProcessHom QuantumCircuitProcess UProcess
-Circuit→U =
+Oracle→U : Cat.ProcessHom QuantumOracleProcess UProcess
+Oracle→U = Oracle→UAt observeU
+
+Oracle→UCost : Cat.ProcessHomCost QuantumOracleProcess UProcess
+Oracle→UCost = Oracle→UCostAt observeU
+
+Circuit→UAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHom (QuantumCircuitProcessAt obs) (UProcessAt obs)
+Circuit→UAt _ =
   record
     { map        = UQC
     ; mono       = λ {refl → refl}
@@ -915,10 +1022,19 @@ Circuit→U =
     ; decode-comm = λ _ → refl
     }
 
-Circuit→UCost : Cat.ProcessHomCost QuantumCircuitProcess UProcess
-Circuit→UCost =
+Circuit→UCostAt
+  : ∀ {ℓO} {Obs : Set ℓO}
+  → (obs : UCode → Obs)
+  → Cat.ProcessHomCost (QuantumCircuitProcessAt obs) (UProcessAt obs)
+Circuit→UCostAt obs =
   record
-    { hom = Circuit→U
+    { hom = Circuit→UAt obs
     ; Q-comm = refl
     ; stepCost-comm = λ _ → refl
     }
+
+Circuit→U : Cat.ProcessHom QuantumCircuitProcess UProcess
+Circuit→U = Circuit→UAt observeU
+
+Circuit→UCost : Cat.ProcessHomCost QuantumCircuitProcess UProcess
+Circuit→UCost = Circuit→UCostAt observeU

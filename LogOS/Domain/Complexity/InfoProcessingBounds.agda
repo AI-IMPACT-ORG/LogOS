@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,17 +10,18 @@ module LogOS.Domain.Complexity.InfoProcessingBounds where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; trans≤ℕ) public
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; trans≤ℕ) public
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
 
 open import LogOS.Domain.Complexity.SecondLaw as SL
 open import LogOS.Domain.Complexity.LCUToLandauer as LCU
 
 -- Local (safe) preorder on naturals, used only for throughput bounds
--- (shared via `Data.NatOrder`).
+-- (shared via `LogOS.Prelude.NatOrder`).
 
 -- Information-processing bounds, LogOS-style:
 -- we bound *irreversible* information loss per unit of physical time, while
@@ -53,11 +54,23 @@ record ThroughputAssumptions {ℓ : Level}
     -- Throughput budget: maximum number of merges allowed within a given time.
     budget : Time → ℕ
 
-    merges≤budget : ∀ f → merges f ≤ℕ budget (ticks f)
+    -- Budget assumption as a refinement from trivial truth.
+    budget-ref : SatRefinement₀ Cosp
+                  (λ _ _ → ⊤ {ℓ = lzero})
+                  (λ _ f → merges f ≤ℕ budget (ticks f))
 
-    -- Reversible computation stays alive: local unitarity forces zero merges.
-    unitary→merges0
-      : ∀ f → LCUObsAssumptions.LocalUnitary (SL.SecondLawAssumptions.LCUA SL) f
-            → merges f ≡ 0
+    -- Reversible computation stays alive: local unitarity forces zero merges,
+    -- expressed as a refinement between predicates.
+    unitary-ref : SatRefinement₀ Cosp
+                  (λ _ f → LCUObsAssumptions.LocalUnitary (SL.SecondLawAssumptions.LCUA SL) f)
+                  (λ _ f → merges f ≡ 0)
 
--- Re-export `trans≤ℕ` from `Data.NatOrder`.
+  merges≤budget : ∀ f → merges f ≤ℕ budget (ticks f)
+  merges≤budget f = sat-→₀ budget-ref f tt
+
+  unitary→merges0
+    : ∀ f → LCUObsAssumptions.LocalUnitary (SL.SecondLawAssumptions.LCUA SL) f
+          → merges f ≡ 0
+  unitary→merges0 f u = sat-→₀ unitary-ref f u
+
+-- Re-export `trans≤ℕ` from `LogOS.Prelude.NatOrder`.

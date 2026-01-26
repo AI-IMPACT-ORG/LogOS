@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,15 +10,15 @@ module LogOS.Domain.Complexity.ProofSearchBoundary where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_; ⊥; _↔_)
 
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
 open import LogOS.Prelude as Eq using (_≡_; refl; subst; cong; sym)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ)
 
 import LogOS.Domain.Complexity.CookReckhow as CR
 open import LogOS.Domain.Complexity.CookReckhow using (Finℓ; fzero; fsuc; toNat)
-import LogOS.Domain.Complexity.ProofSystem as PSCore
+import LogOS.Syntax.ProofSystem as PSCore
 import LogOS.Computation.SemiDecider as SD
 import LogOS.Theorems.Meta.LimitPublicisation as LP
 open import LogOS.Theorems.Meta.LocalGlobalBoundary as LGB

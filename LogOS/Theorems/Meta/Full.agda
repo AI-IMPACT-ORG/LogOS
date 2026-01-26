@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.Full where
 
 open import LogOS.Prelude
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Product using (Σ; _,_)
 open import LogOS.Syntax.Prop using (¬_)
 
 open import LogOS.Base.Signature
@@ -17,8 +17,8 @@ open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
 open import LogOS.Kernel.Hom
-open import LogOS.Algebra.ConAlg using (ConAlgHom≡)
 import LogOS.Theorems.Meta.Assumptions.Core as A
+open import LogOS.Theorems.Meta.DecodeTransportKit using (decode-mapCode-cong)
 open import LogOS.Kernel.Initial
 open import LogOS.Theorems.Meta.Base using (NonTrivialC; DeciderC; mkDeciderC)
 -- Use shared assumption packs
@@ -83,10 +83,7 @@ decodeExt-pull
     → A.DecodeExtensional K P
     → A.DecodeExtensional (FreeKernel Sig Q HW) (λ γ → P (KernelHom.mapCode (foldTo Sig Q HW K) γ))
 decodeExt-pull HW K P ext γ₁ γ₂ pr p =
-  let open KernelHom (foldTo _ _ HW K) in
-  ext _ _ (trans (map-decode γ₁)
-        (trans (cong (ConAlgHom≡.map∂ con-hom) pr)
-               (sym (map-decode γ₂)))) p
+  ext _ _ (decode-mapCode-cong (foldTo _ _ HW K) pr) p
 
 -- Transport undecidability from the canonical FreeKernel to any target kernel via fold.
 -- (Textbook contrapositive: if P is decidable on K, then its pullback along fold is

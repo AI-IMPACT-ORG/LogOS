@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,6 +23,6 @@ open import LogOS.Domain.ZFC.SetTheory.LimitPack using (CumulativeHierarchy)
 toCumulativeHierarchy
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
-  → ZFAxioms K
+  → ZFAxioms (kernelLike-fromKernel K)
   → CumulativeHierarchy K
 toCumulativeHierarchy _ zf = record { axioms = zf }

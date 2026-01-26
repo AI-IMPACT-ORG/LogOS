@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -53,7 +53,7 @@ ineq→Ent_S
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : Kernel Sig Q)
     (φ ψ : Kernel.Fml K)
-  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (Kernel.TransH K φ) (Kernel.TransH K ψ)
+  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (Kernel.TransH K φ) (Kernel.TransH K ψ)
   → Ent_S Sig Q K φ ψ
 ineq→Ent_S Sig Q K φ ψ le w p =
   let

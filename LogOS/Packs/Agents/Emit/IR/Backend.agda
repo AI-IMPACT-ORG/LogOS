@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,9 +7,9 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Agents.Emit.IR.Backend where
 
-open import Data.List using (List)
-open import Data.Maybe using (Maybe)
-open import Data.String using (String)
+open import LogOS.Prelude.List using (List)
+open import LogOS.Prelude.Maybe using (Maybe)
+open import LogOS.Prelude.String using (String)
 
 record Backend : Set1 where
   field

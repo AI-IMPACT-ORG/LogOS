@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -109,3 +109,16 @@ module For
       × _⊑_ (apply (stepUpdate s) (μPolicy-step s)) (μPolicy-step s)
   μPolicy-step-fixed s SC =
     (μPolicy-step-unfold-left s , μPolicy-step-unfold-right s SC)
+
+  -- Convergent learning: a Scott-continuous step has a fixed point
+  -- up to mutual refinement (the refinement preorder on policies).
+
+  ConvergentStep : LearningStep → Set _
+  ConvergentStep s = ScottContinuous (Endo.fn (stepUpdate s))
+
+  convergent-fixed
+    : (s : LearningStep)
+    → ConvergentStep s
+    → _⊑_ (μPolicy-step s) (apply (stepUpdate s) (μPolicy-step s))
+      × _⊑_ (apply (stepUpdate s) (μPolicy-step s)) (μPolicy-step s)
+  convergent-fixed s SC = μPolicy-step-fixed s SC

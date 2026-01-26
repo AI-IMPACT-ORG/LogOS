@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -73,6 +73,40 @@ rebase P₁ sys =
     ; Prover       = PB.pullbackProver Prover
     ; ModelChecker = PB.pullbackModelChecker ModelChecker
     }
+
+rebase-prover-complete
+  : ∀ {ℓName ℓCtx ℓCon ℓSat ℓForm₁ ℓForm₂ ℓWProver ℓWModel}
+    {Name : Set ℓName}
+    {Ctx  : Set ℓCtx}
+    {Con  : Set ℓCon}
+    {SatC : Ctx → Con → Set ℓSat}
+    (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC)
+    (sys : SystemIO {ℓForm = ℓForm₂} {ℓWProver = ℓWProver} {ℓWModel = ℓWModel} Name Ctx Con SatC)
+  → Complete (SystemIO.Prover sys)
+  → Complete (SystemIO.Prover (rebase P₁ sys))
+rebase-prover-complete P₁ sys comp =
+  let
+    open SystemIO sys renaming (Pres to P₂)
+    module PB = PT.Shared P₁ P₂
+  in
+  PB.pullbackProver-complete comp
+
+rebase-modelChecker-complete
+  : ∀ {ℓName ℓCtx ℓCon ℓSat ℓForm₁ ℓForm₂ ℓWProver ℓWModel}
+    {Name : Set ℓName}
+    {Ctx  : Set ℓCtx}
+    {Con  : Set ℓCon}
+    {SatC : Ctx → Con → Set ℓSat}
+    (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC)
+    (sys : SystemIO {ℓForm = ℓForm₂} {ℓWProver = ℓWProver} {ℓWModel = ℓWModel} Name Ctx Con SatC)
+  → Complete (SystemIO.ModelChecker sys)
+  → Complete (SystemIO.ModelChecker (rebase P₁ sys))
+rebase-modelChecker-complete P₁ sys comp =
+  let
+    open SystemIO sys renaming (Pres to P₂)
+    module PB = PT.Shared P₁ P₂
+  in
+  PB.pullbackModelChecker-complete comp
 
 -- ---------------------------------------------------------------------------
 -- Rebase along a satisfaction morphism.

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,6 +19,14 @@ open import LogOS.Domain.UniversalIR.Core using
   )
 open import LogOS.Domain.UniversalIR.IR using (lowerToIR; decode; observe)
 open import LogOS.Domain.UniversalIR.Task using (PATask; eval)
+import LogOS.Computation.Scheme as Sch
+open import LogOS.Domain.UniversalIR.Schemes using
+  ( minskyMachineScheme
+  ; lambdaMachineScheme
+  ; ethereumMachineScheme
+  ; oracleMachineScheme
+  ; quantumCircuitMachineScheme
+  )
 import LogOS.Domain.UniversalIR.Languages.Minsky as Minsky
 import LogOS.Domain.UniversalIR.Languages.Lambda as Lambda
 import LogOS.Domain.UniversalIR.Languages.Ethereum as Ether
@@ -37,6 +45,16 @@ record CompilerCorrectness
   : Set (lsuc (ℓI ⊔ ℓC ⊔ ℓO)) where
   field
     correct : ∀ x → run (compile x) ≡ spec x
+
+record SchemeCorrectness
+  {ℓI ℓO ℓC ℓQ : Level}
+  (Input : Set ℓI)
+  (Output : Set ℓO)
+  (S : Sch.Scheme {ℓI = ℓI} {ℓO = ℓO} {ℓC = ℓC} {ℓQ = ℓQ} Input Output)
+  (spec : Input → Output)
+  : Set (lsuc (ℓI ⊔ ℓO ⊔ ℓC ⊔ ℓQ)) where
+  field
+    correct : ∀ x → Sch.run S x ≡ spec x
 
 runU : ℕ → UCode → ℕ
 runU fuel u = decode (lowerToIR (simulate fuel u))
@@ -105,3 +123,23 @@ oracle-compiler = record { correct = Thm.oracle-correct }
 circuit-compiler : CompilerCorrectness PATask (QuantumCircuitCode × ℕ) ℕ
   circuit-compile runCircuit eval
 circuit-compiler = record { correct = Thm.circuit-correct }
+
+minsky-scheme-correct : SchemeCorrectness PATask ℕ minskyMachineScheme eval
+minsky-scheme-correct =
+  record { correct = Thm.minskyMachine-correct }
+
+lambda-scheme-correct : SchemeCorrectness PATask ℕ lambdaMachineScheme eval
+lambda-scheme-correct =
+  record { correct = Thm.lambdaMachine-correct }
+
+ethereum-scheme-correct : SchemeCorrectness PATask ℕ ethereumMachineScheme eval
+ethereum-scheme-correct =
+  record { correct = Thm.ethereumMachine-correct }
+
+oracle-scheme-correct : SchemeCorrectness PATask ℕ oracleMachineScheme eval
+oracle-scheme-correct =
+  record { correct = Thm.oracleMachine-correct }
+
+circuit-scheme-correct : SchemeCorrectness PATask ℕ quantumCircuitMachineScheme eval
+circuit-scheme-correct =
+  record { correct = Thm.circuitMachine-correct }

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
-open import LogOS.Minimal.Adjunction using (MonoidalPoset)
+open import LogOS.Minimal.Adjunction using (MonoidalOps)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel
 
@@ -45,7 +45,7 @@ record InfiniteKernel {ℓ : Level}
     -- automatically for any InfiniteKernel target (no extra per-target assumptions).
     bot≡I∂
       : GT∞.OmegaCPO.⊥ ωCPO
-        ≡ (MonoidalPoset.I MBnd)
+        ≡ (MonoidalOps.I MBnd)
 
 -- Convenience projections.
 

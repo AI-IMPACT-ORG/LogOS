@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -21,9 +21,9 @@ open import LogOS.Minimal.Con
 open import LogOS.Minimal.Adjunction
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel.Graded
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.Ordinal as Ord using (Ord; fin; ω)
-open import Data.List using ([])
+open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude.Ordinal as Ord using (Ord; fin; ω)
+open import LogOS.Prelude.List using ([])
 
 -- Graded kernel over UniversalIR UCode with decode = id.
 -- The boundary order is trivial, so any flow is admissible; grades are
@@ -47,7 +47,7 @@ Q : QAdapter lzero
 Q = QTop.QNatTop
 
 Ops : ScaleOps Q
-Ops = QTop.scaleOps
+Ops = QTop.scaleOpsTrunc
 
 module W = Worlds Sig
 
@@ -59,16 +59,20 @@ HWorld = record
   ; wflow-trans = λ _ _ _ → QAdapter.≤s-refl Q
   }
 
-conPosetU : ConPoset lzero
-conPosetU = record { Con = UCode ; _⊑_ = λ _ _ → ⊤ ; refl = tt ; trans = λ _ _ → tt }
+conPreorderU : ConPreorder lzero
+conPreorderU = record { Con = UCode ; _⊑_ = λ _ _ → ⊤ ; refl = tt ; trans = λ _ _ → tt }
+
+-- Explicit degeneracy witness: boundary order is top.
+topOrderU : TopOrder conPreorderU
+topOrderU = record { top = λ _ _ → tt }
 
 BB : BulkBoundary lzero
-BB = record { bulk = conPosetU ; bnd = conPosetU }
+BB = record { bulk = conPreorderU ; bnd = conPreorderU }
 
-MBulk : MonoidalPoset (BulkBoundary.bulk BB)
+MBulk : MonoidalOps (BulkBoundary.bulk BB)
 MBulk = record { _⊗_ = λ x _ → x ; I = UM (mkM 0 0 0 0 0 []) ; mono⊗ = λ _ _ → tt }
 
-MBnd : MonoidalPoset (BulkBoundary.bnd BB)
+MBnd : MonoidalOps (BulkBoundary.bnd BB)
 MBnd = record { _⊗_ = λ x _ → x ; I = UM (mkM 0 0 0 0 0 []) ; mono⊗ = λ _ _ → tt }
 
 Holo : LaxMonoidalAdjunction BB MBulk MBnd
@@ -83,6 +87,10 @@ module HT = Truth.HomotypicalTruth Sig Q HWorld
 
 HTruth : HT.HLayer BB
 HTruth = record { Sat_H = λ _ _ → ⊤ ; mono-Con = λ _ _ → tt ; mono-ctx = λ _ _ → tt }
+
+-- Explicit degeneracy witness: H-tier truth is vacuous (always satisfied).
+vacuousHTruth : HT.VacuousHLayer HTruth
+vacuousHTruth = record { satAll = λ _ _ → tt }
 
 HInv : HT.Invariance BB
 HInv = record { Inv_H = λ c → c ; infl = λ _ → tt ; idemp-lax = λ _ → tt }

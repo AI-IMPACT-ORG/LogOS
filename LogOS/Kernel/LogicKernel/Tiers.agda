@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -82,16 +82,17 @@ module For
 
       -- H↔R at the decoded constraint of `codeOfFml φ` (no rewriting needed on the R-side).
       cohHR = LogicKernel.sat-coh K w (LogicKernel.decode K (codeOfFml φ))
+      eq≈ = ≡→≈CP {CP = BulkBoundary.bnd (LogicKernel.BB K)} eq
+
+      module H = HT.HLayer (LogicKernel.HTruth K)
     in
     Prop.intro
       (λ satS →
         Prop.to cohHR
-          (subst (λ c → HT.HLayer.Sat_H (LogicKernel.HTruth K) w c) (sym eq)
-            (Prop.to cohSH satS)))
+          (H.mono-Con (snd eq≈) (Prop.to cohSH satS)))
       (λ satR →
         Prop.from cohSH
-          (subst (λ c → HT.HLayer.Sat_H (LogicKernel.HTruth K) w c) eq
-            (Prop.from cohHR satR)))
+          (H.mono-Con (fst eq≈) (Prop.from cohHR satR)))
 
   -- R-tier inherits H-tier monotonicity via `Sat_H_bnd`.
   Sat_R-mono
@@ -147,10 +148,13 @@ module For
           (GTier.Flow (LogicKernel.G K) (GTier.step (LogicKernel.G K))
             (LogicKernel.decode K γ)))
   Sat_R-Guard w γ =
-    let eq = decode-Guard γ in
+    let
+      eq = decode-Guard γ
+      eq≈ = ≡→≈CP {CP = BulkBoundary.bnd (LogicKernel.BB K)} eq
+    in
     Prop.intro
-      (λ sat → subst (λ c → LogicKernel.Sat_H_bnd K (to∂ w) c) eq sat)
-      (λ sat → subst (λ c → LogicKernel.Sat_H_bnd K (to∂ w) c) (sym eq) sat)
+      (λ sat → Core.Sat_H_bnd-mono (LogicKernel.shape K) (fst eq≈) sat)
+      (λ sat → Core.Sat_H_bnd-mono (LogicKernel.shape K) (snd eq≈) sat)
 
   Sat_R-FlowCode
     : ∀ (w : Cosp) (γ : LogicKernel.Code K)
@@ -160,10 +164,40 @@ module For
           (GTier.Flow (LogicKernel.G K) (GTier.step (LogicKernel.G K))
             (LogicKernel.Body∂ K (LogicKernel.decode K γ))))
   Sat_R-FlowCode w γ =
-    let eq = decode-FlowCode-step γ in
+    let
+      eq = decode-FlowCode-step γ
+      eq≈ = ≡→≈CP {CP = BulkBoundary.bnd (LogicKernel.BB K)} eq
+    in
     Prop.intro
-      (λ sat → subst (λ c → LogicKernel.Sat_H_bnd K (to∂ w) c) eq sat)
-      (λ sat → subst (λ c → LogicKernel.Sat_H_bnd K (to∂ w) c) (sym eq) sat)
+      (λ sat → Core.Sat_H_bnd-mono (LogicKernel.shape K) (fst eq≈) sat)
+      (λ sat → Core.Sat_H_bnd-mono (LogicKernel.shape K) (snd eq≈) sat)
+
+  Sat_R-BoxAt
+    : ∀ (w : Cosp)
+      (g : GTier.Step (LogicKernel.G K))
+      (γ : LogicKernel.Code K)
+    → Prop._↔_
+        (Sat_R w (BoxAt K g γ))
+        (LogicKernel.Sat_H_bnd K (to∂ w)
+          (GTier.Flow (LogicKernel.G K) g (LogicKernel.decode K γ)))
+  Sat_R-BoxAt w g γ =
+    let
+      eq = decode-BoxAt K g γ
+      eq≈ = ≡→≈CP {CP = BulkBoundary.bnd (LogicKernel.BB K)} eq
+    in
+    Prop.intro
+      (λ sat → Core.Sat_H_bnd-mono (LogicKernel.shape K) (fst eq≈) sat)
+      (λ sat → Core.Sat_H_bnd-mono (LogicKernel.shape K) (snd eq≈) sat)
+
+  Sat_R-Box
+    : ∀ (w : Cosp) (γ : LogicKernel.Code K)
+    → Prop._↔_
+        (Sat_R w (Box K γ))
+        (LogicKernel.Sat_H_bnd K (to∂ w)
+          (GTier.Flow (LogicKernel.G K) (GTier.sat (LogicKernel.G K))
+            (LogicKernel.decode K γ)))
+  Sat_R-Box w γ =
+    Sat_R-BoxAt w (GTier.sat (LogicKernel.G K)) γ
 
   Sat_R-γ*
     : ∀ (w : Cosp)
@@ -171,7 +205,10 @@ module For
         (Sat_R w (LogicKernel.γ* K))
         (LogicKernel.Sat_H_bnd K (to∂ w) (GTier.Th* (LogicKernel.G K)))
   Sat_R-γ* w =
-    let eq = decode-γ*-is-Th* in
+    let
+      eq = decode-γ*-is-Th*
+      eq≈ = ≡→≈CP {CP = BulkBoundary.bnd (LogicKernel.BB K)} eq
+    in
     Prop.intro
-      (λ sat → subst (λ c → LogicKernel.Sat_H_bnd K (to∂ w) c) eq sat)
-      (λ sat → subst (λ c → LogicKernel.Sat_H_bnd K (to∂ w) c) (sym eq) sat)
+      (λ sat → Core.Sat_H_bnd-mono (LogicKernel.shape K) (fst eq≈) sat)
+      (λ sat → Core.Sat_H_bnd-mono (LogicKernel.shape K) (snd eq≈) sat)

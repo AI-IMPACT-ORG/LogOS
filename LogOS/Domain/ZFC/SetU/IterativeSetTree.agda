@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,8 @@ module LogOS.Domain.ZFC.SetU.IterativeSetTree where
 
 open import LogOS.Prelude
 
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_)
 
 -- Aczel-style iterative sets (W-style trees) as a pure syntax/presentation layer.
 -- This is independent of any graph carrier.

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,13 +15,13 @@ open import LogOS.Syntax.Prop using (⊥; ¬_; _↔_; intro)
 -- Extensionality (by definition), and Membership-respects-≈.
 
 -- We intentionally avoid stdlib lists and define the small utilities we need
--- on top of the project’s `Data.List` (which bridges the host’s builtin list).
+-- on top of the project’s `LogOS.Prelude.List` (bridging the host’s builtin list via `LogOS.Host.List`).
 
-open import Data.List using (List; []; _∷_; map; _++_; concat)
+open import LogOS.Prelude.List using (List; []; _∷_; map; _++_; concat)
 
--- Minimal dependent pair and sum from project’s Data/*
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+-- Minimal dependent pair and sum from the curated Prelude.
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 -- HF sets as finite trees of lists
 

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module LogOS.Domain.Complexity.Targets.ProofSearchChainedTheoremGraded where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop using (NoWitness)
 
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Product using (Σ; _,_)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Domain.Complexity.Poly using (PolyPred)
@@ -18,7 +18,7 @@ import LogOS.Domain.Complexity.ProofSearchBoundary as B
 import LogOS.Domain.Complexity.ProofSearchCapstoneGraded as Cap
 import LogOS.Domain.Complexity.ResourceSchemaGraded as RS
 import LogOS.Domain.Complexity.ObservabilityBudgetGraded as OB
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- One chained theorem (grade-native entrypoint) for the “verification vs search” story.
 
@@ -61,7 +61,7 @@ module For {ℓI ℓ ℓQ : Level}
                       (Assumptions.hard A)
 
     module Q {PS : PB.ProofSystem} =
-      Quartet.MakeConstPack (Assumptions PS) Claim derive
+      AppKit.MakeConstPack (Assumptions PS) Claim derive
     open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module G where
@@ -83,7 +83,7 @@ module For {ℓI ℓ ℓQ : Level}
                           (Assumptions.hard A)
 
     module Q {PS : PB.ProofSystem} =
-      Quartet.MakeConstPack (Assumptions PS) Claim derive
+      AppKit.MakeConstPack (Assumptions PS) Claim derive
     open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module LOB where
@@ -104,7 +104,7 @@ module For {ℓI ℓ ℓQ : Level}
                       (Assumptions.hard A)
 
     module Q {PS : PB.ProofSystem} =
-      Quartet.MakeConstPack (Assumptions PS) Claim derive
+      AppKit.MakeConstPack (Assumptions PS) Claim derive
     open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
   module LOBG where
@@ -125,5 +125,5 @@ module For {ℓI ℓ ℓQ : Level}
                           (Assumptions.hard A)
 
     module Q {PS : PB.ProofSystem} =
-      Quartet.MakeConstPack (Assumptions PS) Claim derive
+      AppKit.MakeConstPack (Assumptions PS) Claim derive
     open Q public using (Pack; assumptionsOf; claimOf; mkPack)

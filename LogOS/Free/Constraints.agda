@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Free.Constraints where
 
 open import LogOS.Prelude
-open import Data.Product using (_×_; _,_)
+open import LogOS.Prelude.Product using (_×_; _,_)
 open import LogOS.Prelude as Eq using (refl; trans; cong; cong₂)
 open import LogOS.Syntax.Prop using (⊥)
 
@@ -63,21 +63,21 @@ module _ {ℓ : Level} where
     ; reflb; transb; cong⊗b; counit; ext-⊗; ext-I
     )
 
--- Build ConPoset/Monoidal/LaxAdjunction from syntax
+-- Build ConPreorder/Monoidal/LaxAdjunction from syntax
 
-conPoset∂ : ∀ {ℓ} → ConPoset ℓ
-conPoset∂ {ℓ} = C.conPoset∂ {ℓ = ℓ} ⋆
+conPreorder∂ : ∀ {ℓ} → ConPreorder ℓ
+conPreorder∂ {ℓ} = C.conPreorder∂ {ℓ = ℓ} ⋆
 
-conPosetb : ∀ {ℓ} → ConPoset ℓ
-conPosetb {ℓ} = C.conPosetb {ℓ = ℓ} ⋆
+conPreorderb : ∀ {ℓ} → ConPreorder ℓ
+conPreorderb {ℓ} = C.conPreorderb {ℓ = ℓ} ⋆
 
 BBfree : ∀ {ℓ} → BulkBoundary ℓ
 BBfree {ℓ} = C.BBfree {ℓ = ℓ} ⋆
 
-MBulkfree : ∀ {ℓ} → MonoidalPoset (BulkBoundary.bulk (BBfree {ℓ}))
+MBulkfree : ∀ {ℓ} → MonoidalOps (BulkBoundary.bulk (BBfree {ℓ}))
 MBulkfree {ℓ} = C.MBulkfree {ℓ = ℓ} ⋆
 
-MBndfree : ∀ {ℓ} → MonoidalPoset (BulkBoundary.bnd (BBfree {ℓ}))
+MBndfree : ∀ {ℓ} → MonoidalOps (BulkBoundary.bnd (BBfree {ℓ}))
 MBndfree {ℓ} = C.MBndfree {ℓ = ℓ} ⋆
 
 Holofree : ∀ {ℓ} → LaxMonoidalAdjunction (BBfree {ℓ}) (MBulkfree {ℓ}) (MBndfree {ℓ})

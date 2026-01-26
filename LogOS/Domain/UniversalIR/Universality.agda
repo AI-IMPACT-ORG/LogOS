@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,11 @@ module LogOS.Domain.UniversalIR.Universality where
 
 open import LogOS.Prelude
 
-open import LogOS.Computation.Core using (Computation; iterate)
+open import LogOS.Computation.Core using (iterateStep)
+import LogOS.Computation.Core as CompCore
+module Sim = CompCore.StepSimulation
+open Sim using (StepSim; _∘StepSim_)
+open Sim.StepSim public renaming (map to embed)
 
 open import LogOS.Domain.UniversalIR.Core
   using
@@ -31,50 +35,12 @@ open import LogOS.Domain.UniversalIR.Core.QuantumCircuit using (QuantumCircuitCo
 -- branch can be transported to `UCode` just by composing with the injection.
 -- ============================================================================
 
--- A minimal step-simulation interface (independent of SchemeCategory/Norm).
-
--- View a plain step function as a trivial computation (halting ignored).
-CompOf : ∀ {ℓ} {A : Set ℓ} → (A → A) → Computation A
-CompOf step = record { Step = step ; Halts = λ _ → Topℓ }
-
-record StepSim {ℓ₁ ℓ₂ : Level} (A : Set ℓ₁) (B : Set ℓ₂)
-               (stepA : A → A) (stepB : B → B) : Set (lsuc (ℓ₁ ⊔ ℓ₂)) where
-  field
-    embed    : A → B
-    step-comm : ∀ a → embed (stepA a) ≡ stepB (embed a)
-
-open StepSim public
-
-infixr 40 _∘StepSim_
-
-_∘StepSim_
-  : ∀ {ℓ₁ ℓ₂ ℓ₃}
-    {A : Set ℓ₁} {B : Set ℓ₂} {C : Set ℓ₃}
-    {stepA : A → A} {stepB : B → B} {stepC : C → C}
-    → StepSim B C stepB stepC
-    → StepSim A B stepA stepB
-    → StepSim A C stepA stepC
-_∘StepSim_ g f =
-  record
-    { embed = λ a → embed g (embed f a)
-    ; step-comm = λ a →
-        trans (cong (embed g) (step-comm f a))
-              (step-comm g (embed f a))
-    }
-
-iter : ∀ {ℓ} {A : Set ℓ} → (A → A) → ℕ → A → A
-iter step n a = iterate (CompOf step) n a
-
 iterSim
   : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {B : Set ℓ₂}
     (stepA : A → A) (stepB : B → B)
     (S : StepSim A B stepA stepB)
-    → ∀ n a → embed S (iter stepA n a) ≡ iter stepB n (embed S a)
-iterSim _ _ S zero    _ = refl
-iterSim stepA stepB S (suc n) a =
-  trans
-    (iterSim stepA stepB S n (stepA a))
-    (cong (iter stepB n) (step-comm S a))
+    → ∀ n a → embed S (iterateStep stepA n a) ≡ iterateStep stepB n (embed S a)
+iterSim stepA stepB S n a = Sim.iterateStep-map stepA stepB S n a
 
 -- Branch embeddings into `UCode` commute with one step (definitionally).
 
@@ -96,19 +62,19 @@ step-UQC _ = refl
 -- Branch simulations (as StepSim values), suitable for composition.
 
 MinskySim : StepSim MinskyCode UCode stepM stepU
-MinskySim = record { embed = UM ; step-comm = λ _ → refl }
+MinskySim = record { map = UM ; step-comm = λ _ → refl }
 
 LambdaSim : StepSim LambdaCode UCode stepLC stepU
-LambdaSim = record { embed = UL ; step-comm = λ _ → refl }
+LambdaSim = record { map = UL ; step-comm = λ _ → refl }
 
 EthereumSim : StepSim EVMCode UCode stepE stepU
-EthereumSim = record { embed = UE ; step-comm = λ _ → refl }
+EthereumSim = record { map = UE ; step-comm = λ _ → refl }
 
 QuantumOracleSim : StepSim QuantumCode UCode stepQ stepU
-QuantumOracleSim = record { embed = UQ ; step-comm = λ _ → refl }
+QuantumOracleSim = record { map = UQ ; step-comm = λ _ → refl }
 
 QuantumCircuitSim : StepSim QuantumCircuitCode UCode stepQC stepU
-QuantumCircuitSim = record { embed = UQC ; step-comm = λ _ → refl }
+QuantumCircuitSim = record { map = UQC ; step-comm = λ _ → refl }
 
 -- Core transport lemma (lightweight universality upgrade):
 --
@@ -124,28 +90,28 @@ liftThroughMinsky sim = MinskySim ∘StepSim sim
 -- And therefore, running the universal stepper restricted to a branch is the
 -- same as iterating the branch stepper and then re-injecting.
 
-simulateUM : ∀ n m → simulate n (UM m) ≡ UM (iter stepM n m)
+simulateUM : ∀ n m → simulate n (UM m) ≡ UM (iterateStep stepM n m)
 simulateUM zero    _ = refl
 simulateUM (suc n) m =
   trans
     (simulateUM n (stepM m))
     refl
 
-simulateUL : ∀ n l → simulate n (UL l) ≡ UL (iter stepLC n l)
+simulateUL : ∀ n l → simulate n (UL l) ≡ UL (iterateStep stepLC n l)
 simulateUL zero    _ = refl
 simulateUL (suc n) l =
   trans
     (simulateUL n (stepLC l))
     refl
 
-simulateUE : ∀ n e → simulate n (UE e) ≡ UE (iter stepE n e)
+simulateUE : ∀ n e → simulate n (UE e) ≡ UE (iterateStep stepE n e)
 simulateUE zero    _ = refl
 simulateUE (suc n) e =
   trans
     (simulateUE n (stepE e))
     refl
 
-simulateUQ : ∀ n q → simulate n (UQ q) ≡ UQ (iter stepQ n q)
+simulateUQ : ∀ n q → simulate n (UQ q) ≡ UQ (iterateStep stepQ n q)
 simulateUQ zero    _ = refl
 simulateUQ (suc n) q =
   trans
@@ -153,7 +119,7 @@ simulateUQ (suc n) q =
     refl
 
 simulateUQC
-  : ∀ n q → simulate n (UQC q) ≡ UQC (iter stepQC n q)
+  : ∀ n q → simulate n (UQC q) ≡ UQC (iterateStep stepQC n q)
 simulateUQC zero    _ = refl
 simulateUQC (suc n) q =
   trans

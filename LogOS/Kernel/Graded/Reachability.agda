@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -31,10 +31,10 @@ module For
 
   open GradedKernel K
 
-  CP∂ : ConPoset ℓ
+  CP∂ : ConPreorder ℓ
   CP∂ = BulkBoundary.bnd BB
 
-  module CP∂ = ConPoset CP∂
+  module CP∂ = ConPreorder CP∂
 
   module Reach = R.For {Q = Q} {CP = CP∂} GTruth
 

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -21,13 +21,13 @@ open import LogOS.Prelude hiding (refl; trans) renaming (_⊔_ to _⊔ℓ_)
 import LogOS.Prelude as Prelude
 
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; MonoOn)
+open import LogOS.Minimal.Con using (ConPreorder; MonoOn)
 
 record Quantale {ℓ : Level} : Set (lsuc ℓ) where
   field
-    CP : ConPoset ℓ
+    CP : ConPreorder ℓ
 
-  open ConPoset CP public
+  open ConPreorder CP public
 
   infixl 6 _⊔_
   infixl 7 _·_
@@ -60,7 +60,7 @@ record Quantale {ℓ : Level} : Set (lsuc ℓ) where
 -- Generic helpers (for working “up to ≈”)
 
 ≈-refl : ∀ {ℓ} {Q : Quantale {ℓ}} {a : Quantale.Con Q} → Quantale._≈_ Q a a
-≈-refl {Q = Q} = ConPoset.refl (Quantale.CP Q) , ConPoset.refl (Quantale.CP Q)
+≈-refl {Q = Q} = ConPreorder.refl (Quantale.CP Q) , ConPreorder.refl (Quantale.CP Q)
 
 ≈-sym
   : ∀ {ℓ} {Q : Quantale {ℓ}} {a b : Quantale.Con Q}
@@ -71,19 +71,19 @@ record Quantale {ℓ : Level} : Set (lsuc ℓ) where
   : ∀ {ℓ} {Q : Quantale {ℓ}} {a b c : Quantale.Con Q}
   → Quantale._≈_ Q a b → Quantale._≈_ Q b c → Quantale._≈_ Q a c
 ≈-trans {Q = Q} (ab , ba) (bc , cb) =
-  ConPoset.trans (Quantale.CP Q) ab bc , ConPoset.trans (Quantale.CP Q) cb ba
+  ConPreorder.trans (Quantale.CP Q) ab bc , ConPreorder.trans (Quantale.CP Q) cb ba
 
 ⊔-mono
   : ∀ {ℓ} {Q : Quantale {ℓ}} {a b c d : Quantale.Con Q}
-  → ConPoset._⊑_ (Quantale.CP Q) a c
-  → ConPoset._⊑_ (Quantale.CP Q) b d
-  → ConPoset._⊑_ (Quantale.CP Q)
+  → ConPreorder._⊑_ (Quantale.CP Q) a c
+  → ConPreorder._⊑_ (Quantale.CP Q) b d
+  → ConPreorder._⊑_ (Quantale.CP Q)
       (Quantale._⊔_ Q a b)
       (Quantale._⊔_ Q c d)
 ⊔-mono {Q = Q} {a = a} {b = b} {c = c} {d = d} a≤c b≤d =
   let
-    step₁ = ConPoset.trans (Quantale.CP Q) a≤c (Quantale.⊔-ub₁ Q c d)
-    step₂ = ConPoset.trans (Quantale.CP Q) b≤d (Quantale.⊔-ub₂ Q c d)
+    step₁ = ConPreorder.trans (Quantale.CP Q) a≤c (Quantale.⊔-ub₁ Q c d)
+    step₂ = ConPreorder.trans (Quantale.CP Q) b≤d (Quantale.⊔-ub₂ Q c d)
   in Quantale.⊔-least Q step₁ step₂
 
 -- --------------------------------------------------------------------------
@@ -111,7 +111,7 @@ quantaleFromQAdapter {ℓ} Q =
   where
     module QA = QAdapter Q
 
-    CP : ConPoset ℓ
+    CP : ConPreorder ℓ
     CP =
       record
         { Con  = QA.Scale

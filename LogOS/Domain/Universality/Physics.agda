@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,9 +8,9 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Universality.Physics where
 
 open import LogOS.Prelude
-open import Data.Nat using (ℕ)
-open import Data.Product using (Σ; _,_)
-open import Data.Sum using (_⊎_)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_)
+open import LogOS.Prelude.Sum using (_⊎_)
 
 open import LogOS.Domain.Universality.Core
 open import LogOS.Domain.Universality.ComplexitySpectrum
@@ -35,12 +35,14 @@ record PhysicalPostulates {ℓ : Level}
 
 -- Separation from physics: combine complexity model (Blum-based) and a time
 -- evolution operator satisfying physical postulates to assert P≠NP as a Set.
+--
+-- We make the assumptions explicit and package the claim separately.
 
-record PhysicsSeparation {ℓ : Level}
-                         (CM : ComplexityModel {ℓ})
-                         (EO : EvolOperator {ℓH = ℓ} CoreUCode stepCoreU)
-                         (PP : PhysicalPostulates EO)
-                         : Set (lsuc (lsuc ℓ)) where
+record PhysicsSeparationAssumptions {ℓ : Level}
+                                    (CM : ComplexityModel {ℓ})
+                                    (EO : EvolOperator {ℓH = ℓ} CoreUCode stepCoreU)
+                                    (PP : PhysicalPostulates EO)
+                                    : Set (lsuc (lsuc ℓ)) where
   open ComplexityModel CM
   open EvolOperator EO
   open PhysicalPostulates PP
@@ -52,5 +54,15 @@ record PhysicsSeparation {ℓ : Level}
     -- with LocalUnitary + Causality (model declares existence)
     SuperPolyVer : Set ℓ
 
+record PhysicsSeparation {ℓ : Level}
+                         (CM : ComplexityModel {ℓ})
+                         (EO : EvolOperator {ℓH = ℓ} CoreUCode stepCoreU)
+                         (PP : PhysicalPostulates EO)
+                         : Set (lsuc (lsuc ℓ)) where
+  field
+    assumptions : PhysicsSeparationAssumptions CM EO PP
+
     -- Claim: P≠NP (stated as a Set proposition)
     claim : SeparationClaim
+
+  open PhysicsSeparationAssumptions assumptions public

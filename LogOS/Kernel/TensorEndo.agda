@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,9 +17,9 @@ open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel
 open import LogOS.Kernel.Endo
 
-open import Data.Product using (_×_; _,_)
+open import LogOS.Prelude.Product using (_×_; _,_)
 
--- Lax braiding/monoidality assumptions on the boundary monoidal poset.
+-- Lax braiding/monoidality assumptions on the boundary monoidal preorder.
 
 record LaxBraidingMBnd {ℓ : Level}
                        {Sig : LogOSSignature ℓ}
@@ -27,10 +27,10 @@ record LaxBraidingMBnd {ℓ : Level}
                        (K   : Kernel Sig Q)
                        : Set (lsuc ℓ) where
   open Kernel K
-  open MonoidalPoset MBnd using (_⊗_; I)
+  open MonoidalOps MBnd using (_⊗_; I)
   field
-    swapL→R : ∀ {c d} → ConPoset._⊑_ (BulkBoundary.bnd BB) (c ⊗ d) (d ⊗ c)
-    swapR→L : ∀ {c d} → ConPoset._⊑_ (BulkBoundary.bnd BB) (d ⊗ c) (c ⊗ d)
+    swapL→R : ∀ {c d} → ConPreorder._⊑_ (BulkBoundary.bnd BB) (c ⊗ d) (d ⊗ c)
+    swapR→L : ∀ {c d} → ConPreorder._⊑_ (BulkBoundary.bnd BB) (d ⊗ c) (c ⊗ d)
 
 record LaxMonoidalFlow {ℓ : Level}
                        {Sig : LogOSSignature ℓ}
@@ -38,15 +38,26 @@ record LaxMonoidalFlow {ℓ : Level}
                        (K   : Kernel Sig Q)
                        : Set (lsuc ℓ) where
   open Kernel K
-  open MonoidalPoset MBnd using (_⊗_; I)
+  open MonoidalOps MBnd using (_⊗_; I)
   field
-    Flow⊗-lax : ∀ {c d} → ConPoset._⊑_ (BulkBoundary.bnd BB)
+    Flow⊗-lax : ∀ {c d} → ConPreorder._⊑_ (BulkBoundary.bnd BB)
                          (Truth.GuardedCore.GuardedClosure.Flow GTruth (c ⊗ d))
                          ((Truth.GuardedCore.GuardedClosure.Flow GTruth c)
                            ⊗ (Truth.GuardedCore.GuardedClosure.Flow GTruth d))
-    Flow-I-lax : ConPoset._⊑_ (BulkBoundary.bnd BB)
+    Flow-I-lax : ConPreorder._⊑_ (BulkBoundary.bnd BB)
                 (Truth.GuardedCore.GuardedClosure.Flow GTruth I)
                 I
+
+record TensorLaws {ℓ : Level}
+                  {Sig : LogOSSignature ℓ}
+                  {Q   : QAdapter ℓ}
+                  (K   : Kernel Sig Q)
+                  : Set (lsuc ℓ) where
+  field
+    braiding : LaxBraidingMBnd K
+    flow     : LaxMonoidalFlow K
+  open LaxBraidingMBnd braiding public
+  open LaxMonoidalFlow flow public
 
 -- Canonical tensor endomaps on the boundary (right- and left-handed).
 
@@ -55,29 +66,29 @@ infixl 7 _⊗ᵣ_ _⊗ₗ_
 _⊗ᵣ_
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
-    → ConPoset.Con (BulkBoundary.bnd (Kernel.BB K))
+    → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K))
     → Endo K
 _⊗ᵣ_ K d .Endo.fn c =
   let open Kernel K in
-  MonoidalPoset._⊗_ MBnd c d
+  MonoidalOps._⊗_ MBnd c d
 _⊗ᵣ_ K d .Endo.mono {x} {y} p =
   let open Kernel K in
-  let open MonoidalPoset MBnd using (_⊗_; mono⊗) in
-  let refl∂ = ConPoset.refl (BulkBoundary.bnd BB) in
+  let open MonoidalOps MBnd using (_⊗_; mono⊗) in
+  let refl∂ = ConPreorder.refl (BulkBoundary.bnd BB) in
   mono⊗ p refl∂
 
 _⊗ₗ_
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
-    → ConPoset.Con (BulkBoundary.bnd (Kernel.BB K))
+    → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K))
     → Endo K
 _⊗ₗ_ K c .Endo.fn d =
   let open Kernel K in
-  MonoidalPoset._⊗_ MBnd c d
+  MonoidalOps._⊗_ MBnd c d
 _⊗ₗ_ K c .Endo.mono {x} {y} p =
   let open Kernel K in
-  let open MonoidalPoset MBnd using (_⊗_; mono⊗) in
-  let refl∂ = ConPoset.refl (BulkBoundary.bnd BB) in
+  let open MonoidalOps MBnd using (_⊗_; mono⊗) in
+  let refl∂ = ConPreorder.refl (BulkBoundary.bnd BB) in
   mono⊗ refl∂ p
 
 -- Flow compatibility with tensor endomaps.
@@ -85,31 +96,31 @@ _⊗ₗ_ K c .Endo.mono {x} {y} p =
 Flow⊗-endo-right
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K  : Kernel Sig Q)
-    (LM : LaxMonoidalFlow K)
-    (d  : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+    (TL : TensorLaws K)
+    (d  : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
   → _≤₂_ K ((Flow-Endo K) ∘E ((K ⊗ᵣ_) d))
              (((K ⊗ᵣ_) (Endo.fn (Flow-Endo K) d)) ∘E (Flow-Endo K))
-Flow⊗-endo-right K LM d =
+Flow⊗-endo-right K TL d =
   let open Kernel K in
-  let open LaxMonoidalFlow LM in
+  let open TensorLaws TL in
   λ c → Flow⊗-lax {c} {d}
 
 Flow⊗-endo-left
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K  : Kernel Sig Q)
-    (LM : LaxMonoidalFlow K)
-    (c  : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+    (TL : TensorLaws K)
+    (c  : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
   → _≤₂_ K ((Flow-Endo K) ∘E ((K ⊗ₗ_) c))
              (((K ⊗ₗ_) (Endo.fn (Flow-Endo K) c)) ∘E (Flow-Endo K))
-Flow⊗-endo-left K LM c =
+Flow⊗-endo-left K TL c =
   let open Kernel K in
-  let open LaxMonoidalFlow LM in
+  let open TensorLaws TL in
   λ d → Flow⊗-lax {c = c} {d = d}
 
 Flow⊗-infl-≤₂
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
-    (d : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+    (d : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
   → _≤₂_ K ((idEndo K) ∘E ((K ⊗ᵣ_) d))
              ((Flow-Endo K) ∘E ((K ⊗ᵣ_) d))
 Flow⊗-infl-≤₂ K d =
@@ -119,7 +130,7 @@ Flow⊗-infl-≤₂ K d =
 Flow⊗-infl-≤₂-left
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
-    (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+    (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
   → _≤₂_ K ((idEndo K) ∘E ((K ⊗ₗ_) c))
              ((Flow-Endo K) ∘E ((K ⊗ₗ_) c))
 Flow⊗-infl-≤₂-left K c =

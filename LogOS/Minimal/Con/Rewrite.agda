@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,8 +16,8 @@ open import LogOS.Prelude
 
 open import LogOS.Minimal.Con
 
-module For {ℓ : Level} (CP : ConPoset ℓ) where
-  open ConPoset CP
+module For {ℓ : Level} (CP : ConPreorder ℓ) where
+  open ConPreorder CP
 
   -- Rewrite the left endpoint.
   substL : ∀ {a a' b} → a ≡ a' → _⊑_ a b → _⊑_ a' b

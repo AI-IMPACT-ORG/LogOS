@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,50 +8,15 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Reflection.ForcingSheaves where
 
 open import LogOS.Prelude
-open import Data.List using (List; []; _∷_; _++_; concat)
-open import LogOS.Minimal.Con using (ConPoset; PredConPoset)
+open import LogOS.Prelude.List using (List; []; _∷_; _++_; concat; All; all[]; all∷; All-map; All-++; All-concat; listsOf)
+open import LogOS.Minimal.Con using (ConPreorder; PredConPreorder)
 open import LogOS.Minimal.Closure using (ClosureOp)
 import LogOS.Syntax.Prop as Prop
 open import LogOS.Syntax.Prop using (_↔_; intro)
 
--- Minimal list-wise predicate.
-data All {ℓ₁ ℓ₂ : Level} {A : Set ℓ₁}
-         (P : A → Set ℓ₂) : List A → Set (ℓ₁ ⊔ ℓ₂) where
-  all[] : All P []
-  all∷  : ∀ {x xs} → P x → All P xs → All P (x ∷ xs)
-
-All-map
-  : ∀ {ℓ₁ ℓ₂ ℓ₃} {A : Set ℓ₁}
-    {P : A → Set ℓ₂} {Q : A → Set ℓ₃}
-  → (∀ x → P x → Q x)
-  → ∀ {xs} → All P xs → All Q xs
-All-map f all[] = all[]
-All-map f (all∷ px pxs) = all∷ (f _ px) (All-map f pxs)
-
-All-++ : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {P : A → Set ℓ₂}
-       → ∀ {xs ys} → All P xs → All P ys → All P (xs ++ ys)
-All-++ all[] ys = ys
-All-++ (all∷ px pxs) ys = all∷ px (All-++ pxs ys)
-
-All-concat
-  : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} {P : A → Set ℓ₂}
-  → ∀ {xss} → All (All P) xss → All P (concat xss)
-All-concat all[] = all[]
-All-concat (all∷ px pxs) = All-++ px (All-concat pxs)
-
--- Extract the list-of-lists payload from an All of dependent pairs.
-listsOf
-  : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁}
-    {R : A → List A → Set ℓ₂}
-    {cs : List A}
-  → All (λ c → Σ (List A) (λ ds → R c ds)) cs
-  → List (List A)
-listsOf all[] = []
-listsOf (all∷ (ds , _) rest) = ds ∷ listsOf rest
-
--- Coverage on a preorder (poset-site, list-based).
-record Coverage {ℓ : Level} (CP : ConPoset ℓ) : Set (lsuc ℓ) where
-  open ConPoset CP
+-- Coverage on a preorder (poset-site when antisymmetry is supplied; list-based).
+record Coverage {ℓ : Level} (CP : ConPreorder ℓ) : Set (lsuc ℓ) where
+  open ConPreorder CP
   field
     Cover : Con → List Con → Set ℓ
     id-cover : ∀ p → Cover p (p ∷ [])
@@ -64,18 +29,18 @@ record Coverage {ℓ : Level} (CP : ConPoset ℓ) : Set (lsuc ℓ) where
 -- Avoid opening Coverage globally: its fields are also projections and this can
 -- lead to ambiguous projection resolution under `-W all -W error`.
 
-module _ {ℓ : Level} {CP : ConPoset ℓ} (Cov : Coverage CP) where
-  open ConPoset CP
+module _ {ℓ : Level} {CP : ConPreorder ℓ} (Cov : Coverage CP) where
+  open ConPreorder CP
   open Coverage Cov
 
-  PredCP : ConPoset (lsuc ℓ)
-  PredCP = PredConPoset Con
+  PredCP : ConPreorder (lsuc ℓ)
+  PredCP = PredConPreorder Con
 
   localOp : (Con → Set ℓ) → Con → Set ℓ
   localOp U p = Σ (List Con) (λ cs → Cover p cs × All U cs)
 
   idempLocal
-    : ∀ U → ConPoset._⊑_ PredCP (localOp (localOp U)) (localOp U)
+    : ∀ U → ConPreorder._⊑_ PredCP (localOp (localOp U)) (localOp U)
   idempLocal U = lift idempLocal'
     where
       idempLocal' : ∀ p → localOp (localOp U) p → localOp U p
@@ -116,24 +81,24 @@ module _ {ℓ : Level} {CP : ConPoset ℓ} (Cov : Coverage CP) where
   Sheaf : (Con → Set ℓ) → Set ℓ
   Sheaf U = ∀ p cs → Cover p cs → All U cs → U p
 
-  sheaf→fixed : ∀ {U} → Sheaf U → ConPoset._⊑_ PredCP (localOp U) U
+  sheaf→fixed : ∀ {U} → Sheaf U → ConPreorder._⊑_ PredCP (localOp U) U
   sheaf→fixed sh = lift (λ p (cs , (cov , allU)) → sh p cs cov allU)
 
-  fixed→sheaf : ∀ {U} → ConPoset._⊑_ PredCP (localOp U) U → Sheaf U
+  fixed→sheaf : ∀ {U} → ConPreorder._⊑_ PredCP (localOp U) U → Sheaf U
   fixed→sheaf fixed p cs cov allU =
     Lift.lower fixed p (cs , (cov , allU))
 
-  sheaf↔fixed : ∀ {U} → Sheaf U ↔ ConPoset._⊑_ PredCP (localOp U) U
+  sheaf↔fixed : ∀ {U} → Sheaf U ↔ ConPreorder._⊑_ PredCP (localOp U) U
   sheaf↔fixed = intro sheaf→fixed fixed→sheaf
 
 -- Coverage equivalence: two presentations of the same site induce the same
 -- sheaf semantics (forcing is invariant under observationally equivalent covers).
 
-module CoverageEq {ℓ : Level} {CP : ConPoset ℓ}
+module CoverageEq {ℓ : Level} {CP : ConPreorder ℓ}
                   (Cov₁ Cov₂ : Coverage CP) where
   open Coverage Cov₁ renaming (Cover to Cover₁)
   open Coverage Cov₂ renaming (Cover to Cover₂)
-  open ConPoset CP
+  open ConPreorder CP
 
   localOp₁ : (Con → Set ℓ) → Con → Set ℓ
   localOp₁ U p = Σ (List Con) (λ cs → Cover₁ p cs × All U cs)

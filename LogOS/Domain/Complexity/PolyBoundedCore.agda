@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,9 +10,9 @@ module LogOS.Domain.Complexity.PolyBoundedCore where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ; suc)
-open import Data.Sum using (_⊎_)
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Nat using (ℕ; suc)
+open import LogOS.Prelude.Sum using (_⊎_)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
 
 open import LogOS.Computation.Decider using (Decider)
 

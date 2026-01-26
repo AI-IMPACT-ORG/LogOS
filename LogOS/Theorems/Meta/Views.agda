@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -20,7 +20,7 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Base.Signature.Hom using (SigHom; composeSigHom)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 open import LogOS.Syntax.Prop as Prop
 open import LogOS.Algebra.ConAlg using (idHom≡)
 
@@ -60,7 +60,7 @@ module ReindexingAssoc
     asLK : Kernel Sig₁ Q → LK.LogicKernel Sig₁ Q
     asLK = LKFromK.asLogicKernel
 
-    CP : Kernel Sig₁ Q → ConPoset ℓ
+    CP : Kernel Sig₁ Q → ConPreorder ℓ
     CP X = BulkBoundary.bnd (Kernel.BB X)
 
   assoc₁ : K2.KernelHom₁ A B
@@ -91,15 +91,15 @@ module ReindexingAssoc
 
   assoc-invL : K2._≈_ (K2._∘₁_ assoc₁⁻¹ assoc₁) (K2.idKernelHom₁ A)
   assoc-invL =
-    (λ _ → ConPoset.refl (CP A))
+    (λ _ → ConPreorder.refl (CP A))
     ,
-    (λ _ → ConPoset.refl (CP A))
+    (λ _ → ConPreorder.refl (CP A))
 
   assoc-invR : K2._≈_ (K2._∘₁_ assoc₁ assoc₁⁻¹) (K2.idKernelHom₁ B)
   assoc-invR =
-    (λ _ → ConPoset.refl (CP B))
+    (λ _ → ConPreorder.refl (CP B))
     ,
-    (λ _ → ConPoset.refl (CP B))
+    (λ _ → ConPreorder.refl (CP B))
 
 -- ============================================================================
 -- 2) Satisfaction is literally precomposition under reindexKernel
@@ -123,7 +123,7 @@ module ReindexingSatisfaction
 
   SatH-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
-        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
     → HT₁.HLayer.Sat_H (Kernel.HTruth K₁) w c
       ≡ HT₂.HLayer.Sat_H (Kernel.HTruth K₂) (SigHom.mapCosp σ w) c
   SatH-precompose _ _ = refl
@@ -137,13 +137,13 @@ module ReindexingSatisfaction
 
   SatHbnd-precompose
     : ∀ (w : LogOSSignature.∂Cosp Sig₁)
-        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
     → Kernel.Sat_H_bnd K₁ w c ≡ Kernel.Sat_H_bnd K₂ (SigHom.map∂Cosp σ w) c
   SatHbnd-precompose _ _ = refl
 
   SatHcoh-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
-        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
     → Prop._↔_
         (HT₁.HLayer.Sat_H (Kernel.HTruth K₁) w c)
         (Kernel.Sat_H_bnd K₁ (LogOSSignature.to∂ Sig₁ w) c)
@@ -177,20 +177,20 @@ module ReindexingSatisfactionWithFml
 
   SatH-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
-        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
     → HT₁.HLayer.Sat_H (Kernel.HTruth K₁) w c
       ≡ HT₂.HLayer.Sat_H (Kernel.HTruth K₂) (SigHom.mapCosp σ w) c
   SatH-precompose _ _ = refl
 
   SatHbnd-precompose
     : ∀ (w : LogOSSignature.∂Cosp Sig₁)
-        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
     → Kernel.Sat_H_bnd K₁ w c ≡ Kernel.Sat_H_bnd K₂ (SigHom.map∂Cosp σ w) c
   SatHbnd-precompose _ _ = refl
 
   SatHcoh-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
-        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
     → Prop._↔_
         (HT₁.HLayer.Sat_H (Kernel.HTruth K₁) w c)
         (Kernel.Sat_H_bnd K₁ (LogOSSignature.to∂ Sig₁ w) c)
@@ -225,20 +225,20 @@ module ReindexingSatisfactionWithFmlLogic
 
   SatH-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
-        (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
     → HT₁.HLayer.Sat_H (LogicKernel.HTruth K₁) w c
       ≡ HT₂.HLayer.Sat_H (LogicKernel.HTruth K₂) (SigHom.mapCosp σ w) c
   SatH-precompose _ _ = refl
 
   SatHbnd-precompose
     : ∀ (w : LogOSSignature.∂Cosp Sig₁)
-        (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
     → LogicKernel.Sat_H_bnd K₁ w c ≡ LogicKernel.Sat_H_bnd K₂ (SigHom.map∂Cosp σ w) c
   SatHbnd-precompose _ _ = refl
 
   SatHcoh-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
-        (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
     → Prop._↔_
         (HT₁.HLayer.Sat_H (LogicKernel.HTruth K₁) w c)
         (LogicKernel.Sat_H_bnd K₁ (LogOSSignature.to∂ Sig₁ w) c)
@@ -328,7 +328,7 @@ module FlowGuardTransport
       {h : LK2.LogicKernelHom₁ K₁ K₂}
       (hf : LK2.LogicKernelHomFlow₁ h)
       (γ : LK.LogicKernel.Code K₁)
-    → ConPoset._⊑_ (BulkBoundary.bnd (LK.LogicKernel.BB K₂))
+    → ConPreorder._⊑_ (BulkBoundary.bnd (LK.LogicKernel.BB K₂))
         (LK.LogicKernel.decode K₂ (LK2.LogicKernelHom₁.mapCode₁ h (LK.LogicKernel.Guard K₁ γ)))
         (LK.GTier.Flow (LK.LogicKernel.G K₂) (LK.GTier.step (LK.LogicKernel.G K₂))
           (LK.LogicKernel.decode K₂ (LK2.LogicKernelHom₁.mapCode₁ h γ)))
@@ -352,21 +352,21 @@ module FlowGuardTransport
                     ≡ LK2.LogicKernelHom₁.map∂₁ h (LK.LogicKernel.decode K₁ (LK.LogicKernel.Guard K₁ γ))
       eq-mapGuard = LK2.LogicKernelHom₁.map-decode₁ h (LK.LogicKernel.Guard K₁ γ)
 
-      step : ConPoset._⊑_ CP₂
+      step : ConPreorder._⊑_ CP₂
               (LK2.LogicKernelHom₁.map∂₁ h (Flow₁ step₁ (LK.LogicKernel.decode K₁ γ)))
               (Flow₂ step₂ (LK2.LogicKernelHom₁.map∂₁ h (LK.LogicKernel.decode K₁ γ)))
       step = LK2.LogicKernelHomFlow₁.preserves-step hf (LK.LogicKernel.decode K₁ γ)
     in
     subst
-      (λ x → ConPoset._⊑_ CP₂ x (Flow₂ step₂ (LK.LogicKernel.decode K₂ (LK2.LogicKernelHom₁.mapCode₁ h γ))))
+      (λ x → ConPreorder._⊑_ CP₂ x (Flow₂ step₂ (LK.LogicKernel.decode K₂ (LK2.LogicKernelHom₁.mapCode₁ h γ))))
       (sym eq-mapGuard)
       (subst
-        (λ y → ConPoset._⊑_ CP₂
+        (λ y → ConPreorder._⊑_ CP₂
                 (LK2.LogicKernelHom₁.map∂₁ h (LK.LogicKernel.decode K₁ (LK.LogicKernel.Guard K₁ γ)))
                 (Flow₂ step₂ y))
         (sym eq-mapγ)
         (subst
-          (λ z → ConPoset._⊑_ CP₂ (LK2.LogicKernelHom₁.map∂₁ h z)
+          (λ z → ConPreorder._⊑_ CP₂ (LK2.LogicKernelHom₁.map∂₁ h z)
                     (Flow₂ step₂ (LK2.LogicKernelHom₁.map∂₁ h (LK.LogicKernel.decode K₁ γ))))
           (sym eq-guard₁)
           step))

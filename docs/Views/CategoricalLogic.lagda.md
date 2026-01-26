@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,7 +10,47 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.Views.CategoricalLogic where
 
-open import LogOS.Docs.Views.View_CategoricalLogic public
+-- Typechecked “view surface” for the categorical-logic presentation.
+--
+-- Keep this module intentionally lightweight: it should be importable alongside
+-- other views/tests without introducing operator/name clashes.
+
+open import LogOS.Prelude public
+open import LogOS.Base.Signature using (LogOSSignature)
+open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Kernel using (Kernel)
+import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheorems
+
+module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (K : Kernel Sig Q)
+  where
+  module V = ViewTheorems.For K
+  open V.CategoricalLogic public
+
+  private
+    CodeThinCat-exists : _
+    CodeThinCat-exists = CodeThinCat
+
+    BoxFunctor-exists : _
+    BoxFunctor-exists = BoxFunctor
+
+    Kernel2Cat-exists : _
+    Kernel2Cat-exists = Kernel2Cat
+
+    Port2Cat-exists : _
+    Port2Cat-exists = Port2Cat
+
+    KernelCategory-exists : _
+    KernelCategory-exists = KernelCategory
+
+    quantale-exists : _
+    quantale-exists = quantale
+
+    conAlg-exists : _
+    conAlg-exists = conAlg
+
+    projection-exists : _
+    projection-exists = V.Projections.projection
 ```
 
 This note states the **categorical-logic leg** of the “computational trinity”
@@ -30,7 +70,7 @@ Theorem spine (authoritative)
 Thin categories from refinement
 ------------------------------
 
-Every `ConPoset` can be read as a preorder-style category:
+Every `ConPreorder` can be read as a preorder-style category:
 
 - objects: constraints `Con`
 - morphisms: refinement proofs `c ⊑ d`
@@ -59,9 +99,12 @@ The categorical logic structure that LogOS actually needs is:
 These are packaged in the Minimal layer:
 
 - `LogOS/Minimal/Adjunction.agda`
-  - `MonoidalPoset` (monoidal preorder-style category)
-  - `LaxAdjunction` (bulk/boundary reflection interface)
+  - `MonoidalOps` (tensor/unit operations + monotonicity; laws are optional via `MonoidalLaws`)
+  - `Monoidal` (ops + laws bundle, when you want a real monoid up to `≈`)
+  - `LaxAdjunction` (lax unit/counit inequalities; the ↔-law “tight” form is `GaloisConnection`)
+  - `LaxAdjunctionMono` (monotone lax adjunction; derives a `GaloisConnection`)
   - `LaxMonoidalAdjunction` (monoidal compatibility)
+- `LogOS/Minimal/WorldLaws.agda` (`CtxPreorder`): optional preorder laws for the context relation `_≤ctx_`.
 
 At the Kernel level, the corresponding bundled interface is:
 
@@ -71,7 +114,21 @@ which exposes:
 
 - a `BulkBoundary` of preorders (posets if antisymmetry is supplied),
 - monoidal structures on bulk and boundary, and
-- a lax monoidal adjunction `ext ⊣ bnd`.
+- a lax monoidal adjunction `ext ⊣ bnd` (in the unit/counit-inequality sense).
+
+Cheap coherence (lax Beck–Chevalley / Frobenius)
+-----------------------------------------------
+
+Without importing full Lawvere semantics, LogOS still supports some “hyperdoctrine-shaped”
+coherence at the preorder (`_⊑_`) level:
+
+- **Frobenius (one-way)** from lax monoidality alone:
+  `LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda` (`Frobenius.frobenius-ext≤`).
+- **Boundary closure** induced by the adjunction, once monotonicity is supplied:
+  `T = bnd ∘ ext` as a `ClosureOp` via `LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda`
+  (`Derived.T-closureOp`).
+- **Beck–Chevalley (lax)** as commutation squares up to refinement:
+  `LogOS/Theorems/CategoryTheory/BeckChevalley.agda`.
 
 Quantale enrichment (resource-aware categories)
 ----------------------------------------------
@@ -84,17 +141,18 @@ universality, complexity, and opacity.
 Categorically:
 - `WorldH` equips strict worlds with a `WFlow : WorldS → WorldS → Scale` satisfying lax unit/associativity,
   i.e. a category enriched over the **monoidal preorder** underlying `Scale` (using `_·_`, `e`, and `_≤s_`).
-  The Kripke-style context order `_≤ctx_` is a separate preorder used for satisfaction monotonicity.
+  The Kripke-style context relation `_≤ctx_` (often taken as a preorder) is used for satisfaction monotonicity.
+  When you want the preorder reading, supply `CtxPreorder` from `LogOS/Minimal/WorldLaws.agda`.
 - The graded kernel (`LogOS/Kernel/Graded.agda`) indexes the boundary flow by grades `g : Scale`,
   enabling resource-aware closure/normalisation arguments.
 
-Category of kernels (morphisms up to decode)
+Category of kernels (morphisms up to strict decode equality)
 --------------------------------------------
 
 For a fixed signature `Sig` and adapter `Q`, kernels form a category where the
-notion of equality on morphisms is **decode-level equality** (two morphisms are
+notion of equality on morphisms is **strict decode equality** (two morphisms are
 identified if they induce the same decoded boundary constraint at the target).
-Concretely, this is pointwise: `f ≈ g` iff `∀ γ → decode (mapCode f γ) ≡ decode (mapCode g γ)`.
+Concretely, this is pointwise: `eqHom f g` iff `∀ γ → decode (mapCode f γ) ≡ decode (mapCode g γ)`.
 
 The production library packages this as:
 
@@ -135,7 +193,7 @@ In code:
   - `LogOS/Theorems/CategoryTheory/Port2Cat.agda` (ports/adapters; satisfaction-equivalence as 2-cells)
 
 The 1-category `KernelCat` is the decode-level 1D façade: it identifies morphisms
-by decode-level equality (`eqHom`). Conceptually, this *presents* the locally
+by strict decode equality (`eqHom`). Conceptually, this *presents* the locally
 posetal quotient of the refinement 2-category (it is not implemented as a
 quotient type).
 

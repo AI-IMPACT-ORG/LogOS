@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -74,9 +74,9 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
 
   -- Thin 2-category view (LogicKernel level) and its laws.
 
-  LogicKernelHomPoset
-    : LogicKernel Sig Q → LogicKernel Sig Q → ConPoset (lsuc (lsuc ℓ))
-  LogicKernelHomPoset K₁ K₂ =
+  LogicKernelHomPreorder
+    : LogicKernel Sig Q → LogicKernel Sig Q → ConPreorder (lsuc (lsuc ℓ))
+  LogicKernelHomPreorder K₁ K₂ =
     record
       { Con = LogicKernelHom₁ K₁ K₂
       ; _⊑_ = λ f g → Lift (lsuc (lsuc ℓ)) (f ⇒ g)
@@ -89,7 +89,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   LogicKernelThin2Cat =
     record
       { Obj = LogicKernel Sig Q
-      ; Hom = LogicKernelHomPoset
+      ; Hom = LogicKernelHomPreorder
       ; id  = λ {A} → idLogicKernelHom₁ A
       ; _∘_ = _∘₁_
       ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} le →
@@ -126,12 +126,9 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       step₂ = GTier.step (LogicKernel.G K₂)
       Flow₁ = GTier.Flow (LogicKernel.G K₁)
       Flow₂ = GTier.Flow (LogicKernel.G K₂)
-      Th⋆₁  = GTier.Th* (LogicKernel.G K₁)
-      Th⋆₂  = GTier.Th* (LogicKernel.G K₂)
     field
-      preserves-step : ∀ c → ConPoset._⊑_ CP₂ (LogicKernelHom₁.map∂₁ h (Flow₁ step₁ c))
+      preserves-step : ∀ c → ConPreorder._⊑_ CP₂ (LogicKernelHom₁.map∂₁ h (Flow₁ step₁ c))
                                          (Flow₂ step₂ (LogicKernelHom₁.map∂₁ h c))
-      preserves-Th   : ConPoset._⊑_ CP₂ (LogicKernelHom₁.map∂₁ h Th⋆₁) Th⋆₂
 
   open LogicKernelHomFlow₁ public
 
@@ -142,9 +139,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     → LogicKernelHomFlow₁ (idLogicKernelHom₁ K)
   idLogicKernelHomFlow₁ K =
     record
-      { preserves-step = λ _ → ConPoset.refl (BulkBoundary.bnd (LogicKernel.BB K))
-      ; preserves-Th   = ConPoset.refl (BulkBoundary.bnd (LogicKernel.BB K))
-      }
+      { preserves-step = λ _ → ConPreorder.refl (BulkBoundary.bnd (LogicKernel.BB K)) }
 
   composeLogicKernelHomFlow₁
     : ∀ {K₁ K₂ K₃ : LogicKernel Sig Q}
@@ -165,13 +160,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
             step₁ = LogicKernelHomFlow₁.preserves-step ff c
             step₁' = LogicKernelHom₁.mono∂ g step₁
             step₂ = LogicKernelHomFlow₁.preserves-step gg (mapf c)
-          in ConPoset.trans CP₃ step₁' step₂
-      ; preserves-Th =
-          let
-            step₁ = LogicKernelHomFlow₁.preserves-Th ff
-            step₁' = LogicKernelHom₁.mono∂ g step₁
-            step₂ = LogicKernelHomFlow₁.preserves-Th gg
-          in ConPoset.trans CP₃ step₁' step₂
+          in ConPreorder.trans CP₃ step₁' step₂
       }
 
   module FlowSub₁ =

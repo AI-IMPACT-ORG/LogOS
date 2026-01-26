@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ module LogOS.Kernel.LogicKernel.Reindex where
 -- - contravariant in `SigHom`,
 -- - reindexes the world/satisfaction indices,
 -- - preserves constraints and code on-the-nose,
--- - keeps the guarded tier (`GTier`) unchanged (it acts on the same boundary poset).
+-- - keeps the guarded tier (`GTier`) unchanged (it acts on the same boundary preorder).
 --
 -- This is the minimal “tier alignment” story over signatures: S/H/G/R (reflection)
 -- can be pulled back uniformly without introducing new axioms.

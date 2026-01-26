@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,8 +18,8 @@ import LogOS.Domain.UniversalIR.Languages.Minsky as Minsky
 open import LogOS.Domain.UniversalIR.Std using (decodeChurch-church)
 open import LogOS.Domain.UniversalIR.Encoding as Enc using (take-length; bitsToNat-natToBits)
 
-open import Data.List using (List; []; _∷_)
-open import Data.Bool using (Bool; true; false)
+open import LogOS.Prelude.List using (List; []; _∷_)
+open import LogOS.Prelude.Bool using (Bool; true; false)
 
 -- A minimal “explicit circuit” backend:
 -- - circuit syntax is a list of gate instructions (`QCInstr`)

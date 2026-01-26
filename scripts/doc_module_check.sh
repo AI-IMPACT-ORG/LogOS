@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: an Agda research library for foundational logic system architecture.
+# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -15,7 +15,7 @@ LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 cd "${LIB_ROOT}"
 
-DOCS=(README.md CHANGELOG.md CONTRIBUTING.md)
+DOCS=(README.md CONTRIBUTING.md)
 
 while IFS= read -r -d '' f; do
   DOCS+=("$f")
@@ -43,7 +43,7 @@ is_path_like() {
   local s="$1"
 
   case "$s" in
-    LogOS/*|Data/*|Tests/*|docs/*|scripts/*|.github/*) return 0 ;;
+    LogOS/*|Tests/*|docs/*|scripts/*|.github/*) return 0 ;;
     *.agda|*.lagda.md) return 0 ;;
     *) return 1 ;;
   esac
@@ -110,4 +110,3 @@ if [[ -n "$bad" ]]; then
 fi
 
 echo "doc-module-check: OK"
-

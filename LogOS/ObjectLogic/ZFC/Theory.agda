@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,8 +10,8 @@ module LogOS.ObjectLogic.ZFC.Theory where
 open import LogOS.Prelude
 import LogOS.Syntax.Prop as Prop
 
-open import Data.Fin using (fzero; fsuc)
-open import Data.List using (List; []; _∷_)
+open import LogOS.Prelude.Fin using (fzero; fsuc)
+open import LogOS.Prelude.List using (List; []; _∷_)
 open import LogOS.Domain.ZFC.SetTheory.FormulaPack using (ZFAxiomsᶠ; ZFCAxiomsᶠ)
 open import LogOS.ObjectLogic.FOL.All as FOL
 open import LogOS.ObjectLogic.FOL.ND using (Deriv; hyp; ⊥E; ⇒I; ⇒E; ∧I; ∧E₁; ∧E₂; ∀I; ∀E)

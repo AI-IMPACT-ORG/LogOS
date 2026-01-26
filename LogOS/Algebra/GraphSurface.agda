@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,7 +11,7 @@ open import LogOS.Prelude
 
 open import LogOS.Algebra.Ring
 open import LogOS.Algebra.FiniteGraph
-open import Data.Graph
+open import LogOS.Prelude.Graph
 
 -- Some algebraic models (Ihara, spectral GRH) package graphs as adjacency
 -- matrices over a ring. To reuse the canonical Graph datatype we expose a tiny

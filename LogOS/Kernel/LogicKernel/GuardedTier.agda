@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ module LogOS.Kernel.LogicKernel.GuardedTier where
 open import LogOS.Prelude
 
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset)
+open import LogOS.Minimal.Con using (ConPreorder)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel.LogicKernel using (GTier)
 
@@ -23,7 +23,7 @@ private
   module GC = Truth.GuardedCore
 
 fromGuardedClosure
-  : ∀ {ℓ : Level} {Q : QAdapter ℓ} {CP : ConPoset ℓ}
+  : ∀ {ℓ : Level} {Q : QAdapter ℓ} {CP : ConPreorder ℓ}
   → GC.GuardedClosure CP
   → GuardedTier Q CP
 fromGuardedClosure G =
@@ -40,7 +40,7 @@ fromGuardedClosure G =
     }
 
 fromGradedClosure
-  : ∀ {ℓ : Level} {Q : QAdapter ℓ} {CP : ConPoset ℓ}
+  : ∀ {ℓ : Level} {Q : QAdapter ℓ} {CP : ConPreorder ℓ}
   → GC.GradedClosure Q CP
   → QAdapter.Scale Q
   → GuardedTier Q CP
@@ -58,13 +58,13 @@ fromGradedClosure {Q = Q} G step =
     }
 
 fromGradedClosure-sat
-  : ∀ {ℓ : Level} {Q : QAdapter ℓ} {CP : ConPoset ℓ}
+  : ∀ {ℓ : Level} {Q : QAdapter ℓ} {CP : ConPreorder ℓ}
   → GC.GradedClosure Q CP
   → GuardedTier Q CP
 fromGradedClosure-sat G = fromGradedClosure G (GC.GradedClosure.sat G)
 
 toGuardedClosure
-  : ∀ {ℓ : Level} {Q : QAdapter ℓ} {CP : ConPoset ℓ}
+  : ∀ {ℓ : Level} {Q : QAdapter ℓ} {CP : ConPreorder ℓ}
   → GuardedTier Q CP
   → GC.GuardedClosure CP
 toGuardedClosure G =

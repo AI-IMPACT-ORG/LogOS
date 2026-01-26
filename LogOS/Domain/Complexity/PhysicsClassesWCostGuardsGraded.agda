@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,8 +10,8 @@ module LogOS.Domain.Complexity.PhysicsClassesWCostGuardsGraded where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ)
-open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_; proj₁; proj₂)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Kernel.Graded
@@ -87,10 +87,10 @@ module Kernel
 
   module Base = PCW.Kernel K Input Size DetRun VerRun VerRunWith IsPoly gradeBound WSize
 
-  open Base public using (Con; PhysP; PhysNPw; SuperPolyHardness; notPhysP)
+  open Base public using (Con; PhysP; PhysTotalNPw; SuperPolyHardness; notPhysP)
 
   PhysPCostGuards = PhysP
-  PhysNPwCostGuards = PhysNPw
+  PhysTotalNPwCostGuards = PhysTotalNPw
   notPhysPCostGuards = notPhysP
 
 -- Grade-native kernel route (TruthRoute_Grade_Only-based).
@@ -112,8 +112,8 @@ module KernelG
 
   module Base = PCW.KernelG K Input Size DetRun VerRun VerRunWith PGG Pℕ WSize
 
-  open Base public using (Con; PhysP; PhysNPw; SuperPolyHardness; notPhysP)
+  open Base public using (Con; PhysP; PhysTotalNPw; SuperPolyHardness; notPhysP)
 
   PhysPCostGuards = PhysP
-  PhysNPwCostGuards = PhysNPw
+  PhysTotalNPwCostGuards = PhysTotalNPw
   notPhysPCostGuards = notPhysP

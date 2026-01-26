@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,7 +23,8 @@ open import LogOS.Theorems.Boundary.Reflection as BR
 -- so the only behaviour that matters is what the explicit boundary can observe.
 --
 -- If you additionally assume observational completeness (Extension),
--- you recover a full-abstraction statement: bisimilarity ⇔ decode-equality.
+-- you recover a full-abstraction statement: bisimilarity ⇔ decoded observational equality
+-- (and hence ⇔ strict decode equality when the boundary preorder is antisymmetric).
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
          (K : Kernel Sig Q) where

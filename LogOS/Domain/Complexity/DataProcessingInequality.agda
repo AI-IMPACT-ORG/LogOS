@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,9 +9,9 @@ module LogOS.Domain.Complexity.DataProcessingInequality where
 
 open import LogOS.Prelude
 
-open import Data.Nat using (ℕ)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; trans≤ℕ) public
-open import LogOS.Minimal.Con using (ConPoset)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; trans≤ℕ) public
+open import LogOS.Minimal.Con using (ConPreorder)
 
 -- A minimal, LogOS-native Data Processing Inequality (DPI) layer.
 --
@@ -45,7 +45,7 @@ module Derived {ℓ : Level} {Obs : Set ℓ} (D : DPI Obs) where
   dpi² C₁ C₂ o = trans≤ℕ (dpi C₂ (Channel.run C₁ o)) (dpi C₁ o)
 
 -- --------------------------------------------------------------------------
--- More general (and less vacuous) DPI interface: explicit channel family + value poset.
+-- More general (and less vacuous) DPI interface: explicit channel family + value preorder.
 -- --------------------------------------------------------------------------
 
 record ChannelFamily {ℓObs ℓCh : Level} (Obs : Set ℓObs) : Set (lsuc (ℓObs ⊔ ℓCh)) where
@@ -57,11 +57,11 @@ record DPIOn
   {ℓObs ℓCh ℓI : Level}
   (Obs : Set ℓObs)
   (CF  : ChannelFamily {ℓObs = ℓObs} {ℓCh = ℓCh} Obs)
-  (IP  : ConPoset ℓI)
+  (IP  : ConPreorder ℓI)
   : Set (lsuc (ℓObs ⊔ ℓCh ⊔ ℓI)) where
 
   open ChannelFamily CF
-  open ConPoset IP
+  open ConPreorder IP
 
   field
     info : Obs → Con
@@ -71,15 +71,15 @@ module DerivedOn
   {ℓObs ℓCh ℓI : Level}
   {Obs : Set ℓObs}
   {CF  : ChannelFamily {ℓObs = ℓObs} {ℓCh = ℓCh} Obs}
-  {IP  : ConPoset ℓI}
+  {IP  : ConPreorder ℓI}
   (D : DPIOn Obs CF IP)
   where
 
   open DPIOn D
   open ChannelFamily CF
-  open ConPoset IP
+  open ConPreorder IP
 
   dpi²
     : ∀ (C₁ C₂ : Ch) (o : Obs)
       → _⊑_ (info (run C₂ (run C₁ o))) (info o)
-  dpi² C₁ C₂ o = ConPoset.trans IP (dpi C₂ (run C₁ o)) (dpi C₁ o)
+  dpi² C₁ C₂ o = ConPreorder.trans IP (dpi C₂ (run C₁ o)) (dpi C₁ o)

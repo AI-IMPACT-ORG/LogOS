@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,17 +12,18 @@ module LogOS.Theorems.CategoryTheory.Yoneda where
 -- ============================================================================
 --
 -- This module builds up a Yoneda-like result incrementally using LogOS-native
--- concepts: decode-level equality, S/H/G tiers, and the initial kernel.
+-- concepts: equality of morphisms up to strict decode equality (`≡`), S/H/G tiers,
+-- and the initial kernel.
 --
 -- Approach:
--- 1. Start with decode-level equality for morphisms (LogOS-native)
+-- 1. Start with morphism equality up to strict decode equality (`≡`) (LogOS-native)
 -- 2. Show properties preserved by kernel homomorphisms
 -- 3. Connect to initial kernel via foldK
 -- 4. Build up to representability results
 -- ============================================================================
 
 open import LogOS.Prelude
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Product using (Σ; _,_)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
@@ -33,6 +34,7 @@ open import LogOS.Syntax.Eq using (module ForKernel)
 open import LogOS.Syntax.Prop as Prop
 open import LogOS.Algebra.ConAlg using (ConAlgHom≡)
 import LogOS.Theorems.CategoryTheory.KernelCat as KC
+open import LogOS.Theorems.Meta.DecodeTransportKit using (mapCode≈K-from-decode≡)
 
 Hom
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -63,9 +65,10 @@ id {Sig = Sig} {Q = Q} {K = K} =
   KC.KernelCat.id (KC.KernelCat-instance Sig Q) {A = K}
 
 -- ============================================================================
--- STEP 1: Decode-Level Equality for Morphisms (LogOS-Native)
+-- STEP 1: Strict Decode Equality for Morphisms (LogOS-Native)
 -- ============================================================================
--- In LogOS, morphisms are equal up to decode-level equality.
+-- In this development, morphisms are equal up to *strict* decode equality (`≡`)
+-- on decoded boundary constraints at the target (this is `KernelCat.eqHom`).
 -- This is the foundation for our Yoneda results.
 
 -- Morphisms from FreeK to K are equal up to decode
@@ -84,7 +87,8 @@ morphism-uniqueness-decode IK K h =
 -- STEP 2: Properties Preserved by Kernel Homomorphisms (LogOS-Native)
 -- ============================================================================
 -- A property on kernels that respects decode-level equality of morphisms.
--- This is LogOS-native because it uses decode-level equality, not strict equality.
+-- This is LogOS-native because it is invariant under the chosen `eqHom` relation,
+-- rather than requiring literal equality of morphisms.
 
 record DecodePreservingProperty {ℓ : Level} {ℓP : Level}
                                 {Sig : LogOSSignature ℓ}
@@ -130,7 +134,7 @@ yoneda-morphism-decode
 yoneda-morphism-decode IK K h = morphism-uniqueness-decode IK K h
 
 -- ============================================================================
--- STEP 4: Yoneda for Properties (Using Decode-Level Equality)
+-- STEP 4: Yoneda for Properties (Using Morphism Equality up to Decode)
 -- ============================================================================
 -- Properties at K can be transported to FreeK via foldK, and this is unique
 -- up to decode-level equality.
@@ -163,10 +167,10 @@ property-transport-unique IK K P DPP h pK =
 -- ============================================================================
 -- STEP 5: Code-Level Properties (LogOS-Native)
 -- ============================================================================
--- Properties on codes that respect decode-level equality.
+-- Properties on codes that respect decoded observational equality.
 -- This is LogOS-native because it uses the code/reflection layer.
 
--- A property on codes that respects decode-level equality
+-- A property on codes that respects decoded observational equality.
 record CodeProperty {ℓ : Level}
                     {Sig : LogOSSignature ℓ}
                     {Q : QAdapter ℓ}
@@ -175,8 +179,8 @@ record CodeProperty {ℓ : Level}
                     : Set (lsuc ℓ) where
   open ForKernel K
   field
-    -- P respects decode-level equality
-    decode-extensional : ∀ {γ₁ γ₂} → γ₁ ≃K γ₂ → P γ₁ → P γ₂
+    -- P respects decoded observational equality (mutual refinement).
+    decode-extensional : ∀ {γ₁ γ₂} → γ₁ ≈K γ₂ → P γ₁ → P γ₂
 
 open CodeProperty public
 
@@ -202,14 +206,8 @@ code-property-transport-respects-decode
     (eq : Kernel.decode K₁ γ₁ ≡ Kernel.decode K₁ γ₂)
   → code-property-transport h P₂ CP₂ γ₁ → code-property-transport h P₂ CP₂ γ₂
 code-property-transport-respects-decode {K₁ = K₁} {K₂ = K₂} h P₂ CP₂ {γ₁} {γ₂} eq p =
-  let open ForKernel K₂
-      -- mapCode h γ₁ and mapCode h γ₂ are decode-equal at K₂
-      eq₂ : Kernel.decode K₂ (KernelHom.mapCode h γ₁) 
-            ≡ Kernel.decode K₂ (KernelHom.mapCode h γ₂)
-      eq₂ = trans (KernelHom.map-decode h γ₁)
-                  (trans (cong (ConAlgHom≡.map∂ (KernelHom.con-hom h)) eq)
-                         (sym (KernelHom.map-decode h γ₂)))
-  in decode-extensional CP₂ eq₂ p
+  let open ForKernel K₂ in
+  decode-extensional CP₂ (mapCode≈K-from-decode≡ h eq) p
 
 -- ============================================================================
 -- STEP 6: Connection to LogOS Transport Theorems (S↔H)
@@ -235,7 +233,7 @@ H-satisfaction-property
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
     (w : LogOSSignature.Cosp Sig)
-    (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+    (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
   → Set ℓ
 H-satisfaction-property {Sig = Sig} {Q = Q} K w c =
   let module HT = Truth.HomotypicalTruth Sig Q (Kernel.HWorld K)
@@ -299,11 +297,11 @@ code-fixedpoint-property
     (K : Kernel Sig Q)
   → Set ℓ
 code-fixedpoint-property Sig Q K =
-  (ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+  (ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
     (Kernel.decode K (Kernel.γ* K))
     (Kernel.decode K (Kernel.Guard K (Kernel.Body K (Kernel.γ* K)))))
   ×
-  (ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+  (ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
     (Kernel.decode K (Kernel.Guard K (Kernel.Body K (Kernel.γ* K))))
     (Kernel.decode K (Kernel.γ* K)))
 
@@ -586,7 +584,7 @@ code-structure-uniqueness-via-fold IK K γ =
 --
 -- Relative to the classical statement `Nat(Hom(-, K), P) ≅ P(K)`, the main
 -- adjustments are:
--- - equality on morphisms is decode-level (`_≃K_`), and
+-- - equality on morphisms is decode-level (prefer `_≈K_` / mutual refinement; `_≃K_` is the strict `≡` form), and
 -- - presheaves are restricted to decode-preserving predicates.
 --
 -- The development also includes transport lemmas connecting this correspondence

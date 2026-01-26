@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,9 +17,9 @@ open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel
 open import LogOS.Kernel.Endo using (Endo; Flow-Endo; Th⋆K; Th⋆≤FlowTh⋆; FlowTh⋆≤Th⋆; id≤Flow)
 
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.NatOrder as NatOrder using (_≤ℕ_; z≤n; s≤s)
-open import Data.NatExtra using (_⊔ℕ_; max-left; max-right; ≤ℕ-suc)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude.NatOrder as NatOrder using (_≤ℕ_; z≤n; s≤s)
+open import LogOS.Prelude.NatExtra using (_⊔ℕ_; max-left; max-right; ≤ℕ-suc)
 
 open import LogOS.Domain.ZFC.SetTheory.Cumulative
 open import LogOS.Domain.ZFC.SetTheory.LimitPack using (CumulativeHierarchy)
@@ -154,21 +154,21 @@ StageToCH-fromCH-μFlow {ℓ = ℓ} {Sig = Sig} {Q = Q} K CH ωCPO FF =
     private
       CP = BulkBoundary.bnd (Kernel.BB K)
 
-      FlowSat : ConPoset.Con CP → ConPoset.Con CP
+      FlowSat : ConPreorder.Con CP → ConPreorder.Con CP
       FlowSat = Endo.fn (Flow-Endo K)
 
-      μFlow : ConPoset.Con CP
+      μFlow : ConPreorder.Con CP
       μFlow = μ.μ FlowSat
 
-      μ≤Flowμ : ConPoset._⊑_ CP μFlow (FlowSat μFlow)
+      μ≤Flowμ : ConPreorder._⊑_ CP μFlow (FlowSat μFlow)
       μ≤Flowμ = μ.μ-unfold-left FlowSat (Endo.mono (Flow-Endo K))
 
       -- Build the Scott-continuity record for Flow from the FiniteFirst witness.
       SCFlow : μ.ScottContinuous FlowSat
       SCFlow = record { cont-ω = Truth.GuardedCore.FiniteFirst.cont-ω FF }
 
-      inflFlow : ∀ c → ConPoset._⊑_ CP c (FlowSat c)
+      inflFlow : ∀ c → ConPreorder._⊑_ CP c (FlowSat c)
       inflFlow = id≤Flow K
 
-      Flowμ≤μ : ConPoset._⊑_ CP (FlowSat μFlow) μFlow
+      Flowμ≤μ : ConPreorder._⊑_ CP (FlowSat μFlow) μFlow
       Flowμ≤μ = μ.μ-unfold-right-infl FlowSat SCFlow inflFlow

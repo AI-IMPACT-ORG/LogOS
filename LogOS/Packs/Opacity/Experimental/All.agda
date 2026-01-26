@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,10 +16,14 @@ open import LogOS.Packs.Trust using (PackTrust; experimental)
 packTrust : PackTrust
 packTrust = record { level = experimental }
 
-open import LogOS.API.Minimal public
+module AssumptionBundles where
+  open import LogOS.Packs.Assumptions.ZFC public
 
 module Opacity where
   open import LogOS.Packs.Opacity.Experimental.Core public
 
-module GRH where
-  open import LogOS.Packs.Opacity.Experimental.Applications.GRH public
+-- Common discoverability alias: “meaningfulness” = explicit vacuity guards.
+module Meaningfulness = Opacity.Meaningfulness
+
+module Applications where
+  open import LogOS.Packs.Opacity.Experimental.Applications.All public

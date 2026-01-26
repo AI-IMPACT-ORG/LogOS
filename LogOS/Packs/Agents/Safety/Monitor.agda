@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -66,9 +66,3 @@ module For
   -- Default choice: saturate at the kernel’s `sat` grade.
   defaultMonitor : Monitor
   defaultMonitor = defaultMonitorAt (GTier.sat (LogicKernel.G LK))
-
-  -- Backwards-compatible name: read as “this monitor *aims to* enforce safety”.
-  -- The pack does not claim this yields unconditional safety; any such claim
-  -- must be stated as an explicit assumption/theorem in the surrounding model.
-  enforceSafety : Monitor
-  enforceSafety = defaultMonitor

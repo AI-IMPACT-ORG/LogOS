@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -59,7 +59,7 @@ module InitialRefinement {ℓ : Level}
       CP = BulkBoundary.bnd (Kernel.BB K)
       module R = ConRewrite.For CP
     in
-    R.substR (eqγ γ) (ConPoset.refl CP)
+    R.substR (eqγ γ) (ConPreorder.refl CP)
 
   foldK⇐ : ∀ (K : Kernel Sig Q) (h : KernelHom₁ (FreeK) K) → h ⇒ foldK₁ K
   foldK⇐ K h γ =
@@ -69,7 +69,7 @@ module InitialRefinement {ℓ : Level}
       CP = BulkBoundary.bnd (Kernel.BB K)
       module R = ConRewrite.For CP
     in
-    R.substR (sym (eqγ γ)) (ConPoset.refl CP)
+    R.substR (sym (eqγ γ)) (ConPreorder.refl CP)
 
   foldK≈ : ∀ (K : Kernel Sig Q) (h : KernelHom₁ (FreeK) K) → foldK₁ K ≈ h
   foldK≈ K h = foldK⇒ K h , foldK⇐ K h

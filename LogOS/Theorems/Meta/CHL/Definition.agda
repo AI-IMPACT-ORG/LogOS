@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,10 +15,10 @@ open import LogOS.Syntax.Prop as Prop using (_↔_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 import LogOS.Minimal.Con.Rewrite as ConRewrite
 
-open import LogOS.Kernel
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 import LogOS.Theorems.Meta.CHL.Core as Core
 import LogOS.Theorems.Meta.CHL.ProofTheory as Proof
 import LogOS.Theorems.Meta.CHL.Completeness as Complete
@@ -72,7 +72,7 @@ module For
   cut = C.cut-refines
 
   -- Semantics and modality.
-  Sem : Type → ConPoset.Con CP
+  Sem : Type → ConPreorder.Con CP
   Sem = C.denote
 
   Box : Type → Type
@@ -85,7 +85,7 @@ module For
   proofs-as-refinement
     : ∀ {A B}
     → Program A B
-      ↔ ConPoset._⊑_ CP (Sem A) (Sem B)
+      ↔ ConPreorder._⊑_ CP (Sem A) (Sem B)
   proofs-as-refinement = C.proofs-as-refinement
 
   -- Strict syntax as a view: formulas map into types via encode ∘ TransH.

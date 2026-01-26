@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Domain.Universality.Growth where
 
-open import Data.Nat using (ℕ; suc)
+open import LogOS.Prelude.Nat using (ℕ; suc)
 open import LogOS.Prelude
 
 open import LogOS.Domain.Universality.Core

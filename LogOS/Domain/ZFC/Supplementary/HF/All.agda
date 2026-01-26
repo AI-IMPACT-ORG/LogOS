@@ -1,0 +1,15 @@
+{-
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+Copyright (C) 2026 AI.IMPACT GmbH
+SPDX-License-Identifier: GPL-3.0-only
+-}
+
+{-# OPTIONS --safe #-}
+module LogOS.Domain.ZFC.Supplementary.HF.All where
+
+import LogOS.Domain.ZFC.Supplementary.HF.HFFragment as HFFragmentₜ
+import LogOS.Domain.ZFC.Supplementary.HF.HFGraph as HFGraphₜ
+
+module HFFragment = HFFragmentₜ
+module HFGraph = HFGraphₜ
+

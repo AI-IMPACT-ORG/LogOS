@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,8 @@ module LogOS.Domain.UniversalIR.While.SmallStep where
 
 open import LogOS.Prelude
 
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Product using (Σ; _,_; _×_)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_)
 
 open import LogOS.Domain.UniversalIR.While.Language
 open import LogOS.Domain.UniversalIR.While.Semantics
@@ -52,6 +52,86 @@ data Step : Stmt → Store → Stmt → Store → Set where
     ∀ {v body σ n} →
     get v σ ≡ suc n →
     Step (whileNZ v body) σ (body >> whileNZ v body) σ
+
+-- Multi-step closure (small-step reachability).
+
+data Steps : Stmt → Store → Stmt → Store → Set where
+  steps-refl :
+    ∀ {s σ} →
+    Steps s σ s σ
+
+  steps-step :
+    ∀ {s σ s' σ' s'' σ''} →
+    Step s σ s' σ' →
+    Steps s' σ' s'' σ'' →
+    Steps s σ s'' σ''
+
+steps-trans
+  : ∀ {s σ s' σ' s'' σ''}
+  → Steps s σ s' σ'
+  → Steps s' σ' s'' σ''
+  → Steps s σ s'' σ''
+steps-trans steps-refl steps₂ = steps₂
+steps-trans (steps-step step₁ rest₁) steps₂ =
+  steps-step step₁ (steps-trans rest₁ steps₂)
+
+steps-seq-left
+  : ∀ {s t σ s' σ'}
+  → Steps s σ s' σ'
+  → Steps (s >> t) σ (s' >> t) σ'
+steps-seq-left steps-refl = steps-refl
+steps-seq-left (steps-step stepS rest) =
+  steps-step (step-seq-step stepS) (steps-seq-left rest)
+
+exec→steps
+  : ∀ {s σ σ'}
+  → Exec s σ σ'
+  → Steps s σ skip σ'
+exec→steps exec-skip = steps-refl
+exec→steps exec-inc = steps-step step-inc steps-refl
+exec→steps exec-dec = steps-step step-dec steps-refl
+exec→steps exec-mulAB = steps-step step-mulAB steps-refl
+exec→steps (exec-seq execS execT) =
+  let
+    stepsS = exec→steps execS
+    stepsT = exec→steps execT
+    toSkipT = steps-step step-seq-done stepsT
+  in
+  steps-trans (steps-seq-left stepsS) toSkipT
+exec→steps (exec-while-zero eq) = steps-step (step-while-zero eq) steps-refl
+exec→steps (exec-while-step eq execBody execLoop) =
+  let
+    stepsBody = exec→steps execBody
+    stepsLoop = exec→steps execLoop
+    bodyToLoop =
+      steps-trans
+        (steps-seq-left stepsBody)
+        (steps-step step-seq-done stepsLoop)
+  in
+  steps-step (step-while-step eq) bodyToLoop
+
+step→exec
+  : ∀ {s σ s' σ' σ''}
+  → Step s σ s' σ'
+  → Exec s' σ' σ''
+  → Exec s σ σ''
+step→exec step-inc exec-skip = exec-inc
+step→exec step-dec exec-skip = exec-dec
+step→exec step-mulAB exec-skip = exec-mulAB
+step→exec (step-seq-step stepS) (exec-seq execS execT) =
+  exec-seq (step→exec stepS execS) execT
+step→exec step-seq-done execT =
+  exec-seq exec-skip execT
+step→exec (step-while-zero eq) exec-skip = exec-while-zero eq
+step→exec (step-while-step eq) (exec-seq execBody execLoop) =
+  exec-while-step eq execBody execLoop
+
+steps→exec
+  : ∀ {s σ σ'}
+  → Steps s σ skip σ'
+  → Exec s σ σ'
+steps→exec steps-refl = exec-skip
+steps→exec (steps-step stepS rest) = step→exec stepS (steps→exec rest)
 
 -- Progress: a well-typed statement can always step, unless it is already skip.
 

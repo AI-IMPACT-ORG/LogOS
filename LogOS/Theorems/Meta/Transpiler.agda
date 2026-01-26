@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -132,6 +132,20 @@ module For
       → BoundaryPort.SatF P₁ p φ
     reflects-typing p φ =
       Prop.from (transpiler-correct T p φ)
+
+  record SoundPass : Set (lsuc (ℓ ⊔ ℓForm₁ ⊔ ℓForm₂)) where
+    field
+      pass : Interop.PortRefinement B P₁ P₂
+
+  sound-from-adapter : PortAdapter B P₁ P₂ → SoundPass
+  sound-from-adapter A = record { pass = Interop.refinement-from-adapter B A }
+
+  sound-correct
+    : ∀ (S : SoundPass) p φ
+    → BoundaryPort.SatF P₁ p φ
+    → BoundaryPort.SatF P₂ p (Interop.PortRefinement.map (SoundPass.pass S) φ)
+  sound-correct S p φ =
+    Interop.PortRefinement.preserves-Sat (SoundPass.pass S) p φ
 
 module Hetero
   {ℓCtx₁ ℓCon₁ ℓForm₁ ℓSat₁ : Level}

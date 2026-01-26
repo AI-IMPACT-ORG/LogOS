@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,16 +8,8 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Complexity.CookReckhow where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (¬_; ⊥)
 
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
-
-open import LogOS.Base.Signature
-open import LogOS.Minimal.Adapter
-open import LogOS.Kernel
-open import LogOS.Theorems.Meta.Base using (DeciderC; mkDeciderC)
+open import LogOS.Computation.Decider using (Decider)
 open import LogOS.Domain.Complexity.PolyBoundedCore as PB
 
 -- Shared bounded search primitives.
@@ -34,24 +26,21 @@ open Search public using (ExistsFin; searchFin)
 -- This is enough to derive a *decider* for P by bounded search.
 
 record PolyBoundedProofSystem
-  {ℓ : Level}
-  {Sig : LogOSSignature ℓ}
-  {Q : QAdapter ℓ}
-  (K : Kernel Sig Q)
-  (P : Kernel.Code K → Set ℓ)
-  : Set (lsuc (lsuc ℓ)) where
+  {ℓI ℓ : Level}
+  (Input : Set ℓI)
+  (P : Input → Set ℓ)
+  : Set (lsuc (lsuc (ℓ ⊔ ℓI))) where
   field
-    core : PB.PolyBoundedSystem (Kernel.Code K) P
+    core : PB.PolyBoundedSystem Input P
 
   open PB.PolyBoundedSystem core public
 
 -- Core Cook–Reckhow lemma: a poly-bounded complete proof system yields a decider.
 
 deciderFromProofSystem
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {K : Kernel Sig Q}
-    (P : Kernel.Code K → Set ℓ)
-  → PolyBoundedProofSystem K P
-  → DeciderC {K = K} P
+  : ∀ {ℓI ℓ} {Input : Set ℓI}
+    (P : Input → Set ℓ)
+  → PolyBoundedProofSystem Input P
+  → Decider Input P
 deciderFromProofSystem P PS =
-  mkDeciderC (PB.deciderFromPolyBoundedSystem P (PolyBoundedProofSystem.core PS))
+  PB.deciderFromPolyBoundedSystem P (PolyBoundedProofSystem.core PS)

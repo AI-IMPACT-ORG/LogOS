@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,7 +11,7 @@ open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop using (_↔_)
 
 open import LogOS.Domain.ZFC.Supplementary.HF.HFFragment as HF
-open import Data.Graph
+open import LogOS.Prelude.Graph
 
 -- View the hereditarily-finite universe as a graph: vertices are HF sets and
 -- there is a directed edge x → y precisely when x ∈ y. This graph exposes the

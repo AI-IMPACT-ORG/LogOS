@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ open import LogOS.Domain.UniversalIR.While.Compile
 open import LogOS.Domain.UniversalIR.While.Decompile
 open import LogOS.Domain.UniversalIR.While.Examples.Factorial using (n₅; outM₅; outE₅; outM₅≡outE₅; outM₅≡120; outE₅≡120)
 
-open import Data.Maybe using (Maybe; just; nothing)
+open import LogOS.Prelude.Maybe using (Maybe; just; nothing)
 
 -- EXAMPLE (argument): compilation/transpilation diagram checks between multiple backends.
 

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,3 +19,4 @@ import LogOS.Theorems.Meta.ObserverCore
 import LogOS.Ports.Semantic.VacuityGuards
 import LogOS.Packs.ZFC.VacuityGuards
 import LogOS.Packs.Universality.VacuityGuards
+import Tests.MeaningfulModels

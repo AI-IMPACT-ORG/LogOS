@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,12 +16,12 @@ module LogOS.Packs.Agents.Experimental.Arguments.KolmogorovOptimality where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
 
-open import Data.Nat using (ℕ)
-open import Data.NatOrder using (_≤ℕ_)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (BulkBoundary; ConPoset)
+open import LogOS.Minimal.Con using (BulkBoundary; ConPreorder)
 open import LogOS.Kernel.Graded using (GradedKernel)
 import LogOS.Kernel.Graded as GK
 import LogOS.Theorems.Meta.MathPhysSynthesis as MPS
@@ -36,7 +36,7 @@ module For
   open GradedKernel K public using (Code; decode; reify; reify-decode)
 
   Dec : Set ℓ
-  Dec = ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))
+  Dec = ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))
 
   -- Kolmogorov/Solomonoff optimality relative to a code-size model.
   KOptimal : (Code → ℕ) → Code → Set ℓ

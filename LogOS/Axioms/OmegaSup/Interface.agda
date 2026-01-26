@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Axioms.OmegaSup.Interface where
 
 open import LogOS.Prelude
-open import Data.Nat using (ℕ)
+open import LogOS.Prelude.Nat using (ℕ)
 
 open import LogOS.Minimal.Con
 open import LogOS.Base.Signature
@@ -19,8 +19,8 @@ open import LogOS.Minimal.Truth as Truth
 -- This production snapshot ships no global ω-sup selector; supply `ChainSup`
 -- explicitly to any model that needs ω-suprema.
 
-record ChainSup {ℓ : Level} (CP : ConPoset ℓ) : Set (lsuc ℓ) where
-  open ConPoset CP
+record ChainSup {ℓ : Level} (CP : ConPreorder ℓ) : Set (lsuc ℓ) where
+  open ConPreorder CP
   field
     supω  : (ℕ → Con) → Con
     ub    : ∀ (f : ℕ → Con) (n : ℕ) → _⊑_ (f n) (supω f)
@@ -29,15 +29,15 @@ record ChainSup {ℓ : Level} (CP : ConPoset ℓ) : Set (lsuc ℓ) where
 -- Build an OmegaCPO from a chosen ω-supremum operator and a provided bottom element.
 omegaCPO-from-chainSup
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
-    (CP : ConPoset ℓ)
-    (bot : ConPoset.Con CP)
-    (isBot : ∀ c → ConPoset._⊑_ CP bot c)
+    (CP : ConPreorder ℓ)
+    (bot : ConPreorder.Con CP)
+    (isBot : ∀ c → ConPreorder._⊑_ CP bot c)
     (CS : ChainSup CP)
   → (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) CP
 omegaCPO-from-chainSup Sig Q CP bot isBot CS =
   let module GT = Truth.GuardedTruth Sig Q
       module CS' = ChainSup CS
-      open ConPoset CP
+      open ConPreorder CP
   in
   record
     { ⊥     = bot

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,7 +19,7 @@ open import LogOS.Domain.UniversalIR.While.Compile
 
 open import LogOS.Domain.UniversalIR.Languages.Minsky as Minsky using (fuelMul; fuelInnerMul; fuelRestoreMul; perIterMul)
 
-open import Data.List using (List; []; _∷_)
+open import LogOS.Prelude.List using (List; []; _∷_)
 
 -- --------------------------------------------------------------------------
 -- Source meaning: factorial as a terminating big-step execution.

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,8 +8,8 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Complexity.Model where
 
 open import LogOS.Prelude
-open import Data.Nat using (ℕ)
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_)
 
 open import LogOS.Domain.Universality.Core
 open import LogOS.Domain.Universality.ComplexitySpectrum as CS
@@ -32,9 +32,9 @@ record StandardCM {ℓ : Level} : Set (lsuc (lsuc ℓ)) where
 
 -- Optional soundness laws for StandardCM (merged from StandardCMLaws).
 module StandardCMLaws where
-  open import Data.Nat using (ℕ)
-  open import Data.Product using (Σ; _,_)
-  open import Data.NatOrder using (_≤ℕ_)
+  open import LogOS.Prelude.Nat using (ℕ)
+  open import LogOS.Prelude.Product using (Σ; _,_)
+  open import LogOS.Prelude.NatOrder using (_≤ℕ_)
 
   open import LogOS.Computation.Blum using (Blum)
   open import LogOS.Domain.Universality.Core using (CoreUCode)

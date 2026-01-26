@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,8 +10,8 @@ module LogOS.Domain.Opacity.NumberTheory.HP.Opacity where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_; ⊥)
 
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -48,13 +48,13 @@ module For
   open HPInterface HP
 
   Con∂ : Set ℓ
-  Con∂ = ConPoset.Con (BulkBoundary.bnd BB)
+  Con∂ = ConPreorder.Con (BulkBoundary.bnd BB)
 
   -- Boundary predicate: Op fixes the embedded boundary constraint.
   OpFixed∂ : Con∂ → Set ℓ
   OpFixed∂ c = Op (embed c) ≡ embed c
 
-  -- A certificate oracle for Op-fixedness, extensional in `decode`.
+  -- A certificate oracle for Op-fixedness, extensional up to decoded observational equality.
   --
   -- `infer γ` either produces a certificate for the *decoded* boundary constraint,
   -- or explicitly returns `inj₂ tt` (undefined / no certificate).

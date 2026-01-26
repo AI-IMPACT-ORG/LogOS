@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -24,7 +24,7 @@ Core modules (this directory)
 
 - Narrative-first aggregator (core re-exports): `LogOS/Domain/Opacity/Core.agda`
 - Vacuity / meaningfulness guards: `LogOS/Domain/Opacity/Meaningfulness.agda`
-- Opacity/ledger primitives: `LogOS/Domain/Opacity/GRH.agda`, `LogOS/Domain/Opacity/SpectralPack.agda`
+- Opacity/ledger primitives: `LogOS/Domain/Opacity/GRHLedger.agda`, `LogOS/Domain/Opacity/SpectralPack.agda`
 - Separation / barrier theorem surface: `LogOS/Domain/Opacity/TruthSeparation.agda`
 
 GRH application surface

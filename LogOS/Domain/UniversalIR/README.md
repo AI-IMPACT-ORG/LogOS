@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -7,11 +7,19 @@ SPDX-License-Identifier: GPL-3.0-only
 Universal IR (Standard Library)
 ===============================
 
-This directory is a small, self-contained “universal translation machine” library:
+This directory is a small, self-contained “universal translation machine” library.
+In LogOS terms, it is the executable universal-logic spine for the IR story:
 multiple concrete backends compile into a common carrier (`UCode`), can be executed
 via the shared small-step interpreter (`stepU`/`simulate`) for a chosen step budget,
 and are then lowered to a
 canonical IR branch and decoded to an answer.
+For a kernel-aligned view, `LogOS/Domain/UniversalIR/ObservedKernel.agda` packages
+an observation space as a step-homomorphism (an `ObsKit`). This yields a kernel
+over `UCode` whose boundary evolution is well-defined for the chosen observation.
+The canonical `observe : UCode → ℕ` remains the semantic center for agreement,
+but it is not a step-homomorphism in general (so it is kept as an observation,
+not as a kernel boundary step). For other boundaries, use `UProcessAt`/`UProcessObs`
+in `LogOS/Domain/UniversalIR/Schemes.agda`.
 
 The recommended, representation-agnostic execution interface is **scheme-indexed**:
 use `ScaleOps` to interpret a scale/grade as a step budget and run via `Sch.run≤`
@@ -27,6 +35,9 @@ Backends
 - `LogOS/Domain/UniversalIR/Languages/QuantumOracle.agda` — minimal oracle-with-classical-control model (oracle tape / measurement instruction)
 - `LogOS/Domain/UniversalIR/Languages/QuantumCircuit.agda` — explicit basis-state circuit syntax (X/CNOT/TOFF + deterministic measurement)
 - `LogOS/Domain/UniversalIR/Core/QuantumCircuitAmp.agda` — amplitude-level circuit semantics (abstract scalars, Born-style distribution)
+  with explicit measurement axioms (`QMeasureLaws`) for normalization/coherence
+- Boundary choices are explicit for the quantum cores: `boundaryWires` (wires) and
+  `boundaryRegs` (register projections), plus `MeasurementObs` for amplitude-level observation.
 
 The concrete small-step semantics for each paradigm live in `LogOS/Domain/UniversalIR/Core.agda`.
 
@@ -36,8 +47,20 @@ Entry points
 - **Pack skeleton (Assumptions/Claim/Pack/mkPack):** `LogOS/Domain/UniversalIR/Pack.agda`
   (curated re-export: `LogOS/Packs/UniversalIR/Pack.agda`)
 - `LogOS/Domain/UniversalIR/Std.agda` — tiny shared lemma pack (“mini stdlib”)
+- `LogOS/Domain/UniversalIR/ObservedKernel.agda` — observed-kernel view (`KernelObsKit` for
+  observation-only, `ObsKit` for step-homomorphic boundaries; includes `CodeObsKit` and a
+  λ-branch projection `LambdaObsKit`). Each `ObsKit` yields a canonical boundary
+  port via `ObservedKernel.Ports`.
+- `LogOS/Packs/UniversalIR/Kernel.agda` — curated kernel access plus pack-level
+  port defaults for common observation kits (`ObservedPorts`).
 - `LogOS/Computation/Scheme.agda` — shared scheme interface (`run≤`, fuel-free `ComputesTo`/`ComputesWithin`)
+- `LogOS/Computation/Tasks.agda` — generic “arbitrary tasks” layer for any `Process`/`Scheme`
+  (finite/graded execution + strict/lax transport lemmas)
+- `LogOS/Computation/KernelBoundaryTasks.agda` — kernel-induced lax task transport
+  (raw boundary steps vs Flow-saturated boundary steps)
 - `LogOS/Domain/UniversalIR/Walkthrough.lagda.md` — narrative walkthrough
+- `LogOS/Domain/UniversalIR/ArbitraryTasks.agda` — treat `UCode` itself as a task language (Minsky as an example)
+- `LogOS/Domain/UniversalIR/TasksToUProcess.agda` — transport raw code tasks along the canonical backend→UProcess morphisms
 - `LogOS/Domain/UniversalIR/Examples/Addition.agda` — addition across all backends
 - `LogOS/Domain/UniversalIR/Examples/Multiplication.agda` — multiplication across all backends
 - `LogOS/Domain/UniversalIR/Examples/Convincing.agda` — theorem-backed agreement (Minsky ≡ EVM) for all tasks
@@ -60,6 +83,9 @@ Extending
 To add a new backend, implement a compiler into a brand code and provide an injection
 into `UCode` as a `Backend` (`LogOS/Domain/UniversalIR/Backend.agda`). Then use
 `Backend.exec`/`Backend.toIRAt`/`Backend.decodeAt` to execute it with a chosen step budget.
+For other observation spaces, use `UProcessAt`/`UProcessObs` and the `*ProcessAt`
+constructors in `LogOS/Domain/UniversalIR/Schemes.agda` to keep machine processes
+and universal-process factoring aligned.
 
 For paradigm-independent semantics (“machines as schemes”), use the fuel-free predicates
 on `Scheme` (`LogOS/Computation/Scheme.agda`), such as `ComputesTo` / `ComputesWithin`,

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,9 +7,9 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Agents.Emit.IR.Features.TelemetryPlan where
 
-open import Data.Bool using (Bool; true; false)
-open import Data.List using (List; []; _∷_)
-open import Data.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude.Bool using (Bool; true; false)
+open import LogOS.Prelude.List using (List; []; _∷_)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc)
 
 import LogOS.Packs.Agents.Emit.IR.Intent as Intent
 

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,8 +14,12 @@ open import LogOS.Base.Signature.Hom using (SigHom)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (BulkBoundary)
 open import LogOS.Free.ConstraintsOverSig using (rename∂)
+open import LogOS.Boundary.Port using (BoundaryPort)
+open import LogOS.Ports.Semantic.Interlingua using (toPresentationC)
+import LogOS.Ports.Semantic.Interoperability as Interop
 open import LogOS.Kernel.LogicKernel using (LogicKernel)
 open import LogOS.Kernel.LogicKernel.Reindex using (reindexLogicKernel)
+import LogOS.Kernel.LogicKernel.Boundary as LKBoundary
 import LogOS.Adapters.Views.SatMor as SatMorAdapters
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
 
@@ -88,3 +92,35 @@ reindexSocketSatMor
              (LogOSSignature.∂Cosp Sig₂) Con_bnd (LogicKernel.Sat_H_bnd (AgentSocket.LK Sock))
 reindexSocketSatMor σ Sock =
   SatMorAdapters.satMor-reindexLogicKernel-boundary σ (AgentSocket.LK Sock)
+
+-- Canonical port adapter for boundary ports across a signature reindex.
+--
+-- This packages the reindexing SatMor together with the port-level interlingua
+-- tooling so downstream code can reuse adapter lemmas directly.
+
+reindexPortAdapter
+  : ∀ {ℓ ℓTask : Level}
+    {Sig₁ Sig₂ : LogOSSignature ℓ}
+    {Q : QAdapter ℓ}
+    (σ : SigHom Sig₁ Sig₂)
+    {Task : Set ℓTask}
+    (Sock : AgentSocket Sig₂ Q Task)
+    {ℓForm₁ ℓForm₂ : Level}
+    (Port₁ : BoundaryPort {ℓForm = ℓForm₁} Sig₁ Q _ _ _
+              (LKBoundary.boundaryIO (reindexLogicKernel σ (AgentSocket.LK Sock))))
+    (Port₂ : BoundaryPort {ℓForm = ℓForm₂} Sig₂ Q _ _ _
+              (AgentSocket.boundaryIO Sock))
+  → let
+      B₁ = LKBoundary.boundaryIO (reindexLogicKernel σ (AgentSocket.LK Sock))
+      B₂ = AgentSocket.boundaryIO Sock
+    in Interop.HeteroPortAdapter (reindexSocketSatMor σ Sock)
+         (toPresentationC B₁ Port₁)
+         (toPresentationC B₂ Port₂)
+reindexPortAdapter σ Sock Port₁ Port₂ =
+  let
+    B₁ = LKBoundary.boundaryIO (reindexLogicKernel σ (AgentSocket.LK Sock))
+    B₂ = AgentSocket.boundaryIO Sock
+  in
+  Interop.heteroCanonicalAdapter (reindexSocketSatMor σ Sock)
+    (toPresentationC B₁ Port₁)
+    (toPresentationC B₂ Port₂)

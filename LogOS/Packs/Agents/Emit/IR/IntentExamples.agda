@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Agents.Emit.IR.IntentExamples where
 
-open import Data.Bool using (true; false)
-open import Data.List using (List; []; _∷_)
+open import LogOS.Prelude.Bool using (true; false)
+open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Packs.Agents.Emit.IR.Intent
 
@@ -63,7 +63,7 @@ encoderDecoderTelemetry =
         record
           { constraints =
               invariant "type-preservation" ∷
-              rewriteRule "normalize-attention" ∷
+              rewriteRule "close-attention" ∷
               safetyBarrier "no-secret-leak" ∷
               []
           ; proofObligations = "stability-under-shift" ∷ []

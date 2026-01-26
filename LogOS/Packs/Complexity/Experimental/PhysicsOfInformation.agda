@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,7 +18,7 @@ packTrust : PackTrust
 packTrust = record { level = experimental }
 
 open import LogOS.Domain.Complexity.SecondLaw public
-  using (SecondLawAssumptions; merge→entropy+; landauerFromLCU)
+  using (SecondLawAssumptions; SecondLawGuards; merge→entropy+; nonvacuous-entropy+; landauerFromLCU)
 
 open import LogOS.Theorems.Meta.Landauer public
   using (LandauerAssumptions; landauer)

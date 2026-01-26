@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -27,9 +27,9 @@ open import LogOS.Domain.Complexity.Reduction public
 import LogOS.Domain.Complexity.PvsNP_Grade_Only as PvsNP_Grade_Onlyₜ
 module PvsNP_Grade_Only = PvsNP_Grade_Onlyₜ
 
--- Avoid `For` name clashes: re-export the classical surface under its own namespace.
-import LogOS.Domain.Complexity.ClassicalPvsNP as ClassicalPvsNPₜ
-module ClassicalPvsNP = ClassicalPvsNPₜ
+-- Avoid `For` name clashes: re-export the P/NP ledger under its own namespace.
+import LogOS.Domain.Complexity.PvsNPLedger as PvsNPLedgerₜ
+module PvsNPLedger = PvsNPLedgerₜ
 
 -- Info-hardness route (minimal physical axioms).
 import LogOS.Domain.Complexity.PvsNPFromInfo_Grade_Only as PvsNPFromInfo_Grade_Onlyₜ

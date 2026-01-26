@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,6 +12,8 @@ module LogOS.Theorems.Boundary.All where
 
 open import LogOS.Theorems.Boundary.Reflection public
 open import LogOS.Theorems.Boundary.Mu public
+import LogOS.Theorems.Boundary.MuFusion as MuFusionₜ
+module MuFusion = MuFusionₜ
 open import LogOS.Theorems.Boundary.Continuity public
 open import LogOS.Theorems.Boundary.Guarded public
 open import LogOS.Theorems.Boundary.Communication public

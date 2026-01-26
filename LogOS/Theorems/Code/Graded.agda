@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -30,7 +30,7 @@ guard-naturality-decode
     (h  : GradedKernelHom K₁ K₂)
     (ht : GradedKernelHomFlow K₁ K₂ h)
     (γ  : GradedKernel.Code K₁)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
                  (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (GradedKernel.Guard K₁ γ)))
                  (GradedClosure.Flow (GradedKernel.GTruth K₂) (GradedKernel.step-grade K₂)
                    (GradedKernel.decode K₂ (GradedKernelHom.mapCode h γ)))
@@ -47,7 +47,7 @@ record GuardHom {ℓ}
                 (ht : GradedKernelHomFlow K₁ K₂ h)
                 : Set (lsuc ℓ) where
   field
-    natural-decode : ∀ γ → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+    natural-decode : ∀ γ → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
                                (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (GradedKernel.Guard K₁ γ)))
                                (GradedClosure.Flow (GradedKernel.GTruth K₂) (GradedKernel.step-grade K₂)
                                  (GradedKernel.decode K₂ (GradedKernelHom.mapCode h γ)))
@@ -60,6 +60,91 @@ guardHom-from
   → GuardHom K₁ K₂ h ht
 guardHom-from K₁ K₂ h ht = record
   { natural-decode = guard-naturality-decode K₁ K₂ h ht }
+
+-- BoxAt/Box naturality at decode-level (lax): under a graded kernel homomorphism
+-- with graded Flow preservation, decoding mapCode (BoxAt₁ g γ) lies below decoding
+-- BoxAt₂ g (mapCode γ). Specialising to the saturation grade yields Box naturality.
+
+boxAt-naturality-decode
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K₁ K₂ : GradedKernel Sig Q)
+    (h  : GradedKernelHom K₁ K₂)
+    (ht : GradedKernelHomFlow K₁ K₂ h)
+    (g  : QAdapter.Scale Q)
+    (γ  : GradedKernel.Code K₁)
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+      (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (BoxAt K₁ g γ)))
+      (GradedKernel.decode K₂ (BoxAt K₂ g (GradedKernelHom.mapCode h γ)))
+boxAt-naturality-decode {Sig = Sig} {Q = Q} K₁ K₂ h ht g γ =
+  subst
+    (λ x →
+      ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+        (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (BoxAt K₁ g γ)))
+        x)
+    (sym (decode-BoxAt K₂ g (GradedKernelHom.mapCode h γ)))
+    (map-boxAt-decode≤ {Sig = Sig} {Q = Q} {K₁ = K₁} {K₂ = K₂} {h = h} ht g γ)
+
+record BoxAtHom {ℓ}
+                {Sig : LogOSSignature ℓ}
+                {Q : QAdapter ℓ}
+                (K₁ K₂ : GradedKernel Sig Q)
+                (h  : GradedKernelHom K₁ K₂)
+                (ht : GradedKernelHomFlow K₁ K₂ h)
+                : Set (lsuc ℓ) where
+  field
+    natural-decode
+      : ∀ g γ →
+        ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+          (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (BoxAt K₁ g γ)))
+          (GradedKernel.decode K₂ (BoxAt K₂ g (GradedKernelHom.mapCode h γ)))
+
+boxAtHom-from
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K₁ K₂ : GradedKernel Sig Q)
+    (h  : GradedKernelHom K₁ K₂)
+    (ht : GradedKernelHomFlow K₁ K₂ h)
+  → BoxAtHom K₁ K₂ h ht
+boxAtHom-from K₁ K₂ h ht =
+  record
+    { natural-decode = λ g γ → boxAt-naturality-decode K₁ K₂ h ht g γ
+    }
+
+box-naturality-decode
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K₁ K₂ : GradedKernel Sig Q)
+    (h  : GradedKernelHom K₁ K₂)
+    (ht : GradedKernelHomFlow K₁ K₂ h)
+    (γ  : GradedKernel.Code K₁)
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+      (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (Box K₁ γ)))
+      (GradedKernel.decode K₂ (Box K₂ (GradedKernelHom.mapCode h γ)))
+box-naturality-decode {Sig = Sig} {Q = Q} K₁ K₂ h ht γ =
+  map-box-decode≤ {Sig = Sig} {Q = Q} {K₁ = K₁} {K₂ = K₂} {h = h} ht γ
+
+record BoxHom {ℓ}
+              {Sig : LogOSSignature ℓ}
+              {Q : QAdapter ℓ}
+              (K₁ K₂ : GradedKernel Sig Q)
+              (h  : GradedKernelHom K₁ K₂)
+              (ht : GradedKernelHomFlow K₁ K₂ h)
+              : Set (lsuc ℓ) where
+  field
+    natural-decode
+      : ∀ γ →
+        ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+          (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (Box K₁ γ)))
+          (GradedKernel.decode K₂ (Box K₂ (GradedKernelHom.mapCode h γ)))
+
+boxHom-from
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K₁ K₂ : GradedKernel Sig Q)
+    (h  : GradedKernelHom K₁ K₂)
+    (ht : GradedKernelHomFlow K₁ K₂ h)
+  → BoxHom K₁ K₂ h ht
+boxHom-from K₁ K₂ h ht =
+  record
+    { natural-decode = box-naturality-decode K₁ K₂ h ht
+    }
 
 -- Reify and body decode-level equalities (expose GradedKernel fields as theorems).
 
@@ -78,7 +163,7 @@ body-decode-eq
     ≡ (GradedKernel.Body∂ K (GradedKernel.decode K γ))
 body-decode-eq K γ = GradedKernel.body-decode K γ
 
--- Reify compatibility with Guard/Body (up to decode-level equality).
+-- Reify compatibility with Guard/Body (up to strict decode equality (`≡`)).
 -- This is intentionally weaker than any extensionality/canonicity condition on `Code`.
 
 reify-guard-decode
@@ -126,7 +211,7 @@ decode-FlowCode-eq K γ = decode-FlowCode K γ
 γ*-decode≤stepBody
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
       (GradedKernel.decode K (GradedKernel.γ* K))
       (GradedClosure.Flow (GradedKernel.GTruth K) (GradedKernel.step-grade K)
         (GradedKernel.Body∂ K (GradedKernel.decode K (GradedKernel.γ* K))))
@@ -137,14 +222,14 @@ decode-FlowCode-eq K γ = decode-FlowCode K γ
     eq = decode-FlowCode-eq K (GradedKernel.γ* K)
   in
   subst
-    (λ x → ConPoset._⊑_ CP (GradedKernel.decode K (GradedKernel.γ* K)) x)
+    (λ x → ConPreorder._⊑_ CP (GradedKernel.decode K (GradedKernel.γ* K)) x)
     eq
     le
 
 stepBody≤γ*-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
       (GradedClosure.Flow (GradedKernel.GTruth K) (GradedKernel.step-grade K)
         (GradedKernel.Body∂ K (GradedKernel.decode K (GradedKernel.γ* K))))
       (GradedKernel.decode K (GradedKernel.γ* K))
@@ -155,7 +240,7 @@ stepBody≤γ*-decode K =
     eq = decode-FlowCode-eq K (GradedKernel.γ* K)
   in
   subst
-    (λ x → ConPoset._⊑_ CP x (GradedKernel.decode K (GradedKernel.γ* K)))
+    (λ x → ConPreorder._⊑_ CP x (GradedKernel.decode K (GradedKernel.γ* K)))
     eq
     le
 
@@ -178,8 +263,8 @@ decode-FlowCode-mono
     (K : GradedKernel Sig Q)
   → KCore.BodyMonotoneShape (GradedKernel.shape K)
   → ∀ {γ δ}
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) (GradedKernel.decode K γ) (GradedKernel.decode K δ)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) (GradedKernel.decode K γ) (GradedKernel.decode K δ)
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
       (GradedKernel.decode K (FlowCode K γ))
       (GradedKernel.decode K (FlowCode K δ))
 decode-FlowCode-mono K bm {γ} {δ} le =
@@ -188,13 +273,13 @@ decode-FlowCode-mono K bm {γ} {δ} le =
     CP = BulkBoundary.bnd (GradedKernel.BB K)
     F  = GradedClosure.Flow GTruth step-grade
     bodyLe = KCore.BodyMonotoneShape.mono-Body∂ bm le
-    flowLe : ConPoset._⊑_ CP (F (GradedKernel.Body∂ K (GradedKernel.decode K γ))) (F (GradedKernel.Body∂ K (GradedKernel.decode K δ)))
+    flowLe : ConPreorder._⊑_ CP (F (GradedKernel.Body∂ K (GradedKernel.decode K γ))) (F (GradedKernel.Body∂ K (GradedKernel.decode K δ)))
     flowLe = GradedClosure.mono GTruth bodyLe
     eqγ = decode-FlowCode-eq K γ
     eqδ = decode-FlowCode-eq K δ
-    flowLe' : ConPoset._⊑_ CP (F (GradedKernel.Body∂ K (GradedKernel.decode K γ))) (GradedKernel.decode K (FlowCode K δ))
-    flowLe' = subst (λ x → ConPoset._⊑_ CP (F (GradedKernel.Body∂ K (GradedKernel.decode K γ))) x) (sym eqδ) flowLe
-  in subst (λ x → ConPoset._⊑_ CP x (GradedKernel.decode K (FlowCode K δ))) (sym eqγ) flowLe'
+    flowLe' : ConPreorder._⊑_ CP (F (GradedKernel.Body∂ K (GradedKernel.decode K γ))) (GradedKernel.decode K (FlowCode K δ))
+    flowLe' = subst (λ x → ConPreorder._⊑_ CP (F (GradedKernel.Body∂ K (GradedKernel.decode K γ))) x) (sym eqδ) flowLe
+  in subst (λ x → ConPreorder._⊑_ CP x (GradedKernel.decode K (FlowCode K δ))) (sym eqγ) flowLe'
 
 -- Textbook alias: monotonicity of the operational step (FlowCode), under BodyMonotone.
 

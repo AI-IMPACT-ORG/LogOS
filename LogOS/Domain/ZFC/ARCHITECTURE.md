@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -14,7 +14,7 @@ experimental.
 Stable entrypoints
 ------------------
 
-- Curated pack bundle: `LogOS/Packs/ZFC/All.agda`
+- Stable lock surface: `LogOS/Packs/ZFC/Surface.agda` (umbrella: `LogOS/Packs/ZFC/All.agda`)
 - WFGraph pack quartets (Assumptions/Claim/Pack/mkPack): `LogOS/Packs/ZFC/WFGraph.agda`
 - WFGraph route (worked semantics pipeline): `LogOS/Domain/ZFC/WFGraph/Surface.agda`
 - Proof-theoretic layer (FOL + ZF/ZFC sentences + soundness): `LogOS/ObjectLogic/ZFC/All.agda`
@@ -56,5 +56,5 @@ Experimental / non-core modules
 -------------------------------
 
 Supplementary alternate routes live under `LogOS/Domain/ZFC/Supplementary/*` and are not
-re-exported from the curated pack surface `LogOS.Packs.ZFC.All`. If you need them
+re-exported from the stable lock surface `LogOS.Packs.ZFC.Surface`. If you need them
 explicitly, import the corresponding `LogOS/Domain/ZFC/*` module directly.

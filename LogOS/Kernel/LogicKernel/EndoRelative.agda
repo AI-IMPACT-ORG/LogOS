@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,8 +22,8 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
-open import LogOS.Minimal.Closure using (ClosureOp; cl; infl; idemp-lax; mono)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
+open import LogOS.Minimal.Closure using (ClosureOp; cl; infl; idemp-lax) renaming (mono to mono-cl)
 
 open import LogOS.Kernel.LogicKernel using (LogicKernel; module LogicKernel)
 open import LogOS.Kernel.LogicKernel.EndoCore
@@ -39,16 +39,27 @@ module With
   {Sig : LogOSSignature ℓ}
   {Q   : QAdapter ℓ}
   (K   : LogicKernel Sig Q)
-  (J   : Endo K)
-  (id≤J : _≤₂_ K (idEndo K) J)
-  (J∘J≤J : _≤₂_ K (J ∘E J) J)
+  (C   : ClosureOp (BulkBoundary.bnd (LogicKernel.BB K)))
   where
 
   open LogicKernel K
 
   private
-    CP : ConPoset ℓ
+    CP : ConPreorder ℓ
     CP = BulkBoundary.bnd BB
+
+  J : Endo K
+  J =
+    record
+      { fn   = cl C
+      ; mono = mono-cl C
+      }
+
+  id≤J : _≤₂_ K (idEndo K) J
+  id≤J = infl C
+
+  J∘J≤J : _≤₂_ K (J ∘E J) J
+  J∘J≤J = idemp-lax C
 
   -- “Apply f, then take J-shadow”.
   J-closeEndo : Endo K → Endo K
@@ -59,7 +70,7 @@ module With
     → _≤₂_ K (idEndo K) f
     → _≤₂_ K (idEndo K) (J-closeEndo f)
   id≤J-close f id≤f = λ c →
-    ConPoset.trans CP (id≤f c) (id≤J (Endo.fn f c))
+    ConPreorder.trans CP (id≤f c) (id≤J (Endo.fn f c))
 
   J-close≤J
     : ∀ (f : Endo K)
@@ -69,7 +80,7 @@ module With
     let
       step₁ = Endo.mono J (f≤J c)   -- J(f c) ≤ J(J c)
       step₂ = J∘J≤J c               -- J(J c) ≤ J c
-    in ConPoset.trans CP step₁ step₂
+    in ConPreorder.trans CP step₁ step₂
 
   J≤J-close
     : ∀ (f : Endo K)
@@ -108,7 +119,7 @@ module With
       g = endo s₂
 
       inflComp : _≤₂_ K (idEndo K) (g ∘E f)
-      inflComp = λ c → ConPoset.trans CP (infl s₁ c) (infl s₂ (Endo.fn f c))
+      inflComp = λ c → ConPreorder.trans CP (infl s₁ c) (infl s₂ (Endo.fn f c))
 
       leJComp : _≤₂_ K (g ∘E f) J
       leJComp = λ c →
@@ -116,7 +127,7 @@ module With
           step₁ = leJ s₂ (Endo.fn f c)            -- g(f c) ≤ J(f c)
           step₂ = Endo.mono J (leJ s₁ c)          -- J(f c) ≤ J(J c)
           step₃ = J∘J≤J c                         -- J(J c) ≤ J c
-        in ConPoset.trans CP step₁ (ConPoset.trans CP step₂ step₃)
+        in ConPreorder.trans CP step₁ (ConPreorder.trans CP step₂ step₃)
     in
     mkClosureStep (g ∘E f) inflComp leJComp
 
@@ -139,19 +150,5 @@ module FromClosureOp
   (C   : ClosureOp (BulkBoundary.bnd (LogicKernel.BB K)))
   where
 
-  open LogicKernel K
-
-  J : Endo K
-  J =
-    record
-      { fn   = cl C
-      ; mono = mono C
-      }
-
-  id≤J : _≤₂_ K (idEndo K) J
-  id≤J = infl C
-
-  J∘J≤J : _≤₂_ K (J ∘E J) J
-  J∘J≤J = idemp-lax C
-
-  module Rel = With K J id≤J J∘J≤J
+  module Rel = With K C
+  open Rel public

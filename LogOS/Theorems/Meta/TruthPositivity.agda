@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,8 +8,8 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.TruthPositivity where
 
 open import LogOS.Prelude
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 -- A tiny meta-meta interface for “truth positivity”:
 -- there is a space of tests, a positivity predicate, and a class of observable

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,7 +11,7 @@ module LogOS.Theorems.Boundary.Graded.Guarded where
 -- guard naturality under graded kernel homomorphisms.
 
 open import LogOS.Prelude
-open import Data.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
 
 open import LogOS.Kernel.Graded
 open import LogOS.Kernel.Graded.Hom
@@ -20,31 +20,71 @@ open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+import LogOS.Theorems.Boundary.MuFusion as MuFusion
 
--- If a graded kernel hom preserves Flow (via GradedKernelHomFlow), then the mapped
--- guarded fixed-point in the target decodes below Th* (lax preservation).
+-- If a graded kernel hom transports `Th*` (via `GradedKernelHomFlowStable`), then
+-- the mapped guarded fixed-point in the target decodes below Th* (lax preservation).
 
 decode-mapCode-γ*≤Th*
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K₁ K₂ : GradedKernel Sig Q)
     (h  : GradedKernelHom K₁ K₂)
-    (ht : GradedKernelHomFlow K₁ K₂ h)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+    (ht : GradedKernelHomFlowStable K₁ K₂ h)
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
                  (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (GradedKernel.γ* K₁)))
                  (GradedClosure.Th* (GradedKernel.GTruth K₂))
 decode-mapCode-γ*≤Th* {Sig = Sig} {Q = Q} K₁ K₂ h ht =
   let open GradedKernel K₁ renaming (BB to BB₁; GTruth to G₁)
       open GradedKernel K₂ renaming (BB to BB₂; GTruth to G₂)
-      module GT0 = Truth.GuardedCore
       open GradedKernelHom h
-      open GradedKernelHomFlow ht
-      open GT0.GradedFlowHom flow-hom using (preserves-Th)
+      open GradedKernelHomFlowStable ht
       map∂ = ConAlgHom≡.map∂ (GradedKernelHom.con-hom h)
       eq₁ : GradedKernel.decode K₂ (GradedKernelHom.mapCode h (GradedKernel.γ* K₁))
             ≡ map∂ (GradedKernel.decode K₁ (GradedKernel.γ* K₁))
       eq₁ = GradedKernelHom.map-decode h (GradedKernel.γ* K₁)
       eq₂ : GradedKernel.decode K₁ (GradedKernel.γ* K₁) ≡ GradedClosure.Th* G₁
       eq₂ = GradedKernel.decode-γ* K₁
-  in subst (λ x → ConPoset._⊑_ (BulkBoundary.bnd BB₂) x (GradedClosure.Th* G₂))
+  in subst (λ x → ConPreorder._⊑_ (BulkBoundary.bnd BB₂) x (GradedClosure.Th* G₂))
            (sym (trans eq₁ (cong map∂ eq₂)))
            preserves-Th
+
+-- Variant: derive `GradedKernelHomFlowStable` from step preservation using μ-fusion
+-- at the saturation grade.
+
+module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+         (K₁ K₂ : GradedKernel Sig Q)
+         (h : GradedKernelHom K₁ K₂)
+         where
+  private
+    module GT = Truth.GuardedCore {ℓ = ℓ}
+
+    CP₁ : ConPreorder ℓ
+    CP₁ = BulkBoundary.bnd (GradedKernel.BB K₁)
+
+    CP₂ : ConPreorder ℓ
+    CP₂ = BulkBoundary.bnd (GradedKernel.BB K₂)
+
+    map∂ : ConPreorder.Con CP₁ → ConPreorder.Con CP₂
+    map∂ = ConAlgHom≡.map∂ (GradedKernelHom.con-hom h)
+
+    module MF = MuFusion.For CP₁ CP₂
+
+    GC₁sat : GT.GuardedClosure CP₁
+    GC₁sat = GT.forgetGradedClosure (GradedKernel.GTruth K₁)
+
+    GC₂sat : GT.GuardedClosure CP₂
+    GC₂sat = GT.forgetGradedClosure (GradedKernel.GTruth K₂)
+
+  decode-mapCode-γ*≤Th*-fromFlow
+    : (hf : GradedKernelHomFlow K₁ K₂ h)
+      (ω₁ : GT.OmegaCPO CP₁)
+      (ω₂ : GT.OmegaCPO CP₂)
+      (M  : MF.OmegaCPOMap ω₁ ω₂ map∂)
+      (FF₁ : GT.FiniteFirst CP₁ GC₁sat ω₁)
+      (FF₂ : GT.FiniteFirst CP₂ GC₂sat ω₂)
+    → ConPreorder._⊑_ CP₂
+        (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (GradedKernel.γ* K₁)))
+        (GradedClosure.Th* (GradedKernel.GTruth K₂))
+  decode-mapCode-γ*≤Th*-fromFlow hf ω₁ ω₂ M FF₁ FF₂ =
+    decode-mapCode-γ*≤Th* K₁ K₂ h
+      (MuFusion.GradedKernel.gradedKernelHomFlowStable-from hf ω₁ ω₂ M FF₁ FF₂)

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,10 +11,10 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature; module LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (BulkBoundary; ConPoset; MonoMap)
-open import LogOS.Minimal.Adjunction using (MonoidalPoset)
+open import LogOS.Minimal.Con using (BulkBoundary; ConPreorder; MonoMap)
+open import LogOS.Minimal.Adjunction using (MonoidalOps)
 open import LogOS.Boundary.IO using (BoundaryIO)
-open import LogOS.Ports.Semantic.SatMor using (SatMor)
+open import LogOS.Ports.Semantic.SatMor using (SatMor; SatHom)
 open import LogOS.Algebra.ConAlg using (ConAlg)
 import LogOS.Minimal.Thin2Cat as Thin2Cat
 
@@ -26,6 +26,7 @@ import LogOS.Kernel.LogicKernel as LK
 --
 -- `Edge` uses `SatMor`, which preserves *and reflects* satisfaction. This makes
 -- the edge a conservative translation rather than a one-way sound abstraction.
+-- Use `EdgeSound` for sound-only (one-way) translations.
 
 record AgentNode {ℓ ℓTask : Level} : Set (lsuc (lsuc (ℓ ⊔ ℓTask))) where
   field
@@ -72,9 +73,9 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   tensorAt : (r : Role) → Con r → Con r → Con r
   tensorAt r c d = ConAlg._⊗∂_ (conAlg r) c d
 
-  -- Boundary poset per role.
-  ConPosetAt : Role → ConPoset ℓ
-  ConPosetAt r = BulkBoundary.bnd (LK.LogicKernel.BB (AgentSocket.LK (Sock r)))
+  -- Boundary preorder per role.
+  ConPreorderAt : Role → ConPreorder ℓ
+  ConPreorderAt r = BulkBoundary.bnd (LK.LogicKernel.BB (AgentSocket.LK (Sock r)))
 
   -- A policy is a role-indexed assignment of boundary constraints.
   Policy : Set (ℓ ⊔ ℓRole)
@@ -94,14 +95,14 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   Policy≤ : Policy → Policy → Set (ℓ ⊔ ℓRole)
   Policy≤ pol pol' = ∀ r → AgentSocket._⊑bnd_ (Sock r) (pol r) (pol' r)
 
-  PolicyPoset : ConPoset (ℓ ⊔ ℓRole)
-  PolicyPoset =
+  PolicyPreorder : ConPreorder (ℓ ⊔ ℓRole)
+  PolicyPreorder =
     record
       { Con = Policy
       ; _⊑_ = Policy≤
-      ; refl = λ {pol} r → ConPoset.refl (ConPosetAt r)
+      ; refl = λ {pol} r → ConPreorder.refl (ConPreorderAt r)
       ; trans = λ {pol} {pol'} {pol''} le₁ le₂ r →
-          ConPoset.trans (ConPosetAt r) (le₁ r) (le₂ r)
+          ConPreorder.trans (ConPreorderAt r) (le₁ r) (le₂ r)
       }
 
   -- Edge wiring: a conservative translation between boundary satisfactions.
@@ -113,23 +114,32 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
     translateCon : Con r → Con s
     translateCon = SatMor.mapCon satMor
 
-  -- Thin 2-category of monotone maps between role boundary posets.
+  -- Sound-only edge wiring (no reflection assumption).
+  record EdgeSound (r s : Role) : Set (lsuc (ℓ ⊔ ℓRole)) where
+    field
+      satHom : SatHom (Ctx r) (Con r) (Sat r)
+                       (Ctx s) (Con s) (Sat s)
+
+    translateCon : Con r → Con s
+    translateCon = SatHom.mapCon satHom
+
+  -- Thin 2-category of monotone maps between role boundary preorders.
   record MonoHom (r s : Role) : Set (lsuc (ℓ ⊔ ℓRole)) where
     field
       fn   : Con r → Con s
-      mono : MonoMap (ConPosetAt r) (ConPosetAt s) fn
+      mono : MonoMap (ConPreorderAt r) (ConPreorderAt s) fn
 
-  MonoHomPoset : Role → Role → ConPoset (lsuc (ℓ ⊔ ℓRole))
-  MonoHomPoset r s =
+  MonoHomPreorder : Role → Role → ConPreorder (lsuc (ℓ ⊔ ℓRole))
+  MonoHomPreorder r s =
     record
       { Con = MonoHom r s
       ; _⊑_ = λ f g →
           Lift (lsuc (ℓ ⊔ ℓRole))
-            (∀ c → ConPoset._⊑_ (ConPosetAt s) (MonoHom.fn f c) (MonoHom.fn g c))
+            (∀ c → ConPreorder._⊑_ (ConPreorderAt s) (MonoHom.fn f c) (MonoHom.fn g c))
       ; refl = λ {f} →
-          lift (λ c → ConPoset.refl (ConPosetAt s))
+          lift (λ c → ConPreorder.refl (ConPreorderAt s))
       ; trans = λ {f} {g} {h} fg gh →
-          lift (λ c → ConPoset.trans (ConPosetAt s) (Lift.lower fg c) (Lift.lower gh c))
+          lift (λ c → ConPreorder.trans (ConPreorderAt s) (Lift.lower fg c) (Lift.lower gh c))
       }
 
   monoComp : ∀ {r s t} → MonoHom s t → MonoHom r s → MonoHom r t
@@ -143,7 +153,7 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   MonoThin2Cat =
     record
       { Obj = Role
-      ; Hom = MonoHomPoset
+      ; Hom = MonoHomPreorder
       ; id  = λ {r} →
           record
             { fn = λ c → c
@@ -163,9 +173,16 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   edgeUpdate : ∀ {r s} → Edge r s → Policy → Con s
   edgeUpdate {r} {s} e pol = edgeTensor e (pol s) (pol r)
 
+  edgeTensorSound : ∀ {r s} → EdgeSound r s → Con s → Con r → Con s
+  edgeTensorSound {r} {s} e cₛ cᵣ =
+    tensorAt s cₛ (EdgeSound.translateCon e cᵣ)
+
+  edgeUpdateSound : ∀ {r s} → EdgeSound r s → Policy → Con s
+  edgeUpdateSound {r} {s} e pol = edgeTensorSound e (pol s) (pol r)
+
   -- Monotone edge translation (an extra assumption when needed).
   EdgeMono : ∀ {r s} (e : Edge r s) → Set ℓ
-  EdgeMono {r} {s} e = MonoMap (ConPosetAt r) (ConPosetAt s) (Edge.translateCon e)
+  EdgeMono {r} {s} e = MonoMap (ConPreorderAt r) (ConPreorderAt s) (Edge.translateCon e)
 
   edgeMonoHom : ∀ {r s} (e : Edge r s) → EdgeMono e → MonoHom r s
   edgeMonoHom e monoE =
@@ -177,13 +194,13 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   tensorMono : (r : Role) → Con r → MonoHom r r
   tensorMono r c =
     let
-      module MB = MonoidalPoset (ConAlg.MBnd (conAlg r))
-      CP = ConPosetAt r
+      module MB = MonoidalOps (ConAlg.MBnd (conAlg r))
+      CP = ConPreorderAt r
     in
     record
       { fn = λ d → tensorAt r c d
       ; mono = λ {x} {y} x≤y →
-          MB.mono⊗ (ConPoset.refl CP {c = c}) x≤y
+          MB.mono⊗ (ConPreorder.refl CP {c = c}) x≤y
       }
 
   edgeTensor-mono-right
@@ -208,12 +225,12 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
     → AgentSocket._⊑bnd_ (Sock s) (edgeTensor e cₛ cᵣ) (edgeTensor e cₛ' cᵣ')
   edgeTensor-mono {r} {s} e monoE {cₛ} {cₛ'} {cᵣ} {cᵣ'} c≤c' d≤d' =
     let
-      module MB = MonoidalPoset (ConAlg.MBnd (conAlg s))
-      CP = ConPosetAt s
+      module MB = MonoidalOps (ConAlg.MBnd (conAlg s))
+      CP = ConPreorderAt s
       step₁ = edgeTensor-mono-right e monoE cₛ d≤d'
-      step₂ = MB.mono⊗ c≤c' (ConPoset.refl CP {c = Edge.translateCon e cᵣ'})
+      step₂ = MB.mono⊗ c≤c' (ConPreorder.refl CP {c = Edge.translateCon e cᵣ'})
     in
-    ConPoset.trans CP step₁ step₂
+    ConPreorder.trans CP step₁ step₂
 
   edgeUpdate-mono
     : ∀ {r s} (e : Edge r s)
@@ -227,6 +244,6 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   edgeUpdate-monoMap
     : ∀ {r s} (e : Edge r s)
     → EdgeMono e
-    → MonoMap PolicyPoset (ConPosetAt s) (edgeUpdate e)
+    → MonoMap PolicyPreorder (ConPreorderAt s) (edgeUpdate e)
   edgeUpdate-monoMap e monoE pol≤pol' =
     edgeUpdate-mono e monoE pol≤pol'

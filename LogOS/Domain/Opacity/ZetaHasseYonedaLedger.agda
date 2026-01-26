@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -21,7 +21,7 @@ open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Wit
 
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
 import LogOS.Theorems.Meta.MathTruth as MT
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 import LogOS.Domain.Opacity.HasseYonedaTransport as HY
 import LogOS.Domain.Opacity.WeilCriterionLedger as WCL
 
@@ -57,12 +57,12 @@ record ZetaHasseYonedaLedger {ℓ ℓW : Level}
 
     -- “Stable truth is observable” side conditions for W-pos.
     W-ext    : Comm.DecodeExtensional′ K W-pos
-    W-stable : ∀ γ → W-pos γ ↔ W-pos (FlowCode K γ)
+    W-stableBoxBody : ∀ γ → W-pos γ ↔ W-pos (Box K (Kernel.Body K γ))
 
     -- Finite truth on the regulator-generated tests.
     mkTest-true : ∀ r → W-pos (HY.mkTest {IK = IK} K G r)
 
-    -- Every nontrivial zero’s probe is (up to decode equality) one of the
+    -- Every nontrivial zero’s probe is (up to decoded observational equality / mutual refinement) one of the
     -- regulator-generated tests.
     sel : ∀ s → NontrivialZero s → HY.Reg G
     mkTest∘sel≈probe
@@ -74,7 +74,7 @@ record ZetaHasseYonedaLedger {ℓ ℓW : Level}
   GRH_Without_Vacuity_Guardsζ : GRH_Without_Vacuity_Guards RS
   GRH_Without_Vacuity_Guardsζ =
     HY.GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator-stableTruth
-      IK K RS W-pos WC G W-ext W-stable mkTest-true sel mkTest∘sel≈probe
+      IK K RS W-pos WC G W-ext W-stableBoxBody mkTest-true sel mkTest∘sel≈probe
 
 -- --------------------------------------------------------------------------
 -- Standard pack skeleton (uniform API).
@@ -93,8 +93,7 @@ module QuartetZetaHasseYonedaLedger
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards (RiemannSpectralFromFacts F)
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
-
-  mkPack : (A : Assumptions) → Pack
-  mkPack = Q.mkPack (ZetaHasseYonedaLedger.GRH_Without_Vacuity_Guardsζ {F = F})
+  module Q =
+    AppKit.MakeDerived Assumptions Claim
+      (ZetaHasseYonedaLedger.GRH_Without_Vacuity_Guardsζ {F = F})
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

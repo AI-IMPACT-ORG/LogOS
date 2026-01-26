@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -38,7 +38,7 @@ module Kleene
     module GT = Truth.GuardedCore
     CP = BulkBoundary.bnd (LogicKernel.BB K)
 
-  open ConPoset CP public
+  open ConPreorder CP public
   open GT.OmegaCPO ωCPO public
 
   module μ = GT.Kleene ωCPO

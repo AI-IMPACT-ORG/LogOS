@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -91,7 +91,7 @@ A final risk is the Agda compiler itself - although this is not a green-fields d
 
 ## Repository overview
 
-The main documentation lives in `/docs`. Uploading `docs/Definition_Spec.lagda.md` or almost any of the other docs to a reasoning chatbot instantiates a conversational interface to start exploring the library. This uses the chatbot as an effective stochastic interpreter. Ensure that memory features of the chatbot are disabled to avoid polluting cross-conversation chatbot memory. For bonus points: ask the chatbot to use the library to explain why this tip works based on a density of information argument. Beware of sycophancy induced by logic: not all suggestions as "next steps" are achievable in finite time, or require technology you have to learn first. 
+The main documentation lives in `/docs`. Uploading `docs/LogOS_Core_Spec.lagda.md` or almost any of the other docs to a reasoning chatbot instantiates a conversational interface to start exploring the library. This uses the chatbot as an effective stochastic interpreter. Ensure that memory features of the chatbot are disabled to avoid polluting cross-conversation chatbot memory. For bonus points: ask the chatbot to use the library to explain why this tip works based on a density of information argument. Beware of sycophancy induced by logic: not all suggestions as "next steps" are achievable in finite time, or require technology you have to learn first. 
 
 ## Usage tips
 
@@ -99,7 +99,7 @@ Interpretation (analogy): you can view the library as an ["OS-style" abstraction
 for composing logic-system components (kernels + ports + adapters). The literal
 content is the Agda API and the curated packs.
 
-Always ensure good coding architecture (clean code, clean architecture for starters) in any new model for optimal results. Refactor almost constantly for presentation, and double and triple check results, ideally resetting chatbot memory to mitigate confirmation bias. Ask for better integration of [kernel functions](docs/Definition.lagda.md) - their use is not always optimal downstream, especially if the result you are after is not in the literature. Best results are obtained usually with SOTA reasoning models, but these come with a hefty cost of time. Note that developments that align with classical literature are noticeably easier as the coding agents roughly know what to build. Directions perpendicular to the knowledge coded into the chatbots require more human supervision.
+Always ensure good coding architecture (clean code, clean architecture for starters) in any new model for optimal results. Refactor almost constantly for presentation, and double and triple check results, ideally resetting chatbot memory to mitigate confirmation bias. Ask for better integration of [kernel functions](docs/LogOS_Overview.lagda.md) - their use is not always optimal downstream, especially if the result you are after is not in the literature. Best results are obtained usually with SOTA reasoning models, but these come with a hefty cost of time. Note that developments that align with classical literature are noticeably easier as the coding agents roughly know what to build. Directions perpendicular to the knowledge coded into the chatbots require more human supervision.
 
 ## Some features
 
@@ -129,9 +129,9 @@ open import LogOS.API.Minimal
 ## Docs
 
 Start here (literate Agda):
-- Architecture + entrypoints: `docs/Definition.lagda.md`
+- Architecture + entrypoints: `docs/LogOS_Overview.lagda.md`
 - Kernel claim register (what “truth” words mean): `docs/Kernel/ClaimRegister.lagda.md`
-- Research-grade spec: `docs/Definition_Spec.lagda.md`
+- Research-grade spec: `docs/LogOS_Core_Spec.lagda.md`
 
 Kernel views (polymorphicity): 
 - Multi-institution: `docs/Views/MultiInstitution.lagda.md`

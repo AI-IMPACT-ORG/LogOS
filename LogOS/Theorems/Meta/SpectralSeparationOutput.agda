@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,8 @@ module LogOS.Theorems.Meta.SpectralSeparationOutput where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_; ¬_; ⊥; ⊥-elim; to)
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -18,7 +18,7 @@ open import LogOS.Minimal.Con
 open import LogOS.Kernel
 open import LogOS.Theorems.Meta.Assumptions.Diagonal using
   (TruthDiagonal; TruthDiagonalC; TruthDiagonal→TruthDiagonalC; liar-witnessC; no-totalC; liar-witness; no-total)
-open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn)
+open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn≈)
 
 -- A partial “spectral separation output” surface: for each code, either produce
 -- some witness W (inj₁ w) or explicitly leave the input undefined (inj₂ tt).
@@ -77,15 +77,69 @@ module Generic {ℓCode ℓDec : Level} (Code : Set ℓCode) (Dec : Set ℓDec) 
     in
     (γ , ¬HasSeparation→NoSeparation nh)
 
+module Generic≈ {ℓCode ℓDec : Level}
+               (Code : Set ℓCode)
+               (CP : ConPreorder ℓDec)
+               (decode : Code → ConPreorder.Con CP)
+               where
+
+  record SpectralSeparationOutputC : Set (lsuc (ℓCode ⊔ ℓDec)) where
+    field
+      Witness : Set ℓCode
+      infer   : Code → Witness ⊎ ⊤ {ℓ = lzero}
+      ext     : ∀ γ₁ γ₂ → _≈CP_ CP (decode γ₁) (decode γ₂) → infer γ₁ ≡ infer γ₂
+
+    HasSeparation : Code → Set ℓCode
+    HasSeparation γ = Σ Witness (λ w → infer γ ≡ inj₁ w)
+
+    NoSeparation : Code → Set ℓCode
+    NoSeparation γ = infer γ ≡ inj₂ ttℓ
+
+    ¬HasSeparation→NoSeparation : ∀ {γ} → ¬ HasSeparation γ → NoSeparation γ
+    ¬HasSeparation→NoSeparation {γ} nh with infer γ
+    ... | inj₂ ttℓ = refl
+    ... | inj₁ w  = ⊥-elim (nh (w , refl))
+
+  record SeparationTotalityClaimC (SSO : SpectralSeparationOutputC) : Set (lsuc ℓCode) where
+    open SpectralSeparationOutputC SSO
+    field
+      Totality : Set ℓCode
+      reflect  : Totality → ∀ γ → HasSeparation γ
+
+  separation-output-not-totalC
+    : (SSO : SpectralSeparationOutputC)
+      (TD  : TruthDiagonalC Code (SpectralSeparationOutputC.HasSeparation SSO))
+    → ¬ (∀ γ → SpectralSeparationOutputC.HasSeparation SSO γ)
+  separation-output-not-totalC SSO TD = no-totalC TD
+
+  separation-output-no-self-certificationC
+    : (SSO : SpectralSeparationOutputC)
+      (TD  : TruthDiagonalC Code (SpectralSeparationOutputC.HasSeparation SSO))
+      (TC  : SeparationTotalityClaimC SSO)
+    → SeparationTotalityClaimC.Totality TC → ⊥
+  separation-output-no-self-certificationC SSO TD TC t =
+    separation-output-not-totalC SSO TD (SeparationTotalityClaimC.reflect TC t)
+
+  separation-output-diagonal-witnessC
+    : (SSO : SpectralSeparationOutputC)
+      (TD  : TruthDiagonalC Code (SpectralSeparationOutputC.HasSeparation SSO))
+    → Σ Code (λ γ → SpectralSeparationOutputC.NoSeparation SSO γ)
+  separation-output-diagonal-witnessC SSO TD =
+    let
+      open SpectralSeparationOutputC SSO
+      w  = liar-witnessC TD
+      γ  = proj₁ w
+      nh = proj₂ w
+    in
+    (γ , ¬HasSeparation→NoSeparation nh)
+
 record SpectralSeparationOutput {ℓ}
                                {Sig : LogOSSignature ℓ}
                                {Q   : QAdapter ℓ}
                                (K   : Kernel Sig Q)
                                : Set (lsuc ℓ) where
   private
-    module G = Generic (Kernel.Code K)
-                       (ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
-                       (Kernel.decode K)
+    module G = Generic≈ (Kernel.Code K) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K)
   field
     core : G.SpectralSeparationOutputC
 
@@ -104,7 +158,7 @@ record Oracle {ℓ}
   field
     -- `inj₁ w` returns a witness, `inj₂ tt` abstains (no output).
     infer : Code → Witness ⊎ ⊤ {ℓ = lzero}
-    ext   : DecodeExtensionalFn K infer
+    ext   : DecodeExtensionalFn≈ K infer
 
   toSSO : SpectralSeparationOutput K
   toSSO = record
@@ -125,9 +179,7 @@ record SeparationTotalityClaim {ℓ}
                               (SSO : SpectralSeparationOutput K)
                               : Set (lsuc ℓ) where
   private
-    module G = Generic (Kernel.Code K)
-                       (ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
-                       (Kernel.decode K)
+    module G = Generic≈ (Kernel.Code K) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K)
   field
     core : G.SeparationTotalityClaimC (SpectralSeparationOutput.core SSO)
 
@@ -204,7 +256,7 @@ separation-output-not-total
     (TD  : TruthDiagonal K (SpectralSeparationOutput.HasSeparation SSO))
   → ¬ (∀ γ → SpectralSeparationOutput.HasSeparation SSO γ)
 separation-output-not-total {K = K} SSO TD all =
-  let module G = Generic (Kernel.Code K) (ConPoset.Con (BulkBoundary.bnd (Kernel.BB K))) (Kernel.decode K)
+  let module G = Generic≈ (Kernel.Code K) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K)
   in G.separation-output-not-totalC (SpectralSeparationOutput.core SSO)
        (TruthDiagonal→TruthDiagonalC (SpectralSeparationOutput.HasSeparation SSO) TD)
        all
@@ -230,6 +282,6 @@ separation-output-diagonal-witness
     (TD  : TruthDiagonal K (SpectralSeparationOutput.HasSeparation SSO))
   → Σ (Kernel.Code K) (λ γ → SpectralSeparationOutput.NoSeparation SSO γ)
 separation-output-diagonal-witness {K = K} SSO TD =
-  let module G = Generic (Kernel.Code K) (ConPoset.Con (BulkBoundary.bnd (Kernel.BB K))) (Kernel.decode K)
+  let module G = Generic≈ (Kernel.Code K) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K)
   in G.separation-output-diagonal-witnessC (SpectralSeparationOutput.core SSO)
        (TruthDiagonal→TruthDiagonalC (SpectralSeparationOutput.HasSeparation SSO) TD)

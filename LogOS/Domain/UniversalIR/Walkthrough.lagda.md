@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -9,11 +9,9 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.UniversalIR.Walkthrough where
 
 open import LogOS.Prelude
-open import Data.Nat as Nat using (ℕ)
 
 open import LogOS.Domain.UniversalIR.Task
 open import LogOS.Domain.UniversalIR.Core
-open import Data.Product using (_×_; _,_)
 open import LogOS.Domain.UniversalIR.Languages.Minsky as Minsky
 open import LogOS.Domain.UniversalIR.Languages.Lambda as Lambda
 open import LogOS.Domain.UniversalIR.Languages.Ethereum as Ether
@@ -38,6 +36,9 @@ import LogOS.Computation.SchemeCategory as Cat
 
 # Universal Translation Machine (Walkthrough)
 
+CI note: this module is imported by `Tests/SmokeSurfaces.agda`, so it stays
+typechecked in CI.
+
 This walkthrough shows how five canonical programming paradigms — Minsky machines,
 untyped lambda calculus, Ethereum‑like (EVM), a minimal oracle‑with‑classical‑control model,
 and explicit circuits —
@@ -58,6 +59,12 @@ Internally, UniversalIR factors this as:
 - five `Choice`s selecting Minsky/λ/EVM/oracle/circuit as different computation *presentations* into that shared process.
   The library keeps a `fuel : Input → ℕ` for convenience, but the preferred execution
   interface is via a **scheme index** `g : Scale` and `ScaleOps` (see `Sch.run≤` / `Cat.run≤`).
+
+For a kernel-aligned observation, see `LogOS/Domain/UniversalIR/ObservedKernel.agda`:
+an `ObsKit` packages an observation `observeU : UCode → Obs` that commutes with `stepU`,
+so the boundary evolution is well-defined. The `UProcess` view keeps `observe : UCode → ℕ`
+as a semantic center, but `observe` itself is not assumed to be a step homomorphism. For
+other observation spaces, use `UProcessAt`/`UProcessObs` in `LogOS/Domain/UniversalIR/Schemes.agda`.
 
 Concretely, each exported scheme is definitionally the process + its choice:
 

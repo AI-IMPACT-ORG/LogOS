@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: an Agda research library for foundational logic system architecture.
+# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -16,7 +16,7 @@ LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${LIB_ROOT}"
 
 AGDA="${AGDA:-agda}"
-AGDA_FLAGS="${AGDA_FLAGS:---no-libraries -i .}"
+AGDA_FLAGS="${AGDA_FLAGS:---no-libraries -i . --safe}"
 AGDA_WARN_FLAGS="${AGDA_WARN_FLAGS:--W all -W error}"
 
 BUILD_DIR="_build/CheckAll"

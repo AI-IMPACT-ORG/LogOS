@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Theorems.Meta.MonotonePredicates where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_; to; from)
-open import LogOS.Minimal.Con using (ConPoset)
+open import LogOS.Minimal.Con using (ConPreorder)
 
 -- Monotonicity for predicates over a preorder, and transport across pointwise ↔.
 --
@@ -19,22 +19,22 @@ open import LogOS.Minimal.Con using (ConPoset)
 
 MonoPredOn
   : ∀ {ℓ ℓP}
-    (CP : ConPoset ℓ)
-    (P  : ConPoset.Con CP → Set ℓP)
+    (CP : ConPreorder ℓ)
+    (P  : ConPreorder.Con CP → Set ℓP)
   → Set (ℓ ⊔ ℓP)
-MonoPredOn CP P = ∀ {c d} → ConPoset._⊑_ CP c d → P c → P d
+MonoPredOn CP P = ∀ {c d} → ConPreorder._⊑_ CP c d → P c → P d
 
 AntiMonoPredOn
   : ∀ {ℓ ℓP}
-    (CP : ConPoset ℓ)
-    (P  : ConPoset.Con CP → Set ℓP)
+    (CP : ConPreorder ℓ)
+    (P  : ConPreorder.Con CP → Set ℓP)
   → Set (ℓ ⊔ ℓP)
-AntiMonoPredOn CP P = ∀ {c d} → ConPoset._⊑_ CP c d → P d → P c
+AntiMonoPredOn CP P = ∀ {c d} → ConPreorder._⊑_ CP c d → P d → P c
 
 mapMonoPredOn
   : ∀ {ℓ ℓP}
-    {CP : ConPoset ℓ}
-    {P Q : ConPoset.Con CP → Set ℓP}
+    {CP : ConPreorder ℓ}
+    {P Q : ConPreorder.Con CP → Set ℓP}
   → (∀ c → P c ↔ Q c)
   → MonoPredOn CP P
   → MonoPredOn CP Q
@@ -43,8 +43,8 @@ mapMonoPredOn {P = P} {Q = Q} eq mono {c} {d} c⊑d qc =
 
 mapAntiMonoPredOn
   : ∀ {ℓ ℓP}
-    {CP : ConPoset ℓ}
-    {P Q : ConPoset.Con CP → Set ℓP}
+    {CP : ConPreorder ℓ}
+    {P Q : ConPreorder.Con CP → Set ℓP}
   → (∀ c → P c ↔ Q c)
   → AntiMonoPredOn CP P
   → AntiMonoPredOn CP Q

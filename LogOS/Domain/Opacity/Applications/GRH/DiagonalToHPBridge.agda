@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -40,7 +40,7 @@ record DiagHPSelector {ℓ} {ℓTX : Level}
   open HPi.HPInterface HP
   field
     -- Boundary selection for each spectral point
-    c : Spectral → ConPoset.Con (BulkBoundary.bnd BB)
+    c : Spectral → ConPreorder.Con (BulkBoundary.bnd BB)
 
     -- Diagonal operator alignment (two directions):
     -- 1) If Op @ embed (c s) is fixed, then there is a local1 witness.
@@ -68,6 +68,14 @@ fromDiagonal K HP RS TX Sel =
   in
   record
     { c = c
-    ; zero→OpFixed = λ s nz → ∃local1→fixed s (det-zero→∃local1 s (nz→ΛXZero s nz))
-    ; opFixed→OnLine = λ s opfx → local1→OnLine s (fixed→∃local1 s opfx)
+    ; zero-ref =
+        record
+          { sat-→ = λ _ s nz →
+              ∃local1→fixed s (det-zero→∃local1 s (nz→ΛXZero s nz))
+          }
+    ; opFixed-ref =
+        record
+          { sat-→ = λ _ s opfx →
+              local1→OnLine s (fixed→∃local1 s opfx)
+          }
     }

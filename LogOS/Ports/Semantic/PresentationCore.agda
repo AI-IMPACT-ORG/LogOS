@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -36,8 +36,44 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
   ObsEqF : Form → Form → Set _
   ObsEqF = Prop.ObsEqOn SatF
 
+  -- Observational preorder induced by satisfaction.
+
+  ObsLeC : Con → Con → Set _
+  ObsLeC = Prop.ObsLeOn SatC
+
+  ObsLeF : Form → Form → Set _
+  ObsLeF = Prop.ObsLeOn SatF
+
+  -- Consistent aliases: use Con/Form naming at call sites.
+
+  ObsEqCon : Con → Con → Set _
+  ObsEqCon = ObsEqC
+
+  ObsEqForm : Form → Form → Set _
+  ObsEqForm = ObsEqF
+
+  ObsLeCon : Con → Con → Set _
+  ObsLeCon = ObsLeC
+
+  ObsLeForm : Form → Form → Set _
+  ObsLeForm = ObsLeF
+
   RespectsObsEqC : (Con → Con) → Set _
   RespectsObsEqC = Prop.RespectsObsEqOn SatC
+
+  RespectsObsEqF : (Form → Form) → Set _
+  RespectsObsEqF F = ∀ {φ ψ} → ObsEqF φ ψ → ObsEqF (F φ) (F ψ)
+
+  RespectsObsEqCon : (Con → Con) → Set _
+  RespectsObsEqCon = RespectsObsEqC
+
+  RespectsObsEqForm : (Form → Form) → Set _
+  RespectsObsEqForm = RespectsObsEqF
+
+  module ObsEqC-Kit where
+    open Prop.ObsEqKit (Prop.obsEqKit SatC) public
+  module ObsEqF-Kit where
+    open Prop.ObsEqKit (Prop.obsEqKit SatF) public
 
   -- Round-trip laws (forced by the satisfaction equivalences).
 
@@ -134,6 +170,66 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
       rhs₀ = SatF-Export (F (G (Import φ)))
     in
     Prop.↔-trans (Prop.↔-trans lhs₀ lhs₁) (Prop.↔-sym rhs₀)
+
+  -- Endomap action on forms (Extend) packaged as a reusable structure.
+  record ExtendAction : Set (lsuc (ℓCtx ⊔ ℓCon ⊔ ℓForm ⊔ ℓSat)) where
+    field
+      act : (Con → Con) → Form → Form
+      act-respects-ObsEqF : ∀ F → RespectsObsEqC F → RespectsObsEqF (act F)
+      act-id : ∀ p φ → SatF p (act (λ x → x) φ) ↔ SatF p φ
+      act-comp
+        : ∀ (F G : Con → Con)
+        → RespectsObsEqC F
+        → ∀ p (φ : Form)
+        → SatF p (act F (act G φ)) ↔ SatF p (act (λ x → F (G x)) φ)
+
+  extendAction : ExtendAction
+  extendAction =
+    record
+      { act = Extend
+      ; act-respects-ObsEqF = Extend-respects-ObsEqF
+      ; act-id = Extend-id
+      ; act-comp = Extend-comp
+      }
+
+-- Semantic lens view: a presentation is a bidirectional lens between
+-- boundary constraints and external syntax, with round-trip laws up to
+-- satisfaction equivalence.
+
+record LensKit {ℓCtx ℓCon ℓForm ℓSat : Level}
+               (Ctx : Set ℓCtx)
+               (Con : Set ℓCon)
+               (SatC : Ctx → Con → Set ℓSat)
+               : Set (lsuc (ℓCtx ⊔ ℓCon ⊔ ℓForm ⊔ ℓSat)) where
+  field
+    Pres : PresentationC {ℓForm = ℓForm} Ctx Con SatC
+  open PresentationC Pres public
+
+  roundTripF : ∀ p (φ : Form) → SatF p φ ↔ SatF p (Export (Import φ))
+  roundTripF = Export∘Import≈F
+
+  roundTripC : ∀ p (c : Con) → SatC p c ↔ SatC p (Import (Export c))
+  roundTripC = Import∘Export≈C
+
+lensFromPresentation
+  : ∀ {ℓCtx ℓCon ℓForm ℓSat}
+    {Ctx : Set ℓCtx}
+    {Con : Set ℓCon}
+    {SatC : Ctx → Con → Set ℓSat}
+  → PresentationC {ℓForm = ℓForm} Ctx Con SatC
+  → LensKit {ℓForm = ℓForm} Ctx Con SatC
+lensFromPresentation P = record { Pres = P }
+
+lensTranslate
+  : ∀ {ℓCtx ℓCon ℓForm₁ ℓForm₂ ℓSat}
+    {Ctx : Set ℓCtx}
+    {Con : Set ℓCon}
+    {SatC : Ctx → Con → Set ℓSat}
+    (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC)
+    (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx Con SatC)
+  → PresentationC.Form P₁ → PresentationC.Form P₂
+lensTranslate P₁ P₂ φ =
+  PresentationC.Export P₂ (PresentationC.Import P₁ φ)
 
 -- -----------------------------------------------------------------------------
 -- Presentation homomorphisms (semantic translations between presentations).

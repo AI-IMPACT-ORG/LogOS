@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -58,7 +58,7 @@ module CategoryTheory where
   open import LogOS.Theorems.CategoryTheory.PortCat public
 
 module Quantitative where
-  -- `QAdapter` instances (quantale + time embedding).
+  -- `QAdapter` instances (quantale + time homomorphism `τ`).
   open import LogOS.QAdapters.All public
 
 module Contracts where
@@ -70,3 +70,24 @@ module Tooling where
   open import LogOS.Syntax.ProofSystem public
   open import LogOS.Ports.Semantic.ProofTransport public
   open import LogOS.Ports.Semantic.SystemIO public
+
+module Downstream where
+  -- Port-first “default view” for downstream developments.
+  --
+  -- Typical usage:
+  --   open import LogOS.API.Architecture
+  --   open Architecture.Downstream
+  --
+  -- This keeps kernel names out of the immediate namespace while still giving
+  -- access to the ports/adapters spine.
+  open Signatures public
+  open import LogOS.Minimal.Adapter public using (QAdapter)
+  open import LogOS.Minimal.World public
+  open import LogOS.Minimal.Con public
+  open Boundary public
+  open Ports public
+  open Tooling public
+
+module Assumptions where
+  -- Core logic-core bundle (used by pack-level assumption bundles).
+  open import LogOS.API.Assumptions public

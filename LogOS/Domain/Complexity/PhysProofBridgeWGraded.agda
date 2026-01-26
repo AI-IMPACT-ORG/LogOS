@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,9 +10,9 @@ module LogOS.Domain.Complexity.PhysProofBridgeWGraded where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ)
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
-open import Data.NatOrder using (_≤ℕ_)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter using (QAdapter)
@@ -86,10 +86,10 @@ module Kernel
   (WSize : GradedKernel.Code K → ℕ)
   where
 
-  module R = TRG.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  module R = TRG.UniformNatFromRuns K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
   module C = PCW.Kernel K Input Size DetRun VerRun VerRunWith IsPoly gradeBound WSize
 
-  open C public using (Con; PhysP; PhysNPw; SuperPolyHardness; notPhysP)
+  open C public using (Con; PhysP; PhysTotalNPw; SuperPolyHardness; notPhysP)
 
   record MergeMeasure {ℓA} (Acc : Con → Set ℓA)
     : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓP ⊔ ℓA))) where
@@ -132,10 +132,10 @@ module KernelG
   (WSize : GradedKernel.Code K → ℕ)
   where
 
-  module R = TRG.For K Input Size DetRun VerRun VerRunWith
+  module R = TRG.UniformFromRuns K Input Size DetRun VerRun VerRunWith
   module C = PCW.KernelG K Input Size DetRun VerRun VerRunWith PGG Pℕ WSize
 
-  open C public using (Con; PhysP; PhysNPw; SuperPolyHardness; notPhysP)
+  open C public using (Con; PhysP; PhysTotalNPw; SuperPolyHardness; notPhysP)
 
   record MergeMeasure {ℓA} (Acc : Con → Set ℓA)
     : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓA))) where

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,7 +16,7 @@ open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Syntax.Prop as Prop
 open import LogOS.Boundary.Port using (BoundaryPort)
-open import LogOS.Kernel
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 import LogOS.Kernel.Boundary as KBoundary
 import LogOS.Ports.Semantic.Interoperability as Interop
 import LogOS.Ports.Semantic.InterlinguaStrictKernel as StrictKernel

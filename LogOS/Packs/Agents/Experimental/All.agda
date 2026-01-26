@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,7 +15,13 @@ open import LogOS.Packs.Trust using (PackTrust; experimental)
 packTrust : PackTrust
 packTrust = record { level = experimental }
 
-open import LogOS.Packs.Agents.All public hiding (packTrust)
+-- Re-export the stable lab surface, then add experimental extensions.
+import LogOS.Packs.Agents.Lab.All as Lab
 
-module Experimental where
-  open import LogOS.Packs.Agents.Experimental.Lab public
+import LogOS.Packs.Agents.Applications.All as Applications
+
+module AssumptionBundles where
+  open import LogOS.Packs.Assumptions.Universality public
+  open import LogOS.Packs.Assumptions.Physics public
+
+import LogOS.Packs.Agents.Experimental.Lab as Experimental

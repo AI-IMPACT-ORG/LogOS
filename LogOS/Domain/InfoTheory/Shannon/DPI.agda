@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,15 +9,15 @@ module LogOS.Domain.InfoTheory.Shannon.DPI where
 
 open import LogOS.Prelude hiding (_+_; _*_)
 
-open import Data.Nat using (ℕ)
-open import Data.Fin using (Fin)
-open import Data.Product using (_×_; _,_)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Fin using (Fin)
+open import LogOS.Prelude.Product using (_×_; _,_)
 
 open import LogOS.Domain.InfoTheory.Shannon.Facts
 import LogOS.Domain.InfoTheory.Shannon.Core as Core
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 import LogOS.Domain.Complexity.DataProcessingInequality as AbsDPI
-open import LogOS.Minimal.Con using (ConPoset)
+open import LogOS.Minimal.Con using (ConPreorder)
 
 -- Data Processing Inequality (finite case), in the “LogOS facts-pack” style.
 --
@@ -115,13 +115,13 @@ module For (DF : DPIFacts) where
       S≤KL =
         subst (λ x → S ≤ x) (sym klEq) (≤-refl {x = S})
 
-  -- Bridge: Shannon KL-DPI as an instance of the generic “DPI-on-a-poset” interface.
+  -- Bridge: Shannon KL-DPI as an instance of the generic “DPI-on-a-preorder” interface.
   --
   -- This uses the endo case (n ↦ n) so channels are genuine endomaps on observables.
   module AsAbstractDPI where
 
-    ℝPoset : ConPoset lzero
-    ℝPoset = record
+    ℝPreorder : ConPreorder lzero
+    ℝPreorder = record
       { Con  = ℝ
       ; _⊑_  = _≤_
       ; refl = ≤-refl
@@ -139,7 +139,7 @@ module For (DF : DPIFacts) where
           ; run = λ K (P , Q) → (pushDistPos K P , pushDistPos K Q)
           }
 
-      dpiKL : AbsDPI.DPIOn Obs channels ℝPoset
+      dpiKL : AbsDPI.DPIOn Obs channels ℝPreorder
       dpiKL =
         record
           { info = λ (P , Q) → KLfun (DistPos.p P) (DistPos.p Q)
@@ -165,11 +165,8 @@ module QuartetDPI where
         (D.push (Core.For.KernelPos.ker K) (Core.For.DistPos.p Q))
       ≤ D.KLfun (Core.For.DistPos.p P) (Core.For.DistPos.p Q)
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
+  derive : (A : Assumptions) → Claim A
+  derive A K P Q = For.KL-DPI (Assumptions.facts A) K P Q
 
-  mkPack : (A : Assumptions) → Pack
-  mkPack A =
-    Q.mkPack
-      (λ A → λ K P Q → For.KL-DPI (Assumptions.facts A) K P Q)
-      A
+  module Q = AppKit.MakeDerived Assumptions Claim derive
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

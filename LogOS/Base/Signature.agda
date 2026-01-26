@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -25,7 +25,7 @@ import LogOS.Base.Ops.Boundary as Bnd
 
 record LogOSSignature (ℓ : Level) : Set (lsuc ℓ) where
   field
-    -- Minimal sorts: keep the existing definition for compatibility
+    -- Minimal sorts (stable interface): keep the existing definition.
     sorts : S.Sorts ℓ
 
   open S.Sorts sorts public

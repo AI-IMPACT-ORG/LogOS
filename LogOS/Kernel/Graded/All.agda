@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,6 +18,7 @@ open import LogOS.Kernel.Graded public
 open import LogOS.Kernel.Graded.Boundary public
 open import LogOS.Kernel.Graded.ToKernel public
 open import LogOS.Kernel.Graded.Endo public
+open import LogOS.Kernel.Graded.Infinite public
 open import LogOS.Kernel.Graded.Hom public
 open import LogOS.Kernel.Graded.Hom2Cat public
 open import LogOS.Kernel.Graded.Reachability public

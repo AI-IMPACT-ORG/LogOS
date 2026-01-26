@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module LogOS.Domain.Opacity.NumberTheory.LFunction.RegulatedPartition where
 open import LogOS.Prelude
   hiding (_+_; _*_)
 
-open import Data.Fin using (Fin; fzero; fsuc; toℕ)
+open import LogOS.Prelude.Fin using (Fin; fzero; fsuc; toℕ)
 
 open import LogOS.Algebra.Ring
 

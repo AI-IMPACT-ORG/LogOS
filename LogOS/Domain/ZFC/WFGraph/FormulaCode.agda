@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,8 +10,8 @@ module LogOS.Domain.ZFC.WFGraph.FormulaCode where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (⊥)
 
-open import Data.Fin using (Fin)
-open import Data.Product using (Σ; _,_; _×_)
+open import LogOS.Prelude.Fin using (Fin)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_)
 
 open import LogOS.ObjectLogic.FOL.Syntax as FOL using (Signature; Fml)
 

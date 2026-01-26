@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,10 +19,11 @@ open import LogOS.Prelude
 -- We import via the curated pack surface so this stays stable even if the
 -- internal Domain layout evolves.
 
-open import LogOS.Packs.UniversalIR.Core public
+import LogOS.Packs.UniversalIR.Core as UIRCore
+open UIRCore.Task public using (PATask)
+open UIRCore.Schemes public
   using
-    ( PATask
-    ; UProcess
+    ( UProcess
     ; minskyChoice
     ; lambdaChoice
     ; ethereumChoice

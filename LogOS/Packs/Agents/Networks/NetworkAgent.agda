@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,9 @@ module LogOS.Packs.Agents.Networks.NetworkAgent where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
+open import LogOS.Prelude.List using (List; []; _∷_)
 
+open import LogOS.Algebra.ConAlg using (ConAlg)
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 open import LogOS.Packs.Agents.Networks.Hetero using (AgentNetwork)
 
@@ -59,3 +61,33 @@ record NetworkAgent {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
 
   aggregated : Policy → Con hub
   aggregated pol = aggregate (λ r → toHub r (pol r))
+
+  -- Canonical aggregation: fold the hub tensor over a chosen list of roles.
+  --
+  -- This is an opt-in default; callers can use any enumeration of roles and
+  -- supply the tensor compatibility hypothesis explicitly.
+
+  tensorAggregate
+    : List Role
+    → (Role → Con hub)
+    → Con hub
+  tensorAggregate [] f =
+    let open ConAlg (conAlg hub) using (I∂) in
+    I∂
+  tensorAggregate (r ∷ rs) f =
+    tensorAt hub (f r) (tensorAggregate rs f)
+
+  abstract
+    tensorAggregate-respects-obsEq
+      : (roles : List Role)
+      → (tensor-respects-obsEq
+          : ∀ {a b c d}
+          → Prop.ObsEqOn (Sat hub) a b
+          → Prop.ObsEqOn (Sat hub) c d
+          → Prop.ObsEqOn (Sat hub) (tensorAt hub a c) (tensorAt hub b d))
+      → AggRespectsObsEqAt Net hub (tensorAggregate roles)
+    tensorAggregate-respects-obsEq [] tensor-respects eqs =
+      let open ConAlg (conAlg hub) using (I∂) in
+      Prop.ObsEqOn-refl (Sat hub) I∂
+    tensorAggregate-respects-obsEq (r ∷ rs) tensor-respects eqs =
+      tensor-respects (eqs r) (tensorAggregate-respects-obsEq rs tensor-respects eqs)

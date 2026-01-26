@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -23,6 +23,12 @@ make ci
 make lint
 ```
 
+If you don't have Agda installed yet, you can still run the non-Agda policy checks:
+
+```sh
+make ci-policy
+```
+
 Optional (heaviest publication sanity):
 
 ```sh
@@ -34,8 +40,10 @@ make check-all
 - No direct `Agda.Builtin.*` / `Agda.Primitive` imports outside the host-surface shims (see `README.md` “Host surface”).
 - No `postulate` in the production library (`LogOS/*`, `Tests/*`); any assumptions must be explicit record fields.
 - No `postulate` (and no unsafe OPTIONS) inside Agda code blocks in `docs/*.lagda.md`.
-- Architectural layering: core layers must not import `LogOS.Domain.*` / `LogOS.Packs.*` / `LogOS.ObjectLogic.*` / `LogOS.Docs.*` (enforced by `scripts/import_layer_check.sh`).
-- Prefer importing `LogOS.Prelude` / `LogOS.API.Minimal` instead of raw `Data.*`.
+- All Agda modules opt into `{-# OPTIONS --safe #-}` (enforced by `scripts/safe_options_check.sh`).
+- Pack entrypoints expose `packTrust : PackTrust` (enforced by `scripts/pack_trust_check.sh`).
+- Architectural layering: core layers must not import `LogOS.Domain.*` / `LogOS.Packs.*` / `LogOS.ObjectLogic.*` / `docs.*` (enforced by `scripts/import_layer_check.sh`).
+- Prefer importing `LogOS.Prelude` / `LogOS.API.Minimal` (and `LogOS.Prelude.*`) instead of raw `LogOS.Host.*` or stdlib `Data.*`.
 - Documentation path references inside backticks must resolve (see `scripts/doc_reference_check.sh`).
 
 ## Style (lemma names and shapes)

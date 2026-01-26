@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -152,6 +152,14 @@ module For
 
   -- Alias (paper-friendly name).
   extend-commutes-with-translate = ported-closure-naturality
+
+  ported-closure-naturality-ObsEndo
+    : (endo : ObsEndo∂ B)
+    → ∀ (p : ∂Cosp) (φ : Form₁)
+    → Prop._↔_ (SatF₂ p (translate (Extend₁ (ObsEndo∂.fn endo) φ)))
+               (SatF₂ p (Extend₂ (ObsEndo∂.fn endo) (translate φ)))
+  ported-closure-naturality-ObsEndo endo p φ =
+    ported-closure-naturality (ObsEndo∂.fn endo) (ObsEndo∂.respects endo) p φ
 
   -- Exported theories are presentation-independent (up to satisfaction).
 

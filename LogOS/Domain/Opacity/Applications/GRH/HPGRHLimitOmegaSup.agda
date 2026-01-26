@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,19 +12,18 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
-open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel
-open import LogOS.Axioms.OmegaSup.Interface as OmegaSup
+open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann
 open import LogOS.Domain.Opacity.Applications.GRH.HPGRHLimit as HP∞
 
--- ω-supremum-flavored limit GRH wrapper (explicit ω-sup assumption)
+-- Limit GRH wrapper (legacy “OmegaSup” name).
 --
--- Idea: build an OmegaCPO for the boundary poset using an explicit ω-supremum
--- operator (ChainSup), assume a FiniteFirst witness (cont-ω) for the model’s
--- Flow, and combine with an ApproxHP family to conclude GRH from finite
--- regulator operator facts.
+-- This module used to bundle explicit ω-supremum structure as part of the
+-- assumptions. The current proof only needs the finite regulator operator facts
+-- (Opᵢ-fixed) plus a limit-level spectral clause (Op∞-fixed ⇒ OnLine), so the
+-- ω-sup fields have been removed to keep the dependency graph honest.
 
 record HP∞OmegaSupAssumptions {ℓ}
                             {Sig : LogOSSignature ℓ}
@@ -35,40 +34,39 @@ record HP∞OmegaSupAssumptions {ℓ}
                             : Set (lsuc ℓ) where
   open Kernel K
   open RiemannSpectral RS
-  module Gd = Truth.GuardedTruth Sig Q
 
   field
-    -- Bottom element and its property, to seed OmegaCPO via ω-sup selection
-    bot   : ConPoset.Con (BulkBoundary.bnd BB)
-    isBot : ∀ c → ConPoset._⊑_ (BulkBoundary.bnd BB) bot c
-
-    -- Explicit ω-supremum operator (no global postulate import).
-    CS : OmegaSup.ChainSup (BulkBoundary.bnd BB)
-
-    -- Finite-first/continuity witness on the boundary poset using the ChainSup-built OmegaCPO
-    FF : Gd.FiniteFirst (BulkBoundary.bnd BB)
-                         (GTruth)
-                         (OmegaSup.omegaCPO-from-chainSup Sig Q (BulkBoundary.bnd BB) bot isBot CS)
-
     -- Spectral adapter to boundary constraints
-    c : Spectral → ConPoset.Con (BulkBoundary.bnd BB)
+    c : Spectral → ConPreorder.Con (BulkBoundary.bnd BB)
 
     -- Chosen finite regulator index (to seed the limit lifting)
     i₀ : HP∞.ResIdx.I (HP∞.ApproxHP.idx AHP)
 
-    -- Finite regulator operator facts: every nontrivial zero maps to an Opᵢ-fixed point
-    allFixedFinite : ∀ i s → NontrivialZero s →
-      HP∞.ApproxHP.Opᵢ AHP i (HP∞.ApproxHP.embedᵢ AHP i (c s))
-        ≡ HP∞.ApproxHP.embedᵢ AHP i (c s)
+    -- Finite regulator operator fact at the chosen index.
+    fixed₀-ref : SatRefinement₀ Spectral
+                  (λ _ s → NontrivialZero s)
+                  (λ _ s → HP∞.ApproxHP.Opᵢ AHP i₀ (HP∞.ApproxHP.embedᵢ AHP i₀ (c s))
+                            ≡ HP∞.ApproxHP.embedᵢ AHP i₀ (c s))
 
-    -- Limit spectral clause: Op∞-fixed implies OnLine
-    Op∞Fixed→OnLine : ∀ s →
-      HP∞.ApproxHP.Op∞ AHP (HP∞.ApproxHP.embed∞ AHP (c s))
-        ≡ HP∞.ApproxHP.embed∞ AHP (c s)
-      → OnLine s
+    -- Limit spectral clause: Op∞-fixed implies OnLine (refinement form).
+    opFixed-ref : SatRefinement₀ Spectral
+                   (λ _ s → HP∞.ApproxHP.Op∞ AHP (HP∞.ApproxHP.embed∞ AHP (c s))
+                             ≡ HP∞.ApproxHP.embed∞ AHP (c s))
+                   (λ _ s → OnLine s)
 
--- Theorem: from ω-sup selector-built OmegaCPO + finite regulator operator facts + limit spectral clause,
--- derive GRH_Without_Vacuity_Guards
+  OpᵢFixedAtZero : ∀ s → NontrivialZero s →
+    HP∞.ApproxHP.Opᵢ AHP i₀ (HP∞.ApproxHP.embedᵢ AHP i₀ (c s))
+      ≡ HP∞.ApproxHP.embedᵢ AHP i₀ (c s)
+  OpᵢFixedAtZero s nz = sat-→₀ fixed₀-ref s nz
+
+  Op∞Fixed→OnLine : ∀ s →
+    HP∞.ApproxHP.Op∞ AHP (HP∞.ApproxHP.embed∞ AHP (c s))
+      ≡ HP∞.ApproxHP.embed∞ AHP (c s)
+    → OnLine s
+  Op∞Fixed→OnLine s fixed = sat-→₀ opFixed-ref s fixed
+
+-- Theorem: from finite regulator operator facts + a limit spectral clause,
+-- derive GRH_Without_Vacuity_Guards.
 
 GRH_Without_Vacuity_Guards_via_HP∞_OmegaSup
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -79,9 +77,9 @@ GRH_Without_Vacuity_Guards_via_HP∞_OmegaSup
   → ∀ s → RiemannSpectral.NontrivialZero RS s → RiemannSpectral.OnLine RS s
 GRH_Without_Vacuity_Guards_via_HP∞_OmegaSup K AHP RS AC s nz =
   let fixed∞ =
-        HP∞.derive-Op∞Fixed K AHP RS
+        HP∞.derive-Op∞Fixed-at K AHP RS
           (HP∞OmegaSupAssumptions.c AC)
           (HP∞OmegaSupAssumptions.i₀ AC)
-          (HP∞OmegaSupAssumptions.allFixedFinite AC)
+          (HP∞OmegaSupAssumptions.OpᵢFixedAtZero AC)
           s nz
   in HP∞OmegaSupAssumptions.Op∞Fixed→OnLine AC s fixed∞

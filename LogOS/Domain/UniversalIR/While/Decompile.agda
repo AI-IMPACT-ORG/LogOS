@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,9 +13,9 @@ open import LogOS.Domain.UniversalIR.Core
 open import LogOS.Domain.UniversalIR.Std using (==ℕ-true→≡)
 open import LogOS.Domain.UniversalIR.While.Compile
 
-open import Data.Bool using (Bool; true; false)
-open import Data.List using (List; []; _∷_)
-open import Data.Maybe using (Maybe; just; nothing)
+open import LogOS.Prelude.Bool using (Bool; true; false)
+open import LogOS.Prelude.List using (List; []; _∷_)
+open import LogOS.Prelude.Maybe using (Maybe; just; nothing)
 
 -- Decompilation “by construction”: return a source task together with a proof
 -- that recompiling it yields (a chosen normal form of) the target code.
@@ -55,7 +55,7 @@ decompileMinsky
 {-# CATCHALL #-}
 decompileMinsky _ = nothing
 
--- 2) Ethereum: normalize away the memory function ---------------------------
+-- 2) Ethereum: close away the memory function ---------------------------
 --
 -- Memory is a function in this minimal EVM model. For factorial, the program
 -- initializes the memory cells it uses (0 and 1), so the initial memory is

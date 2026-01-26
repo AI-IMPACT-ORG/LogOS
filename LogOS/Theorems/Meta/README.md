@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,11 +10,14 @@ Meta Theorems — Pattern and Usage
 This folder contains small, explicit interfaces and transport utilities to derive
 Rice/Tarski/Gödel/Löb‑style theorems inside the logic from clear, local assumptions.
 
+Interpretation (analogy):
+this README sometimes uses metaphorical vocabulary (e.g. “event horizon”, “physics”) as a reading guide; the formal content is exactly the Agda statements in the referenced modules and their explicit assumptions.
+
 The core idea
 - Work primarily at the boundary (decode) level. Kernel exposes safe reflection:
   - `reify` with `reify-decode`: decode (reify γ) ≡ decode γ
   - `Body∂` with `body-decode`: decode (Body γ) ≡ Body∂ (decode γ)
-- State minimal side‑conditions as small records (no global postulates):
+- State minimal side‑conditions as small records or predicates (no global postulates):
   - `DecodeExtensional K P`: P depends only on `decode`
   - `Provability K`: schematic provability pack (extensionality, nontriviality)
 - Prove on the canonical (initial) model once; transport via the canonical fold to any kernel.
@@ -38,14 +41,18 @@ Entry points
 - Spectral separation partial output (assumption-only, anti-totality): `LogOS/Theorems/Meta/SpectralSeparationOutput.agda`
 - Math/Physics observer+opacity bundle (graded-kernel friendly): `LogOS/Theorems/Meta/MathPhysSynthesis.agda`
 - CHL capstone (proof/model/category/system views): `LogOS/Theorems/Meta/CHL.agda`
-- Minimal PL mechanization spine (syntax/statics/dynamics): `LogOS/Docs/PLSpine.agda`
+- Minimal PL mechanization spine (syntax/statics/dynamics): `docs/DeepDive/PLSpineSpine.agda`
 - Maximal communicable truth (Flow-stable): `LogOS/Theorems/Meta/CommunicableTruth.agda`
 - Safe reflection (literature-aligned):
-  - Generic safe reflection: `LogOS/Theorems/Meta/ObserverCore.agda` (`Safe⋆`, `safe⋆-sound`, `safe⋆-stable`).
+  - Generic safe reflection: `LogOS/Theorems/Meta/ObserverCore.agda` (`Safe⋆≈`, `safe⋆≈-sound`, `safe⋆≈-stable`).
+    (Legacy, ≡-based: `Safe⋆`, `safe⋆-sound`, `safe⋆-stable`.)
   - Kernel-safe reflection (FlowCode): `LogOS/Theorems/Meta/CommunicableTruth.agda`
     (`Safe⋆`, `safe⋆-core` connecting kernel ↔ generic).
   - LogicKernel instantiation: `LogOS/Theorems/Meta/ObserverFromLogicKernel.agda`
-    (`Safe⋆`, `SafeTruthAt`).
+    (`Safe⋆`, `SafeTruthAt`, and the step presentation equivalence
+    `Observable⋆↔Observable⋆-FlowCode`).
+  - Guarded truth-at-world for `LogicKernel`: `LogOS/Theorems/Meta/GuardedTruthAt.agda`
+    (largest admissible fragment of `TruthAt`, with a `FlowCode` vs “compute-then-stabilise” equivalence).
 - Safety spine (design choice → architecture + paradox gates):
   - `LogOS/Theorems/Meta/Safety/DesignChoice.agda`
   - `LogOS/Theorems/Meta/Safety/ArchitectureFromSafety.agda`
@@ -53,7 +60,7 @@ Entry points
   - `LogOS/Theorems/Meta/Safety/Matrix.agda`
 - Regulated truth → observable truth (MathTruth pack): `LogOS/Theorems/Meta/MathTruth.agda`
 - Limit publicisation laws (reflector property, cofinality, naturality): `LogOS/Theorems/Meta/LimitPublicisation.agda`
-- Minimal dagger/* infrastructure (quadratic positivity shims): `LogOS/Theorems/Meta/Dagger.agda`
+- Minimal dagger/* infrastructure (quadratic positivity helpers): `LogOS/Theorems/Meta/Dagger.agda`
 
 Typical usage (Rice/Tarski shape)
 1) Choose a kernel `K` and a property `P : Code K → Set`.

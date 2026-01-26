@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -34,9 +34,9 @@ record PNTFromForcingTruthSeparation {ℓ}
 
   field
     PNT : Set ℓ
-    pntC : ConPoset.Con CP
-    pnt-J-closed : ConPoset._⊑_ CP (cl J pntC) pntC
-    JClosed→PNT : ConPoset._⊑_ CP (cl J pntC) pntC → PNT
+    pntC : ConPreorder.Con CP
+    pnt-J-closed : ConPreorder._⊑_ CP (cl J pntC) pntC
+    JClosed→PNT : ConPreorder._⊑_ CP (cl J pntC) pntC → PNT
 
   PNT-from-separation : PNT
   PNT-from-separation = JClosed→PNT pnt-J-closed

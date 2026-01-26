@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -31,7 +31,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     open InfiniteKernel IK using (K; ωCPO)
     open Kernel K using (BB)
     CP = BulkBoundary.bnd BB
-    module CP = ConPoset CP
+    module CP = ConPreorder CP
 
   approx≤Th⋆ : ∀ n → CP._⊑_ (L.approxS n) (L.Th⋆)
   approx≤Th⋆ n =

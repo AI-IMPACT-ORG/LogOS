@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -24,12 +24,13 @@ open import LogOS.Boundary.IO
 open import LogOS.Boundary.Port
 import LogOS.Ports.Semantic.Interlingua as Interlingua
 import LogOS.Ports.Semantic.HeteroInterlinguaCore as Hetero
+import LogOS.Ports.Semantic.InterlinguaMu as InterlinguaMu
 open import LogOS.Ports.Semantic.PresentationCore using
   ( PresentationC
   ; PresentationHom
   ; PresentationHom-respects-ObsEq
   )
-open import LogOS.Ports.Semantic.SatMor using (SatMor)
+open import LogOS.Ports.Semantic.SatMor using (SatMor; SatHom; composeSatHom; idSatHom)
 open import LogOS.Ports.Semantic.InterlinguaStrictReindex as StrictReindex
 open import LogOS.Adapters.Views.SatMor using (satMor-reindexKernel-strict)
 open import LogOS.Kernel
@@ -53,6 +54,81 @@ record PortAdapter
     preserves-Sat : ∀ p φ → Prop._↔_ (P1.SatF p φ) (P2.SatF p (map φ))
 
 open PortAdapter public
+
+record PortRefinement
+  {ℓ : Level}
+  {ℓForm₁ ℓForm₂ : Level}
+  {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  {W : Worlds.WorldH Sig Q}
+  {BB : BulkBoundary ℓ}
+  {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  (B : BoundaryIO Sig Q W BB H)
+  (P₁ : BoundaryPort {ℓForm = ℓForm₁} Sig Q W BB H B)
+  (P₂ : BoundaryPort {ℓForm = ℓForm₂} Sig Q W BB H B)
+  : Set (lsuc (ℓ ⊔ ℓForm₁ ⊔ ℓForm₂)) where
+  private
+    module P1 = BoundaryPort P₁
+    module P2 = BoundaryPort P₂
+  field
+    map : P1.Form → P2.Form
+    preserves-Sat : ∀ p φ → P1.SatF p φ → P2.SatF p (map φ)
+
+open PortRefinement public
+
+refinement-from-adapter
+  : ∀ {ℓ : Level}
+    {ℓForm₁ ℓForm₂ : Level}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q}
+    {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B : BoundaryIO Sig Q W BB H)
+    {P₁ : BoundaryPort {ℓForm = ℓForm₁} Sig Q W BB H B}
+    {P₂ : BoundaryPort {ℓForm = ℓForm₂} Sig Q W BB H B}
+  → PortAdapter B P₁ P₂
+  → PortRefinement B P₁ P₂
+refinement-from-adapter _ A =
+  record
+    { map = map A
+    ; preserves-Sat = λ p φ → Prop.to (preserves-Sat A p φ)
+    }
+
+idRefinement
+  : ∀ {ℓ : Level}
+    {ℓForm : Level}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q}
+    {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B : BoundaryIO Sig Q W BB H)
+    (P : BoundaryPort {ℓForm = ℓForm} Sig Q W BB H B)
+  → PortRefinement B P P
+idRefinement _ _ =
+  record
+    { map = λ φ → φ
+    ; preserves-Sat = λ _ _ sat → sat
+    }
+
+composeRefinement
+  : ∀ {ℓ : Level}
+    {ℓForm₁ ℓForm₂ ℓForm₃ : Level}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q}
+    {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B : BoundaryIO Sig Q W BB H)
+    (P₁ : BoundaryPort {ℓForm = ℓForm₁} Sig Q W BB H B)
+    (P₂ : BoundaryPort {ℓForm = ℓForm₂} Sig Q W BB H B)
+    (P₃ : BoundaryPort {ℓForm = ℓForm₃} Sig Q W BB H B)
+  → PortRefinement B P₁ P₂
+  → PortRefinement B P₂ P₃
+  → PortRefinement B P₁ P₃
+composeRefinement _ _ _ _ A B₁ =
+  record
+    { map = λ φ → map B₁ (map A φ)
+    ; preserves-Sat = λ p φ sat →
+        preserves-Sat B₁ p (map A φ) (preserves-Sat A p φ sat)
+    }
 
 toPresentationHom
   : ∀ {ℓ : Level}
@@ -215,13 +291,14 @@ module For
   adapter-unique A = I.translate-unique (map A) (preserves-Sat A)
 
   -- Any two adapters between the same ports are observationally equivalent.
-  adapter-confluent
-    : ∀ {A A' : PortAdapter B P₁ P₂}
-    → Adapter≈ A A'
-  adapter-confluent {A} {A'} p φ =
-    Prop.↔-trans
-      (adapter-unique A p φ)
-      (Prop.↔-sym (adapter-unique A' p φ))
+  abstract
+    adapter-confluent
+      : ∀ {A A' : PortAdapter B P₁ P₂}
+      → Adapter≈ A A'
+    adapter-confluent {A} {A'} p φ =
+      Prop.↔-trans
+        (adapter-unique A p φ)
+        (Prop.↔-sym (adapter-unique A' p φ))
 
 from-to≈
   : ∀ {ℓ : Level}
@@ -352,6 +429,213 @@ heteroAdapter-unique
 heteroAdapter-unique m P₁ P₂ A =
   let module H = Hetero.For m P₁ P₂ in
   H.translate-unique (map A) (preserves-Sat A)
+
+heteroAdapter-respects-ObsEqF
+  : ∀ {ℓCtx₁ ℓCon₁ ℓForm₁ ℓSat₁ : Level}
+    {ℓCtx₂ ℓCon₂ ℓForm₂ ℓSat₂ : Level}
+    {Ctx₁ : Set ℓCtx₁} {Con₁ : Set ℓCon₁} {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
+    {Ctx₂ : Set ℓCtx₂} {Con₂ : Set ℓCon₂} {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
+    (m  : SatMor Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
+    (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ Con₁ Sat₁)
+    (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ Con₂ Sat₂)
+    (A  : HeteroPortAdapter m P₁ P₂)
+  → ∀ {φ ψ}
+  → PresentationC.ObsEqF P₁ φ ψ
+  → let module H = Hetero.For m P₁ P₂ in
+    ∀ p → H.SatF₂↑ p (map A φ) ↔ H.SatF₂↑ p (map A ψ)
+heteroAdapter-respects-ObsEqF m P₁ P₂ A {φ} {ψ} eq p =
+  let module H = Hetero.For m P₁ P₂ in
+  Prop.↔-trans
+    (Prop.↔-sym (preserves-Sat A p φ))
+    (Prop.↔-trans (eq p) (preserves-Sat A p ψ))
+
+abstract
+  heteroAdapter-confluent
+    : ∀ {ℓCtx₁ ℓCon₁ ℓForm₁ ℓSat₁ : Level}
+      {ℓCtx₂ ℓCon₂ ℓForm₂ ℓSat₂ : Level}
+      {Ctx₁ : Set ℓCtx₁} {Con₁ : Set ℓCon₁} {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
+      {Ctx₂ : Set ℓCtx₂} {Con₂ : Set ℓCon₂} {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
+      (m  : SatMor Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
+      (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ Con₁ Sat₁)
+      (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ Con₂ Sat₂)
+      {A A' : HeteroPortAdapter m P₁ P₂}
+    → let module H = Hetero.For m P₁ P₂ in
+      H._≈⇒_ (map A) (map A')
+  heteroAdapter-confluent m P₁ P₂ {A} {A'} p φ =
+    Prop.↔-trans
+      (heteroAdapter-unique m P₁ P₂ A p φ)
+      (Prop.↔-sym (heteroAdapter-unique m P₁ P₂ A' p φ))
+
+-- ---------------------------------------------------------------------------
+-- Limit/stabilisation transport (μ-level) for heterogeneous translations.
+-- ---------------------------------------------------------------------------
+
+module Limit
+  {ℓCtx₁ ℓCon₁ ℓForm₁ ℓSat₁ : Level}
+  {Ctx₁ : Set ℓCtx₁}
+  (CP₁ : ConPreorder ℓCon₁)
+  {Sat₁ : Ctx₁ → ConPreorder.Con CP₁ → Set ℓSat₁}
+  {ℓCtx₂ ℓCon₂ ℓForm₂ ℓSat₂ : Level}
+  {Ctx₂ : Set ℓCtx₂}
+  (CP₂ : ConPreorder ℓCon₂)
+  {Sat₂ : Ctx₂ → ConPreorder.Con CP₂ → Set ℓSat₂}
+  (m  : SatMor Ctx₁ (ConPreorder.Con CP₁) Sat₁ Ctx₂ (ConPreorder.Con CP₂) Sat₂)
+  (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ (ConPreorder.Con CP₁) Sat₁)
+  (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ (ConPreorder.Con CP₂) Sat₂)
+  where
+
+  module IM = InterlinguaMu.For CP₁ CP₂ m P₁ P₂
+  open IM public using (MuTransportData; MuTransportData↑; translate-export; translate-μ≤; translate-μ≤↑)
+
+  -- Readability aliases (make laxness explicit at the call site).
+  translate-preserves-stabilisation≤ = translate-μ≤
+  translate-preserves-stabilisation≤↑ = translate-μ≤↑
+
+  -- Adapter-friendly wrapper: reduce to the canonical translation via uniqueness.
+  adapter-translate-μ≤
+    : ∀ {ω₁ : Truth.GuardedCore.OmegaCPO CP₁}
+        {ω₂ : Truth.GuardedCore.OmegaCPO CP₂}
+        {F₁ : ConPreorder.Con CP₁ → ConPreorder.Con CP₁}
+        {F₂ : ConPreorder.Con CP₂ → ConPreorder.Con CP₂}
+    → (A : HeteroPortAdapter m P₁ P₂)
+    → MuTransportData ω₁ ω₂ F₁ F₂
+    → ∀ p
+    → (let
+         module H  = Hetero.For m P₁ P₂
+         module P1 = PresentationC P₁
+       in H.SatF₂↑ p (map A (P1.Export (Truth.GuardedCore.Kleene.μ ω₁ F₁))))
+    → (let
+         module H  = Hetero.For m P₁ P₂
+         module P2 = PresentationC P₂
+       in H.SatF₂↑ p (P2.Export (Truth.GuardedCore.Kleene.μ ω₂ F₂)))
+  adapter-translate-μ≤ {ω₁ = ω₁} {ω₂ = ω₂} {F₁ = F₁} {F₂ = F₂} A D p prem =
+    let
+      module H  = Hetero.For m P₁ P₂
+      module P1 = PresentationC P₁
+
+      μ₁ = Truth.GuardedCore.Kleene.μ ω₁ F₁
+
+      map≈translate : H._≈⇒_ (map A) H.translate
+      map≈translate = heteroAdapter-unique m P₁ P₂ A
+
+      prem' : H.SatF₂↑ p (H.translate (P1.Export μ₁))
+      prem' = Prop.to (map≈translate p (P1.Export μ₁)) prem
+    in
+    IM.translate-μ≤ D p prem'
+
+  adapter-translate-μ≤↑
+    : ∀ {ω₁ : Truth.GuardedCore.OmegaCPO CP₁}
+        {ω₂ : Truth.GuardedCore.OmegaCPO CP₂}
+        {F₁ : ConPreorder.Con CP₁ → ConPreorder.Con CP₁}
+        {F₂ : ConPreorder.Con CP₂ → ConPreorder.Con CP₂}
+    → (A : HeteroPortAdapter m P₁ P₂)
+    → MuTransportData↑ ω₁ ω₂ F₁ F₂
+    → ∀ p
+    → (let
+         module H  = Hetero.For m P₁ P₂
+         module P1 = PresentationC P₁
+       in H.SatF₂↑ p (map A (P1.Export (Truth.GuardedCore.Kleene.μ ω₁ F₁))))
+    → (let
+         module H  = Hetero.For m P₁ P₂
+         module P2 = PresentationC P₂
+       in H.SatF₂↑ p (P2.Export (Truth.GuardedCore.Kleene.μ ω₂ F₂)))
+  adapter-translate-μ≤↑ {ω₁ = ω₁} {ω₂ = ω₂} {F₁ = F₁} {F₂ = F₂} A D p prem =
+    let
+      module H  = Hetero.For m P₁ P₂
+      module P1 = PresentationC P₁
+
+      μ₁ = Truth.GuardedCore.Kleene.μ ω₁ F₁
+
+      map≈translate : H._≈⇒_ (map A) H.translate
+      map≈translate = heteroAdapter-unique m P₁ P₂ A
+
+      prem' : H.SatF₂↑ p (H.translate (P1.Export μ₁))
+      prem' = Prop.to (map≈translate p (P1.Export μ₁)) prem
+    in
+    IM.translate-μ≤↑ D p prem'
+
+-- ---------------------------------------------------------------------------
+-- Heterogeneous refinement: one-way translations along SatHom.
+-- ---------------------------------------------------------------------------
+
+record HeteroPortRefinement
+  {ℓCtx₁ ℓCon₁ ℓForm₁ ℓSat₁ : Level}
+  {ℓCtx₂ ℓCon₂ ℓForm₂ ℓSat₂ : Level}
+  {Ctx₁ : Set ℓCtx₁} {Con₁ : Set ℓCon₁} {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
+  {Ctx₂ : Set ℓCtx₂} {Con₂ : Set ℓCon₂} {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
+  (m  : SatHom Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
+  (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ Con₁ Sat₁)
+  (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ Con₂ Sat₂)
+  : Set (lsuc (ℓCtx₁ ⊔ ℓCon₁ ⊔ ℓSat₁ ⊔ ℓForm₁ ⊔ ℓCtx₂ ⊔ ℓCon₂ ⊔ ℓSat₂ ⊔ ℓForm₂)) where
+  private
+    module H = Hetero.ForSound m P₁ P₂
+  field
+    map : PresentationC.Form P₁ → PresentationC.Form P₂
+    preserves-Sat : H.SemPreserving map
+
+open HeteroPortRefinement public
+
+heteroCanonicalRefinement
+  : ∀ {ℓCtx₁ ℓCon₁ ℓForm₁ ℓSat₁ : Level}
+    {ℓCtx₂ ℓCon₂ ℓForm₂ ℓSat₂ : Level}
+    {Ctx₁ : Set ℓCtx₁} {Con₁ : Set ℓCon₁} {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
+    {Ctx₂ : Set ℓCtx₂} {Con₂ : Set ℓCon₂} {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
+    (m  : SatHom Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
+    (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ Con₁ Sat₁)
+    (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ Con₂ Sat₂)
+  → HeteroPortRefinement m P₁ P₂
+heteroCanonicalRefinement m P₁ P₂ =
+  let module H = Hetero.ForSound m P₁ P₂ in
+  record
+    { map = H.translate
+    ; preserves-Sat = H.translate-preserves-Sat
+    }
+
+heteroComposeRefinement
+  : ∀ {ℓCtx₁ ℓCon₁ ℓForm₁ ℓSat₁ : Level}
+    {ℓCtx₂ ℓCon₂ ℓForm₂ ℓSat₂ : Level}
+    {ℓCtx₃ ℓCon₃ ℓForm₃ ℓSat₃ : Level}
+    {Ctx₁ : Set ℓCtx₁} {Con₁ : Set ℓCon₁} {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
+    {Ctx₂ : Set ℓCtx₂} {Con₂ : Set ℓCon₂} {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
+    {Ctx₃ : Set ℓCtx₃} {Con₃ : Set ℓCon₃} {Sat₃ : Ctx₃ → Con₃ → Set ℓSat₃}
+    (m₁ : SatHom Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
+    (m₂ : SatHom Ctx₂ Con₂ Sat₂ Ctx₃ Con₃ Sat₃)
+    (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ Con₁ Sat₁)
+    (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ Con₂ Sat₂)
+    (P₃ : PresentationC {ℓForm = ℓForm₃} Ctx₃ Con₃ Sat₃)
+  → HeteroPortRefinement m₁ P₁ P₂
+  → HeteroPortRefinement m₂ P₂ P₃
+  → HeteroPortRefinement (composeSatHom m₁ m₂) P₁ P₃
+heteroComposeRefinement m₁ m₂ P₁ P₂ P₃ A B =
+  record
+    { map = λ φ → map B (map A φ)
+    ; preserves-Sat = λ p φ sat →
+        let
+          sat₂ = preserves-Sat A p φ sat
+        in
+        preserves-Sat B (SatHom.mapCtx m₁ p) (map A φ) sat₂
+    }
+
+boundaryRefinementToHetero
+  : ∀ {ℓ : Level}
+    {ℓForm₁ ℓForm₂ : Level}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q}
+    {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B : BoundaryIO Sig Q W BB H)
+    {P₁ : BoundaryPort {ℓForm = ℓForm₁} Sig Q W BB H B}
+    {P₂ : BoundaryPort {ℓForm = ℓForm₂} Sig Q W BB H B}
+  → PortRefinement B P₁ P₂
+  → HeteroPortRefinement
+      (idSatHom (BoundaryIO.Sat∂ B))
+      (Interlingua.toPresentationC B P₁)
+      (Interlingua.toPresentationC B P₂)
+boundaryRefinementToHetero B R =
+  record
+    { map = map R
+    ; preserves-Sat = preserves-Sat R
+    }
 
 strictReindexAdapter
   : ∀ {ℓ : Level}

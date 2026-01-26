@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -72,7 +72,7 @@ Two distinct layers are used throughout the library:
     - `LogOS/Domain/ZFC/WFGraph/FormulaKernel.agda`
     - `LogOS/Domain/ZFC/WFGraph/FormulaPack.agda` (surface: `LogOS/Domain/ZFC/WFGraph/Surface.agda` → `FormulaCoded W`)
 - Curated pack entrypoint:
-  - `LogOS/Packs/ZFC/All.agda`
+  - `LogOS/Packs/ZFC/Surface.agda` (umbrella: `LogOS/Packs/ZFC/All.agda`)
   - WFGraph pack quartets: `LogOS/Packs/ZFC/WFGraph.agda`
   - Minimal typechecked demo: `docs/DeepDive/ZFC_Demo.lagda.md`
 

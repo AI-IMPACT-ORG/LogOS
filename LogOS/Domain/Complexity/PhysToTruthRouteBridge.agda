@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,8 +10,8 @@ module LogOS.Domain.Complexity.PhysToTruthRouteBridge where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ)
-open import Data.Product using (Σ; _,_; proj₁; proj₂; fst; snd)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; fst; snd)
 
 open import LogOS.Prelude as Eq using (refl; sym; trans; cong)
 
@@ -58,8 +58,8 @@ module For
                      ≡ VerRunWith₂ x (GradedKernelHomWithGrade.mapCode h w))
   where
 
-  module R₁ = TRG.ForNat K₁ Input Size DetRun₁ VerRun₁ VerRunWith₁ IsPoly gradeBound₁
-  module R₂ = TRG.ForNat K₂ Input Size DetRun₂ VerRun₂ VerRunWith₂ IsPoly gradeBound₂
+  module R₁ = TRG.NonUniformNat K₁ Input Size DetRun₁ VerRun₁ VerRunWith₁ IsPoly gradeBound₁
+  module R₂ = TRG.NonUniformNat K₂ Input Size DetRun₂ VerRun₂ VerRunWith₂ IsPoly gradeBound₂
 
   private
     open GradedKernelHomWithGrade h
@@ -67,12 +67,12 @@ module For
     open GH renaming (map to grade-map)
 
   module AT = FlowAccTransportWithGrade K₁ K₂ h hf
-  open AT public using (AccBridge)
+  open AT public using (AccBridgeFwd; AccBridgeBwd)
 
   -- Transport deterministic “within bound” at a grade.
   mapDetWithinAt
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeFwd Acc₁ Acc₂)
       → ∀ g x → R₁.DetWithinAt Acc₁ g x → R₂.DetWithinAt Acc₂ (grade-map g) x
   mapDetWithinAt AB g x acc =
     let
@@ -87,7 +87,7 @@ module For
   -- Transport deterministic “within bound” at an ℕ bound.
   mapDetWithin
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeFwd Acc₁ Acc₂)
       → ∀ t x → R₁.DetWithin Acc₁ t x → R₂.DetWithin Acc₂ t x
   mapDetWithin {Acc₂ = Acc₂} AB t x acc =
     Eq.subst
@@ -97,7 +97,7 @@ module For
 
   mapDetWithinAt-back
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeBwd Acc₁ Acc₂)
       → ∀ g x → R₂.DetWithinAt Acc₂ (grade-map g) x → R₁.DetWithinAt Acc₁ g x
   mapDetWithinAt-back AB g x acc₂ =
     let
@@ -111,7 +111,7 @@ module For
 
   mapDetWithin-back
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeBwd Acc₁ Acc₂)
       → ∀ t x → R₂.DetWithin Acc₂ t x → R₁.DetWithin Acc₁ t x
   mapDetWithin-back {Acc₁ = Acc₁} {Acc₂ = Acc₂} AB t x acc =
     mapDetWithinAt-back AB (gradeBound₁ t) x
@@ -123,7 +123,7 @@ module For
   -- Transport verifier “within bound”.
   mapVerWithinWithAt
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeFwd Acc₁ Acc₂)
       → ∀ g x w → R₁.VerWithinWithAt Acc₁ g x w →
                   R₂.VerWithinWithAt Acc₂ (grade-map g) x (mapCode w)
   mapVerWithinWithAt AB g x w acc =
@@ -139,7 +139,7 @@ module For
 
   mapVerWithinWith
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeFwd Acc₁ Acc₂)
       → ∀ t x w → R₁.VerWithinWith Acc₁ t x w →
                   R₂.VerWithinWith Acc₂ t x (mapCode w)
   mapVerWithinWith {Acc₂ = Acc₂} AB t x w acc =
@@ -151,9 +151,9 @@ module For
   -- Transport the NP-style witness pack.
   mapNP
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
-      → R₁.PolyWitnessedTotalVerification Acc₁
-      → R₂.PolyWitnessedTotalVerification Acc₂
+      (AB : AccBridgeFwd Acc₁ Acc₂)
+      → R₁.PolyTotalWitnessedVerification Acc₁
+      → R₂.PolyTotalWitnessedVerification Acc₂
   mapNP AB (p , (polyP , wit)) =
     p , (polyP , (λ x →
       let ex = wit x in
@@ -163,7 +163,7 @@ module For
   -- Transport deterministic super-polynomial hardness.
   mapSuperPolyHardness
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeBwd Acc₁ Acc₂)
       → R₁.SuperPolyHardness Acc₁
       → R₂.SuperPolyHardness Acc₂
   mapSuperPolyHardness AB sp p polyP =
@@ -175,18 +175,18 @@ module For
   -- Transport the full separation assumptions and build the claim on K₂.
   mapAssumptions
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeBwd Acc₁ Acc₂)
       → R₁.SpectralSeparationAssumptions Acc₁
       → R₂.SpectralSeparationAssumptions Acc₂
   mapAssumptions AB A =
     record
-      { NP-witness   = mapNP AB (R₁.SpectralSeparationAssumptions.NP-witness A)
+      { total-witness   = mapNP (AccBridgeBwd.fwd AB) (R₁.SpectralSeparationAssumptions.total-witness A)
       ; Det-superpoly = mapSuperPolyHardness AB (R₁.SpectralSeparationAssumptions.Det-superpoly A)
       }
 
   mapPvsNP
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeBwd Acc₁ Acc₂)
       → R₁.SpectralSeparationAssumptions Acc₁
       → R₂.PvsNPClaim Acc₂
   mapPvsNP AB A =
@@ -230,8 +230,8 @@ module ForG
                      ≡ VerRunWith₂ x (GradedKernelHomWithGrade.mapCode h w))
   where
 
-  module R₁ = TRG.For K₁ Input Size DetRun₁ VerRun₁ VerRunWith₁
-  module R₂ = TRG.For K₂ Input Size DetRun₂ VerRun₂ VerRunWith₂
+  module R₁ = TRG.NonUniform K₁ Input Size DetRun₁ VerRun₁ VerRunWith₁
+  module R₂ = TRG.NonUniform K₂ Input Size DetRun₂ VerRun₂ VerRunWith₂
   module G₁ = R₁.GradeBounded PG₁
   module G₂ = R₂.GradeBounded PG₂
 
@@ -240,11 +240,11 @@ module ForG
     module GH = Truth.GuardedCore.GradeHom grade-hom
     open GH renaming (map to grade-map)
   module AT = FlowAccTransportWithGrade K₁ K₂ h hf
-  open AT public using (AccBridge)
+  open AT public using (AccBridgeFwd; AccBridgeBwd)
 
   mapDetWithinAt
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeFwd Acc₁ Acc₂)
       → ∀ g x → R₁.DetWithinAt Acc₁ g x → R₂.DetWithinAt Acc₂ (grade-map g) x
   mapDetWithinAt AB g x acc =
     let
@@ -258,7 +258,7 @@ module ForG
 
   mapDetWithinAt-back
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeBwd Acc₁ Acc₂)
       → ∀ g x → R₂.DetWithinAt Acc₂ (grade-map g) x → R₁.DetWithinAt Acc₁ g x
   mapDetWithinAt-back AB g x acc₂ =
     let
@@ -272,7 +272,7 @@ module ForG
 
   mapVerWithinWithAt
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeFwd Acc₁ Acc₂)
       → ∀ g x w → R₁.VerWithinWithAt Acc₁ g x w →
                   R₂.VerWithinWithAt Acc₂ (grade-map g) x (mapCode w)
   mapVerWithinWithAt AB g x w acc =
@@ -288,9 +288,9 @@ module ForG
 
   mapNP
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
-      → G₁.PolyWitnessedTotalVerificationG Acc₁
-      → G₂.PolyWitnessedTotalVerificationG Acc₂
+      (AB : AccBridgeFwd Acc₁ Acc₂)
+      → G₁.PolyTotalWitnessedVerificationG Acc₁
+      → G₂.PolyTotalWitnessedVerificationG Acc₂
   mapNP AB (g , (polyG , wit)) =
     (λ n → grade-map (g n)) ,
     (poly-map g polyG , (λ x →
@@ -300,7 +300,7 @@ module ForG
 
   mapSuperPolyHardness
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeBwd Acc₁ Acc₂)
       → G₁.SuperPolyHardnessG Acc₁
       → G₂.SuperPolyHardnessG Acc₂
   mapSuperPolyHardness {Acc₂ = Acc₂} AB sp g₂ polyG₂ =
@@ -323,18 +323,18 @@ module ForG
 
   mapAssumptions
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeBwd Acc₁ Acc₂)
       → G₁.SpectralSeparationAssumptionsG Acc₁
       → G₂.SpectralSeparationAssumptionsG Acc₂
   mapAssumptions AB A =
     record
-      { NP-witnessG   = mapNP AB (G₁.SpectralSeparationAssumptionsG.NP-witnessG A)
+      { total-witnessG   = mapNP (AccBridgeBwd.fwd AB) (G₁.SpectralSeparationAssumptionsG.total-witnessG A)
       ; Det-superpolyG = mapSuperPolyHardness AB (G₁.SpectralSeparationAssumptionsG.Det-superpolyG A)
       }
 
   mapPvsNP
     : ∀ {ℓA₁ ℓA₂} {Acc₁ : R₁.Con → Set ℓA₁} {Acc₂ : R₂.Con → Set ℓA₂}
-      (AB : AccBridge Acc₁ Acc₂)
+      (AB : AccBridgeBwd Acc₁ Acc₂)
       → G₁.SpectralSeparationAssumptionsG Acc₁
       → G₂.PvsNPClaimG Acc₂
   mapPvsNP AB A =

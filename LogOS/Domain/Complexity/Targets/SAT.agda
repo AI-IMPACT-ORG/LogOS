@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,16 +9,20 @@ module LogOS.Domain.Complexity.Targets.SAT where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
+open import LogOS.Prelude.Level using (Setω)
 
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_; proj₁; proj₂)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; ≤ℕ-refl)
 
-open import Data.Bool using (Bool; true; false)
-open import Data.List using (List; []; _∷_)
+open import LogOS.Prelude.Bool using (Bool; true; false)
+open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 
+open import LogOS.Domain.Complexity.Poly using (PolyPred)
+import LogOS.Domain.Complexity.PvsNPLedger as CP
 open import LogOS.Domain.Complexity.LanguageWitnessW as LWW
 
 -- A minimal, safe SAT (CNF) development:
@@ -119,6 +123,104 @@ WS-SAT =
         in ρ , (LWW.≤ℕ-refl , pr)
     }
 
+-- Classical alignment: SAT ∈ NP (literature-aligned interface).
+
+module Classical (Pℕ : PolyPred) where
+  module C = CP.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} CNF cnfSize Pℕ
+
+  SATInNP : C.InNP SAT
+  SATInNP =
+    ( record
+        { WS        = WS-SAT
+        ; checkCost = λ φ _ → cnfSize φ
+        ; checkBound = λ n → n
+        ; polyCheck = PolyPred.id-isPoly Pℕ
+        ; checkCost≤ = λ _ _ → ≤ℕ-refl
+        }
+    , tt
+    )
+
+-- ETH-aligned assumption pack (classical surface).
+
+module ClassicalETH (Pℕ : PolyPred) where
+  module C = CP.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} CNF cnfSize Pℕ
+
+  SATL : C.Language
+  SATL = SAT
+
+  record Assumptions : Set (lsuc (lsuc lzero)) where
+    field
+      hard : ∀ (PD : C.PolyTimeDecider SATL) →
+        Σ CNF (λ φ → ¬ (C.PolyTimeDecider.cost PD φ ≤ℕ
+                        C.PolyTimeDecider.bound PD (cnfSize φ)))
+
+  record Claim : Set (lsuc (lsuc lzero)) where
+    field
+      inNP : C.InNP SATL
+      notP : ¬ C.InP SATL
+
+  record Pack (A : Assumptions) : Set (lsuc (lsuc lzero)) where
+    field
+      assumptions : Assumptions
+      claim       : Claim
+
+  mkPack : ∀ (A : Assumptions) → Pack A
+  mkPack A =
+    record
+      { assumptions = A
+      ; claim =
+          record
+            { inNP = Classical.SATInNP Pℕ
+            ; notP = C.notInP (Assumptions.hard A)
+            }
+      }
+
+-- NP-completeness axiom pack (classical surface).
+
+module ClassicalNPComplete (Pℕ : PolyPred) where
+  open import LogOS.Domain.Complexity.Reduction as Red
+
+  module SATC = CP.For {ℓI = lzero} {ℓW = lzero} {ℓ = lzero} CNF cnfSize Pℕ
+
+  record Assumptions : Setω where
+    field
+      reduce
+        : ∀ {ℓI}
+          {Input : Set ℓI}
+          (size : Input → ℕ)
+          (L : Input → Set lzero)
+        → (let module C = CP.For {ℓI = ℓI} {ℓW = lzero} {ℓ = lzero} Input size Pℕ in C.InNP L)
+        → Red.PolyReduction Input CNF L SAT size cnfSize Pℕ
+
+  npInPFromSAT
+    : (A : Assumptions)
+      → (inSATP : SATC.InP SAT)
+      → (boundMono : ∀ {m n} → m ≤ℕ n →
+           SATC.PolyTimeDecider.bound (proj₁ inSATP) m ≤ℕ
+           SATC.PolyTimeDecider.bound (proj₁ inSATP) n)
+      → (polyComp : ∀ {ℓI}
+           {Input : Set ℓI}
+           (size : Input → ℕ)
+           (L : Input → Set lzero)
+           (inNP : (let module C = CP.For {ℓI = ℓI} {ℓW = lzero} {ℓ = lzero} Input size Pℕ in C.InNP L))
+           → PolyPred.isPoly Pℕ
+               (λ n →
+                 SATC.PolyTimeDecider.bound (proj₁ inSATP)
+                   (Red.PolyReduction.bound (Assumptions.reduce A size L inNP) n)))
+      → ∀ {ℓI}
+          {Input : Set ℓI}
+          (size : Input → ℕ)
+          (L : Input → Set lzero)
+          (inNP : (let module C = CP.For {ℓI = ℓI} {ℓW = lzero} {ℓ = lzero} Input size Pℕ in C.InNP L))
+          → (let module C = CP.For {ℓI = ℓI} {ℓW = lzero} {ℓ = lzero} Input size Pℕ in C.InP L)
+  npInPFromSAT A inSATP boundMono polyComp {ℓI} {Input = Input} size L inNP =
+    let module C = CP.For {ℓI = ℓI} {ℓW = lzero} {ℓ = lzero} Input size Pℕ
+        module R = Red.Classical {ℓI₁ = ℓI} {ℓI₂ = lzero} {ℓ = lzero}
+                          Input CNF size cnfSize Pℕ
+        red = Assumptions.reduce A size L inNP
+    in
+    R.inPFromPolyReduction red inSATP boundMono (polyComp size L inNP)
+
 -- -------------------------------------------------------------------------
 -- Cost-guard graded separation (previously in SATPhysicalSeparationCostGuardsGraded).
 -- -------------------------------------------------------------------------
@@ -167,7 +269,36 @@ module CostGuardsGraded where
       → P.Claim SATL
     separationFromProof MM PLB =
       P.Pack.claim
-        (P.mkPack (record { inNPwCostGuards = inPhysNPwCostGuards-SAT ; MM = MM ; PLB = PLB }))
+        (P.mkPack
+          (record
+            { inNPwCostGuards = inPhysNPwCostGuards-SAT
+            ; MM = MM
+            ; PLB = PLB
+            }))
+
+    module SATFromProof where
+      record Assumptions : Set (lsuc (lsuc (ℓQ ⊔ lzero))) where
+        field
+          MM  : B.MergeMeasure SATL
+          PLB : B.ProofLowerBound SATL MM
+
+      Claim : Set (lsuc (lsuc (ℓQ ⊔ lzero)))
+      Claim = P.Claim SATL
+
+      mkPack : Assumptions → P.Pack {L = SATL}
+      mkPack A =
+        P.mkPack
+          (record
+            { inNPwCostGuards = inPhysNPwCostGuards-SAT
+            ; MM             = Assumptions.MM A
+            ; PLB            = Assumptions.PLB A
+            })
+
+      pack : Assumptions → P.Pack {L = SATL}
+      pack = mkPack
+
+      claim : Assumptions → Claim
+      claim A = P.Pack.claim (mkPack A)
 
   module Kernel
     {ℓ ℓP ℓA : Level}
@@ -188,10 +319,15 @@ module CostGuardsGraded where
 
     separationFromProof
       : {Acc : C.Con → Set ℓA}
-        → C.PhysNPwCostGuards Acc
+        → C.PhysTotalNPwCostGuards Acc
         → (MM : B.MergeMeasure Acc)
         → B.ProofLowerBound Acc MM
         → P.Claim Acc
-    separationFromProof inNPwCostGuards MM PLB =
+    separationFromProof inTotalNPwCostGuards MM PLB =
       P.Pack.claim
-        (P.mkPack (record { inNPwCostGuards = inNPwCostGuards ; MM = MM ; PLB = PLB }))
+        (P.mkPack
+          (record
+            { inTotalNPwCostGuards = inTotalNPwCostGuards
+            ; MM = MM
+            ; PLB = PLB
+            }))

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -54,6 +54,12 @@ module Shared
   Valid₂ : Form₂ → Set (ℓCtx ⊔ ℓSat)
   Valid₂ ψ = ∀ p → P2.SatF p ψ
 
+  valid-translate : ∀ φ → Valid₁ φ ↔ Valid₂ (C.translate φ)
+  valid-translate φ =
+    Prop.intro
+      (λ v p → Prop.to (C.translate-preserves-Sat p φ) (v p))
+      (λ v p → Prop.from (C.translate-preserves-Sat p φ) (v p))
+
   -- Pull back a prover for presentation 2 along the forced translation.
   pullbackProver
     : ∀ {ℓW}
@@ -70,6 +76,21 @@ module Shared
             v₂ = sound PS₂ (C.translate φ) pr ok
           in
           Prop.from (C.translate-preserves-Sat p φ) (v₂ p)
+      }
+
+  pullbackProver-complete
+    : ∀ {ℓW}
+    → {PS₂ : ProofSystem {ℓI = ℓForm₂} {ℓP = ℓCtx ⊔ ℓSat} {ℓW = ℓW} Form₂ Valid₂}
+    → Complete PS₂
+    → Complete (pullbackProver PS₂)
+  pullbackProver-complete {PS₂ = PS₂} comp =
+    record
+      { complete = λ φ v₁ →
+          let
+            v₂ : Valid₂ (C.translate φ)
+            v₂ = Prop.to (valid-translate φ) v₁
+          in
+          Complete.complete comp (C.translate φ) v₂
       }
 
   -- Pull back a model-checker: certifies satisfaction for a specific context.
@@ -101,6 +122,24 @@ module Shared
             sat₂ = sound PS₂ (p , C.translate φ) pr ok
           in
           Prop.from (C.translate-preserves-Sat p φ) sat₂
+      }
+
+  pullbackModelChecker-complete
+    : ∀ {ℓW}
+    → {PS₂ : ProofSystem {ℓI = ℓCtx ⊔ ℓForm₂} {ℓP = ℓSat} {ℓW = ℓW}
+        (Ctx × Form₂)
+        (λ where (p , ψ) → P2.SatF p ψ)}
+    → Complete PS₂
+    → Complete (pullbackModelChecker PS₂)
+  pullbackModelChecker-complete {PS₂ = PS₂} comp =
+    record
+      { complete = λ x sat₁ →
+          let
+            (p , φ) = x
+            sat₂ : P2.SatF p (C.translate φ)
+            sat₂ = Prop.to (C.translate-preserves-Sat p φ) sat₁
+          in
+          Complete.complete comp (p , C.translate φ) sat₂
       }
 
 -- ---------------------------------------------------------------------------
@@ -151,6 +190,12 @@ module AlongSatMor
   Valid₂ : Form₂ → Set ℓV₂
   Valid₂ ψ = ∀ p → P2.SatF p ψ
 
+  valid-translate : ∀ φ → Valid₁ φ ↔ Valid₂↑ (H.translate φ)
+  valid-translate φ =
+    Prop.intro
+      (λ v p → Prop.to (H.translate-preserves-Sat p φ) (v p))
+      (λ v p → Prop.from (H.translate-preserves-Sat p φ) (v p))
+
   restrictValid₂ : ∀ ψ → Valid₂ ψ → Valid₂↑ ψ
   restrictValid₂ ψ v₂ p = v₂ (M.mapCtx p)
 
@@ -192,6 +237,25 @@ module AlongSatMor
       ... | inj₁ ok = inj₁ (lift ok)
       ... | inj₂ notOk = inj₂ (λ ok' → notOk (Lift.lower ok'))
 
+  pullbackProver-complete
+    : ∀ {ℓW}
+    → {PS₂ : ProofSystem {ℓI = ℓForm₂} {ℓP = ℓCtx₁ ⊔ ℓSat₂} {ℓW = ℓW} Form₂ Valid₂↑}
+    → Complete PS₂
+    → Complete (pullbackProver PS₂)
+  pullbackProver-complete {PS₂ = PS₂} comp =
+    record
+      { complete = λ φ v₁↑ →
+          let
+            v₁ : Valid₁ φ
+            v₁ = Lift.lower v₁↑
+
+            v₂ : Valid₂↑ (H.translate φ)
+            v₂ = Prop.to (valid-translate φ) v₁
+            pr , ok = Complete.complete comp (H.translate φ) v₂
+          in
+          pr , lift ok
+      }
+
   -- Alias with an explicit name to avoid misreading `pullbackProver` as global.
   pullbackProverOnImage = pullbackProver
 
@@ -230,6 +294,26 @@ module AlongSatMor
       ... | inj₁ ok    = inj₁ (lift ok)
       ... | inj₂ notOk = inj₂ (λ ok → notOk (Lift.lower ok))
 
+  pullbackProverFromGlobal-complete
+    : ∀ {ℓW}
+    → {PS₂ : ProofSystem {ℓI = ℓForm₂} {ℓP = ℓV₂} {ℓW = ℓW} Form₂ Valid₂}
+    → (valid-lift : ∀ φ → Valid₁ φ → Valid₂ (H.translate φ))
+    → Complete PS₂
+    → Complete (pullbackProverFromGlobal PS₂)
+  pullbackProverFromGlobal-complete {PS₂ = PS₂} valid-lift comp =
+    record
+      { complete = λ φ v₁↑ →
+          let
+            v₁ : Valid₁ φ
+            v₁ = Lift.lower v₁↑
+
+            v₂ : Valid₂ (H.translate φ)
+            v₂ = valid-lift φ v₁
+            pr , ok = Complete.complete comp (H.translate φ) v₂
+          in
+          pr , lift ok
+      }
+
   -- Context-specific checker (pulled back along `mapCtx` + translation).
   pullbackModelChecker
     : ∀ {ℓW}
@@ -265,6 +349,28 @@ module AlongSatMor
       decCheck' x pr with decCheck PS₂ (x .fst , H.translate (x .snd)) pr
       ... | inj₁ ok = inj₁ (lift ok)
       ... | inj₂ notOk = inj₂ (λ ok' → notOk (Lift.lower ok'))
+
+  pullbackModelChecker-complete
+    : ∀ {ℓW}
+    → {PS₂ : ProofSystem {ℓI = ℓCtx₁ ⊔ ℓForm₂} {ℓP = ℓSat₂} {ℓW = ℓW}
+        (Ctx₁ × Form₂)
+        (λ where (p , ψ) → P2.SatF (M.mapCtx p) ψ)}
+    → Complete PS₂
+    → Complete (pullbackModelChecker PS₂)
+  pullbackModelChecker-complete {PS₂ = PS₂} comp =
+    record
+      { complete = λ x sat₁↑ →
+          let
+            (p , φ) = x
+            sat₁ : P1.SatF p φ
+            sat₁ = Lift.lower sat₁↑
+
+            sat₂ : P2.SatF (M.mapCtx p) (H.translate φ)
+            sat₂ = Prop.to (H.translate-preserves-Sat p φ) sat₁
+            pr , ok = Complete.complete comp (p , H.translate φ) sat₂
+          in
+          pr , lift ok
+      }
 
   -- Common specialization: start from a target model-checker phrased over `Ctx₂`.
   --
@@ -304,3 +410,25 @@ module AlongSatMor
       decCheck' x pr with decCheck PS₂ (M.mapCtx (x .fst) , H.translate (x .snd)) pr
       ... | inj₁ ok    = inj₁ (lift ok)
       ... | inj₂ notOk = inj₂ (λ ok → notOk (Lift.lower ok))
+
+  pullbackModelCheckerFromGlobal-complete
+    : ∀ {ℓW}
+    → {PS₂ : ProofSystem {ℓI = ℓCtx₂ ⊔ ℓForm₂} {ℓP = ℓSat₂} {ℓW = ℓW}
+        (Ctx₂ × Form₂)
+        (λ where (p , ψ) → P2.SatF p ψ)}
+    → Complete PS₂
+    → Complete (pullbackModelCheckerFromGlobal PS₂)
+  pullbackModelCheckerFromGlobal-complete {PS₂ = PS₂} comp =
+    record
+      { complete = λ x sat₁↑ →
+          let
+            (p , φ) = x
+            sat₁ : P1.SatF p φ
+            sat₁ = Lift.lower sat₁↑
+
+            sat₂ : P2.SatF (M.mapCtx p) (H.translate φ)
+            sat₂ = Prop.to (H.translate-preserves-Sat p φ) sat₁
+            pr , ok = Complete.complete comp (M.mapCtx p , H.translate φ) sat₂
+          in
+          pr , lift ok
+      }

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,6 +13,7 @@ open import LogOS.Syntax.Prop as Prop
 open import LogOS.Boundary.Port using (BoundaryPort)
 open import LogOS.Kernel.LogicKernel using (LogicKernel; GTier)
 open import LogOS.Kernel.LogicKernel.Endo as LKEndo
+open import LogOS.Minimal.Truth as Truth
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
@@ -41,7 +42,7 @@ module For
 
   open AgentNetwork Net
 
-  module Inter = Interop.For Net edge PortR PortS
+  module Inter = Interop.ForEquiv Net edge PortR PortS
   open Inter
 
   module MonR = Monitor.For (Sock r)
@@ -91,6 +92,37 @@ module For
   monitor-translate-commutes MR MS ext compat p φ =
     ported-closure-naturality (applyR MR) (applyS MS) ext compat p φ
 
+  -- μ-level strengthening: exported Kleene μ fixed points transport across the edge.
+  --
+  -- This is the limit-level analogue of `monitor-translate-commutes`, but it
+  -- talks about a distinguished stabilised constraint (μ) rather than a single
+  -- application of `Extend`.
+  module LimitMu where
+    open Inter.Limit public using (MuTransportData; MuTransportData↑; translate-μ≤; translate-μ≤↑)
+
+    monitor-translate-μ≤
+      : ∀ {ω₁ ω₂}
+        (MR : MonR.Monitor) (MS : MonS.Monitor)
+      → MuTransportData ω₁ ω₂ (applyR MR) (applyS MS)
+      → ∀ p
+      → SatF₂↑ p (translate (BoundaryPort.Interp PortR (Truth.GuardedCore.Kleene.μ ω₁ (applyR MR))))
+      → SatF₂↑ p (BoundaryPort.Interp PortS (Truth.GuardedCore.Kleene.μ ω₂ (applyS MS)))
+    monitor-translate-μ≤ {ω₁ = ω₁} {ω₂ = ω₂} MR MS A p sat =
+      translate-μ≤ {ω₁ = ω₁} {ω₂ = ω₂} A p sat
+
+    monitor-translate-μ≤↑
+      : ∀ {ω₁ ω₂}
+        (MR : MonR.Monitor) (MS : MonS.Monitor)
+      → MuTransportData↑ ω₁ ω₂ (applyR MR) (applyS MS)
+      → ∀ p
+      → SatF₂↑ p (translate (BoundaryPort.Interp PortR (Truth.GuardedCore.Kleene.μ ω₁ (applyR MR))))
+      → SatF₂↑ p (BoundaryPort.Interp PortS (Truth.GuardedCore.Kleene.μ ω₂ (applyS MS)))
+    monitor-translate-μ≤↑ {ω₁ = ω₁} {ω₂ = ω₂} MR MS A p sat =
+      translate-μ≤↑ {ω₁ = ω₁} {ω₂ = ω₂} A p sat
+
+    monitor-preserves-stabilisation≤ = monitor-translate-μ≤
+    monitor-preserves-stabilisation≤↑ = monitor-translate-μ≤↑
+
   -- Default monitor compatibility for edges that commute with flow and tensor.
   defaultMonitor-compatible
     : RespectsObsEq₂↑ flowS
@@ -108,5 +140,5 @@ module For
       {F₂ = flowS}
       {G₂ = λ c → tensorS c safetyS}
       flowRespects
-      flowCompat
-      tensorCompatSafety
+      (record { commute = flowCompat })
+      (record { commute = tensorCompatSafety })

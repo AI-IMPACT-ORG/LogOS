@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -34,11 +34,11 @@ prefixed→Th⋆≤
     (FF   : (let module GT = Truth.GuardedCore in GT.FiniteFirst)
              (BulkBoundary.bnd (GradedKernel.BB K))
              (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K)) ωCPO)
-    (c    : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K)))
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+    (c    : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K)))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
                  (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K)) c)
                  c
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
                  (GradedClosure.Th* (GradedKernel.GTruth K))
                  c
 prefixed→Th⋆≤ Sig Q K ωCPO FF c = μ-induction-K Sig Q K ωCPO FF c
@@ -56,7 +56,7 @@ Th⋆≤fTh⋆
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q) (f : Endo K)
   → _≤₂_ K (Flow-Endo K) f
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
       (Th⋆K K) (Endo.fn f (Th⋆K K))
 Th⋆≤fTh⋆ = Flow≤f→Th⋆≤fTh⋆
 
@@ -64,7 +64,7 @@ fTh⋆≤Th⋆
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q) (f : Endo K)
   → _≤₂_ K f (Flow-Endo K)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
       (Endo.fn f (Th⋆K K)) (Th⋆K K)
 fTh⋆≤Th⋆ = f≤Flow→fTh⋆≤Th⋆
 
@@ -74,8 +74,8 @@ Sat_H-mono-Con
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : GradedKernel Sig Q)
     {w : LogOSSignature.Cosp Sig}
-    {c c' : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))}
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) c c'
+    {c c' : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))}
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) c c'
   → Truth.HomotypicalTruth.HLayer.Sat_H (GradedKernel.HTruth K) w c
   → Truth.HomotypicalTruth.HLayer.Sat_H (GradedKernel.HTruth K) w c'
 Sat_H-mono-Con Sig Q K = Truth.HomotypicalTruth.HLayer.mono-Con (GradedKernel.HTruth K)
@@ -84,7 +84,7 @@ Sat_H-mono-ctx
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : GradedKernel Sig Q)
     {w w' : LogOSSignature.Cosp Sig}
-    {c : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))}
+    {c : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))}
   → Worlds.WorldH._≤ctx_ (GradedKernel.HWorld K) w w'
   → Truth.HomotypicalTruth.HLayer.Sat_H (GradedKernel.HTruth K) w c
   → Truth.HomotypicalTruth.HLayer.Sat_H (GradedKernel.HTruth K) w' c
@@ -97,8 +97,8 @@ Sat_H_bnd-mono-Con
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : GradedKernel Sig Q)
     (w : LogOSSignature.Cosp Sig)
-    {c c' : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))}
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) c c'
+    {c c' : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))}
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) c c'
   → GradedKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
   → GradedKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c'
 Sat_H_bnd-mono-Con Sig Q K w le sat =
@@ -120,7 +120,7 @@ Sat_H_bnd-mono-ctx
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : GradedKernel Sig Q)
     {w w' : LogOSSignature.Cosp Sig}
-    {c : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))}
+    {c : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))}
   → Worlds.WorldH._≤ctx_ (GradedKernel.HWorld K) w w'
   → GradedKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
   → GradedKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w') c
@@ -141,7 +141,7 @@ Sat_H-inv
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : GradedKernel Sig Q)
     {w : LogOSSignature.Cosp Sig}
-    {c : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))}
+    {c : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))}
   → Truth.HomotypicalTruth.HLayer.Sat_H (GradedKernel.HTruth K) w c
   → Truth.HomotypicalTruth.HLayer.Sat_H (GradedKernel.HTruth K) w
       (Truth.HomotypicalTruth.Invariance.Inv_H (GradedKernel.HInv K) c)
@@ -160,8 +160,8 @@ iterStep
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
   → ℕ
-  → ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))
-  → ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))
 iterStep K zero    c = c
 iterStep K (suc n) c =
   GradedClosure.Flow (GradedKernel.GTruth K) (GradedKernel.step-grade K) (iterStep K n c)
@@ -174,7 +174,7 @@ iterStep≤sat
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
   → ∀ n c
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
       (iterStep K n c)
       (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K)) c)
 iterStep≤sat K zero c =
@@ -183,7 +183,7 @@ iterStep≤sat K (suc n) c =
   let
     open GradedKernel K
     CP = BulkBoundary.bnd BB
-    trans⊑ = ConPoset.trans CP
+    trans⊑ = ConPreorder.trans CP
     ih = iterStep≤sat K n c
     step-mono = GradedClosure.mono GTruth {g = step-grade} ih
     step≤sat' = GradedClosure.mono-grade GTruth (step≤sat K)
@@ -202,7 +202,7 @@ sat-absorb
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
   → ∀ g c
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
       (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K))
         (GradedClosure.Flow (GradedKernel.GTruth K) g c))
       (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K)) c)
@@ -211,7 +211,7 @@ sat-absorb {Q = Q} K g c =
     open GradedKernel K
     module Q0 = QAdapter Q
     CP = BulkBoundary.bnd BB
-    trans⊑ = ConPoset.trans CP
+    trans⊑ = ConPreorder.trans CP
     G = GTruth
     sat = GradedClosure.sat G
     step₁ = GradedClosure.comp-lax G g sat c
@@ -236,19 +236,19 @@ iterStepPow
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
   → ∀ n c
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
       (iterStep K (suc n) c)
       (GradedClosure.Flow (GradedKernel.GTruth K) (powStep K n) c)
 iterStepPow K zero c =
   let
     open GradedKernel K
     CP = BulkBoundary.bnd BB
-  in ConPoset.refl CP
+  in ConPreorder.refl CP
 iterStepPow K (suc n) c =
   let
     open GradedKernel K
     CP = BulkBoundary.bnd BB
-    trans⊑ = ConPoset.trans CP
+    trans⊑ = ConPreorder.trans CP
     ih = iterStepPow K n c
     step-mono = GradedClosure.mono GTruth {g = step-grade} ih
     step-comp = GradedClosure.comp-lax GTruth (powStep K n) step-grade c
@@ -285,7 +285,7 @@ ineq→Sat_S
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : GradedKernel Sig Q)
     (φ ψ : GradedKernel.Fml K)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) (GradedKernel.TransH K φ) (GradedKernel.TransH K ψ)
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K)) (GradedKernel.TransH K φ) (GradedKernel.TransH K ψ)
   → ∀ (w : LogOSSignature.Cosp Sig)
     → Truth.StrictTruth.StrictLayer.Sat_S (GradedKernel.Strict K) w φ
     → Truth.StrictTruth.StrictLayer.Sat_S (GradedKernel.Strict K) w ψ
@@ -309,7 +309,7 @@ guard-naturality
     (h : GradedKernelHom K₁ K₂)
     (presFlow : GradedKernelHomFlow K₁ K₂ h)
     (γ : GradedKernel.Code K₁)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
                  (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (GradedKernel.Guard K₁ γ)))
                  (GradedClosure.Flow (GradedKernel.GTruth K₂) (GradedKernel.step-grade K₂)
                    (GradedKernel.decode K₂ (GradedKernelHom.mapCode h γ)))

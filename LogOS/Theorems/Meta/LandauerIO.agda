@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,6 +16,7 @@ open import LogOS.Minimal.Con
 open import LogOS.Boundary.IO
 open import LogOS.Boundary.Telemetry using (ObsLe∂Cosp)
 open import LogOS.Minimal.Truth as Truth
+open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
 
 -- A boundary‑I/O flavored Landauer pack: energy carrier from QAdapter, a program
 -- cost `Cosp → Scale`, subadditive bounds for composition/tensor in the chosen
@@ -41,7 +42,14 @@ record LandauerIOAssumptions {ℓ : Level}
     cost-id     : ∀ (i : Iface) → _≤E_ ε (cost (idC i))
     -- Model-supplied merges predicate
     MergesIO : Cosp → Set ℓ
-    merges→lower : ∀ (f : Cosp) → MergesIO f → _≤E_ L (cost f)
+
+    -- Core lower bound as a refinement on program semantics.
+    merge-ref : SatRefinement₀ Cosp
+                  (λ _ f → MergesIO f)
+                  (λ _ f → _≤E_ L (cost f))
+
+  merges→lower : ∀ (f : Cosp) → MergesIO f → _≤E_ L (cost f)
+  merges→lower f m = sat-→₀ merge-ref f m
 
 -- Core Landauer inequality (boundary I/O context)
 

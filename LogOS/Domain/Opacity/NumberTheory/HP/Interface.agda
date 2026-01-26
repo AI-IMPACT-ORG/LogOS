@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -27,7 +27,7 @@ record HPInterface {ℓ : Level}
   open Kernel K
   private
     Con∂ : Set ℓ
-    Con∂ = ConPoset.Con (BulkBoundary.bnd BB)
+    Con∂ = ConPreorder.Con (BulkBoundary.bnd BB)
 
   field
     H        : Set ℓ
@@ -56,7 +56,7 @@ record EmbedFaithful {ℓ : Level}
   open Kernel K
   open HPInterface HP
   field
-    embed-reflects≡ : ∀ {c d : ConPoset.Con (BulkBoundary.bnd BB)}
+    embed-reflects≡ : ∀ {c d : ConPreorder.Con (BulkBoundary.bnd BB)}
                       → embed c ≡ embed d → c ≡ d
 
 -- Helper: build faithfulness from a right-inverse (retract) π of embed.
@@ -66,7 +66,7 @@ embedFaithful-from-retract
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K  : Kernel Sig Q)
     (HP : HPInterface K)
-    → (π : HPInterface.H HP → ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+    → (π : HPInterface.H HP → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
     → (∀ c → π (HPInterface.embed HP c) ≡ c)
     → EmbedFaithful K HP
 embedFaithful-from-retract K HP π right = record

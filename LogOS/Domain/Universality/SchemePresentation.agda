@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,9 +11,9 @@ module LogOS.Domain.Universality.SchemePresentation where
 -- The input explicitly carries a fuel bound, so `run` coincides with `simulateCoreU`.
 
 open import LogOS.Prelude
-open import Data.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc)
 
-open import LogOS.Minimal.Con using (ConPoset)
+open import LogOS.Minimal.Con using (ConPreorder)
 open import LogOS.Minimal.Closure using (ClosureOp)
 open import LogOS.Minimal.Adapter using (QAdapter; trivialQAdapter)
 import LogOS.Computation.Scheme as Scheme
@@ -28,7 +28,7 @@ record CoreInput : Set where
 
 open CoreInput public
 
-coreCP : ConPoset lzero
+coreCP : ConPreorder lzero
 coreCP =
   record
     { Con  = CoreUCode
@@ -51,7 +51,7 @@ CoreScheme =
   record
     { CP       = coreCP
     ; Step     = stepCoreU
-    ; Norm     = coreClosure
+    ; Close     = coreClosure
     ; compile  = code
     ; fuel     = fuel
     ; decode   = λ x → x

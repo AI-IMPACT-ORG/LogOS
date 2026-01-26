@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,12 +10,55 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.Views.CurryHowardLambek where
 
-open import LogOS.Docs.Views.View_CurryHowardLambek public
+-- Typechecked “view surface” for the Curry–Howard–Lambek presentation.
+--
+-- Keep this module lightweight to avoid name clashes when imported alongside
+-- other views/tests.
+
+open import LogOS.Prelude public
+open import LogOS.Base.Signature using (LogOSSignature)
+open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Kernel using (Kernel)
+import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheorems
+
+module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (K : Kernel Sig Q)
+  where
+  module V = ViewTheorems.For K
+  open V.CHL public
+
+  private
+    capstone-exists : _
+    capstone-exists = capstone
+
+    capstone-complete-exists : _
+    capstone-complete-exists = capstone-complete
+
+    capstone-complete-budget-exists : _
+    capstone-complete-budget-exists = capstone-complete-budget
+
+    completeF-exists : _
+    completeF-exists = completeF
+
+    completeF-budget-exists : _
+    completeF-budget-exists = completeF-budget
+
+    formula-program-exists : _
+    formula-program-exists = formula-program
+
+    formula-sat-boundary-exists : _
+    formula-sat-boundary-exists = V.Commuting.formula-sat-boundary
+
+    projection-exists : _
+    projection-exists = V.Projections.projection
 ```
 
 This note states the **CHL capstone** of the LogOS kernel. It is deliberately
 preorder-safe and proof-relevant: everything is up to refinement/observational
 equivalence, not definitional equality.
+
+See also: `docs/Views/MeredithSentences.lagda.md` (ultra-compact “axiom poem”
+presentation of the same kernel interface).
 
 Theorem spine (authoritative)
 -----------------------------
@@ -36,10 +79,16 @@ Exact claims (all kernel-native):
   inherited from the preorder (`LogOS/Theorems/Meta/CHL/Definition.agda`).
 - *model theory:* refinement implies entailment at the H-tier and the boundary
   tier (`LogOS/Theorems/Meta/CHL/ModelTheory.agda`).
-- *category theory:* codes form a thin category and `FlowCode` is a monotone
-  endofunctor (`LogOS/Theorems/Meta/CHL/Category.agda`).
-- *observer semantics:* guarded truth is stability under the operational step
-  (`FlowCode`), exposed via the CHL guarded view (`LogOS/Theorems/Meta/CHL/Guarded.agda`).
+- *category theory:* codes form a thin category and `Box` (stable closure at `Th*`)
+  is a monotone endofunctor (`LogOS/Theorems/Meta/CHL/Category.agda`).
+  (`Box` itself is kernel-level: `LogOS/Kernel.agda` / `LogOS/Kernel/Graded.agda`.)
+- *observer semantics:* guarded truth is stability under `Box` (closure-stability),
+  exposed via the CHL guarded view (`LogOS/Theorems/Meta/CHL/Guarded.agda`);
+  `Step` is the canonical **logical** step “compute then stabilise”
+  (`Box (Body _)` in `LogOS/Theorems/Meta/CHL/Core.agda`), and the raw operational step remains
+  available as `RawStep = FlowCode`.
+  In particular, `RawStep γ` is decode-equivalent to `Step γ`
+  (`LogOS/Theorems/Meta/CHL/Core.agda` → `decode-RawStep≡decode-Step`).
 - *interoperability:* port translations are meaning-preserving at the boundary
   (`LogOS/Theorems/Meta/CHL/Interoperability.agda`).
 - *strict syntax as port input:* strict formulas transpile to any boundary port
@@ -91,7 +140,7 @@ completeness under adequacy) is:
 
 - `LogOS/Theorems/Meta/CHL/Capstone.agda`
 
-Optional proof-theory packaging (Hilbert-style, Imp external, Box = FlowCode):
+Optional proof-theory packaging (Hilbert-style, Imp external, Box fixed to the CHL modality):
 
 - `LogOS/Theorems/Meta/CHL/ProofTheory.agda`
 

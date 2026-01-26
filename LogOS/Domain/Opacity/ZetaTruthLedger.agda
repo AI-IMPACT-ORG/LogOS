@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -24,7 +24,7 @@ open WCL public renaming
   ; GRH_Without_Vacuity_Guards-from-weak-criterion+complete to GRH_Without_Vacuity_Guards-from-weak-ledger+complete
   )
 
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- This module is an “axiom ledger” packaging: it isolates exactly what you must
 -- assume (beyond LogOS core) to derive the standard RH/GRH_Without_Vacuity_Guards statement.
@@ -112,8 +112,5 @@ module QuartetAxiomLedger {ℓT ℓW ℓObs : Level} where
   Claim : Assumptions → Set
   Claim A = GRH_Without_Vacuity_Guards (RiemannSpectralFromFacts (RHAxiomLedger.F A))
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
-
-  mkPack : (A : Assumptions) → Pack
-  mkPack = Q.mkPack RH_from_AxiomLedger
+  module Q = AppKit.MakeDerived Assumptions Claim RH_from_AxiomLedger
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStableCofinal where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -18,7 +18,7 @@ open import LogOS.Kernel
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
 import LogOS.Theorems.Meta.MathTruth as MT
 import LogOS.Theorems.Meta.LimitPublicisation as LP
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
@@ -60,7 +60,7 @@ record AccessibleWeilMeetLimitBridgeStableCofinal {ℓ ℓW : Level}
 
     -- Each regulator predicate is stable/extensional (so it is self-observable).
     Wᵢ-ext : ∀ i → Comm.DecodeExtensional′ K (Wᵢ i)
-    Wᵢ-stable : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (FlowCode K γ))
+    Wᵢ-stableBoxBody : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (Box K (Kernel.Body K γ)))
 
     -- Plain finite evidence only along the cofinal schedule.
     holdsᵇ : ∀ b s → NontrivialZero s → Wᵢ (u b) (WPI.WeilProbeImplication.probe WProbe s)
@@ -76,7 +76,7 @@ record AccessibleWeilMeetLimitBridgeStableCofinal {ℓ ℓW : Level}
     { Reg       = Reg
     ; WProbe    = WProbe
     ; Wᵢ-ext    = Wᵢ-ext
-    ; Wᵢ-stable = Wᵢ-stable
+    ; Wᵢ-stableBoxBody = Wᵢ-stableBoxBody
     ; holdsᵢ    = holdsᵢ
     }
 
@@ -100,10 +100,7 @@ module QuartetMeetLimitStableCofinal
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
-
-  mkPack : (A : Assumptions) → Pack
-  mkPack =
-    Q.mkPack
+  module Q =
+    AppKit.MakeDerived Assumptions Claim
       (AccessibleWeilMeetLimitBridgeStableCofinal.GRH_Without_Vacuity_Guards-from-cofinal {RS = RS})
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

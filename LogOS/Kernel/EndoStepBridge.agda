@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -40,14 +40,14 @@ module With
            → LKEndo._≤₂_ (asLogicKernel K) (toLKEndo f) (toLKEndo g)
            → _≤₂_ K f g)
   (idFn : ∀ {K : Obj}
-        → (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
+        → (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
         → LKEndo.Endo.fn (toLKEndo (idEndo K)) c ≡ LKEndo.Endo.fn (LKEndo.idEndo (asLogicKernel K)) c)
   (flowFn : ∀ {K : Obj}
-          → (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
+          → (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
           → LKEndo.Endo.fn (toLKEndo (Flow-Endo K)) c ≡ LKEndo.Endo.fn (LKEndo.Flow-Endo (asLogicKernel K)) c)
   (toLK∘fromLK-fn : ∀ {K : Obj}
                  → (e : LKEndo.Endo (asLogicKernel K))
-                 → (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
+                 → (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB (asLogicKernel K))))
                  → LKEndo.Endo.fn (toLKEndo (fromLKEndo e)) c ≡ LKEndo.Endo.fn e c)
   where
 
@@ -74,13 +74,13 @@ module With
         infl' : LKEndo._≤₂_ (asLogicKernel K) (LKEndo.idEndo (asLogicKernel K)) (toLKEndo (ClosureStep.endo s))
         infl' c =
           subst
-            (λ x → ConPoset._⊑_ CP x (LKEndo.Endo.fn (toLKEndo (ClosureStep.endo s)) c))
+            (λ x → ConPreorder._⊑_ CP x (LKEndo.Endo.fn (toLKEndo (ClosureStep.endo s)) c))
             (idFn c)
             (infl₀ c)
         leFlow' : LKEndo._≤₂_ (asLogicKernel K) (toLKEndo (ClosureStep.endo s)) (LKEndo.Flow-Endo (asLogicKernel K))
         leFlow' c =
           subst
-            (λ y → ConPoset._⊑_ CP (LKEndo.Endo.fn (toLKEndo (ClosureStep.endo s)) c) y)
+            (λ y → ConPreorder._⊑_ CP (LKEndo.Endo.fn (toLKEndo (ClosureStep.endo s)) c) y)
             (flowFn c)
             (leFlow₀ c)
     in LKEndo.mkClosureStep (toLKEndo (ClosureStep.endo s)) infl' leFlow'
@@ -97,32 +97,32 @@ module With
         leFlowLK = LKEndo.ClosureStep.leFlow sk
         infl' : LKEndo._≤₂_ (asLogicKernel K) (toLKEndo (idEndo K)) (toLKEndo endoK)
         infl' c =
-          let infl₁ : ConPoset._⊑_ CP
+          let infl₁ : ConPreorder._⊑_ CP
                         (LKEndo.Endo.fn (LKEndo.idEndo (asLogicKernel K)) c)
                         (LKEndo.Endo.fn (toLKEndo endoK) c)
               infl₁ =
                 subst
-                  (λ y → ConPoset._⊑_ CP (LKEndo.Endo.fn (LKEndo.idEndo (asLogicKernel K)) c) y)
+                  (λ y → ConPreorder._⊑_ CP (LKEndo.Endo.fn (LKEndo.idEndo (asLogicKernel K)) c) y)
                   (sym (endoFnEq c))
                   (inflLK c)
           in
           subst
-            (λ x → ConPoset._⊑_ CP x (LKEndo.Endo.fn (toLKEndo endoK) c))
+            (λ x → ConPreorder._⊑_ CP x (LKEndo.Endo.fn (toLKEndo endoK) c))
             (sym (idFn c))
             infl₁
         leFlow' : LKEndo._≤₂_ (asLogicKernel K) (toLKEndo endoK) (toLKEndo (Flow-Endo K))
         leFlow' c =
-          let leFlow₁ : ConPoset._⊑_ CP
+          let leFlow₁ : ConPreorder._⊑_ CP
                          (LKEndo.Endo.fn (toLKEndo endoK) c)
                          (LKEndo.Endo.fn (LKEndo.Flow-Endo (asLogicKernel K)) c)
               leFlow₁ =
                 subst
-                  (λ x → ConPoset._⊑_ CP x (LKEndo.Endo.fn (LKEndo.Flow-Endo (asLogicKernel K)) c))
+                  (λ x → ConPreorder._⊑_ CP x (LKEndo.Endo.fn (LKEndo.Flow-Endo (asLogicKernel K)) c))
                   (sym (endoFnEq c))
                   (leFlowLK c)
           in
           subst
-            (λ y → ConPoset._⊑_ CP (LKEndo.Endo.fn (toLKEndo endoK) c) y)
+            (λ y → ConPreorder._⊑_ CP (LKEndo.Endo.fn (toLKEndo endoK) c) y)
             (sym (flowFn c))
             leFlow₁
     in mkClosureStep endoK (fromLK≤₂ infl') (fromLK≤₂ leFlow')

@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -13,6 +13,15 @@ module docs.Applications.Opacity where
 -- Sync guard: these imports anchor the module paths this document references.
 -- If they drift, the docs build fails.
 import LogOS.Packs.Opacity.Experimental.Surface
+
+-- Identifier sync guards (claim-heavy): these names are referenced in the prose.
+import LogOS.Packs.Opacity.Experimental.Applications.GRH as GRHApp
+open GRHApp.Guarded using (GRH; mkPack)
+open import LogOS.Packs.Opacity.Experimental.Core using (VacuityGuards)
+open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
+open import LogOS.Theorems.Meta.LimitPublicisation using (TruthK→Pr)
+open import LogOS.Theorems.Meta.SpectralSeparationOutput using (separation-output-not-total)
+open import LogOS.Theorems.Meta.BudgetedSeparationOutput using (budgeted-diagonal-witness)
 ```
 
 This note is the single, publication-facing entrypoint for the **opacity / observability**
@@ -29,6 +38,31 @@ LogOS does **not** claim to prove classical analytic number theory. Instead it:
 2. proves clean **strategy-barrier theorems** about what can and cannot be made
    totally observable inside reflective systems.
 
+Even without new analytic proofs, these GRH/RH-shaped ledgers are valuable as
+reverse mathematics: they expose the minimum “coverage/adequacy” hypotheses
+needed to close the classical statement.
+
+> TL;DR: Opacity is the “observability ledger” layer: it defines a canonical
+> observable/communicable fragment `Pr` from the kernel, proves no‑total‑oracle
+> barrier theorems for extensional observers, and packages analytic number theory
+> statements (e.g. GRH/RH) as **conditional** ledgers with explicit assumptions.
+
+## At a glance
+
+What you get (and where to look):
+
+- **Kernel-derived observability:** `Pr` / “limit publicisation” (`LogOS/Theorems/Meta/CommunicableTruth.agda`, `LogOS/Theorems/Meta/LimitPublicisation.agda`)
+- **GRH/RH as an axiom ledger:** `LogOS/Domain/Opacity/ZetaTruthLedger.agda` (with vacuity guards via `LogOS/Domain/Opacity/Meaningfulness.agda`)
+- **Kernel-driven assumption weakenings:** stable truth ⇒ observable (`TruthK→Pr`), meet-limit/cofinal scheduling, Hasse–Yoneda probe coverage
+- **Barrier theorems (“no total oracle”):** `LogOS/Theorems/Meta/SpectralSeparationOutput.agda` (+ budgeted variants)
+
+```text
+W-pos (truth/positivity on tests)
+  └─ Pr(W-pos)    -- observable/communicable fragment (kernel-derived)
+       └─ analytic bridge (Weil probe lemma) / operator bridge (HP) / nucleus separation
+            └─ GRH_Without_Vacuity_Guards  (+ explicit vacuity guards when packaging GRH)
+```
+
 ## Observational indistinguishability (simulators/adapters)
 
 Opacity is also used as a *semantic indistinguishability* interface:
@@ -41,7 +75,7 @@ Opacity is also used as a *semantic indistinguishability* interface:
 
 Guarded vs guardless application claim (canonical vs raw):
 
-- Canonical claim object: `LogOS/Domain/Opacity/GRH.agda` (guards + packaged GRH/RH claim with explicit vacuity guards).
+- Canonical claim object: `LogOS/Domain/Opacity/GRHLedger.agda` (guards + packaged GRH/RH claim with explicit vacuity guards).
 - Guardless predicate: `GRH_Without_Vacuity_Guards` from `ZerosPack` (no vacuity guards).
 - Naming rule: guardless theorems are prefixed `GRH_Without_Vacuity_Guards-`.
 
@@ -84,6 +118,28 @@ The “observable sector / superselection” form is packaged in:
 
 - `LogOS/Domain/Opacity/ObservableSector.agda`
 
+### Kernel-driven strengthenings (weaken the observer axiom)
+
+The baseline Weil ledger needs a “probe is observable”/coverage hypothesis to go
+from the weak criterion to full GRH. When the truth predicates you care about are
+already **decode-extensional** (up to `_≈K_`) and **kernel-stable** (stable under the kernel’s
+closure modality, e.g. `Box` / `BoxAt`), the kernel can discharge much
+of that burden:
+
+- Stable truth is observable: `TruthK→Pr` (`LogOS/Theorems/Meta/LimitPublicisation.agda`)
+- `Pr` can be read as “stable under `Box ∘ Body`” (since `FlowCode` and `Box (Body _)` coincide after `decode`):
+  `Pr↔Pr-BoxBody` (`LogOS/Theorems/Meta/CommunicableTruth.agda`)
+- Stable-truth ledger (single predicate): `LogOS/Domain/Opacity/AccessibleWeilLedger.agda`
+- Stable meet-limit bridge: `LogOS/Domain/Opacity/AccessibleWeilMeetLimitBridgeStable.agda`
+- Cofinal schedule variant (ω-chain style): `LogOS/Domain/Opacity/AccessibleWeilMeetLimitBridgeStableCofinal.agda`
+- ζ-facing wrapper (meet-limit): `LogOS/Domain/Opacity/ZetaAccessibleMeetLimitLedgerStable.agda`
+- ζ-facing wrapper (coverage via Hasse + Yoneda transport): `LogOS/Domain/Opacity/ZetaHasseYonedaLedger.agda`
+
+For one-line “systems” entrypoints (operator, nucleus/forcing, and the kernel-strengthened
+Weil routes), see:
+
+- `LogOS/Domain/Opacity/Applications/GRH/Systems.agda`
+
 ## Forcing/nucleus generalization (Flow is a restriction)
 
 The primary abstraction is **forcing-style truth separation**: close probes with
@@ -111,10 +167,10 @@ keeping their assumptions explicit:
   theorems.
 - **Diagonalization and no-total-oracle results:** the opacity theorems are the
   usual recursion-theoretic barrier stated for observable probes, with explicit
-  decode-extensionality and budget parameters.
-- **Forcing/sheaf-style closures:** the nucleus-based truth separation is a
-  direct generalization of closure operators used in forcing or sheafification,
-  with Flow as a canonical kernel instance.
+  decode-extensionality (up to `_≈K_`) and budget parameters.
+- **Forcing/sheaf-style closures (interpretation):** the nucleus-based truth
+  separation has the same closure-operator shape as forcing or sheafification,
+  with `Flow` as a canonical kernel instance.
 
 ## GRH with vacuity guards
 
@@ -127,7 +183,7 @@ library therefore provides vacuity guards:
 For a packaged GRH claim object with guards,
 use:
 
-- Canonical guarded surface: `LogOS/Domain/Opacity/GRH.agda`
+- Canonical guarded surface: `LogOS/Domain/Opacity/GRHLedger.agda`
   (re-exports `LogOS/Domain/Opacity/GRH_Vacuity_Guards.agda`).
 - Raw predicate alias (no guards): `GRH_Without_Vacuity_Guards`
 
@@ -178,7 +234,7 @@ module Budgeted-Scale-Snippet where
 ```
 
 Interpretation: for any budget policy `Bnd : Code → Scale`, `G.no-total-within-budget Bnd …`
-says there is no decode-extensional oracle that is total *and* always produces a witness
+says there is no decode-extensional (up to decoded observational equality, `_≈K_`) oracle that is total *and* always produces a witness
 whose grade is ≤ `Bnd γ`. This aligns directly with graded kernels by taking budgets in `Scale`.
 
 ## HP (Hilbert–Pólya) opacity theorem (no total spectral oracle)
@@ -196,7 +252,7 @@ This is the precise statement behind:
 
 > a fully explicit, total “spectral certificate oracle” for the global object is blocked
 
-more precisely: given a decode-extensional oracle surface (`SpectralSeparationOutput`) and a
+more precisely: given a decode-extensional (up to decoded observational equality, `_≈K_`) oracle surface (`SpectralSeparationOutput`) and a
 Tarski-style truth diagonal (`TruthDiagonal`), diagonalization forces an explicit code where the
 oracle must return `undefined`. In particular, no such oracle can be total.
 
@@ -213,7 +269,10 @@ oracle must return `undefined`. In particular, no such oracle can be total.
 
 ```text
 open import LogOS.Packs.Opacity.Experimental.Surface as Opacity
-open import LogOS.Domain.Opacity.NumberTheory.HP.Opacity as HPOpacity
+import LogOS.Packs.Opacity.Experimental.Applications.GRH as GRHApp
+module GRHSystems = GRHApp.Guardless.Systems
+open import LogOS.Packs.Opacity.Experimental.Core as OpacityCore
+module HPOpacity = OpacityCore.HPOpacity
 ```
 
 `Opacity` provides the ledgers and system wrappers; `HPOpacity` provides the

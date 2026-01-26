@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,13 +9,13 @@ module LogOS.Domain.InfoTheory.Shannon.ThermoRG where
 
 open import LogOS.Prelude hiding (_+_; _*_)
 
-open import Data.Nat using (ℕ)
+open import LogOS.Prelude.Nat using (ℕ)
 
 open import LogOS.Syntax.Prop using (¬_)
 
 open import LogOS.Domain.InfoTheory.Shannon.Facts
 import LogOS.Domain.InfoTheory.Shannon.Core as Core
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- “RG flow as coarse-graining” + “Landauer as entropy production” scaffold.
 --
@@ -80,11 +80,8 @@ module QuartetThermoRG where
     let open W in
     ∀ P → (EntropyProduction P * L) ≤ Cost P
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
+  derive : (A : Assumptions) → Claim A
+  derive A = let module W = With A in W.EP→Cost
 
-  mkPack : (A : Assumptions) → Pack
-  mkPack A =
-    Q.mkPack
-      (λ A → let module W = With A in W.EP→Cost)
-      A
+  module Q = AppKit.MakeDerived Assumptions Claim derive
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

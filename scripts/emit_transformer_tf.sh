@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: an Agda research library for foundational logic system architecture.
+# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -15,14 +15,14 @@ if [[ "${1:-}" == "--example" ]]; then
   shift
 fi
 
-OUT="${1:-${LIB_ROOT}/transformer_tf.py}"
-
 BUILD_ROOT="${LIB_ROOT}/_build/emit_transformer_tf"
 BIN="${BUILD_ROOT}/emit_transformer_tf"
 HS_SRC="${BUILD_ROOT}/MAlonzo/Code/LogOS/Packs/Agents/Experimental/Emit/Backends/TensorFlow/Emit.hs"
 HS_DRIVER="${BUILD_ROOT}/EmitDriver.hs"
 
 mkdir -p "${BUILD_ROOT}"
+
+OUT="${1:-${BUILD_ROOT}/transformer_tf.py}"
 
 cd "${LIB_ROOT}"
 
@@ -73,7 +73,7 @@ else
 fi
 
 cat > "${HS_DRIVER}" <<EOF
--- LogOS: an Agda research library for foundational logic system architecture.
+-- LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 -- Copyright (C) 2026 AI.IMPACT GmbH
 -- SPDX-License-Identifier: GPL-3.0-only
 

@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -21,3 +21,7 @@ open UAgree public
 
 This page is a checked pointer to two small, “headline” results used by the
 public narrative; the complexity/physics piece is still experimental.
+
+Interpretation (analogy):
+“physics of information” is a naming convention for resource/cost interfaces.
+Only the cited Agda assumptions and theorems apply.

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,10 +10,10 @@ module LogOS.Domain.Complexity.InfoHardnessBridge where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ)
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
 
-open import Data.NatOrder using (_≤ℕ_; trans≤ℕ)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; trans≤ℕ)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -276,10 +276,10 @@ module For
   (VerRunWith : Input → GradedKernel.Code K → GradedKernel.Code K)
   (IsPoly : (ℕ → ℕ) → Set ℓP)
   (gradeBound : ℕ → QAdapter.Scale Q)
-  (Acc : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K)) → Set ℓA)
+  (Acc : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K)) → Set ℓA)
   where
 
-  module R = TRG.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  module R = TRG.UniformNatFromRuns K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
   module G = Generic Input Size IsPoly (R.DetWithin Acc)
 
   open G public
@@ -304,10 +304,10 @@ module ForGrade
   (VerRunWith : Input → GradedKernel.Code K → GradedKernel.Code K)
   (IsPoly : (ℕ → ℕ) → Set ℓP)
   (gradeBound : ℕ → QAdapter.Scale Q)
-  (Acc : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K)) → Set ℓA)
+  (Acc : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K)) → Set ℓA)
   where
 
-  module R = TRG.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  module R = TRG.UniformNatFromRuns K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
   module G = GenericGrade Input Size IsPoly R.Grade (R.DetWithinAt Acc) gradeBound
 
   open G public

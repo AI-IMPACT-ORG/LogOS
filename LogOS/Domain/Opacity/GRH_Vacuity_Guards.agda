@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Opacity.GRH_Vacuity_Guards where
 
 open import LogOS.Prelude
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Product using (Σ; _,_)
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.RiemannFacts using (RiemannFacts; RiemannSpectralFromFacts)
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
@@ -16,7 +16,7 @@ open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Wit
 
 import LogOS.Domain.Opacity.Meaningfulness as Meaning
 import LogOS.Domain.Opacity.ZetaTruthLedger as Ledger
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- GRH with vacuity guards:
 -- bundle a GRH proof together with explicit non-vacuity / non-tautology guards
@@ -82,12 +82,9 @@ Claim
   → Set₁
 Claim A = GRH (RiemannSpectralFromFacts (RHLedger.F A))
 
-module Q {ℓT ℓW ℓObs : Level} = Quartet.Make (Assumptions {ℓT} {ℓW} {ℓObs}) (Claim {ℓT} {ℓW} {ℓObs})
-open Q public using (Pack; assumptionsOf; claimOf)
-
-mkPack
-  : ∀ {ℓT ℓW ℓObs : Level}
-    (A : Assumptions {ℓT} {ℓW} {ℓObs})
-  → Pack {ℓT} {ℓW} {ℓObs}
-mkPack A =
-  Q.mkPack (λ A → RH_from_RHLedger A) A
+module Q {ℓT ℓW ℓObs : Level} =
+  AppKit.MakeDerived
+    (Assumptions {ℓT} {ℓW} {ℓObs})
+    (Claim {ℓT} {ℓW} {ℓObs})
+    RH_from_RHLedger
+open Q public using (Pack; assumptionsOf; claimOf; mkPack)

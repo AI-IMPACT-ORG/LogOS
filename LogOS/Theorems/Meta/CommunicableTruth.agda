@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Theorems.Meta.CommunicableTruth where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -17,31 +17,36 @@ open import LogOS.Minimal.Con
 open import LogOS.Kernel
 import LogOS.Theorems.Meta.ObserverCore as ObsCore
 
--- Decode-extensionality (level-polymorphic): re-export the canonical definition.
+-- Decode-extensionality, but phrased w.r.t. decoded observational equality (`≈`).
 
-open import LogOS.Theorems.Meta.Assumptions.Core as A using (DecodeExtensional)
+CodeCP
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+  → ConPreorder ℓ
+CodeCP K = BulkBoundary.bnd (Kernel.BB K)
 
-DecodeExtensional′ = A.DecodeExtensional
+DecodeExtensional′
+  : ∀ {ℓ ℓP} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (P : Kernel.Code K → Set ℓP)
+  → Set (ℓ ⊔ ℓP)
+DecodeExtensional′ K P =
+  ObsCore.DecodeExtensional≈ (CodeCP K) (Kernel.decode K) P
 
 -- A “communicable truth” predicate Comm is admissible w.r.t. a chosen TruthK when:
 -- - it only depends on decode,
 -- - it is sound (anything communicable is true),
 -- - it is stable under one FlowCode step (predicate-level fixed point).
 
-record AdmissibleComm
-  {ℓ ℓT ℓC : Level}
-  {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-  (K : Kernel Sig Q)
-  (TruthK : Kernel.Code K → Set ℓT)
-  (Comm   : Kernel.Code K → Set ℓC)
-  : Set (ℓ ⊔ ℓT ⊔ ℓC) where
-  open Kernel K
-  private
-    Dec = ConPoset.Con (BulkBoundary.bnd BB)
-  field
-    core : ObsCore.Admissible (Kernel.Code K) Dec (Kernel.decode K) (FlowCode K) TruthK Comm
-
-  open ObsCore.Admissible core public
+AdmissibleComm
+  : ∀ {ℓ ℓT ℓC : Level}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (TruthK : Kernel.Code K → Set ℓT)
+    (Comm   : Kernel.Code K → Set ℓC)
+  → Set (ℓ ⊔ ℓT ⊔ ℓC)
+AdmissibleComm K TruthK Comm =
+  ObsCore.Admissible≈ (Kernel.Code K) (CodeCP K) (Kernel.decode K) (FlowCode K) TruthK Comm
 
 -- The “largest communicable truth notion compatible with Flow”:
 -- γ is in Comm⋆ iff there exists *some* admissible communicability predicate Comm
@@ -52,30 +57,8 @@ Comm⋆
     (K : Kernel Sig Q)
     (TruthK : Kernel.Code K → Set ℓT)
   → Kernel.Code K → Set (ℓ ⊔ ℓT ⊔ lsuc ℓC)
-Comm⋆ {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K TruthK γ =
-  Σ (Kernel.Code K → Set ℓC) (λ Comm →
-    AdmissibleComm {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K TruthK Comm
-    × Comm γ)
-
-toPred⋆
-  : ∀ {ℓ ℓT ℓC} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (K : Kernel Sig Q)
-    (TruthK : Kernel.Code K → Set ℓT)
-  → ∀ {γ}
-  → Comm⋆ {ℓC = ℓC} K TruthK γ
-  → ObsCore.Pred⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
-toPred⋆ K TruthK (Comm , (A , cγ)) =
-  Comm , (AdmissibleComm.core A , cγ)
-
-fromPred⋆
-  : ∀ {ℓ ℓT ℓC} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (K : Kernel Sig Q)
-    (TruthK : Kernel.Code K → Set ℓT)
-  → ∀ {γ}
-  → ObsCore.Pred⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
-  → Comm⋆ {ℓC = ℓC} K TruthK γ
-fromPred⋆ K TruthK (Comm , (A , cγ)) =
-  Comm , (record { core = A } , cγ)
+Comm⋆ {ℓC = ℓC} K TruthK =
+  ObsCore.Pred⋆≈ {ℓP = ℓC} (CodeCP K) (Kernel.decode K) (FlowCode K) TruthK
 
 -- Naming alias matching the “stable predicate” intuition:
 -- StableP⋆ is the maximal Flow-compatible communicable fragment of TruthK.
@@ -133,9 +116,8 @@ comm⋆-sound
     (K : Kernel Sig Q)
     (TruthK : Kernel.Code K → Set ℓT)
   → ∀ {γ} → Comm⋆ {ℓC = ℓC} K TruthK γ → TruthK γ
-comm⋆-sound K TruthK h =
-  ObsCore.Pred⋆-sound (Kernel.decode K) (FlowCode K) TruthK
-    (toPred⋆ K TruthK h)
+comm⋆-sound {ℓC = ℓC} K TruthK =
+  ObsCore.Pred⋆≈-sound (CodeCP K) (Kernel.decode K) (FlowCode K) TruthK
 
 -- Flow-compatibility: Comm⋆ is stable under FlowCode.
 
@@ -144,20 +126,8 @@ comm⋆-stable
     (K : Kernel Sig Q)
     (TruthK : Kernel.Code K → Set ℓT)
   → ∀ γ → (Comm⋆ {ℓC = ℓC} K TruthK γ) ↔ (Comm⋆ {ℓC = ℓC} K TruthK (FlowCode K γ))
-comm⋆-stable {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K TruthK γ =
-  record { to = to′ ; from = from′ }
-  where
-    open _↔_
-
-    to′ : Comm⋆ {ℓC = ℓC} K TruthK γ → Comm⋆ {ℓC = ℓC} K TruthK (FlowCode K γ)
-    to′ h =
-      let st = ObsCore.Pred⋆-stable (Kernel.decode K) (FlowCode K) TruthK γ
-      in fromPred⋆ K TruthK (_↔_.to st (toPred⋆ K TruthK h))
-
-    from′ : Comm⋆ {ℓC = ℓC} K TruthK (FlowCode K γ) → Comm⋆ {ℓC = ℓC} K TruthK γ
-    from′ h =
-      let st = ObsCore.Pred⋆-stable (Kernel.decode K) (FlowCode K) TruthK γ
-      in fromPred⋆ K TruthK (_↔_.from st (toPred⋆ K TruthK h))
+comm⋆-stable {ℓC = ℓC} K TruthK =
+  ObsCore.Pred⋆≈-stable (CodeCP K) (Kernel.decode K) (FlowCode K) TruthK
 
 -- Decode-extensionality: if the witness predicate is decode-extensional, so is Comm⋆.
 
@@ -166,10 +136,8 @@ comm⋆-ext
     (K : Kernel Sig Q)
     (TruthK : Kernel.Code K → Set ℓT)
   → DecodeExtensional′ K (Comm⋆ {ℓC = ℓC} K TruthK)
-comm⋆-ext K TruthK γ₁ γ₂ dec≡ h =
-  fromPred⋆ K TruthK
-    (ObsCore.Pred⋆-ext (Kernel.decode K) (FlowCode K) TruthK γ₁ γ₂ dec≡
-      (toPred⋆ K TruthK h))
+comm⋆-ext {ℓC = ℓC} K TruthK =
+  ObsCore.Pred⋆≈-ext (CodeCP K) (Kernel.decode K) (FlowCode K) TruthK
 
 -- Comm⋆ itself is admissible (at a bumped universe for the communicability predicate).
 -- This packages the “compatibility with Flow” and “soundness” checks.
@@ -180,15 +148,8 @@ comm⋆-admissible
     (TruthK : Kernel.Code K → Set ℓT)
   → AdmissibleComm {ℓ = ℓ} {ℓT = ℓT} {ℓC = (ℓ ⊔ ℓT ⊔ lsuc ℓC)}
       K TruthK (Comm⋆ {ℓC = ℓC} K TruthK)
-comm⋆-admissible {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K TruthK =
-  record
-    { core =
-        record
-          { ext    = comm⋆-ext K TruthK
-          ; sound  = comm⋆-sound K TruthK
-          ; stable = comm⋆-stable {ℓC = ℓC} K TruthK
-          }
-    }
+comm⋆-admissible {ℓC = ℓC} K TruthK =
+  ObsCore.Pred⋆≈-admissible (CodeCP K) (Kernel.decode K) (FlowCode K) TruthK
 
 -- Naturality in the chosen truth predicate: if TruthK ⇒ TruthK′, then
 -- Comm⋆(TruthK) ⇒ Comm⋆(TruthK′) (same communicability level ℓC).
@@ -205,12 +166,9 @@ comm⋆-mono-Truth K TruthK TruthK′ monoTruth (Comm , (A , cγ)) =
   where
     A′ : AdmissibleComm K TruthK′ Comm
     A′ = record
-      { core =
-          record
-            { ext    = AdmissibleComm.ext A
-            ; sound  = λ {γ} c → monoTruth (AdmissibleComm.sound A c)
-            ; stable = AdmissibleComm.stable A
-            }
+      { ext≈   = ObsCore.Admissible≈.ext≈ A
+      ; sound  = λ {γ} c → monoTruth (ObsCore.Admissible≈.sound A c)
+      ; stable = ObsCore.Admissible≈.stable A
       }
 
 -- Optional naming: view Comm⋆ as a “projection” (interior operator) that sends
@@ -223,6 +181,44 @@ Pr
     (TruthK : Kernel.Code K → Set ℓT)
   → Kernel.Code K → Set (ℓ ⊔ ℓT ⊔ lsuc ℓC)
 Pr {ℓC = ℓC} K TruthK γ = Comm⋆ {ℓC = ℓC} K TruthK γ
+
+-- Alternative view: `Pr` depends on the step function only up to decoded meaning.
+-- Since `FlowCode γ` and `Box (Body γ)` decode to the same boundary constraint,
+-- `Pr` can equivalently be read as the largest admissible predicate for the
+-- “stabilise-after-body” step.
+
+Pr-BoxBody
+  : ∀ {ℓ ℓT ℓC} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (TruthK : Kernel.Code K → Set ℓT)
+  → Kernel.Code K → Set (ℓ ⊔ ℓT ⊔ lsuc ℓC)
+Pr-BoxBody {ℓC = ℓC} K TruthK =
+  ObsCore.Pred⋆≈ {ℓP = ℓC} (CodeCP K) (Kernel.decode K) (λ γ → Box K (Kernel.Body K γ)) TruthK
+
+Pr↔Pr-BoxBody
+  : ∀ {ℓ ℓT ℓC} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (TruthK : Kernel.Code K → Set ℓT)
+  → ∀ {γ} → Pr {ℓC = ℓC} K TruthK γ ↔ Pr-BoxBody {ℓC = ℓC} K TruthK γ
+Pr↔Pr-BoxBody {ℓC = ℓC} K TruthK {γ} =
+  ST.Pred⋆≈↔ {ℓP = ℓC} TruthK {γ = γ}
+  where
+    CP = CodeCP K
+
+    eqStep : ∀ γ′ →
+      _≈CP_ CP (Kernel.decode K (FlowCode K γ′))
+               (Kernel.decode K (Box K (Kernel.Body K γ′)))
+    eqStep γ′
+      rewrite decode-FlowCode≡decode-BoxBody K γ′
+      = (ConPreorder.refl CP , ConPreorder.refl CP)
+
+    module ST =
+      ObsCore.StepTransport≈
+        CP
+        (Kernel.decode K)
+        (FlowCode K)
+        (λ γ′ → Box K (Kernel.Body K γ′))
+        eqStep
 
 -- `Pr` respects pointwise logical equivalence of truth predicates.
 
@@ -259,12 +255,9 @@ Pr-idem-to {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K TruthK {γ} tγ =
     A-self : AdmissibleComm {ℓ = ℓ} {ℓT = (ℓ ⊔ ℓT ⊔ lsuc ℓC)} {ℓC = (ℓ ⊔ ℓT ⊔ lsuc ℓC)}
               K T T
     A-self = record
-      { core =
-          record
-            { ext    = comm⋆-ext {ℓC = ℓC} K TruthK
-            ; sound  = λ {γ} tγ′ → tγ′
-            ; stable = comm⋆-stable {ℓC = ℓC} K TruthK
-            }
+      { ext≈   = comm⋆-ext {ℓC = ℓC} K TruthK
+      ; sound  = λ {γ} tγ′ → tγ′
+      ; stable = comm⋆-stable {ℓC = ℓC} K TruthK
       }
 
 Pr-idem-from
@@ -318,25 +311,22 @@ Pr-Π {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K {Idx} Truthᵢ {γ} all =
 
     A⋂ : AdmissibleComm K Truth∞ Comm⋂
     A⋂ = record
-      { core =
-          record
-            { ext    = ext⋂
-            ; sound  = sound⋂
-            ; stable = stable⋂
-            }
+      { ext≈   = ext⋂
+      ; sound  = sound⋂
+      ; stable = stable⋂
       }
       where
         ext⋂ : DecodeExtensional′ K Comm⋂
-        ext⋂ γ₁ γ₂ dec≡ h i = AdmissibleComm.ext (Aᵢ i) γ₁ γ₂ dec≡ (h i)
+        ext⋂ γ₁ γ₂ dec≈ h i = ObsCore.Admissible≈.ext≈ (Aᵢ i) γ₁ γ₂ dec≈ (h i)
 
         sound⋂ : ∀ {γ′} → Comm⋂ γ′ → Truth∞ γ′
-        sound⋂ {γ′} h i = AdmissibleComm.sound (Aᵢ i) (h i)
+        sound⋂ {γ′} h i = ObsCore.Admissible≈.sound (Aᵢ i) (h i)
 
         stable⋂ : ∀ γ′ → (Comm⋂ γ′) ↔ (Comm⋂ (FlowCode K γ′))
         stable⋂ γ′ =
           record
-            { to   = λ h i → _↔_.to   (AdmissibleComm.stable (Aᵢ i) γ′) (h i)
-            ; from = λ h i → _↔_.from (AdmissibleComm.stable (Aᵢ i) γ′) (h i)
+            { to   = λ h i → _↔_.to   (ObsCore.Admissible≈.stable (Aᵢ i) γ′) (h i)
+            ; from = λ h i → _↔_.from (ObsCore.Admissible≈.stable (Aᵢ i) γ′) (h i)
             }
 
 -- Safe reflection aliases (kernel-specific, FlowCode-based).
@@ -353,26 +343,12 @@ safe⋆-core
     (TruthK : Kernel.Code K → Set ℓT)
   → ∀ {γ}
   → Comm⋆ {ℓC = ℓC} K TruthK γ
-    ↔ ObsCore.Safe⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
+    ↔ ObsCore.Safe⋆≈ {ℓP = ℓC} (CodeCP K) (Kernel.decode K) (FlowCode K) TruthK γ
 safe⋆-core {ℓC = ℓC} K TruthK =
   record
-    { to = to′
-    ; from = from′
+    { to   = λ x → x
+    ; from = λ x → x
     }
-  where
-    to′
-      : ∀ {γ}
-      → Comm⋆ {ℓC = ℓC} K TruthK γ
-      → ObsCore.Safe⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
-    to′ (Comm , (A , cγ)) =
-      Comm , (AdmissibleComm.core A , cγ)
-
-    from′
-      : ∀ {γ}
-      → ObsCore.Safe⋆ {ℓP = ℓC} (Kernel.decode K) (FlowCode K) TruthK γ
-      → Comm⋆ {ℓC = ℓC} K TruthK γ
-    from′ (Comm , (A , cγ)) =
-      Comm , (record { core = A } , cγ)
 
 safe⋆-intro = comm⋆-intro
 safe⋆-sound = comm⋆-sound

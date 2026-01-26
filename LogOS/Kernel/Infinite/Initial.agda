@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,7 +13,7 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
-open import LogOS.Minimal.Adjunction using (MonoidalPoset)
+open import LogOS.Minimal.Adjunction using (MonoidalOps)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Algebra.ConAlg
 open import LogOS.Free.Constraints
@@ -88,7 +88,7 @@ module Build∞ {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ) wher
                 (Kernel.GTruth (Init.InitialKernel.FreeK (Init.build Sig Q HW)))
                 ωCPOF)
     → (bot≡I∂F : GT∞.OmegaCPO.⊥ ωCPOF
-                 ≡ MonoidalPoset.I (Kernel.MBnd (Init.InitialKernel.FreeK (Init.build Sig Q HW))))
+                 ≡ MonoidalOps.I (Kernel.MBnd (Init.InitialKernel.FreeK (Init.build Sig Q HW))))
     → InitialInfiniteKernel Sig Q
   build∞ HW poF ωCPOF FFF bot≡I∂F = record
     { Free∞ = Free∞
@@ -128,7 +128,9 @@ module Build∞ {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ) wher
             in trans unit∂ (sym bot≡I)
 
           ht : KernelHomFlow FreeK Kt h
-          ht = Init.foldFlow-build-auto Sig Q HW Kt (InfiniteKernel.ωCPO IK) eq-bot
+          ht =
+            kernelHomFlowOfStable
+              (Init.foldFlow-build-auto Sig Q HW Kt (InfiniteKernel.ωCPO IK) eq-bot)
 
       unique∞
         : ∀ (IK : InfiniteKernel Sig Q) (h : InfiniteKernelHom Free∞ IK) →

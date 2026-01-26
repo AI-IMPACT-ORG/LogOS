@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -7,11 +7,15 @@ SPDX-License-Identifier: GPL-3.0-only
 # Implementing a Kernel (checklist)
 
 This file is kept as a DeepDive appendix-style checklist.
-The maintained entrypoint is `docs/Definition.lagda.md`.
+The maintained entrypoint is `docs/LogOS_Overview.lagda.md`.
 
 The LogOS design is “hexagonal”: the Kernel is a small interface; everything else
 (ZFC, complexity/physics of information, opacity/observability, universality/IR, agents) is an
 application pack that *instantiates* the Kernel and proves additional structure.
+
+Interpretation (analogy):
+terms like “hexagonal” and “physics of information” are architecture/motivation labels.
+All semantic strength comes only from the explicit interfaces/assumptions you instantiate.
 
 ## Minimal checklist
 
@@ -33,6 +37,6 @@ application pack that *instantiates* the Kernel and proves additional structure.
 
 ## Where to look (current docs)
 
-- Architecture and entrypoints: `docs/Definition.lagda.md`
+- Architecture and entrypoints: `docs/LogOS_Overview.lagda.md`
 - Formal spec (multi-institution view): `docs/Views/MultiInstitution.lagda.md`
 - 3-level HoTT-style view (host-facing): `docs/Views/HoTT_3Level.lagda.md`

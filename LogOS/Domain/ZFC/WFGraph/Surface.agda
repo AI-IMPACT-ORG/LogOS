@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.ZFC.WFGraph.Surface where
 
 open import LogOS.Prelude
+open import LogOS.Kernel using (kernelLike-fromKernel)
 
 open import LogOS.Domain.ZFC.SetTheory.ChoiceAxiom as AC using (AxiomOfChoice)
 open import LogOS.Domain.ZFC.SetTheory.Dsl using (ZFDsl)
@@ -24,6 +25,7 @@ open import LogOS.Domain.ZFC.SetTheory.CumulativeSurface using (stageToSurface)
 open import LogOS.Domain.ZFC.WFGraph.Structure using (WFGraphStructure)
 import LogOS.Domain.ZFC.WFGraph.ZFC as ZFC
 import LogOS.Domain.ZFC.WFGraph.FormulaPack as Formula
+import LogOS.Domain.ZFC.WFGraph.Textbook as Textbookₜ
 
 -- Single entrypoint for “WF-graph sets inside LogOS”.
 --
@@ -34,6 +36,8 @@ import LogOS.Domain.ZFC.WFGraph.FormulaPack as Formula
 -- - `Definable`: a definable/coded ZF(+Infinity) pack (Metamath-style schemata),
 -- - `Full`: upgrade to full textbook Separation/Replacement under explicit
 --   representability assumptions, then expose `ZFAxioms` / `StageToCH` / `ZFDsl`.
+-- - `Textbook`: full textbook ZF/ZFC directly from `sup` formation (no
+--   representability-by-codes layer).
 
 module Definable
   {ℓ : Level}
@@ -73,7 +77,7 @@ module Full
   module Base = ZFC.ForZFC G S Ext P Fnd
   open Base using (K; zfᵈ)
 
-  zf : ZFAxioms K
+  zf : ZFAxioms (kernelLike-fromKernel K)
   zf =
     let module U = Base.FullZF PR FR in
     U.zf
@@ -94,12 +98,22 @@ module Full
   module WithChoice
     (choice : AxiomOfChoice (ZFAxioms.SetU zf) (ZFAxioms._∈_ zf) (ZFAxioms._≈_ zf) (ZFAxioms.pairing zf))
     where
-    zfc : ZFCAxioms K
+    zfc : ZFCAxioms (kernelLike-fromKernel K)
     zfc = record { zf = zf ; AC = choice }
 
     -- Formula-pack ZFC view (same Choice witness, but with coded schemata).
     zfcᶠ : ZFCAxiomsᶠ K
     zfcᶠ = record { zf = zfᶠ ; AC = choice }
+
+-- Textbook ZF/ZFC: derive full Separation/Replacement directly from the WFGraph
+-- `supN` operator (no representability assumptions). Choice remains explicit.
+
+module Textbook
+  {ℓ : Level}
+  (W : WFGraphStructure ℓ)
+  where
+  module T = Textbookₜ.ForZFC W
+  open T public
 
 -- Formula-coded ZF(+Infinity) surface: schemata range over genuine first-order
 -- formulas (with explicit parameters encoded in the code) and `decode` maps

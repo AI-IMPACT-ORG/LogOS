@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
-open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensional)
+open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalLike)
 open import LogOS.Syntax.Prop using (_↔_; intro; ¬_)
 open import LogOS.Domain.ZFC.SetTheory.ChoiceAxiom as AC using (AxiomOfChoice)
 
@@ -27,9 +27,9 @@ open import LogOS.Domain.ZFC.SetTheory.ChoiceAxiom as AC using (AxiomOfChoice)
 record ZFAxioms {ℓ}
                   {Sig : LogOSSignature ℓ}
                   {Q   : QAdapter ℓ}
-                  (K   : Kernel Sig Q)
+                  (K   : KernelLike Sig Q)
                   : Set (lsuc (lsuc ℓ)) where
-  open Kernel K
+  open KernelLike K
   infix 4 _∈_ _≈_
   field
     SetU   : Set ℓ
@@ -61,7 +61,7 @@ record ZFAxioms {ℓ}
                 → ∀ x → Σ SetU (λ y → ∀ z → (z ∈ y) ↔ (Σ SetU (λ u → u ∈ x × (proj₁ (F u) ≈ z))))
     foundation : ∀ x → (x ≈ zeroS) ⊎ (Σ SetU (λ y → y ∈ x × (∀ z → z ∈ x → ¬ (z ∈ y))))
 
-  by-decode-ext : DecodeExtensional K (λ γ → ∀ z → z ∈ ⟦ γ ⟧)
+  by-decode-ext : DecodeExtensionalLike K (λ γ → ∀ z → z ∈ ⟦ γ ⟧)
   by-decode-ext γ δ eq d =
     let e : ⟦ γ ⟧ ≈ ⟦ δ ⟧
         e = by-decode≈ eq
@@ -70,7 +70,7 @@ record ZFAxioms {ℓ}
 record ZFCAxioms {ℓ}
                  {Sig : LogOSSignature ℓ}
                  {Q   : QAdapter ℓ}
-                 (K   : Kernel Sig Q)
+                 (K   : KernelLike Sig Q)
                  : Set (lsuc (lsuc ℓ)) where
   field
     zf : ZFAxioms K

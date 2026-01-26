@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -111,7 +111,7 @@ record LogicLanglandsSquareForcing {ℓ ℓW : Level}
                            (pack : Stable.AccessibleWeilMeetLimitBridgeStableCofinal
                                    {ℓ = ℓ} {ℓW = ℓW} K RS)
                            (J   : ClosureOp (BulkBoundary.bnd (Kernel.BB K)))
-                           (Sep : TruthSepF.ForcingTruthSeparation K RS J)
+                           (Sep : TruthSepF.ProperForcingTruthSeparation K RS J)
   : Set (lsuc (ℓ ⊔ ℓW ⊔ lsuc ℓW)) where
   field
     metadata       : LogicLanglandsMetadata K RS pack
@@ -127,7 +127,7 @@ logicLanglandsSquareForcing
     (pack : Stable.AccessibleWeilMeetLimitBridgeStableCofinal
            {ℓ = ℓ} {ℓW = ℓW} K RS)
     (J   : ClosureOp (BulkBoundary.bnd (Kernel.BB K)))
-    (Sep : TruthSepF.ForcingTruthSeparation K RS J)
+    (Sep : TruthSepF.ProperForcingTruthSeparation K RS J)
   → LogicLanglandsSquareForcing K RS pack J Sep
 logicLanglandsSquareForcing K RS pack J Sep = record
   { metadata = record
@@ -141,7 +141,7 @@ logicLanglandsSquareForcing K RS pack J Sep = record
             ; antiMonoProof = Stable.AccessibleWeilMeetLimitBridgeStableCofinal.antiMono pack
             }
       }
-  ; globalBridge   = TruthSepF.forcingNucleusBridge K RS J Sep
+  ; globalBridge   = TruthSepF.forcingNucleusBridge K RS J (TruthSepF.ProperForcingTruthSeparation.sep Sep)
   ; accessiblePath = Stable.AccessibleWeilMeetLimitBridgeStableCofinal.GRH_Without_Vacuity_Guards-from-cofinal pack
-  ; forcingPath    = TruthSepF.GRH_Without_Vacuity_Guards_from_ForcingTruthSeparation K RS J Sep
+  ; forcingPath    = TruthSepF.GRH_Without_Vacuity_Guards_from_ProperForcingTruthSeparation K RS J Sep
   }

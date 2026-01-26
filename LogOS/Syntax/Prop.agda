@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,10 +23,11 @@ module LogOS.Syntax.Prop where
 -- - Use `_≡_` for meta-level propositional equality in Agda.
 -- - Use `_↔_` for logical equivalence/coherence (pairs of functions).
 -- - For decode-level equality tied to a specific kernel, prefer opening
---   `LogOS.Syntax.Eq.ForKernel K` and use `_≃K_` for `decode γ₁ ≡ decode γ₂`.
+--   `LogOS.Syntax.Eq.ForKernel K` and use `_≈K_` for decoded observational equality
+--   (mutual refinement); use `_≃K_` only for the strict `decode γ₁ ≡ decode γ₂` form.
 
 open import LogOS.Prelude
-open import Data.Product using (_×_; Σ; _,_)
+open import LogOS.Prelude.Product using (_×_; Σ; _,_)
 
 -- Logical equivalence (bi-implication)
 infix 3 _↔_
@@ -125,6 +126,28 @@ ObsEqOn-trans
   → ObsEqOn Sat x y → ObsEqOn Sat y z → ObsEqOn Sat x z
 ObsEqOn-trans xy yz p = ↔-trans (xy p) (yz p)
 
+record ObsEqKit
+  {ℓP ℓX ℓSat}
+  {P : Set ℓP} {X : Set ℓX}
+  (Sat : P → X → Set ℓSat)
+  : Set (lsuc (ℓP ⊔ ℓX ⊔ ℓSat)) where
+  field
+    reflEq  : ∀ x → ObsEqOn Sat x x
+    symEq   : ∀ {x y} → ObsEqOn Sat x y → ObsEqOn Sat y x
+    transEq : ∀ {x y z} → ObsEqOn Sat x y → ObsEqOn Sat y z → ObsEqOn Sat x z
+
+obsEqKit
+  : ∀ {ℓP ℓX ℓSat}
+    {P : Set ℓP} {X : Set ℓX}
+    (Sat : P → X → Set ℓSat)
+  → ObsEqKit Sat
+obsEqKit Sat =
+  record
+    { reflEq  = ObsEqOn-refl Sat
+    ; symEq   = λ {x} {y} eq → ObsEqOn-sym {Sat = Sat} eq
+    ; transEq = λ {x} {y} {z} xy yz → ObsEqOn-trans {Sat = Sat} xy yz
+    }
+
 -- Conjunction (already available as _×_, but provided for logical clarity)
 infixr 4 _∧_
 _∧_ : ∀ {ℓ} → Set ℓ → Set ℓ → Set ℓ
@@ -135,7 +158,7 @@ infixr 3 _∨_
 _∨_ : ∀ {ℓ} → Set ℓ → Set ℓ → Set ℓ
 _∨_ {ℓ} P Q = P ⊎ Q
   where
-    open import Data.Sum using (_⊎_)
+    open import LogOS.Prelude.Sum using (_⊎_)
 
 -- Truth (unit type): `⊤` is available via `LogOS.Prelude`.
 

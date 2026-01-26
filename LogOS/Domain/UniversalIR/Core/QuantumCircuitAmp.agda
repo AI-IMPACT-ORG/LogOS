@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,11 +9,12 @@ module LogOS.Domain.UniversalIR.Core.QuantumCircuitAmp where
 
 open import LogOS.Prelude hiding (_+_; _*_)
 
-open import Data.Bool using (Bool; true; false)
-open import Data.Fin using (Fin; fzero; fsuc)
-open import Data.List using (List; []; _∷_; map; _++_)
-open import Data.Product using (_×_; _,_)
-open import LogOS.Domain.UniversalIR.Core.Utils using (lookupDefault)
+open import LogOS.Prelude.Bool using (Bool; true; false)
+open import LogOS.Prelude.Fin using (Fin; fzero; fsuc)
+open import LogOS.Prelude.List using (List; []; _∷_; map; _++_)
+open import LogOS.Prelude.Product using (_×_; _,_)
+open import LogOS.Domain.UniversalIR.Core.Utils using (BoundaryObs; EffectAt; _⊨ᵇ_; lookupDefault)
+open import LogOS.Domain.UniversalIR.Quantum.Measurement as QM
 
 -- Abstract scalar interface for amplitude-level semantics.
 -- The laws (unitarity, norm preservation) are intentionally left abstract.
@@ -115,6 +116,8 @@ module For {ℓ} (S : QScalars {ℓ}) where
   measureRaw ψ = record { p = λ w → abs2 (ψ w) }
 
   -- Weighted finite distributions (support list, no normalization proof).
+  -- This is a weighted trace: duplicates are allowed and no normalization is
+  -- enforced at this layer.
   record DistList {ℓA : Level} (A : Set ℓA) : Set (lsuc (ℓ ⊔ ℓA)) where
     field
       support : List (Scalar × A)
@@ -176,6 +179,22 @@ module For {ℓ} (S : QScalars {ℓ}) where
   applyInstr (QCNOT c t) ψ = λ w → ψ (applyCNOT c t w)
   applyInstr (QTOFF a b t) ψ = λ w → ψ (applyTOFF a b t w)
 
+  -- Unitary laws for the amplitude-level fragment.
+  -- This keeps normalization preservation explicit and model-controlled.
+  record QUnitaryLaws : Set (lsuc ℓ) where
+    field
+      preserve
+        : ∀ {n} (i : QCInstrA n) (ψ : QState n)
+        → sumWires (λ w → abs2 (applyInstr i (QState.amp ψ) w)) ≡ 1#
+
+  applyInstrQState
+    : ∀ {n} → QUnitaryLaws → QCInstrA n → QState n → QState n
+  applyInstrQState laws i ψ =
+    record
+      { amp = applyInstr i (QState.amp ψ)
+      ; norm≡1 = QUnitaryLaws.preserve laws i ψ
+      }
+
   record QuantumCircuitAmpCode : Set (lsuc ℓ) where
     constructor mkQCA
     field
@@ -230,14 +249,6 @@ module For {ℓ} (S : QScalars {ℓ}) where
   setStateQCAP : ∀ {n} → State n → QuantumCircuitAmpPCode n → QuantumCircuitAmpPCode n
   setStateQCAP s q = mkQCAP (pc q) s (prog q)
 
-  applyInstrP : ∀ {n} → QCInstrP n → State n → State n
-  applyInstrP QCHALT ψ = ψ
-  applyInstrP (QX i) ψ = applyInstr (QX i) ψ
-  applyInstrP (QH i) ψ = applyInstr (QH i) ψ
-  applyInstrP (QCNOT c t) ψ = applyInstr (QCNOT c t) ψ
-  applyInstrP (QTOFF a b t) ψ = applyInstr (QTOFF a b t) ψ
-  applyInstrP (QMEASURE _ _ _) ψ = ψ
-
   scaleState : ∀ {n} → Scalar → State n → State n
   scaleState c ψ = λ w → c *S ψ w
 
@@ -257,28 +268,87 @@ module For {ℓ} (S : QScalars {ℓ}) where
   probTrue : ∀ {n} → Fin n → State n → Scalar
   probTrue i ψ = sumWires (λ w → abs2 (projTrue i ψ w))
 
-  collapseFalse : ∀ {n} → Fin n → State n → State n
-  collapseFalse i ψ = scaleState (invSqrtS (probFalse i ψ)) (projFalse i ψ)
+  -- Raw collapse formula: uses `invSqrt` directly. Any zero-probability
+  -- behavior is made explicit via the measurement laws below.
+  collapseFalseRaw : ∀ {n} → Fin n → State n → State n
+  collapseFalseRaw i ψ = scaleState (invSqrtS (probFalse i ψ)) (projFalse i ψ)
 
-  collapseTrue : ∀ {n} → Fin n → State n → State n
-  collapseTrue i ψ = scaleState (invSqrtS (probTrue i ψ)) (projTrue i ψ)
+  collapseTrueRaw : ∀ {n} → Fin n → State n → State n
+  collapseTrueRaw i ψ = scaleState (invSqrtS (probTrue i ψ)) (projTrue i ψ)
+
+  -- Explicit measurement laws (kept abstract, but made manifest).
+  -- This isolates the normalization/zero-probability assumptions that were
+  -- previously implicit in the collapse definitions.
+
+  record QMeasureLaws : Set (lsuc ℓ) where
+    field
+      split-prob
+        : ∀ {n} (i : Fin n) (ψ : State n)
+        → probFalse i ψ +S probTrue i ψ ≡ sumWires (λ w → abs2 (ψ w))
+
+      collapseFalse-norm
+        : ∀ {n} (i : Fin n) (ψ : QState n)
+        → sumWires (λ w → abs2 (collapseFalseRaw i (QState.amp ψ) w)) ≡ 1#
+
+      collapseTrue-norm
+        : ∀ {n} (i : Fin n) (ψ : QState n)
+        → sumWires (λ w → abs2 (collapseTrueRaw i (QState.amp ψ) w)) ≡ 1#
+
+  probSum≡1
+    : ∀ {n} (laws : QMeasureLaws) (i : Fin n) (ψ : QState n)
+    → probFalse i (QState.amp ψ) +S probTrue i (QState.amp ψ) ≡ 1#
+  probSum≡1 laws i ψ =
+    trans
+      (QMeasureLaws.split-prob laws i (QState.amp ψ))
+      (QState.norm≡1 ψ)
+
+  collapseFalseQState
+    : ∀ {n} (laws : QMeasureLaws) (i : Fin n) (ψ : QState n) → QState n
+  collapseFalseQState laws i ψ =
+    record
+      { amp = collapseFalseRaw i (QState.amp ψ)
+      ; norm≡1 = QMeasureLaws.collapseFalse-norm laws i ψ
+      }
+
+  collapseTrueQState
+    : ∀ {n} (laws : QMeasureLaws) (i : Fin n) (ψ : QState n) → QState n
+  collapseTrueQState laws i ψ =
+    record
+      { amp = collapseTrueRaw i (QState.amp ψ)
+      ; norm≡1 = QMeasureLaws.collapseTrue-norm laws i ψ
+      }
+
+  asBinaryLaws
+    : QMeasureLaws
+    → ∀ {n} (i : Fin n) → QM.BinaryMeasurementLaws Scalar _+S_ 1# (QState n)
+  asBinaryLaws laws i =
+    record
+      { prob0 = λ ψ → probFalse i (QState.amp ψ)
+      ; prob1 = λ ψ → probTrue i (QState.amp ψ)
+      ; norm = λ ψ → sumWires (λ w → abs2 (QState.amp ψ w))
+      ; collapse0 = collapseFalseQState laws i
+      ; collapse1 = collapseTrueQState laws i
+      ; split-prob = λ ψ → QMeasureLaws.split-prob laws i (QState.amp ψ)
+      ; collapse0-norm = λ ψ → QMeasureLaws.collapseFalse-norm laws i ψ
+      ; collapse1-norm = λ ψ → QMeasureLaws.collapseTrue-norm laws i ψ
+      }
 
   stepQCAProb : ∀ {n} → QuantumCircuitAmpPCode n → DistList (QuantumCircuitAmpPCode n)
   stepQCAProb q with lookupDefault QCHALT (prog q) (pc q)
   ... | QCHALT = pureDist q
   ... | QX i =
-    pureDist (setPCQCAP (suc (pc q)) (setStateQCAP (applyInstrP (QX i) (state q)) q))
+    pureDist (setPCQCAP (suc (pc q)) (setStateQCAP (applyInstr (QX i) (state q)) q))
   ... | QH i =
-    pureDist (setPCQCAP (suc (pc q)) (setStateQCAP (applyInstrP (QH i) (state q)) q))
+    pureDist (setPCQCAP (suc (pc q)) (setStateQCAP (applyInstr (QH i) (state q)) q))
   ... | QCNOT c t =
-    pureDist (setPCQCAP (suc (pc q)) (setStateQCAP (applyInstrP (QCNOT c t) (state q)) q))
+    pureDist (setPCQCAP (suc (pc q)) (setStateQCAP (applyInstr (QCNOT c t) (state q)) q))
   ... | QTOFF a b t =
-    pureDist (setPCQCAP (suc (pc q)) (setStateQCAP (applyInstrP (QTOFF a b t) (state q)) q))
+    pureDist (setPCQCAP (suc (pc q)) (setStateQCAP (applyInstr (QTOFF a b t) (state q)) q))
   ... | QMEASURE i j k =
     record
       { support =
-          (probFalse i (state q) , setPCQCAP j (setStateQCAP (collapseFalse i (state q)) q))
-          ∷ (probTrue i (state q) , setPCQCAP k (setStateQCAP (collapseTrue i (state q)) q))
+          (probFalse i (state q) , setPCQCAP j (setStateQCAP (collapseFalseRaw i (state q)) q))
+          ∷ (probTrue i (state q) , setPCQCAP k (setStateQCAP (collapseTrueRaw i (state q)) q))
           ∷ []
       }
 
@@ -290,3 +360,45 @@ module For {ℓ} (S : QScalars {ℓ}) where
 
   observeDistList : ∀ {n} → DistList (QuantumCircuitAmpPCode n) → DistList (Wires n)
   observeDistList d = bindDist d observeDist
+
+  -- Boundary view: observe the induced distribution on wires.
+  boundaryDistList : ∀ {n} → BoundaryObs (QuantumCircuitAmpPCode n)
+  boundaryDistList {n} =
+    record
+      { Obs = DistList (Wires n)
+      ; observe = observeDist
+      }
+
+  Effect : ∀ {n} → Set _
+  Effect {n} = EffectAt (boundaryDistList {n})
+
+  infix 4 _⊨_
+  _⊨_ : ∀ {n} → QuantumCircuitAmpPCode n → Effect {n} → Set
+  _⊨_ {n} q E = (q ⊨ᵇ boundaryDistList {n}) E
+
+  -- Abstract measurement boundary: choose what “observation” returns.
+  record MeasurementObs {ℓO : Level} (n : ℕ) : Set (lsuc (ℓ ⊔ ℓO)) where
+    field
+      Obs : Set ℓO
+      observeState : State n → DistList Obs
+
+  observeCode
+    : ∀ {ℓO} {n}
+    → (M : MeasurementObs {ℓO} n)
+    → QuantumCircuitAmpPCode n → DistList (MeasurementObs.Obs M)
+  observeCode M q = MeasurementObs.observeState M (state q)
+
+  observeDistListAt
+    : ∀ {ℓO} {n}
+    → (M : MeasurementObs {ℓO} n)
+    → DistList (QuantumCircuitAmpPCode n) → DistList (MeasurementObs.Obs M)
+  observeDistListAt M d = bindDist d (observeCode M)
+
+  WiresObs : ∀ {n} → MeasurementObs n
+  WiresObs {n} = record { Obs = Wires n ; observeState = distFromState }
+
+  observeDistAt : ∀ {n} → QuantumCircuitAmpPCode n → DistList (Wires n)
+  observeDistAt q = observeCode WiresObs q
+
+  observeDistListAtWires : ∀ {n} → DistList (QuantumCircuitAmpPCode n) → DistList (Wires n)
+  observeDistListAtWires d = observeDistListAt WiresObs d

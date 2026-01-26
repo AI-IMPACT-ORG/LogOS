@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -44,6 +44,18 @@ ObsEq∂ : ∀ {ℓ}
        → Set ℓ
 ObsEq∂ B c d = c ≈∂[ B ] d
 
+-- Consistent alias for boundary constraints (cf. PresentationC.ObsEqCon).
+
+ObsEqBnd : ∀ {ℓ}
+           {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+           {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+           {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+         → BoundaryIO Sig Q W BB H
+         → BulkBoundary.Con_bnd BB
+         → BulkBoundary.Con_bnd BB
+         → Set ℓ
+ObsEqBnd = ObsEq∂
+
 ObsLe∂
   : ∀ {ℓ}
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -55,14 +67,25 @@ ObsLe∂
   → Set ℓ
 ObsLe∂ B c d = Prop.ObsLeOn (BoundaryIO.Sat∂ B) c d
 
-ObsBndPoset
+ObsLeBnd
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → BoundaryIO Sig Q W BB H
+  → BulkBoundary.Con_bnd BB
+  → BulkBoundary.Con_bnd BB
+  → Set ℓ
+ObsLeBnd = ObsLe∂
+
+ObsBndPreorder
   : ∀ {ℓ}
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
     {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
   → (B : BoundaryIO Sig Q W BB H)
-  → ConPoset ℓ
-ObsBndPoset {BB = BB} B =
+  → ConPreorder ℓ
+ObsBndPreorder {BB = BB} B =
   let open BulkBoundary BB in
   record
     { Con = Con_bnd
@@ -80,6 +103,41 @@ Respects≈∂[_] : ∀ {ℓ}
               → Set ℓ
 Respects≈∂[ B ] F = Prop.RespectsObsEqOn (BoundaryIO.Sat∂ B) F
 
+RespectsObsEqBnd
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → (B : BoundaryIO Sig Q W BB H)
+  → (BulkBoundary.Con_bnd BB → BulkBoundary.Con_bnd BB)
+  → Set ℓ
+RespectsObsEqBnd B F = Respects≈∂[ B ] F
+
+-- A boundary endomap packaged together with its observational extensionality.
+--
+-- This is a convenience wrapper for the common pattern “F plus Respects≈∂[B] F”.
+record ObsEndo∂
+  {ℓ : Level}
+  {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+  {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  (B : BoundaryIO Sig Q W BB H)
+  : Set (lsuc ℓ) where
+  open BulkBoundary BB
+  field
+    fn       : Con_bnd → Con_bnd
+    respects : Respects≈∂[ B ] fn
+
+module ObsEq∂Kit
+  {ℓ}
+  {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+  {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  (B : BoundaryIO Sig Q W BB H)
+  where
+
+  open Prop.ObsEqKit (Prop.obsEqKit (BoundaryIO.Sat∂ B)) public
+
 ≈∂-refl
   : ∀ {ℓ}
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -88,7 +146,7 @@ Respects≈∂[ B ] F = Prop.RespectsObsEqOn (BoundaryIO.Sat∂ B) F
   → (B : BoundaryIO Sig Q W BB H)
   → (c : BulkBoundary.Con_bnd BB)
   → c ≈∂[ B ] c
-≈∂-refl B c = Prop.ObsEqOn-refl (BoundaryIO.Sat∂ B) c
+≈∂-refl B c = ObsEq∂Kit.reflEq B c
 
 ≈∂-sym
   : ∀ {ℓ}
@@ -99,7 +157,7 @@ Respects≈∂[ B ] F = Prop.RespectsObsEqOn (BoundaryIO.Sat∂ B) F
   → {c d : BulkBoundary.Con_bnd BB}
   → c ≈∂[ B ] d
   → d ≈∂[ B ] c
-≈∂-sym eq p = Prop.↔-sym (eq p)
+≈∂-sym {B = B} eq = ObsEq∂Kit.symEq B eq
 
 ≈∂-trans
   : ∀ {ℓ}
@@ -111,7 +169,7 @@ Respects≈∂[ B ] F = Prop.RespectsObsEqOn (BoundaryIO.Sat∂ B) F
   → a ≈∂[ B ] b
   → b ≈∂[ B ] c
   → a ≈∂[ B ] c
-≈∂-trans ab bc p = Prop.↔-trans (ab p) (bc p)
+≈∂-trans {B = B} ab bc = ObsEq∂Kit.transEq B ab bc
 
 ≈∂↔ObsLe
   : ∀ {ℓ}
@@ -133,11 +191,11 @@ mono-ObsBnd-respects≈∂
     {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
   → {B : BoundaryIO Sig Q W BB H}
   → {F : BulkBoundary.Con_bnd BB → BulkBoundary.Con_bnd BB}
-  → MonoOn (ObsBndPoset B) F
+  → MonoOn (ObsBndPreorder B) F
   → Respects≈∂[ B ] F
 mono-ObsBnd-respects≈∂ {B = B} monoF eq =
   Prop._↔_.from (≈∂↔ObsLe B)
-    (monoOn-respects≈ {CP = ObsBndPoset B} monoF
+    (monoOn-respects≈ {CP = ObsBndPreorder B} monoF
       (Prop._↔_.to (≈∂↔ObsLe B) eq))
 
 -- External boundary “port”: a boundary semantics (export) plus an import leg.
@@ -165,6 +223,19 @@ record BoundaryPort {ℓ ℓForm}
 
   Extend : (Con_bnd → Con_bnd) → Form → Form
   Extend F φ = Interp (F (Import φ))
+
+  -- Derived: lifting a boundary endomap preserves satisfaction when the
+  -- underlying boundary semantics is sound for that endomap.
+  Extend-preserves-Sat
+    : ∀ (F : Con_bnd → Con_bnd)
+    → (pres : ∀ p c → BoundaryIO.Sat∂ B p c → BoundaryIO.Sat∂ B p (F c))
+    → ∀ p φ → SatF p φ → SatF p (Extend F φ)
+  Extend-preserves-Sat F pres p φ satF =
+    let
+      sat∂  = Prop.to (SatF≈∂ p φ) satF
+      sat∂' = pres p (Import φ) sat∂
+    in
+    Prop.to (Sat∂≈F p (F (Import φ))) sat∂'
 
   -- Derived: Export∘Import is satisfaction-equivalent to the identity on `Form`.
 

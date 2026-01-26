@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,9 +9,9 @@ module LogOS.Domain.UniversalIR.Examples.QuantumCircuitAmp where
 
 open import LogOS.Prelude
 
-open import Data.Bool using (Bool; true; false)
-open import Data.Fin using (Fin; fzero)
-open import Data.List using (List; []; _∷_)
+open import LogOS.Prelude.Bool using (Bool; true; false)
+open import LogOS.Prelude.Fin using (Fin; fzero)
+open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Domain.UniversalIR.Core.QuantumCircuitAmp as QCA
 open import LogOS.Domain.UniversalIR.Quantum.Scalars.Free using (formalScalars)
@@ -24,9 +24,9 @@ open A using
   ; state
   ; QH; QX; QMEASURE; QCHALT
   ; stepQCAProb; pureDist
-  ; applyInstrP; setPCQCAP; setStateQCAP
+  ; applyInstr; setPCQCAP; setStateQCAP
   ; DistList; observeDistList
-  ; probFalse; probTrue; collapseFalse; collapseTrue
+  ; probFalse; probTrue; collapseFalseRaw; collapseTrueRaw
   )
 
 -- Example: one-qubit superposition then measurement, using formal scalars.
@@ -43,7 +43,7 @@ q0 = mkQCAP 0 ket0 progHM
 
 qAfterH : QuantumCircuitAmpPCode 1
 qAfterH =
-  setPCQCAP 1 (setStateQCAP (applyInstrP (QH fzero) ket0) q0)
+  setPCQCAP 1 (setStateQCAP (applyInstr (QH fzero) ket0) q0)
 
 distAfterH : DistList (QuantumCircuitAmpPCode 1)
 distAfterH = stepQCAProb q0
@@ -59,9 +59,9 @@ measureBranches-def :
     record
       { support =
           (probFalse fzero (state qAfterH)
-          , setPCQCAP 2 (setStateQCAP (collapseFalse fzero (state qAfterH)) qAfterH))
+          , setPCQCAP 2 (setStateQCAP (collapseFalseRaw fzero (state qAfterH)) qAfterH))
           ∷ (probTrue fzero (state qAfterH)
-          , setPCQCAP 2 (setStateQCAP (collapseTrue fzero (state qAfterH)) qAfterH))
+          , setPCQCAP 2 (setStateQCAP (collapseTrueRaw fzero (state qAfterH)) qAfterH))
           ∷ []
       }
 measureBranches-def = refl
@@ -84,7 +84,7 @@ qHXH : QuantumCircuitAmpPCode 2
 qHXH = mkQCAP 0 ket00 progHXH
 
 stateHXH : State 2
-stateHXH = applyInstrP (QH fzero) (applyInstrP (QX fzero) (applyInstrP (QH fzero) ket00))
+stateHXH = applyInstr (QH fzero) (applyInstr (QX fzero) (applyInstr (QH fzero) ket00))
 
 amp10-interference :
   stateHXH (A._∷_ true (A._∷_ false A.[])) ≡

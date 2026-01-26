@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,7 +17,7 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Base.Signature.Hom using (SigHom; composeSigHom)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Syntax.Prop as Prop
 
@@ -41,12 +41,13 @@ import LogOS.Theorems.Meta.ObserverFromLogicKernel as ObsLK
 import LogOS.Boundary.Port as Port
 import LogOS.Ports.Semantic.Interlingua as Interlingua
 
--- The four documentation view modules should be mutually importable.
-open import LogOS.Docs.Views.View_CategoricalLogic
-open import LogOS.Docs.Views.View_HoTT_3Level
-open import LogOS.Docs.Views.View_MultiInstitution
-open import LogOS.Docs.Views.View_ObserverSemantics
-open import LogOS.Docs.Views.View_CurryHowardLambek
+-- The documentation view modules should be mutually importable.
+open import docs.Views.CategoricalLogic
+open import docs.Views.HoTT_3Level
+open import docs.Views.MultiInstitution
+open import docs.Views.ObserverSemantics
+open import docs.Views.CurryHowardLambek
+open import docs.Views.MeredithSentences
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
 

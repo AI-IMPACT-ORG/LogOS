@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,9 +10,9 @@ module LogOS.Domain.UniversalIR.Theorems where
 open import LogOS.Prelude
 
 open import LogOS.Syntax.Prop using (⊥)
-open import Data.List using (List; []; _∷_; map)
-open import Data.Bool using (Bool; true; false)
-open import Data.Maybe using (nothing)
+open import LogOS.Prelude.List using (List; []; _∷_; map)
+open import LogOS.Prelude.Bool using (Bool; true; false)
+open import LogOS.Prelude.Maybe using (nothing)
 
 open import LogOS.Domain.UniversalIR.Core
 open import LogOS.Domain.UniversalIR.IR using (lowerToIR; decode; observe; take; bitsToNat; double)
@@ -25,7 +25,7 @@ open import LogOS.Domain.UniversalIR.Languages.QuantumOracle as Oracle
 open import LogOS.Domain.UniversalIR.Languages.QuantumCircuit as Circuit
 open import LogOS.Domain.UniversalIR.CQM.QuantumCircuitRel public
 open import LogOS.Domain.UniversalIR.Encoding as Enc using (incBits; natToBits; length; take-length; bitsToNat-natToBits)
-open import LogOS.Domain.UniversalIR.Universality using (iter; simulateUM; simulateUL; simulateUE; simulateUQ; simulateUQC)
+open import LogOS.Domain.UniversalIR.Universality using (simulateUM; simulateUL; simulateUE; simulateUQ; simulateUQC)
 open import LogOS.Domain.UniversalIR.Schemes using
   ( minskyMachineScheme
   ; lambdaMachineScheme
@@ -48,8 +48,8 @@ open import LogOS.Domain.UniversalIR.Schemes using
   ; quantumCircuitChoice
   )
 import LogOS.Computation.Scheme as Sch
-open import LogOS.Computation.Core using (Computation; iterate)
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+open import LogOS.Computation.Core using (Computation; iterate; iterateStep)
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- --------------------------------------------------------------------------
 -- Shared lemmas are provided by `LogOS.Domain.UniversalIR.Std`.
@@ -179,7 +179,7 @@ stepLC-church : ∀ n → stepLC (mkL (church n)) ≡ mkL (church n)
 stepLC-church n = cong mkL (stepL-church n)
 
 iter-stepLC-church
-  : ∀ n k → iter stepLC n (mkL (church k)) ≡ mkL (church k)
+  : ∀ n k → iterateStep stepLC n (mkL (church k)) ≡ mkL (church k)
 iter-stepLC-church zero    _ = refl
 iter-stepLC-church (suc n) k
   rewrite stepLC-church k
@@ -238,7 +238,7 @@ circuit-correct : (t : PATask) → Circuit.run t ≡ eval t
 iterate≡iter
   : ∀ {ℓ} {A : Set ℓ}
     (C : Computation A) (n : ℕ) (a : A)
-  → iterate C n a ≡ iter (Computation.Step C) n a
+  → iterate C n a ≡ iterateStep (Computation.Step C) n a
 iterate≡iter C zero    _ = refl
 iterate≡iter C (suc n) a = iterate≡iter C n (Computation.Step C a)
 
@@ -376,23 +376,20 @@ lowerToIR-eraseU (UL _) = refl
 lowerToIR-eraseU (UE _) = refl
 lowerToIR-eraseU (UQC _) = refl
 
-NoMeasure : QInstr → Set
-NoMeasure QHALT            = ⊤
-NoMeasure (QINC _ _)       = ⊤
-NoMeasure (QDECJZ _ _ _)   = ⊤
-NoMeasure (MEASURE _ _ _)  = ⊥
+NoMeasureQ : QInstr → Set
+NoMeasureQ QHALT            = ⊤
+NoMeasureQ (QINC _ _)       = ⊤
+NoMeasureQ (QDECJZ _ _ _)   = ⊤
+NoMeasureQ (MEASURE _ _ _)  = ⊥
 
-AllNoMeasure : List QInstr → Set
-AllNoMeasure []       = ⊤
-AllNoMeasure (x ∷ xs) = NoMeasure x × AllNoMeasure xs
+AllNoMeasureQ : List QInstr → Set
+AllNoMeasureQ = AllPred NoMeasureQ
 
-lookupNoMeasure
+lookupNoMeasureQ
   : ∀ (xs : List QInstr) (n : ℕ)
-  → AllNoMeasure xs
-  → NoMeasure (lookupDefault QHALT xs n)
-lookupNoMeasure [] _ _ = tt
-lookupNoMeasure (x ∷ _) zero (nmX , _) = nmX
-lookupNoMeasure (_ ∷ xs) (suc n) (_ , nmXs) = lookupNoMeasure xs n nmXs
+  → AllNoMeasureQ xs
+  → NoMeasureQ (lookupDefault QHALT xs n)
+lookupNoMeasureQ xs n nm = lookupAllPred NoMeasureQ QHALT xs n tt nm
 
 lookupDefault-map
   : ∀ {A B : Set} (f : A → B) (d : A) (xs : List A) (n : ℕ)
@@ -420,7 +417,7 @@ stepM′≡stepM m with lookupDefault HALT (MinskyCode.prog m) (MinskyCode.pc m)
 ... | suc _ = refl
 
 erase-stepQInstr
-  : ∀ instr q → NoMeasure instr
+  : ∀ instr q → NoMeasureQ instr
   → eraseQ (stepQInstr instr q) ≡ stepMInstr (eraseQInstr instr) (eraseQ q)
 erase-stepQInstr QHALT q _ = refl
 erase-stepQInstr (QINC R0 _) q _ = refl
@@ -443,12 +440,12 @@ erase-stepQInstr (MEASURE _ _ _) _ ()
 
 erase-stepQ
   : (q : QuantumCode)
-  → AllNoMeasure (QuantumCode.prog q)
+  → AllNoMeasureQ (QuantumCode.prog q)
   → eraseQ (stepQ q) ≡ stepM (eraseQ q)
 erase-stepQ q nm =
   let
     instrQ = lookupDefault QHALT (QuantumCode.prog q) (QuantumCode.pc q)
-    nmInstr = lookupNoMeasure (QuantumCode.prog q) (QuantumCode.pc q) nm
+    nmInstr = lookupNoMeasureQ (QuantumCode.prog q) (QuantumCode.pc q) nm
     m = eraseQ q
 
     lookup≡
@@ -488,35 +485,35 @@ prog-stepQ : ∀ q → QuantumCode.prog (stepQ q) ≡ QuantumCode.prog q
 prog-stepQ q =
   prog-stepQInstr (lookupDefault QHALT (QuantumCode.prog q) (QuantumCode.pc q)) q
 
-AllNoMeasure-stepQ
-  : ∀ q → AllNoMeasure (QuantumCode.prog q) → AllNoMeasure (QuantumCode.prog (stepQ q))
-AllNoMeasure-stepQ q nm rewrite prog-stepQ q = nm
+AllNoMeasureQ-stepQ
+  : ∀ q → AllNoMeasureQ (QuantumCode.prog q) → AllNoMeasureQ (QuantumCode.prog (stepQ q))
+AllNoMeasureQ-stepQ q nm rewrite prog-stepQ q = nm
 
 eraseU-stepQ
-  : ∀ q → AllNoMeasure (QuantumCode.prog q)
+  : ∀ q → AllNoMeasureQ (QuantumCode.prog q)
   → eraseU (stepU (UQ q)) ≡ stepU (eraseU (UQ q))
 eraseU-stepQ q nm = cong UM (erase-stepQ q nm)
 
 eraseU-simulateQ
-  : ∀ n q → AllNoMeasure (QuantumCode.prog q)
+  : ∀ n q → AllNoMeasureQ (QuantumCode.prog q)
   → eraseU (simulate n (UQ q)) ≡ simulate n (eraseU (UQ q))
 eraseU-simulateQ zero q _ = refl
 eraseU-simulateQ (suc n) q nm =
   trans
-    (eraseU-simulateQ n (stepQ q) (AllNoMeasure-stepQ q nm))
+    (eraseU-simulateQ n (stepQ q) (AllNoMeasureQ-stepQ q nm))
     (cong (simulate n) (eraseU-stepQ q nm))
 
-allNoMeasure-progAdd : AllNoMeasure Oracle.progAdd
-allNoMeasure-progAdd = tt , (tt , (tt , tt))
+allNoMeasureQ-progAdd : AllNoMeasureQ Oracle.progAdd
+allNoMeasureQ-progAdd = tt , (tt , (tt , tt))
 
-allNoMeasure-progMul : AllNoMeasure Oracle.progMul
-allNoMeasure-progMul =
+allNoMeasureQ-progMul : AllNoMeasureQ Oracle.progMul
+allNoMeasureQ-progMul =
   tt , (tt , (tt , (tt , (tt , (tt , (tt , tt))))))
 
-allNoMeasure-compileBrand : ∀ t → AllNoMeasure (QuantumCode.prog (Oracle.compileBrand t))
-allNoMeasure-compileBrand t with PATask.op t
-... | Add = allNoMeasure-progAdd
-... | Mul = allNoMeasure-progMul
+allNoMeasureQ-compileBrand : ∀ t → AllNoMeasureQ (QuantumCode.prog (Oracle.compileBrand t))
+allNoMeasureQ-compileBrand t with PATask.op t
+... | Add = allNoMeasureQ-progAdd
+... | Mul = allNoMeasureQ-progMul
 
 erase-compileBrand : ∀ t → eraseQ (Oracle.compileBrand t) ≡ Minsky.compileBrand t
 erase-compileBrand t with PATask.op t
@@ -549,7 +546,7 @@ oracle≡minsky t =
   let
     n  = Oracle.fuel t
     q  = Oracle.compileBrand t
-    nm = allNoMeasure-compileBrand t
+    nm = allNoMeasureQ-compileBrand t
 
     step₁
       : decode (lowerToIR (simulate n (UQ q)))
@@ -712,18 +709,18 @@ quantumCircuitScheme-fuelHalts t
 -- Oracle choice scheme: derived by erasure to the Minsky halting proof,
 -- using the “no measurement” invariant of the compiled programs.
 
-NoMeasure-eraseHALT→QHALT
-  : ∀ instr → NoMeasure instr → eraseQInstr instr ≡ HALT → instr ≡ QHALT
-NoMeasure-eraseHALT→QHALT QHALT _ _ = refl
-NoMeasure-eraseHALT→QHALT (QINC _ _) _ ()
-NoMeasure-eraseHALT→QHALT (QDECJZ _ _ _) _ ()
-NoMeasure-eraseHALT→QHALT (MEASURE _ _ _) () _
+NoMeasureQ-eraseHALT→QHALT
+  : ∀ instr → NoMeasureQ instr → eraseQInstr instr ≡ HALT → instr ≡ QHALT
+NoMeasureQ-eraseHALT→QHALT QHALT _ _ = refl
+NoMeasureQ-eraseHALT→QHALT (QINC _ _) _ ()
+NoMeasureQ-eraseHALT→QHALT (QDECJZ _ _ _) _ ()
+NoMeasureQ-eraseHALT→QHALT (MEASURE _ _ _) () _
 
-AllNoMeasure-iterStepQ
-  : ∀ n q → AllNoMeasure (QuantumCode.prog q) → AllNoMeasure (QuantumCode.prog (iter stepQ n q))
-AllNoMeasure-iterStepQ zero    q nm = nm
-AllNoMeasure-iterStepQ (suc n) q nm =
-  AllNoMeasure-iterStepQ n (stepQ q) (AllNoMeasure-stepQ q nm)
+AllNoMeasureQ-iterStepQ
+  : ∀ n q → AllNoMeasureQ (QuantumCode.prog q) → AllNoMeasureQ (QuantumCode.prog (iterateStep stepQ n q))
+AllNoMeasureQ-iterStepQ zero    q nm = nm
+AllNoMeasureQ-iterStepQ (suc n) q nm =
+  AllNoMeasureQ-iterStepQ n (stepQ q) (AllNoMeasureQ-stepQ q nm)
 
 oracleHaltsAtFuel
   : ∀ t → stepU (simulate (Oracle.fuel t) (Oracle.compile t)) ≡ simulate (Oracle.fuel t) (Oracle.compile t)
@@ -732,19 +729,19 @@ oracleHaltsAtFuel (mkTask Add a b) =
     t  = mkTask Add a b
     n  = Oracle.fuel t
     q0 = Oracle.compileBrand t
-    qn = iter stepQ n q0
+    qn = iterateStep stepQ n q0
 
-    nm0 : AllNoMeasure (QuantumCode.prog q0)
-    nm0 = allNoMeasure-compileBrand t
+    nm0 : AllNoMeasureQ (QuantumCode.prog q0)
+    nm0 = allNoMeasureQ-compileBrand t
 
-    nmn : AllNoMeasure (QuantumCode.prog qn)
-    nmn = AllNoMeasure-iterStepQ n q0 nm0
+    nmn : AllNoMeasureQ (QuantumCode.prog qn)
+    nmn = AllNoMeasureQ-iterStepQ n q0 nm0
 
     instrQ : QInstr
     instrQ = lookupDefault QHALT (QuantumCode.prog qn) (QuantumCode.pc qn)
 
-    nmInstr : NoMeasure instrQ
-    nmInstr = lookupNoMeasure (QuantumCode.prog qn) (QuantumCode.pc qn) nmn
+    nmInstr : NoMeasureQ instrQ
+    nmInstr = lookupNoMeasureQ (QuantumCode.prog qn) (QuantumCode.pc qn) nmn
 
     -- Erasing the quantum run yields the corresponding Minsky run, which ends in HALT.
     eraseSim≡HALT
@@ -775,7 +772,7 @@ oracleHaltsAtFuel (mkTask Add a b) =
           eraseQn≡HALT)
 
     instr≡QHALT : instrQ ≡ QHALT
-    instr≡QHALT = NoMeasure-eraseHALT→QHALT instrQ nmInstr instrErasesToHALT
+    instr≡QHALT = NoMeasureQ-eraseHALT→QHALT instrQ nmInstr instrErasesToHALT
 
     stepQn≡ : stepQ qn ≡ qn
     stepQn≡ =
@@ -792,19 +789,19 @@ oracleHaltsAtFuel (mkTask Mul a b) =
     t  = mkTask Mul a b
     n  = Oracle.fuel t
     q0 = Oracle.compileBrand t
-    qn = iter stepQ n q0
+    qn = iterateStep stepQ n q0
 
-    nm0 : AllNoMeasure (QuantumCode.prog q0)
-    nm0 = allNoMeasure-compileBrand t
+    nm0 : AllNoMeasureQ (QuantumCode.prog q0)
+    nm0 = allNoMeasureQ-compileBrand t
 
-    nmn : AllNoMeasure (QuantumCode.prog qn)
-    nmn = AllNoMeasure-iterStepQ n q0 nm0
+    nmn : AllNoMeasureQ (QuantumCode.prog qn)
+    nmn = AllNoMeasureQ-iterStepQ n q0 nm0
 
     instrQ : QInstr
     instrQ = lookupDefault QHALT (QuantumCode.prog qn) (QuantumCode.pc qn)
 
-    nmInstr : NoMeasure instrQ
-    nmInstr = lookupNoMeasure (QuantumCode.prog qn) (QuantumCode.pc qn) nmn
+    nmInstr : NoMeasureQ instrQ
+    nmInstr = lookupNoMeasureQ (QuantumCode.prog qn) (QuantumCode.pc qn) nmn
 
     eraseSim≡HALT
       : eraseU (simulate n (UQ q0)) ≡ UM (mkM 6 (0 + (a * b)) 0 b 0 Minsky.progMul)
@@ -833,7 +830,7 @@ oracleHaltsAtFuel (mkTask Mul a b) =
           eraseQn≡HALT)
 
     instr≡QHALT : instrQ ≡ QHALT
-    instr≡QHALT = NoMeasure-eraseHALT→QHALT instrQ nmInstr instrErasesToHALT
+    instr≡QHALT = NoMeasureQ-eraseHALT→QHALT instrQ nmInstr instrErasesToHALT
 
     stepQn≡ : stepQ qn ≡ qn
     stepQn≡ =
@@ -1130,27 +1127,23 @@ record Claim (_ : Assumptions) : Set₁ where
     ethereum≈oracle : Sch.RunEq ethereumScheme oracleScheme
     oracle≈circuit  : Sch.RunEq oracleScheme quantumCircuitScheme
 
-module Q = Quartet.Make Assumptions Claim
-open Q public using (Pack; assumptionsOf; claimOf)
-
-mkPack : (A : Assumptions) → Pack
-mkPack =
-  Q.mkPack
-    (λ _ →
-      record
-        { Alg            = PAAlg
-        ; minsky         = minsky-implements-PA
-        ; lambda         = lambda-implements-PA
-        ; ethereum       = ethereum-implements-PA
-        ; oracle         = oracle-implements-PA
-        ; circuit        = circuit-implements-PA
-        ; minskyCost     = λ t → ChoiceSchemesCostBound.minsky (patask-choiceSchemes-costBound t)
-        ; lambdaCost     = λ t → ChoiceSchemesCostBound.lambda (patask-choiceSchemes-costBound t)
-        ; ethereumCost   = λ t → ChoiceSchemesCostBound.ethereum (patask-choiceSchemes-costBound t)
-        ; oracleCost     = λ t → ChoiceSchemesCostBound.oracle (patask-choiceSchemes-costBound t)
-        ; circuitCost    = λ t → ChoiceSchemesCostBound.circuit (patask-choiceSchemes-costBound t)
-        ; minsky≈lambda   = ChoiceSchemesRunEq.minsky≈lambda patask-choiceSchemes-runEq
-        ; lambda≈ethereum = ChoiceSchemesRunEq.lambda≈ethereum patask-choiceSchemes-runEq
-        ; ethereum≈oracle = ChoiceSchemesRunEq.ethereum≈oracle patask-choiceSchemes-runEq
-        ; oracle≈circuit  = ChoiceSchemesRunEq.oracle≈circuit patask-choiceSchemes-runEq
-        })
+module Q = AppKit.MakeDerived Assumptions Claim
+  (λ _ →
+    record
+      { Alg            = PAAlg
+      ; minsky         = minsky-implements-PA
+      ; lambda         = lambda-implements-PA
+      ; ethereum       = ethereum-implements-PA
+      ; oracle         = oracle-implements-PA
+      ; circuit        = circuit-implements-PA
+      ; minskyCost     = λ t → ChoiceSchemesCostBound.minsky (patask-choiceSchemes-costBound t)
+      ; lambdaCost     = λ t → ChoiceSchemesCostBound.lambda (patask-choiceSchemes-costBound t)
+      ; ethereumCost   = λ t → ChoiceSchemesCostBound.ethereum (patask-choiceSchemes-costBound t)
+      ; oracleCost     = λ t → ChoiceSchemesCostBound.oracle (patask-choiceSchemes-costBound t)
+      ; circuitCost    = λ t → ChoiceSchemesCostBound.circuit (patask-choiceSchemes-costBound t)
+      ; minsky≈lambda   = ChoiceSchemesRunEq.minsky≈lambda patask-choiceSchemes-runEq
+      ; lambda≈ethereum = ChoiceSchemesRunEq.lambda≈ethereum patask-choiceSchemes-runEq
+      ; ethereum≈oracle = ChoiceSchemesRunEq.ethereum≈oracle patask-choiceSchemes-runEq
+      ; oracle≈circuit  = ChoiceSchemesRunEq.oracle≈circuit patask-choiceSchemes-runEq
+      })
+open Q public using (Pack; assumptionsOf; claimOf; mkPack)

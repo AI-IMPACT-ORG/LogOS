@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,12 +10,12 @@ module LogOS.Packs.Agents.Experimental.Arguments.TransformerKolmogorovScaling wh
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
 
-open import Data.Nat using (ℕ; _+_)
-open import Data.NatOrder using (_≤ℕ_; dec≤ℕ; not≤→≥)
+open import LogOS.Prelude.Nat using (ℕ; _+_)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; dec≤ℕ; not≤→≥)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (BulkBoundary; ConPoset)
+open import LogOS.Minimal.Con using (BulkBoundary; ConPreorder)
 open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel.Graded using (GradedKernel)
@@ -48,7 +48,7 @@ module For
   open QAdapter Q using (_≤s_; Scale)
 
   Dec : Set ℓ
-  Dec = ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K))
+  Dec = ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))
 
   record UniversalIRCompile : Set (lsuc (lsuc ℓ)) where
     field

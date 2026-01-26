@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,10 +10,10 @@ module LogOS.Domain.Complexity.LanguageWitnessW where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.Sum using (_⊎_)
-open import Data.Product using (Σ; _,_; _×_; fst; snd)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl) public
+open import LogOS.Prelude.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude.Sum using (_⊎_)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_; fst; snd)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl) public
 
 -- A more classical NP-style witness system:
 -- witnesses live in a type `W x` whose *size* is bounded by a polynomial in `size x`,

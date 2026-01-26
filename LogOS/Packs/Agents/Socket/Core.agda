@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,7 +16,9 @@ open import LogOS.Algebra.ConAlg using (ConAlg)
 open import LogOS.Boundary.IO using (BoundaryIO)
 open import LogOS.Boundary.MultiIO using (MultiBoundaryIO; defaultMultiBoundaryIOFromBoundaryIO)
 open import LogOS.Boundary.Port using (BoundaryPort; canonicalPort)
+open import LogOS.Syntax.Prop as Prop
 
+open import LogOS.API.Assumptions.Core using (LogicCore; coreFromLogicKernel)
 open import LogOS.Kernel.LogicKernel using (LogicKernel)
 open import LogOS.Kernel.LogicKernel.ConAlgOf using (conAlgOf)
 import LogOS.Kernel.LogicKernel.Boundary as LKBoundary
@@ -50,6 +52,9 @@ record AgentSocket
   field
     LK    : LogicKernel Sig Q
     ports : AgentPorts Sig
+
+  core : LogicCore {ℓ}
+  core = coreFromLogicKernel LK
 
   open BulkBoundary (LogicKernel.BB LK) public using (Con_bnd; _⊑bnd_)
 
@@ -110,5 +115,31 @@ record AgentSocket
   canonicalBoundaryPort
     : BoundaryPort {ℓForm = ℓ} Sig Q (LogicKernel.HWorld LK) (LogicKernel.BB LK) (LogicKernel.HTruth LK) boundaryIO
   canonicalBoundaryPort = canonicalPort boundaryIO
+
+  -- Contract language as a boundary port, parameterized by an explicit
+  -- reflection of constraints back into the free contract syntax.
+  --
+  -- This keeps the directionality honest: contracts interpret into constraints,
+  -- and any embedding of constraints into syntax is an explicit assumption.
+
+  contractBoundaryPort
+    : (reflect : Con_bnd → ConOverSig.Con∂ Sig)
+    → (reflect-sound
+        : ∀ p c
+        → BoundaryIO.Sat∂ boundaryIO p c
+            ↔ BoundaryIO.Sat∂ boundaryIO p (⟦ reflect c ⟧))
+    → BoundaryPort {ℓForm = ℓ} Sig Q (LogicKernel.HWorld LK) (LogicKernel.BB LK) (LogicKernel.HTruth LK) boundaryIO
+  contractBoundaryPort reflect reflect-sound =
+    record
+      { Sem =
+          record
+            { Form = ConOverSig.Con∂ Sig
+            ; SatF = λ p φ → BoundaryIO.Sat∂ boundaryIO p (⟦ φ ⟧)
+            ; Interp = reflect
+            ; Sat∂≈F = reflect-sound
+            }
+      ; Import = ⟦_⟧
+      ; SatF≈∂ = λ _ _ → Prop.↔-refl
+      }
 
 open AgentSocket public

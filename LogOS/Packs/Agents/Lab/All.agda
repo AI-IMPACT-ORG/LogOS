@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,8 +10,6 @@ module LogOS.Packs.Agents.Lab.All where
 -- Stable lab surface for agents: socket + learning + networks + frameworks.
 -- Experimental arguments, transformer emission, physics/RG-flow, and capstones
 -- live in `LogOS.Packs.Agents.Experimental.Lab`.
-
-open import LogOS.API.Minimal public
 
 module Lab where
   open import LogOS.Packs.Agents.Lab.Core public
@@ -27,6 +25,8 @@ module Socket where
     open import LogOS.Packs.Agents.Socket.HomOver public
   module Reindex where
     open import LogOS.Packs.Agents.Socket.Reindex public
+  module FromLogicCoreSocket where
+    open import LogOS.Packs.Agents.Socket.FromLogicCore public
   module FromKernelSocket where
     open import LogOS.Packs.Agents.Socket.FromKernel public
   module FromGradedKernelSocket where
@@ -37,6 +37,8 @@ module Learning where
     open import LogOS.Packs.Agents.Learning.Core public
   module TrainingSoundness where
     open import LogOS.Packs.Agents.Learning.TrainingSoundness public
+  module Network where
+    open import LogOS.Packs.Agents.Learning.Network public
   module EndoFixedPoint where
     open import LogOS.Packs.Agents.EndoFixedPoint public
   module FixedPoint where
@@ -94,6 +96,11 @@ module Comparisons where
 module Emit where
   module PythonSyntax where
     open import LogOS.Packs.Agents.Emit.Backends.Python.Syntax public
+  -- Anchor the backend interface modules (reachability/discoverability).
+  import LogOS.Packs.Agents.Emit.Backends.Python.Backend as PythonBackend
+  import LogOS.Packs.Agents.Emit.IR.Backend as IRBackend
+  import LogOS.Packs.Agents.Emit.IR.BackendSyntax as IRBackendSyntax
+  import LogOS.Packs.Agents.Emit.IR.Features.TelemetryPlan as TelemetryPlan
   module Intent where
     open import LogOS.Packs.Agents.Emit.IR.Intent public
   module IntentExamples where

@@ -1,4 +1,4 @@
-# LogOS: an Agda research library for foundational logic system architecture.
+# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -7,6 +7,14 @@
 
 # Local archives (never commit; use releases/artifacts instead)
 Archive.zip
+
+# Python caches (some tooling scripts emit Python)
+__pycache__/
+*.pyc
+
+# Generated code artifacts
+transformer_tf.py
+LogOS/Packs/Agents/Experimental/Emit/Backends/TensorFlow/output/
 
 # Agda build artifacts / caches
 _build/
@@ -25,16 +33,7 @@ MAlonzo/
 *.dyn_hi
 
 # LaTeX build artifacts (paper sources are tracked; outputs are ignored)
-docs/Paper/*.aux
-docs/Paper/*.bbl
-docs/Paper/*.blg
-docs/Paper/*.fdb_latexmk
-docs/Paper/*.fls
-docs/Paper/*.log
-docs/Paper/*.out
-docs/Paper/*.pdf
-docs/Paper/*.synctex.gz
-docs/Paper/*.toc
+docs/Paper/
 
 # LaTeX build artifacts
 *.aux
@@ -49,6 +48,7 @@ docs/Paper/*.toc
 # Editor / OS
 .DS_Store
 __MACOSX/
+._*
 *~
 *.swp
 *.swo

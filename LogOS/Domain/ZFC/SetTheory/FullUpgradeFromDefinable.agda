@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_)
 
 open import LogOS.Domain.ZFC.SetTheory.DefinablePack using (ZFAxiomsᵈ)
 open import LogOS.Domain.ZFC.SetTheory.Pack using (ZFAxioms)
@@ -71,6 +71,9 @@ module Upgrade
 
   open ZFAxiomsᵈ A
   private
+    KL : KernelLike Sig Q
+    KL = kernelLike-fromKernel K
+
     repPred = PredicateRepresentable.represent PR
     repFun  = FunctionGraphRepresentable.represent FR
 
@@ -118,7 +121,7 @@ module Upgrade
         (λ { (u , (ux , Fu≈z)) →
           _↔_.from (memy z) (u , (ux , _↔_.from (spec u z) Fu≈z)) }))
 
-  ZF : ZFAxioms K
+  ZF : ZFAxioms KL
   ZF = record
     { SetU   = SetU
     ; _∈_    = _∈_

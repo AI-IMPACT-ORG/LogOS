@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,6 +23,7 @@ open import LogOS.Kernel
 import LogOS.Kernel.Boundary as KBoundary
 
 open import LogOS.Ports.Semantic.InterlinguaCore using (PresentationC; canonicalPresentation)
+import LogOS.Ports.Semantic.Interlingua as Interlingua
 import LogOS.Ports.Semantic.InterlinguaStrictKernel as StrictKernel
 import LogOS.Ports.Semantic.InterlinguaCodeKernel as CodeKernel
 
@@ -61,6 +62,30 @@ module For
       ; SatF≈∂ = λ _ _ → Prop.↔-refl
       }
 
+  -- Convenience: translate between kernel code and any other boundary port over
+  -- the same canonical boundary satisfaction.
+
+  code→Port
+    : ∀ {ℓForm : Level}
+      (P : BoundaryPort {ℓForm = ℓForm} Sig Q (Kernel.HWorld K) (Kernel.BB K) (Kernel.HTruth K) B)
+    → Kernel.Code K → BoundaryPort.Form P
+  code→Port P = Interlingua.translate B CodePort P
+
+  port→Code
+    : ∀ {ℓForm : Level}
+      (P : BoundaryPort {ℓForm = ℓForm} Sig Q (Kernel.HWorld K) (Kernel.BB K) (Kernel.HTruth K) B)
+    → BoundaryPort.Form P → Kernel.Code K
+  port→Code P = Interlingua.translate B P CodePort
+
+  -- Kernel closure as a ported closure: Box = Extend Flow on the canonical CodePort.
+
+  Flow∂ = Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K)
+
+  Box≡ExtendFlow
+    : ∀ (γ : Kernel.Code K)
+    → Box K γ ≡ BoundaryPort.Extend CodePort Flow∂ γ
+  Box≡ExtendFlow _ = refl
+
   -- Strict formulas as a canonical presentation (not a boundary port).
   module ST = Truth.StrictTruth Sig
 
@@ -69,9 +94,6 @@ module For
 
   StrictPresentation : PresentationC (LogOSSignature.Cosp Sig) (Kernel.Fml K) SatS
   StrictPresentation = canonicalPresentation SatS
-
-  -- Legacy alias: “StrictPort” = strict presentation (no boundary export).
-  StrictPort = StrictPresentation
 
   -- Canonical strict compilation into the boundary port.
   module StrictInterlingua where

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,11 +9,16 @@ module LogOS.Theorems.Meta.MathPhysSynthesis where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
-open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_; proj₁; proj₂)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
+open import LogOS.Minimal.World as Worlds
+open import LogOS.Minimal.Truth as Truth
+open import LogOS.Boundary.IO using (BoundaryIO)
+open import LogOS.Boundary.Telemetry using (TelemetryTrace; ProgramTelemetryPort)
 open import LogOS.Kernel
 open import LogOS.Kernel.Graded as GK using (GradedKernel)
 
@@ -125,7 +130,7 @@ fromKernel
     (TruthK : Kernel.Code K → Set ℓ)
   → Diag.TruthDiagonal K TruthK
   → MathPhysSynthesis (Kernel.Code K)
-                      (ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+                      (ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
                       (Kernel.decode K)
                       (FlowCode K)
                       TruthK
@@ -141,7 +146,7 @@ fromKernelC
     (TruthK : Kernel.Code K → Set ℓT)
   → Diag.TruthDiagonalC (Kernel.Code K) TruthK
   → MathPhysSynthesis (Kernel.Code K)
-                      (ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+                      (ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
                       (Kernel.decode K)
                       (FlowCode K)
                       TruthK
@@ -159,9 +164,66 @@ fromGradedKernel
     (TruthK : GradedKernel.Code K → Set ℓT)
   → Diag.TruthDiagonalC (GradedKernel.Code K) TruthK
   → MathPhysSynthesis (GradedKernel.Code K)
-                      (ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K)))
+                      (ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K)))
                       (GradedKernel.decode K)
                       (GK.FlowCode K)
                       TruthK
 fromGradedKernel K TruthK TD =
   record { diagonal = TD }
+
+-- ============================================================================
+-- DPI as an observational coarsening theorem (diagram proof).
+-- ============================================================================
+
+module DPIFromObservation
+  {ℓ ℓT : Level}
+  {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+  {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  (B : BoundaryIO Sig Q W BB H)
+  (T : TelemetryTrace ℓT)
+  (P : ProgramTelemetryPort Sig Q W BB H B T)
+  where
+
+  open LogOSSignature Sig using (Cosp; to∂)
+  open TelemetryTrace T using (Trace; _⊑T_)
+  open ProgramTelemetryPort P using (observe-∂)
+
+  record Channel : Set (lsuc ℓ) where
+    field
+      run : Cosp → Cosp
+
+  -- Diagram (preorder-enriched square):
+  --
+  --     Cosp  -- run -->  Cosp
+  --       |              |
+  --     to∂;observe-∂   to∂;observe-∂
+  --       v              v
+  --     Trace  ≤T      Trace
+  --
+  -- If the square commutes as a coarsening (≤T) and trace-info is monotone,
+  -- then DPI follows on the induced program info.
+
+  dpi-by-coarsening
+    : (infoProg : Cosp → ℕ)
+    → (traceInfo : Trace → ℕ)
+    → (info-from-telemetry : ∀ f → infoProg f ≡ traceInfo (observe-∂ (to∂ f)))
+    → (traceMono : ∀ {x y} → x ⊑T y → traceInfo x ≤ℕ traceInfo y)
+    → (C : Channel)
+    → (contract : ∀ f → observe-∂ (to∂ (Channel.run C f)) ⊑T observe-∂ (to∂ f))
+    → ∀ f
+    → infoProg (Channel.run C f) ≤ℕ infoProg f
+  dpi-by-coarsening infoProg traceInfo info-from-telemetry traceMono C contract f =
+    let
+      t1 = observe-∂ (to∂ (Channel.run C f))
+      t2 = observe-∂ (to∂ f)
+      step : traceInfo t1 ≤ℕ traceInfo t2
+      step = traceMono (contract f)
+    in
+    subst
+      (λ n → n ≤ℕ infoProg f)
+      (sym (info-from-telemetry (Channel.run C f)))
+      (subst
+        (λ n → traceInfo t1 ≤ℕ n)
+        (sym (info-from-telemetry f))
+        step)

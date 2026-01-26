@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Boundary.SpectralSeparation where
 
 open import LogOS.Prelude
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -18,7 +18,7 @@ open import LogOS.Kernel
 open import LogOS.Kernel.Endo
 
 -- Local addition on ℕ (for indexing tails of approximants)
-open import Data.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
 
 -- Spectrally separated Flow assumptions at the boundary: a predicate Pred
 -- describing a “separation region” that is closed under Flow and contractive
@@ -33,7 +33,7 @@ record SpectralSeparationSpec {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ
                               : Set (lsuc ℓ) where
   private
     module GT = Truth.GuardedTruth Sig Q
-    open ConPoset (BulkBoundary.bnd (Kernel.BB K)) using (Con; _⊑_)
+    open ConPreorder (BulkBoundary.bnd (Kernel.BB K)) using (Con; _⊑_)
     open GT.GuardedClosure (Kernel.GTruth K) renaming (Th* to Th⋆)
     open GT.FiniteFirst FF renaming (approxS to A)
     F = Endo.fn (Flow-Endo K)
@@ -57,7 +57,7 @@ record SpectralSeparationResults {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter 
                                 : Set (lsuc ℓ) where
   private
     module GT = Truth.GuardedTruth Sig Q
-    open ConPoset (BulkBoundary.bnd (Kernel.BB K)) using (Con; _⊑_)
+    open ConPreorder (BulkBoundary.bnd (Kernel.BB K)) using (Con; _⊑_)
     open GT.GuardedClosure (Kernel.GTruth K) renaming (Th* to Th⋆)
     open GT.OmegaCPO ωCPO
     open GT.FiniteFirst FF renaming (approxS to A; Th⋆-as-sup to supineq)
@@ -86,7 +86,7 @@ spectral-separation-inequalities {Sig = Sig}{Q = Q}{K = K} ωCPO FF SS =
   where
     module GT = Truth.GuardedTruth Sig Q
     infix 4 _⊑b_
-    _⊑b_ = ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+    _⊑b_ = ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
     open GT.GuardedClosure (Kernel.GTruth K) renaming (Th* to Th⋆)
     open GT.OmegaCPO ωCPO
     open GT.FiniteFirst FF renaming (approxS to A; Th⋆-as-sup to supineq)
@@ -118,7 +118,7 @@ spectral-separation-inequalities {Sig = Sig}{Q = Q}{K = K} ωCPO FF SS =
     ubA = ub A n
 
     A≤Th⋆ : _⊑b_ (A n) Th⋆
-    A≤Th⋆ = ConPoset.trans (BulkBoundary.bnd (Kernel.BB K)) ubA sup≤
+    A≤Th⋆ = ConPreorder.trans (BulkBoundary.bnd (Kernel.BB K)) ubA sup≤
 
 -- Textbook alias: “finite convergence” from a contractive/closed region.
 -- The result exposes a concrete approximant A n that is a fixed point (up to ⊑)
@@ -126,7 +126,7 @@ spectral-separation-inequalities {Sig = Sig}{Q = Q}{K = K} ωCPO FF SS =
 
 finite-convergence-inequalities = spectral-separation-inequalities
 
--- Under antisymmetry on the boundary poset, the bounds give equalities.
+-- Under antisymmetry on the boundary preorder (hence a poset), the bounds give equalities.
 
 spectral-separation-equalities
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -152,7 +152,7 @@ spectral-separation-equalities {Sig = Sig}{Q = Q}{K = K} po ωCPO FF SS =
     res = spectral-separation-inequalities ωCPO FF SS
     n*  = SpectralSeparationResults.n* res
     module GT = Truth.GuardedTruth Sig Q
-    open ConPoset (BulkBoundary.bnd (Kernel.BB K)) using (Con; _⊑_)
+    open ConPreorder (BulkBoundary.bnd (Kernel.BB K)) using (Con; _⊑_)
     open BulkBoundaryPO po using (po-bnd)
     open PartialOrder (po-bnd) using (antisym)
     open GT.GuardedClosure (Kernel.GTruth K) renaming (Th* to Th⋆)

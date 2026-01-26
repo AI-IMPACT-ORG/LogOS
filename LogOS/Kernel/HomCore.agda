@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -45,7 +45,7 @@ module WithOps {ℓ : Level} (ops : Ops {ℓ}) where
       map-encode : ∀ c → mapCode (encode K₁ c) ≡ encode K₂ (ConAlgHom≡.map∂ con-hom c)
       map-decode : ∀ γ → decode K₂ (mapCode γ) ≡ ConAlgHom≡.map∂ con-hom (decode K₁ γ)
 
-    -- Up-to-decode equality on code maps (helpful for quotiented initiality).
+    -- Up-to-strict decode equality (`≡`) on code maps (helpful for quotiented initiality).
     infix 4 _≈Code_
     _≈Code_ : Code K₁ → Code K₁ → Set ℓ
     _≈Code_ γ δ = decode K₁ γ ≡ decode K₁ δ
@@ -99,4 +99,3 @@ module WithOps {ℓ : Level} (ops : Ops {ℓ}) where
     let open Hom h in
     trans (map-decode (Body K₁ γ))
           (cong (ConAlgHom≡.map∂ con-hom) (body-decode K₁ γ))
-

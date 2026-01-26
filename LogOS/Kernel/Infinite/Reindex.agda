@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ module LogOS.Kernel.Infinite.Reindex where
 --
 -- The infinite-kernel companion structure is also reindexable along a
 -- signature morphism, because its extra fields live purely over the boundary
--- constraint poset (independent of the concrete world/satisfaction indices).
+-- constraint preorder (independent of the concrete world/satisfaction indices).
 -- ============================================================================
 
 open import LogOS.Prelude
@@ -22,7 +22,7 @@ open import LogOS.Base.Signature.Hom
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Minimal.Adjunction using (MonoidalPoset)
+open import LogOS.Minimal.Adjunction using (MonoidalOps)
 open import LogOS.Kernel
 open import LogOS.Kernel.Reindex
 open import LogOS.Kernel.Infinite

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -90,12 +90,12 @@ module For
 
     learning-scalingBound-public
       : ∀ {g} (T : LearningTraining g)
-      → (stableBound : ∀ γ →
+      → (stableBoundBoxBody : ∀ γ →
           ScalingBoundK (step T) (dim T) γ
           ↔
-          ScalingBoundK (step T) (dim T) (Kernel.FlowCode K₀ γ))
+          ScalingBoundK (step T) (dim T) (Kernel.Box K₀ (Kernel.Body K₀ γ)))
       → ∀ {γ}
       → ScalingBoundK (step T) (dim T) γ
       → LP.LimitPublicisation K₀ (ScalingBoundK (step T) (dim T)) γ
-    learning-scalingBound-public T stableBound =
-      scalingBound-public (step T) (dim T) stableBound
+    learning-scalingBound-public T stableBoundBoxBody =
+      scalingBound-public (step T) (dim T) stableBoundBoxBody

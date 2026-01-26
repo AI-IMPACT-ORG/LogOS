@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,7 +17,7 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Syntax.Prop as Prop using (_↔_)
 open import LogOS.Minimal.Con using (MonoOn)
 
-open import LogOS.Kernel
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 
 open import LogOS.Kernel.Core as KCore
 import LogOS.Theorems.Meta.CHL.Core as Core
@@ -54,9 +54,9 @@ module For
       -- Model-theory: refinement implies boundary entailment.
       sound∂ : ∀ {γ δ} → C.Refines γ δ → Co.Entails∂ γ δ
 
-      -- Category-theory: code forms a thin category; FlowCode is monotone.
+      -- Category-theory: code forms a thin category; Box is monotone.
       code-cat : Category.ThinCat ℓ
-      box-mono : MonoOn (KCore.CodePoset (Kernel.shape K)) C.Box
+      box-mono : MonoOn (KCore.CodePreorder (Kernel.shape K)) C.Box
 
       -- Observer view: guarded truth is Flow-stable (for the distinguished code).
       guarded-fixed : C.Refines C.truth (C.Box C.truth)
@@ -112,5 +112,5 @@ module For
       ; strict-complete   = S.sound-completeS-budget A
       }
 
-  -- Hilbert-style packaging (Imp is external, Box is FlowCode).
+  -- Hilbert-style packaging (Imp is external, Box is the stable closure modality).
   open P public using (Hilbert; hilbert-from)

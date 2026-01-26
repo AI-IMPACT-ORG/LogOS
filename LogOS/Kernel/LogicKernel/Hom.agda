@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -44,7 +44,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       )
 
   map∂-id
-    : ∀ {K} (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K)))
+    : ∀ {K} (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB K)))
     → ConAlgHom≡.map∂ (LogicKernelHom.con-hom (idLogicKernelHom K)) c ≡ c
   map∂-id _ = refl
 
@@ -52,7 +52,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     : ∀ {K₁ K₂ K₃}
       (h₁ : LogicKernelHom K₁ K₂)
       (h₂ : LogicKernelHom K₂ K₃)
-      (c : ConPoset.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
+      (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
     → ConAlgHom≡.map∂ (LogicKernelHom.con-hom (composeLogicKernelHom h₁ h₂)) c
       ≡ ConAlgHom≡.map∂ (LogicKernelHom.con-hom h₂)
           (ConAlgHom≡.map∂ (LogicKernelHom.con-hom h₁) c)

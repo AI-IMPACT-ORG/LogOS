@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,7 +10,8 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.DeepDive.AIAssistedModeling where
 
-open import LogOS.API.Minimal
+open import LogOS.API.Architecture as Architecture
+open Architecture.Downstream
 open import LogOS.Theorems.Core as Theorems
 ```
 

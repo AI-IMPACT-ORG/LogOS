@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,11 +7,11 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Agents.Emit.IR.Intent where
 
-open import Data.List using (List; []; _∷_)
-open import Data.Nat using (ℕ)
-open import Data.String using (String; _++s_; intercalateS)
-open import Data.NatShow using (showNat)
-open import Data.Bool using (Bool; true; false)
+open import LogOS.Prelude.List using (List; []; _∷_)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.String using (String; _++s_; intercalateS)
+open import LogOS.Prelude.NatShow using (showNat)
+open import LogOS.Prelude.Bool using (Bool; true; false)
 
 data EmitArg : Set where
   param : String → EmitArg

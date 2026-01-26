@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,10 +10,10 @@ module LogOS.Domain.Complexity.ProofSearchOpacitySpine where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ)
-open import Data.NatOrder using (_≤ℕ_)
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -24,8 +24,8 @@ import LogOS.Domain.Complexity.ProofSearchBoundary as PBₜ
 import LogOS.Theorems.Meta.SpectralSeparationOutput as SSOₜ
 import LogOS.Theorems.Meta.BudgetedSeparationOutput as BSOₜ
 open import LogOS.Theorems.Meta.Assumptions.Diagonal using (TruthDiagonalC)
-import LogOS.Theorems.Meta.QuartetCore as Quartet
-open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn)
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
+open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn≈)
 
 -- Proof-search opacity spine: a proof-search oracle is a partial-output surface,
 -- and the same diagonal/opacity machinery blocks any total, budget-bounded oracle.
@@ -50,7 +50,7 @@ module For {ℓ ℓP : Level}
   ProofCost = WitnessCost ProofIndex
 
   BudgetExt : (Code → ℕ) → Set ℓ
-  BudgetExt = DecodeExtensionalFn K
+  BudgetExt = DecodeExtensionalFn≈ K
 
   record BudgetBy : Set (lsuc ℓ) where
     field
@@ -58,7 +58,8 @@ module For {ℓ ℓP : Level}
       ext    : BudgetExt budget
 
   -- A proof-search oracle: either return a proof code (with correctness) or abstain.
-  -- Extensionality is decode-level (matches the GRH/opacity convention).
+  -- Extensionality is decode-level up to decoded observational equality (mutual refinement),
+  -- matching the GRH/opacity convention.
   record ProofSearchOracle (PS : PB.ProofSystem) : Set (lsuc (lsuc (ℓ ⊔ ℓP))) where
     field
       oracle : SSOₜ.Oracle K ProofIndex
@@ -164,32 +165,29 @@ module For {ℓ ℓP : Level}
       witness  : Σ Code (λ γ → ¬ B.WithinBudgetBy budget γ)
       nontrivial : NonTrivialWithinBudget oracle cost budget
 
-  module Q {PS : PB.ProofSystem} = Quartet.Make (Assumptions PS) (Claim PS)
-  open Q public using (Pack; assumptionsOf; claimOf)
+  derive : ∀ {PS} (A : Assumptions PS) → Claim PS A
+  derive A =
+    let
+      module B = Budgeted (Assumptions.oracle A) (Assumptions.cost A)
+      noTotal =
+        B.no-total-within-budgetBy
+          (Assumptions.budget A)
+          (Assumptions.diagonal A)
+      witness =
+        B.diagonal-witness-within-budgetBy
+          (Assumptions.budget A)
+          (Assumptions.diagonal A)
+      nontriv : NonTrivialWithinBudget
+                  (Assumptions.oracle A)
+                  (Assumptions.cost A)
+                  (Assumptions.budget A)
+      nontriv = VacuityGuards.someWithin (Assumptions.vacuity A) , witness
+    in
+    record
+      { no-total  = noTotal
+      ; witness   = witness
+      ; nontrivial = nontriv
+      }
 
-  mkPack : ∀ {PS} → (A : Assumptions PS) → Pack {PS}
-  mkPack A =
-    Q.mkPack
-      (λ A →
-        let
-          module B = Budgeted (Assumptions.oracle A) (Assumptions.cost A)
-          noTotal =
-            B.no-total-within-budgetBy
-              (Assumptions.budget A)
-              (Assumptions.diagonal A)
-          witness =
-            B.diagonal-witness-within-budgetBy
-              (Assumptions.budget A)
-              (Assumptions.diagonal A)
-          nontriv : NonTrivialWithinBudget
-                      (Assumptions.oracle A)
-                      (Assumptions.cost A)
-                      (Assumptions.budget A)
-          nontriv = VacuityGuards.someWithin (Assumptions.vacuity A) , witness
-        in
-        record
-          { no-total  = noTotal
-          ; witness   = witness
-          ; nontrivial = nontriv
-          })
-      A
+  module Q {PS : PB.ProofSystem} = AppKit.MakeDerived (Assumptions PS) (Claim PS) derive
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

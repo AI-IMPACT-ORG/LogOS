@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,9 +8,9 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Universality.ComplexitySpectrum where
 
 open import LogOS.Prelude
-open import Data.Nat using (ℕ)
-open import Data.Sum using (_⊎_)
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Sum using (_⊎_)
+open import LogOS.Prelude.Product using (Σ; _,_)
 -- Unit and Level primitives via Prelude (Lift available as Level.Lift)
 
 open import LogOS.Computation.Core
@@ -58,7 +58,7 @@ record EvolEndo {ℓ : Level}
   open GradedKernel K
   private
     CP = BulkBoundary.bnd BB
-    module CP = ConPoset CP
+    module CP = ConPreorder CP
   field
     embed : CoreUCode → CP.Con
     StepE : Endo K

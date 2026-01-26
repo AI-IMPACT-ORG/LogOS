@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,12 +14,23 @@ module LogOS.Theorems.CategoryTheory.AdjunctionMonads where
 
 open import LogOS.Prelude
 
-open import LogOS.Minimal.Adjunction using (LaxAdjunction; LaxMonoidalAdjunction; MonoidalPoset)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary; MonoMap)
+open import LogOS.Base.Signature using (LogOSSignature)
+open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Minimal.Adjunction using
+  ( LaxAdjunction
+  ; LaxAdjunctionMono
+  ; LaxMonoidalAdjunction
+  ; LaxMonoidalAdjunctionMono
+  ; MonoidalOps
+  )
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary; MonoMap; PartialOrder)
+open import LogOS.Minimal.Con.Iso using (PreorderIso; module PreorderIsoEq)
+open import LogOS.Minimal.Closure using (ClosureOp)
 
 open import LogOS.Syntax.Prop as Prop
 open import LogOS.Theorems.Reflection.Projector using (Projector; Coreflector)
 open import LogOS.Theorems.Modal.S4 using (S4Modality)
+open import LogOS.Kernel using (Kernel)
 
 module Derived
   {ℓ : Level}
@@ -47,13 +58,13 @@ module Derived
     let
       to : _⊑bulk_ (ext c) d → _⊑bnd_ c (bnd d)
       to ext≤ =
-        ConPoset.trans (BulkBoundary.bnd BB)
+        ConPreorder.trans (BulkBoundary.bnd BB)
           (unit-lax c)
           (mono-bnd ext≤)
 
       from : _⊑bnd_ c (bnd d) → _⊑bulk_ (ext c) d
       from c≤ =
-        ConPoset.trans (BulkBoundary.bulk BB)
+        ConPreorder.trans (BulkBoundary.bulk BB)
           (mono-ext c≤)
           (counit-lax d)
     in
@@ -121,6 +132,17 @@ module Derived
     ; idemp-lax = T-mult-lax
     }
 
+  -- Boundary closure as a `ClosureOp` (monotone nucleus interface).
+
+  T-closureOp : ClosureOp (BulkBoundary.bnd BB)
+  T-closureOp =
+    record
+      { cl        = T
+      ; mono      = T-mono
+      ; infl      = T-unit
+      ; idemp-lax = T-mult-lax
+      }
+
   -- Same structure as an S4 modality (monotone + inflationary + idempotent-lax).
 
   T-modality : S4Modality (BulkBoundary.bnd BB)
@@ -185,20 +207,20 @@ module Derived
     _≤b_ : StableBulk → StableBulk → Set ℓ
     x ≤b y = _⊑bulk_ (toBulk x) (toBulk y)
 
-    StableBndPoset : ConPoset ℓ
-    StableBndPoset = record
+    StableBndPreorder : ConPreorder ℓ
+    StableBndPreorder = record
       { Con = StableBnd
       ; _⊑_ = _≤∂_
-      ; refl = λ {x} → ConPoset.refl (BulkBoundary.bnd BB) {c = toBnd x}
-      ; trans = λ {x} {y} {z} xy yz → ConPoset.trans (BulkBoundary.bnd BB) xy yz
+      ; refl = λ {x} → ConPreorder.refl (BulkBoundary.bnd BB) {c = toBnd x}
+      ; trans = λ {x} {y} {z} xy yz → ConPreorder.trans (BulkBoundary.bnd BB) xy yz
       }
 
-    StableBulkPoset : ConPoset ℓ
-    StableBulkPoset = record
+    StableBulkPreorder : ConPreorder ℓ
+    StableBulkPreorder = record
       { Con = StableBulk
       ; _⊑_ = _≤b_
-      ; refl = λ {x} → ConPoset.refl (BulkBoundary.bulk BB) {c = toBulk x}
-      ; trans = λ {x} {y} {z} xy yz → ConPoset.trans (BulkBoundary.bulk BB) xy yz
+      ; refl = λ {x} → ConPreorder.refl (BulkBoundary.bulk BB) {c = toBulk x}
+      ; trans = λ {x} {y} {z} xy yz → ConPreorder.trans (BulkBoundary.bulk BB) xy yz
       }
 
     -- Restricted maps: ext lands in the stable bulk fragment, bnd lands in the
@@ -218,13 +240,13 @@ module Derived
 
     -- Monotonicity of the restricted maps.
 
-    extStable-mono : MonoMap StableBndPoset StableBulkPoset extStable
-    extStable-mono le = mono-ext le
+    extStable-mono : MonoMap StableBndPreorder StableBulkPreorder extStable
+    extStable-mono {x} {y} le = mono-ext {x = toBnd x} {y = toBnd y} le
 
-    bndStable-mono : MonoMap StableBulkPoset StableBndPoset bndStable
-    bndStable-mono le = mono-bnd le
+    bndStable-mono : MonoMap StableBulkPreorder StableBndPreorder bndStable
+    bndStable-mono {x} {y} le = mono-bnd {x = toBulk x} {y = toBulk y} le
 
-    -- Inverse laws on stable fragments (up to refinement in the ambient posets).
+    -- Inverse laws on stable fragments (up to refinement in the ambient preorders).
 
     bndStable∘extStable≤ : ∀ x → bndStable (extStable x) ≤∂ x
     bndStable∘extStable≤ x = stableBnd x
@@ -238,6 +260,26 @@ module Derived
     extStable∘bndStable≥ : ∀ x → x ≤b extStable (bndStable x)
     extStable∘bndStable≥ x = stableBulk x
 
+    -- Packaged form: stable fragments are order-isomorphic (up to ≈).
+
+    StableIso : PreorderIso StableBndPreorder StableBulkPreorder
+    StableIso =
+      record
+        { to         = extStable
+        ; from       = bndStable
+        ; to-mono    = λ {x} {y} le → mono-ext {x = toBnd x} {y = toBnd y} le
+        ; from-mono  = λ {x} {y} le → mono-bnd {x = toBulk x} {y = toBulk y} le
+        ; to∘from≈id = λ x → (extStable∘bndStable≤ x , extStable∘bndStable≥ x)
+        ; from∘to≈id = λ x → (bndStable∘extStable≤ x , bndStable∘extStable≥ x)
+        }
+
+    module StableIsoEq
+      (po∂ : PartialOrder StableBndPreorder)
+      (poB : PartialOrder StableBulkPreorder)
+      where
+
+      open PreorderIsoEq po∂ poB StableIso public
+
     -- Order reflection (hence order isomorphism structure) on stable fragments.
 
     extStable-reflects : ∀ {x y} → extStable x ≤b extStable y → x ≤∂ y
@@ -248,7 +290,7 @@ module Derived
         c≤Td : _⊑bnd_ c (T d)
         c≤Td = fst (adj c (ext d)) ext≤
       in
-      ConPoset.trans (BulkBoundary.bnd BB) c≤Td (stableBnd y)
+      ConPreorder.trans (BulkBoundary.bnd BB) c≤Td (stableBnd y)
 
     bndStable-reflects : ∀ {x y} → bndStable x ≤∂ bndStable y → x ≤b y
     bndStable-reflects {x} {y} bnd≤ =
@@ -262,22 +304,60 @@ module Derived
         Se≤e : _⊑bulk_ (S e) e
         Se≤e = counit-lax e
       in
-      ConPoset.trans (BulkBoundary.bulk BB) d≤Sd
-        (ConPoset.trans (BulkBoundary.bulk BB) Sd≤Se Se≤e)
+      ConPreorder.trans (BulkBoundary.bulk BB) d≤Sd
+        (ConPreorder.trans (BulkBoundary.bulk BB) Sd≤Se Se≤e)
+
+-- -------------------------------------------------------------------------
+-- Frobenius reciprocity (cheap, one-way)
+-- -------------------------------------------------------------------------
+--
+-- A very lightweight “hyperdoctrine-shaped” coherence statement that follows
+-- from the *lax monoidal* structure alone (no pullbacks/fibrations required):
+--
+--   ext (x ⊗∂ bnd y)  ⊑  ext x ⊗b y
+--
+-- Interpreting `ext` as “∃” and `bnd` as reindexing/pullback, this is the
+-- posetal Frobenius inequality.
+
+module Frobenius
+  {ℓ : Level}
+  {BB : BulkBoundary ℓ}
+  {MBulk : MonoidalOps (BulkBoundary.bulk BB)}
+  {MBnd  : MonoidalOps (BulkBoundary.bnd  BB)}
+  (Holo : LaxMonoidalAdjunction BB MBulk MBnd)
+  where
+
+  open BulkBoundary BB using (Con_bulk; Con_bnd; _⊑bulk_; _⊑bnd_)
+  open MonoidalOps MBulk renaming (_⊗_ to _⊗b_; I to Ib; mono⊗ to mono⊗b)
+  open MonoidalOps MBnd  renaming (_⊗_ to _⊗∂_; I to I∂; mono⊗ to mono⊗∂)
+  open LaxMonoidalAdjunction Holo
+
+  frobenius-ext≤
+    : ∀ (x : Con_bnd) (y : Con_bulk)
+    → _⊑bulk_ (ext (x ⊗∂ bnd y)) (ext x ⊗b y)
+  frobenius-ext≤ x y =
+    ConPreorder.trans (BulkBoundary.bulk BB)
+      (ext-⊗-lax x (bnd y))
+      (mono⊗b
+        (ConPreorder.refl (BulkBoundary.bulk BB))
+        (counit-lax y))
+
+  -- Short alias (common in the literature): “Frob”.
+  Frob-ext≤ = frobenius-ext≤
 
 module DerivedMonoidal
   {ℓ : Level}
   {BB : BulkBoundary ℓ}
-  {MBulk : MonoidalPoset (BulkBoundary.bulk BB)}
-  {MBnd  : MonoidalPoset (BulkBoundary.bnd  BB)}
+  {MBulk : MonoidalOps (BulkBoundary.bulk BB)}
+  {MBnd  : MonoidalOps (BulkBoundary.bnd  BB)}
   (Holo : LaxMonoidalAdjunction BB MBulk MBnd)
   (mono-ext : MonoMap (BulkBoundary.bnd BB) (BulkBoundary.bulk BB) (LaxMonoidalAdjunction.ext Holo))
   (mono-bnd : MonoMap (BulkBoundary.bulk BB) (BulkBoundary.bnd BB) (LaxMonoidalAdjunction.bnd Holo))
   where
 
   open BulkBoundary BB using (Con_bulk; Con_bnd; _⊑bulk_; _⊑bnd_)
-  open MonoidalPoset MBulk renaming (_⊗_ to _⊗b_; I to Ib)
-  open MonoidalPoset MBnd  renaming (_⊗_ to _⊗∂_; I to I∂)
+  open MonoidalOps MBulk renaming (_⊗_ to _⊗b_; I to Ib; mono⊗ to mono⊗b)
+  open MonoidalOps MBnd  renaming (_⊗_ to _⊗∂_; I to I∂; mono⊗ to mono⊗∂)
   open LaxMonoidalAdjunction Holo
 
   module Base = Derived (core) mono-ext mono-bnd
@@ -287,13 +367,13 @@ module DerivedMonoidal
 
   T-⊗-lax : ∀ x y → _⊑bnd_ (T (x ⊗∂ y)) (T x ⊗∂ T y)
   T-⊗-lax x y =
-    ConPoset.trans (BulkBoundary.bnd BB)
+    ConPreorder.trans (BulkBoundary.bnd BB)
       (mono-bnd (ext-⊗-lax x y))
       (bnd-⊗-lax (ext x) (ext y))
 
   T-I-lax : _⊑bnd_ (T I∂) I∂
   T-I-lax =
-    ConPoset.trans (BulkBoundary.bnd BB)
+    ConPreorder.trans (BulkBoundary.bnd BB)
       (mono-bnd ext-I-lax)
       bnd-I-lax
 
@@ -301,12 +381,67 @@ module DerivedMonoidal
 
   S-⊗-lax : ∀ x y → _⊑bulk_ (S (x ⊗b y)) (S x ⊗b S y)
   S-⊗-lax x y =
-    ConPoset.trans (BulkBoundary.bulk BB)
+    ConPreorder.trans (BulkBoundary.bulk BB)
       (mono-ext (bnd-⊗-lax x y))
       (ext-⊗-lax (bnd x) (bnd y))
 
   S-I-lax : _⊑bulk_ (S Ib) Ib
   S-I-lax =
-    ConPoset.trans (BulkBoundary.bulk BB)
+    ConPreorder.trans (BulkBoundary.bulk BB)
       (mono-ext bnd-I-lax)
       ext-I-lax
+
+  -- -------------------------------------------------------------------------
+  -- Frobenius reciprocity (cheap, one-way)
+  -- -------------------------------------------------------------------------
+  open Frobenius Holo using (frobenius-ext≤)
+
+  -- Boundary form: derive the corresponding inequality by applying the unit and
+  -- monotonicity of `bnd`.
+
+  frobenius-bnd≤
+    : ∀ (x : Con_bnd) (y : Con_bulk)
+    → _⊑bnd_ (x ⊗∂ bnd y) (bnd (ext x ⊗b y))
+  frobenius-bnd≤ x y =
+    ConPreorder.trans (BulkBoundary.bnd BB)
+      (unit-lax (x ⊗∂ bnd y))
+      (mono-bnd (frobenius-ext≤ x y))
+
+-- Convenience wrapper: use a bundled monotone lax monoidal adjunction
+-- (`LaxMonoidalAdjunctionMono`) directly.
+
+module DerivedMonoidalMono
+  {ℓ : Level}
+  {BB : BulkBoundary ℓ}
+  {MBulk : MonoidalOps (BulkBoundary.bulk BB)}
+  {MBnd  : MonoidalOps (BulkBoundary.bnd  BB)}
+  (LAM : LaxMonoidalAdjunctionMono BB MBulk MBnd)
+  where
+
+  open LaxMonoidalAdjunctionMono LAM using (core; ext-mono; bnd-mono)
+  open DerivedMonoidal core ext-mono bnd-mono public
+
+-- Convenience wrapper: if you already have a bundled monotone lax adjunction
+-- (`LaxAdjunctionMono`), reuse the same derived structure without re-threading
+-- the monotonicity proofs explicitly.
+
+module DerivedMono
+  {ℓ : Level}
+  {BB : BulkBoundary ℓ}
+  (LAM : LaxAdjunctionMono BB)
+  where
+
+  open LaxAdjunctionMono LAM using (core; ext-mono; bnd-mono)
+  open Derived core ext-mono bnd-mono public
+
+-- Convenience: specialize the assumption-light Frobenius lemma to any kernel.
+
+module ForKernelFrobenius
+  {ℓ : Level}
+  {Sig : LogOSSignature ℓ}
+  {Q : QAdapter ℓ}
+  (K : Kernel Sig Q)
+  where
+
+  open Kernel K using (Holo)
+  open Frobenius Holo public using (frobenius-ext≤)

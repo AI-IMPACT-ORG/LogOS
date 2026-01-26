@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,7 +22,7 @@ open import LogOS.Minimal.Truth as Truth
 open import LogOS.Ports.SpectralPack public using (SpectralPack)
 
 -- Categorical deformation: nucleus/closure (projector) bridge
--- Provide a projector P on the boundary poset and show that nontrivial zeros
+-- Provide a projector P on the boundary preorder and show that nontrivial zeros
 -- pick P-fixed boundary constraints via a selector c; assume a meta clause that
 -- any such P-fixed witness entails OnLine. This avoids mentioning operators and
 -- matches standard closure/nucleus axioms.
@@ -34,18 +34,18 @@ record GlobalNucleusBridge {ℓ ℓS}
                            : Set (lsuc (ℓ ⊔ ℓS)) where
   open Kernel K
   open SpectralPack RS
-  open ConPoset (BulkBoundary.bnd BB)
+  open ConPreorder (BulkBoundary.bnd BB)
   field
     Pr : Proj.Projector (BulkBoundary.bnd BB)
     c  : Spectral → Con
     -- Nontrivial zeros produce P-fixed witnesses at c s (two inequalities)
     zero→PFixed : ∀ s → NontrivialZero s →
-      ConPoset._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P Pr (c s)) (c s)
-      × ConPoset._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P Pr (c s))
+      ConPreorder._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P Pr (c s)) (c s)
+      × ConPreorder._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P Pr (c s))
     -- A meta clause: any such P-fixed witness forces OnLine
     PFixed→OnLine : ∀ s →
-      (ConPoset._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P Pr (c s)) (c s)
-     × ConPoset._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P Pr (c s)))
+      (ConPreorder._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P Pr (c s)) (c s)
+     × ConPreorder._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P Pr (c s)))
       → OnLine s
 
 GRH_Without_Vacuity_Guards_via_GlobalNucleus
@@ -70,29 +70,29 @@ record GlobalNucleusLimit {ℓ ℓS}
   open Kernel K
   open SpectralPack RS
   field
-    -- Finite projectors and a limit projector on the boundary poset
+    -- Finite projectors and a limit projector on the boundary preorder
     Prᵢ : Idx → Proj.Projector (BulkBoundary.bnd BB)
     Pr∞ : Proj.Projector (BulkBoundary.bnd BB)
 
     -- Spectral selector into boundary constraints
-    c   : Spectral → ConPoset.Con (BulkBoundary.bnd BB)
+    c   : Spectral → ConPreorder.Con (BulkBoundary.bnd BB)
 
     -- Finite witnesses: every nontrivial zero yields Prᵢ‑fixed at c s (both inequalities)
     zero→PᵢFixed : ∀ i s → NontrivialZero s →
-      ConPoset._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P (Prᵢ i) (c s)) (c s)
-      × ConPoset._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P (Prᵢ i) (c s))
+      ConPreorder._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P (Prᵢ i) (c s)) (c s)
+      × ConPreorder._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P (Prᵢ i) (c s))
 
     -- Continuity/limit clause: from all finite fixedness obtain limit fixedness
     all→limFixed : ∀ s →
-      (∀ i → ConPoset._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P (Prᵢ i) (c s)) (c s)
-            × ConPoset._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P (Prᵢ i) (c s)))
-      → ConPoset._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P Pr∞ (c s)) (c s)
-      × ConPoset._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P Pr∞ (c s))
+      (∀ i → ConPreorder._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P (Prᵢ i) (c s)) (c s)
+            × ConPreorder._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P (Prᵢ i) (c s)))
+      → ConPreorder._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P Pr∞ (c s)) (c s)
+      × ConPreorder._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P Pr∞ (c s))
 
     -- Spectral clause at the limit: Pr∞‑fixed implies OnLine
     P∞Fixed→OnLine : ∀ s →
-      (ConPoset._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P Pr∞ (c s)) (c s)
-     × ConPoset._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P Pr∞ (c s)))
+      (ConPreorder._⊑_ (BulkBoundary.bnd BB) (Proj.Projector.P Pr∞ (c s)) (c s)
+     × ConPreorder._⊑_ (BulkBoundary.bnd BB) (c s) (Proj.Projector.P Pr∞ (c s)))
       → OnLine s
 
 GRH_Without_Vacuity_Guards_via_GlobalNucleus∞
@@ -106,8 +106,8 @@ GRH_Without_Vacuity_Guards_via_GlobalNucleus∞ K RS {Idx} GL s nz =
   let open GlobalNucleusLimit GL in
   let allFixed
         : ∀ i →
-          ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (Proj.Projector.P (Prᵢ i) (c s)) (c s)
-          × ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (c s) (Proj.Projector.P (Prᵢ i) (c s))
+          ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (Proj.Projector.P (Prᵢ i) (c s)) (c s)
+          × ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (c s) (Proj.Projector.P (Prᵢ i) (c s))
       allFixed i = zero→PᵢFixed i s nz in
   P∞Fixed→OnLine s (all→limFixed s allFixed)
 

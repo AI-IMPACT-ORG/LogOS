@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,48 +12,74 @@ module LogOS.Packs.Agents.Experimental.Lab where
 -- Combine with `LogOS.Packs.Agents.Lab.All` for the full lab story.
 
 module Arguments where
-  module ScalingLaws where
-    open import LogOS.Packs.Agents.Experimental.Arguments.ScalingLaws public
-  module LearningScaling where
-    open import LogOS.Packs.Agents.Experimental.Arguments.LearningScaling public
-  module TransformerScaling where
-    open import LogOS.Packs.Agents.Experimental.Arguments.TransformerScaling public
-  module TransformerFormalization where
-    open import LogOS.Packs.Agents.Experimental.Arguments.TransformerFormalization public
-  module TransformerBridge where
-    open import LogOS.Packs.Agents.Experimental.Arguments.TransformerBridge public
-  module TransformerScalingPipeline where
-    open import LogOS.Packs.Agents.Experimental.Arguments.TransformerScalingPipeline public
-  module Transformer where
-    open import LogOS.Packs.Agents.Experimental.Arguments.Transformer public
-  module LogOSDiscoveryScaling where
-    open import LogOS.Packs.Agents.Experimental.Arguments.LogOSDiscoveryScaling public
-  module KolmogorovDiscoveryScaling where
-    open import LogOS.Packs.Agents.Experimental.Arguments.KolmogorovDiscoveryScaling public
-  module KolmogorovOptimality where
-    open import LogOS.Packs.Agents.Experimental.Arguments.KolmogorovOptimality public
-  module SolomonoffLearning where
-    open import LogOS.Packs.Agents.Experimental.Arguments.SolomonoffLearning public
-  module TransformerKolmogorovScaling where
-    open import LogOS.Packs.Agents.Experimental.Arguments.TransformerKolmogorovScaling public
+  -- Anchor modules for reachability/discoverability (kept namespaced).
+  import LogOS.Packs.Agents.Experimental.Arguments.ScalingLaws as ScalingLaws
+  import LogOS.Packs.Agents.Experimental.Arguments.LearningScaling as LearningScaling
+  import LogOS.Packs.Agents.Experimental.Arguments.TransformerScaling as TransformerScaling
+  import LogOS.Packs.Agents.Experimental.Arguments.TransformerFormalization as TransformerFormalization
+  import LogOS.Packs.Agents.Experimental.Arguments.TransformerBridge as TransformerBridge
+  import LogOS.Packs.Agents.Experimental.Arguments.TransformerScalingPipeline as TransformerScalingPipeline
+  import LogOS.Packs.Agents.Experimental.Arguments.Transformer as Transformer
+  import LogOS.Packs.Agents.Experimental.Arguments.LogOSDiscoveryScaling as LogOSDiscoveryScaling
+  import LogOS.Packs.Agents.Experimental.Arguments.KolmogorovDiscoveryScaling as KolmogorovDiscoveryScaling
+  import LogOS.Packs.Agents.Experimental.Arguments.KolmogorovOptimality as KolmogorovOptimality
+  import LogOS.Packs.Agents.Experimental.Arguments.SolomonoffLearning as SolomonoffLearning
+  import LogOS.Packs.Agents.Experimental.Arguments.TransformerKolmogorovScaling as TransformerKolmogorovScaling
+
+  -- Kept lightweight: import the individual modules directly as needed.
+  --
+  -- Transformer/scaling:
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.ScalingLaws`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.LearningScaling`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerScaling`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerFormalization`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerBridge`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerScalingPipeline`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.Transformer`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerKolmogorovScaling`
+  --
+  -- Discovery scaling (optional):
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.LogOSDiscoveryScaling`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.KolmogorovDiscoveryScaling`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.KolmogorovOptimality`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.SolomonoffLearning`
 
 module Emit where
-  module TransformerTF where
-    open import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Emit public
+  -- Anchor modules for reachability/discoverability (kept namespaced).
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.DataPlan as TensorFlowDataPlan
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Emit as TensorFlowEmit
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.EmitCore as TensorFlowEmitCore
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Features.Coupling as TensorFlowCoupling
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Features.Symbolic as TensorFlowSymbolic
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Features.Telemetry as TensorFlowTelemetry
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Pipeline as TensorFlowPipeline
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Syntax as TensorFlowSyntax
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.SyntaxCore as TensorFlowSyntaxCore
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Types as TensorFlowTypes
+
+  -- Kept lightweight: import the backend directly.
+  -- - `LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Emit`
+  -- - `LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Syntax`
 
 module Learning where
-  module RGFlow where
-    open import LogOS.Packs.Agents.Experimental.Learning.RGFlow public
+  import LogOS.Packs.Agents.Experimental.Learning.RGFlow as RGFlow
+  -- Kept lightweight: import directly.
+  -- - `LogOS.Packs.Agents.Experimental.Learning.RGFlow`
 
 module Physics where
-  open import LogOS.Packs.Agents.Experimental.Physics.All public
+  import LogOS.Packs.Agents.Experimental.Physics.All as All
+  -- Kept lightweight: import directly.
+  -- - `LogOS.Packs.Agents.Experimental.Physics.All`
 
 module Safety where
-  module NoTotalAuditor where
-    open import LogOS.Packs.Agents.Experimental.Safety.NoTotalAuditor public
+  import LogOS.Packs.Agents.Experimental.Safety.NoTotalAuditor as NoTotalAuditor
+  -- Kept lightweight: import directly.
+  -- - `LogOS.Packs.Agents.Experimental.Safety.NoTotalAuditor`
 
 module Capstone where
-  open import LogOS.Packs.Agents.Experimental.Capstone public
+  import LogOS.Packs.Agents.Experimental.Capstone as Capstone
+  -- Kept lightweight: import directly.
+  -- - `LogOS.Packs.Agents.Experimental.Capstone`
 
 module Core where
   open import LogOS.Packs.Agents.Lab.Core public

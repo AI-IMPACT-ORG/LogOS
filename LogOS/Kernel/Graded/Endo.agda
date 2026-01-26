@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -120,13 +120,13 @@ _∘StepAt_ {Sig = Sig} {Q = Q} {K = K} {g₁} {g₂} s₂ s₁ =
       f≤Flow  = ClosureStepAt.leFlow s₁
       g≤Flow  = ClosureStepAt.leFlow s₂
       inflComp : _≤₂_ K (idEndo K) (g ∘E f)
-      inflComp = λ c → ConPoset.trans CP (inflf c) (inflg (Endo.fn f c))
+      inflComp = λ c → ConPreorder.trans CP (inflf c) (inflg (Endo.fn f c))
       leTFComp : _≤₂_ K (g ∘E f) (Flow-EndoAt K (QAdapter._·_ Q g₁ g₂))
       leTFComp = λ c →
         let step₁ = Endo.mono g (f≤Flow c)          -- g(f c) ≤ g(Flow g₁ c)
             step₂ = g≤Flow (GradedClosure.Flow GTruth g₁ c)
             step₃ = GradedClosure.comp-lax GTruth g₁ g₂ c
-        in ConPoset.trans CP step₁ (ConPoset.trans CP step₂ step₃)
+        in ConPreorder.trans CP step₁ (ConPreorder.trans CP step₂ step₃)
   in mkClosureStepAt (g ∘E f) inflComp leTFComp
 
 -- Flow-closing at a chosen grade (grade squares to g · g).
@@ -149,7 +149,7 @@ id≤Flow-closeAt
 id≤Flow-closeAt {Sig = Sig} {Q = Q} K g id≤FlowAt f id≤f = λ c →
   let open GradedKernel K
       CP = BulkBoundary.bnd BB
-  in ConPoset.trans CP (id≤f c) (id≤FlowAt (Endo.fn f c))
+  in ConPreorder.trans CP (id≤f c) (id≤FlowAt (Endo.fn f c))
 
 Flow-close≤FlowAt
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -164,7 +164,7 @@ Flow-close≤FlowAt {Sig = Sig} {Q = Q} K g f f≤Flow = λ c →
       monoFlow = GradedClosure.mono GTruth {g = g}
       step₁ = monoFlow (f≤Flow c)          -- Flow g (f c) ≤ Flow g (Flow g c)
       step₂ = GradedClosure.comp-lax GTruth g g c
-  in ConPoset.trans CP step₁ step₂
+  in ConPreorder.trans CP step₁ step₂
 
 FlowStepAt
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -207,7 +207,7 @@ promoteStep {Sig = Sig} {Q = Q} {K = K} {g} {g'} le s =
       CP = BulkBoundary.bnd BB
       leFlow' : _≤₂_ K (ClosureStepAt.endo s) (Flow-EndoAt K g')
       leFlow' = λ c →
-        ConPoset.trans CP (ClosureStepAt.leFlow s c)
+        ConPreorder.trans CP (ClosureStepAt.leFlow s c)
           (GradedClosure.mono-grade GTruth le c)
   in mkClosureStepAt (ClosureStepAt.endo s) (ClosureStepAt.infl s) leFlow'
 

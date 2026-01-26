@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,9 +13,8 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 open import LogOS.Kernel.LogicKernel using (LogicKernel)
-import LogOS.Kernel.LogicKernel.Endo as LKEndo
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 import LogOS.Packs.Agents.Learning.Core as LearningCore
@@ -30,15 +29,10 @@ module For
 
   open AgentSocket Sock
   module L = LearningCore.For Sock
-  open L using (Policy; LearningStep; learnStep)
+  open L using (Policy; LearningStep; learnStep; learnStep-infl)
 
   private
     CP = BulkBoundary.bnd (LogicKernel.BB LK)
-
-  learnStep-infl
-    : (s : LearningStep) (p : Policy)
-    → _⊑bnd_ p (learnStep s p)
-  learnStep-infl s p = LKEndo.ClosureStep.infl s p
 
   preservesLowerBound
     : ∀ {c p}
@@ -46,7 +40,7 @@ module For
     → _⊑bnd_ c p
     → _⊑bnd_ c (learnStep s p)
   preservesLowerBound s le =
-    ConPoset.trans CP le (learnStep-infl s _)
+    ConPreorder.trans CP le (learnStep-infl s _)
 
   preservesSafety
     : ∀ {p}

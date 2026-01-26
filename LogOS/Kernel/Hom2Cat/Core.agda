@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -30,7 +30,7 @@ record Kit {ℓ : Level} (Obj : Set (lsuc (lsuc ℓ))) : Set (lsuc (lsuc (lsuc �
     conAlgOf  : Obj → ConAlg {ℓ}
 
     Code      : Obj → Set ℓ
-    decode    : (K : Obj) → Code K → ConPoset.Con (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
+    decode    : (K : Obj) → Code K → ConPreorder.Con (BulkBoundary.bnd (ConAlg.BB (conAlgOf K)))
 
     Hom       : Obj → Obj → Set (lsuc (lsuc ℓ))
     con-hom   : ∀ {K₁ K₂} → Hom K₁ K₂ → ConAlgHom≡ (conAlgOf K₁) (conAlgOf K₂)
@@ -43,13 +43,13 @@ record Kit {ℓ : Level} (Obj : Set (lsuc (lsuc ℓ))) : Set (lsuc (lsuc (lsuc �
     composeHom : ∀ {K₁ K₂ K₃} → Hom K₁ K₂ → Hom K₂ K₃ → Hom K₁ K₃
 
     map∂-id
-      : ∀ {K} (c : ConPoset.Con (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
+      : ∀ {K} (c : ConPreorder.Con (BulkBoundary.bnd (ConAlg.BB (conAlgOf K))))
       → ConAlgHom≡.map∂ (con-hom (idHom K)) c ≡ c
 
     map∂-compose
       : ∀ {K₁ K₂ K₃}
         (h₁ : Hom K₁ K₂) (h₂ : Hom K₂ K₃)
-        (c : ConPoset.Con (BulkBoundary.bnd (ConAlg.BB (conAlgOf K₁))))
+        (c : ConPreorder.Con (BulkBoundary.bnd (ConAlg.BB (conAlgOf K₁))))
       → ConAlgHom≡.map∂ (con-hom (composeHom h₁ h₂)) c
         ≡ ConAlgHom≡.map∂ (con-hom h₂) (ConAlgHom≡.map∂ (con-hom h₁) c)
 
@@ -78,13 +78,13 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
       ; mapCode-compose to mapCode-composeᵏ
       )
 
-  CP : Obj → ConPoset ℓ
+  CP : Obj → ConPreorder ℓ
   CP X = BulkBoundary.bnd (ConAlg.BB (conAlgOfᵏ X))
 
   map∂
     : ∀ {K₁ K₂} → Homᵏ K₁ K₂
-    → ConPoset.Con (CP K₁)
-    → ConPoset.Con (CP K₂)
+    → ConPreorder.Con (CP K₁)
+    → ConPreorder.Con (CP K₂)
   map∂ h = ConAlgHom≡.map∂ (con-homᵏ h)
 
   record Hom₁ (K₁ K₂ : Obj) : Set (lsuc (lsuc ℓ)) where
@@ -92,10 +92,10 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
       hom   : Homᵏ K₁ K₂
       mono∂ :
         ∀ {c c'}
-        → ConPoset._⊑_ (CP K₁) c c'
-        → ConPoset._⊑_ (CP K₂) (map∂ hom c) (map∂ hom c')
+        → ConPreorder._⊑_ (CP K₁) c c'
+        → ConPreorder._⊑_ (CP K₂) (map∂ hom c) (map∂ hom c')
 
-    map∂₁ : ConPoset.Con (CP K₁) → ConPoset.Con (CP K₂)
+    map∂₁ : ConPreorder.Con (CP K₁) → ConPreorder.Con (CP K₂)
     map∂₁ = map∂ hom
 
     mapCode₁ : Codeᵏ K₁ → Codeᵏ K₂
@@ -150,7 +150,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
   _⇒_ : ∀ {K₁ K₂ : Obj} → Hom₁ K₁ K₂ → Hom₁ K₁ K₂ → Set ℓ
   _⇒_ {K₂ = K₂} f g =
     ∀ γ →
-      ConPoset._⊑_ (CP K₂)
+      ConPreorder._⊑_ (CP K₂)
         (decodeᵏ K₂ (Hom₁.mapCode₁ f γ))
         (decodeᵏ K₂ (Hom₁.mapCode₁ g γ))
 
@@ -159,10 +159,10 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
   RefinesDecode = _⇒_
 
   refl⇒ : ∀ {K₁ K₂ : Obj} (f : Hom₁ K₁ K₂) → f ⇒ f
-  refl⇒ {K₂ = K₂} _ γ = ConPoset.refl (CP K₂)
+  refl⇒ {K₂ = K₂} _ γ = ConPreorder.refl (CP K₂)
 
   trans⇒ : ∀ {K₁ K₂ : Obj} {f g h : Hom₁ K₁ K₂} → f ⇒ g → g ⇒ h → f ⇒ h
-  trans⇒ {K₂ = K₂} fg gh γ = ConPoset.trans (CP K₂) (fg γ) (gh γ)
+  trans⇒ {K₂ = K₂} fg gh γ = ConPreorder.trans (CP K₂) (fg γ) (gh γ)
 
   -- Whiskering.
 
@@ -182,7 +182,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
       eqR : decodeᵏ K₃ (Hom₁.mapCode₁ (g' ∘₁ f) γ)
             ≡ decodeᵏ K₃ (Hom₁.mapCode₁ g' (Hom₁.mapCode₁ f γ))
       eqR = cong (decodeᵏ K₃) (mapCode-composeᵏ (Hom₁.hom f) (Hom₁.hom g') γ)
-      step : ConPoset._⊑_ CP₃
+      step : ConPreorder._⊑_ CP₃
               (decodeᵏ K₃ (Hom₁.mapCode₁ g (Hom₁.mapCode₁ f γ)))
               (decodeᵏ K₃ (Hom₁.mapCode₁ g' (Hom₁.mapCode₁ f γ)))
       step = gg' (Hom₁.mapCode₁ f γ)
@@ -216,22 +216,22 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
             ≡ Hom₁.map∂₁ g (decodeᵏ K₂ (Hom₁.mapCode₁ f' γ))
       eqR = map-decodeᵏ (Hom₁.hom g) (Hom₁.mapCode₁ f' γ)
 
-      step₀ : ConPoset._⊑_ CP₃
+      step₀ : ConPreorder._⊑_ CP₃
                 (Hom₁.map∂₁ g (decodeᵏ K₂ (Hom₁.mapCode₁ f γ)))
                 (Hom₁.map∂₁ g (decodeᵏ K₂ (Hom₁.mapCode₁ f' γ)))
       step₀ = Hom₁.mono∂ g (ff' γ)
 
-      step₁ : ConPoset._⊑_ CP₃
+      step₁ : ConPreorder._⊑_ CP₃
                 (decodeᵏ K₃ (Hom₁.mapCode₁ g (Hom₁.mapCode₁ f γ)))
                 (Hom₁.map∂₁ g (decodeᵏ K₂ (Hom₁.mapCode₁ f' γ)))
       step₁ = R.substL (sym eqL) step₀
 
-      step₂ : ConPoset._⊑_ CP₃
+      step₂ : ConPreorder._⊑_ CP₃
                 (decodeᵏ K₃ (Hom₁.mapCode₁ g (Hom₁.mapCode₁ f γ)))
                 (decodeᵏ K₃ (Hom₁.mapCode₁ g (Hom₁.mapCode₁ f' γ)))
       step₂ = R.substR (sym eqR) step₁
 
-      step₃ : ConPoset._⊑_ CP₃
+      step₃ : ConPreorder._⊑_ CP₃
                 (decodeᵏ K₃ (Hom₁.mapCode₁ (g ∘₁ f) γ))
                 (decodeᵏ K₃ (Hom₁.mapCode₁ g (Hom₁.mapCode₁ f' γ)))
       step₃ = R.substL (sym eqCompL) step₂
@@ -266,7 +266,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
     → f ⇒ f' → g ⇒ g' → (g ∘₁ f) ⇒ (g' ∘₁ f')
   _⊙_ {K₃ = K₃} {f = f} {f' = f'} {g = g} {g' = g'} ff' gg' γ =
     let CP₃ = CP K₃ in
-    ConPoset.trans CP₃
+    ConPreorder.trans CP₃
       (whiskerR {g = g} {g' = g'} f gg' γ)
       (whiskerL g' {f = f} {f' = f'} ff' γ)
 
@@ -286,7 +286,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
           (mapCode-idᵏ {K = K₂} (Hom₁.mapCode₁ f γ))
       eqDec = cong (decodeᵏ K₂) eqMap
     in
-    R.substR eqDec (ConPoset.refl CP₂)
+    R.substR eqDec (ConPreorder.refl CP₂)
 
   id-left⇐
     : ∀ {K₁ K₂ : Obj}
@@ -302,7 +302,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
           (mapCode-idᵏ {K = K₂} (Hom₁.mapCode₁ f γ))
       eqDec = cong (decodeᵏ K₂) eqMap
     in
-    R.substR (sym eqDec) (ConPoset.refl CP₂)
+    R.substR (sym eqDec) (ConPreorder.refl CP₂)
 
   id-right⇒
     : ∀ {K₁ K₂ : Obj}
@@ -318,7 +318,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
           (cong (mapCodeᵏ (Hom₁.hom f)) (mapCode-idᵏ {K = K₁} γ))
       eqDec = cong (decodeᵏ K₂) eqMap
     in
-    R.substR eqDec (ConPoset.refl CP₂)
+    R.substR eqDec (ConPreorder.refl CP₂)
 
   id-right⇐
     : ∀ {K₁ K₂ : Obj}
@@ -334,7 +334,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
           (cong (mapCodeᵏ (Hom₁.hom f)) (mapCode-idᵏ {K = K₁} γ))
       eqDec = cong (decodeᵏ K₂) eqMap
     in
-    R.substR (sym eqDec) (ConPoset.refl CP₂)
+    R.substR (sym eqDec) (ConPreorder.refl CP₂)
 
   assoc⇒
     : ∀ {K₁ K₂ K₃ K₄ : Obj}
@@ -365,7 +365,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
       eqMap = trans eqLeft (sym eqRight)
       eqDec = cong (decodeᵏ K₄) eqMap
     in
-    R.substR eqDec (ConPoset.refl CP₄)
+    R.substR eqDec (ConPreorder.refl CP₄)
 
   assoc⇐
     : ∀ {K₁ K₂ K₃ K₄ : Obj}
@@ -396,7 +396,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
       eqMap = trans eqLeft (sym eqRight)
       eqDec = cong (decodeᵏ K₄) eqMap
     in
-    R.substR eqDec (ConPoset.refl CP₄)
+    R.substR eqDec (ConPreorder.refl CP₄)
 
   -- “Homotopy” / observational equivalence: mutual refinement of 2-cells.
 

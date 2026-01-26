@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,10 +10,10 @@ module LogOS.Domain.UniversalIR.Blum where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (⊥; ¬_)
 
-open import Data.Product using (Σ; _,_)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
-open import Data.Maybe using (just; nothing)
+open import LogOS.Prelude.Maybe using (just; nothing)
 
 open import LogOS.Computation.Core using (Computation)
 open import LogOS.Computation.Blum using (Blum; TimeLeSound; semiDomain)

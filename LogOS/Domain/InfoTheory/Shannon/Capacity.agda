@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,15 +9,15 @@ module LogOS.Domain.InfoTheory.Shannon.Capacity where
 
 open import LogOS.Prelude hiding (_+_; _*_)
 
-open import Data.Nat using (ℕ)
-open import Data.Fin using (Fin)
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Fin using (Fin)
+open import LogOS.Prelude.Product using (Σ; _,_)
 
 open import LogOS.Syntax.Prop using (¬_)
 
 open import LogOS.Domain.InfoTheory.Shannon.Facts
 import LogOS.Domain.InfoTheory.Shannon.Core as Core
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- Channel capacity and coding theorem interface (finite case).
 --
@@ -82,11 +82,8 @@ module QuartetCapacity where
     ∀ {m n : ℕ} (K : Core.For.Kernel W.F m n) (P : Core.For.Dist W.F m) →
       I K P ≤ Capacity K
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
+  derive : (A : Assumptions) → Claim A
+  derive A = let module W = With A in W.I≤Capacity
 
-  mkPack : (A : Assumptions) → Pack
-  mkPack A =
-    Q.mkPack
-      (λ A → let module W = With A in W.I≤Capacity)
-      A
+  module Q = AppKit.MakeDerived Assumptions Claim derive
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

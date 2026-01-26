@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -20,7 +20,7 @@ open import LogOS.Syntax.Prop as Prop using (_↔_)
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 
 open import LogOS.Kernel
 open import LogOS.Kernel.LogicKernel as LK
@@ -43,7 +43,7 @@ module KernelTruthLemma
   -- H ↔ ∂ (via `sat-coh`)
   H↔∂
     : ∀ (w : LogOSSignature.Cosp Sig)
-        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
     → HT.HLayer.Sat_H (Kernel.HTruth K) w c
       ↔ Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
   H↔∂ w c = Kernel.sat-coh K w c

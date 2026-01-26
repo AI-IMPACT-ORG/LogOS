@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -30,8 +30,8 @@ record Endo {ℓ : Level}
             : Set (lsuc ℓ) where
   open LogicKernel K
   private
-    Con∂ = ConPoset.Con (BulkBoundary.bnd BB)
-    _≤_  = ConPoset._⊑_ (BulkBoundary.bnd BB)
+    Con∂ = ConPreorder.Con (BulkBoundary.bnd BB)
+    _≤_  = ConPreorder._⊑_ (BulkBoundary.bnd BB)
   field
     fn   : Con∂ → Con∂
     mono : ∀ {x y} → x ≤ y → fn x ≤ fn y
@@ -43,7 +43,7 @@ _≤₂_ : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
        (K : LogicKernel Sig Q) → Endo K → Endo K → Set ℓ
 _≤₂_ {ℓ} {Sig} {Q} K f g = ∀ c →
   let open LogicKernel K in
-  ConPoset._⊑_ (BulkBoundary.bnd BB) (Endo.fn f c) (Endo.fn g c)
+  ConPreorder._⊑_ (BulkBoundary.bnd BB) (Endo.fn f c) (Endo.fn g c)
 
 -- Identity and composition on endomaps.
 
@@ -63,22 +63,22 @@ refl₂ : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
         (K : LogicKernel Sig Q) (f : Endo K) → _≤₂_ K f f
 refl₂ K f = λ _ →
   let open LogicKernel K in
-  ConPoset.refl (BulkBoundary.bnd BB)
+  ConPreorder.refl (BulkBoundary.bnd BB)
 
 trans₂ : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
          (K : LogicKernel Sig Q)
          {f g h : Endo K} → _≤₂_ K f g → _≤₂_ K g h → _≤₂_ K f h
 trans₂ K fg gh = λ c →
   let open LogicKernel K in
-  ConPoset.trans (BulkBoundary.bnd BB) (fg c) (gh c)
+  ConPreorder.trans (BulkBoundary.bnd BB) (fg c) (gh c)
 
 -- Endomaps form a one-object thin 2-category; whiskering is inherited.
 
-EndoPoset
+EndoPreorder
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : LogicKernel Sig Q)
-  → ConPoset (lsuc ℓ)
-EndoPoset {ℓ} K =
+  → ConPreorder (lsuc ℓ)
+EndoPreorder {ℓ} K =
   record
     { Con = Endo K
     ; _⊑_ = λ f g → Lift (lsuc ℓ) (_≤₂_ K f g)
@@ -94,7 +94,7 @@ EndoThin2Cat
 EndoThin2Cat K =
   record
     { Obj = ⊤
-    ; Hom = λ _ _ → EndoPoset K
+    ; Hom = λ _ _ → EndoPreorder K
     ; id  = λ {A} → idEndo K
     ; _∘_ = _∘E_
     ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} fg →

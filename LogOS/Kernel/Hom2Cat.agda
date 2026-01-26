@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -71,9 +71,9 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ; cong-∘₁-≈   to cong-∘₁-≈
       )
 
-  KernelHomPoset
-    : Kernel Sig Q → Kernel Sig Q → ConPoset (lsuc (lsuc ℓ))
-  KernelHomPoset K₁ K₂ =
+  KernelHomPreorder
+    : Kernel Sig Q → Kernel Sig Q → ConPreorder (lsuc (lsuc ℓ))
+  KernelHomPreorder K₁ K₂ =
     record
       { Con = KernelHom₁ K₁ K₂
       ; _⊑_ = λ f g → Lift (lsuc (lsuc ℓ)) (f ⇒ g)
@@ -87,7 +87,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   KernelThin2Cat =
     record
       { Obj = Kernel Sig Q
-      ; Hom = KernelHomPoset
+      ; Hom = KernelHomPreorder
       ; id  = λ {A} → idKernelHom₁ A
       ; _∘_ = _∘₁_
       ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} le →
@@ -124,14 +124,11 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       CP₂ = BulkBoundary.bnd (Kernel.BB K₂)
       Flow₁ = GC.GuardedClosure.Flow (Kernel.GTruth K₁)
       Flow₂ = GC.GuardedClosure.Flow (Kernel.GTruth K₂)
-      Th⋆₁  = GC.GuardedClosure.Th* (Kernel.GTruth K₁)
-      Th⋆₂  = GC.GuardedClosure.Th* (Kernel.GTruth K₂)
     field
       preserves-step : ∀ c →
-        ConPoset._⊑_ CP₂
+        ConPreorder._⊑_ CP₂
           (KernelHom₁.map∂₁ h (Flow₁ c))
           (Flow₂ (KernelHom₁.map∂₁ h c))
-      preserves-Th : ConPoset._⊑_ CP₂ (KernelHom₁.map∂₁ h Th⋆₁) Th⋆₂
 
   open KernelHomFlow₁ public
 
@@ -146,16 +143,12 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       module FH = GC.FlowHom flow-hom
     in
     record
-      { preserves-step = FH.preserves-F
-      ; preserves-Th   = FH.preserves-Th
-      }
+      { preserves-step = FH.preserves-F }
 
   idKernelHomFlow₁ : ∀ (K : Kernel Sig Q) → KernelHomFlow₁ (idKernelHom₁ K)
   idKernelHomFlow₁ K =
     record
-      { preserves-step = λ _ → ConPoset.refl (BulkBoundary.bnd (Kernel.BB K))
-      ; preserves-Th   = ConPoset.refl (BulkBoundary.bnd (Kernel.BB K))
-      }
+      { preserves-step = λ _ → ConPreorder.refl (BulkBoundary.bnd (Kernel.BB K)) }
 
   composeKernelHomFlow₁
     : ∀ {K₁ K₂ K₃ : Kernel Sig Q}
@@ -172,13 +165,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
             step₁ = KernelHomFlow₁.preserves-step ff c
             step₁' = KernelHom₁.mono∂ g step₁
             step₂ = KernelHomFlow₁.preserves-step gg (mapf c)
-          in ConPoset.trans CP₃ step₁' step₂
-      ; preserves-Th =
-          let
-            step₁ = KernelHomFlow₁.preserves-Th ff
-            step₁' = KernelHom₁.mono∂ g step₁
-            step₂ = KernelHomFlow₁.preserves-Th gg
-          in ConPoset.trans CP₃ step₁' step₂
+          in ConPreorder.trans CP₃ step₁' step₂
       }
 
   module FlowSub₁ =

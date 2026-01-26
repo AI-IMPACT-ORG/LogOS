@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Universality.Surface where
 
--- Surface lock for the universality + UniversalIR storyline:
+-- Surface lock for the universality + UniversalIR storyline (executable universal logic):
 -- re-export curated pack entrypoints plus the paper-facing IR/language modules.
 
 -- This surface intentionally keeps the two universality developments namespaced:

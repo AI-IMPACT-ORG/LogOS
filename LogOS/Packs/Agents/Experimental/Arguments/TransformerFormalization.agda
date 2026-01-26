@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,8 @@ module LogOS.Packs.Agents.Experimental.Arguments.TransformerFormalization where
 
 open import LogOS.Prelude
 
-open import Data.List using (List)
-open import Data.Product using (_×_; snd)
+open import LogOS.Prelude.List using (List)
+open import LogOS.Prelude.Product using (_×_; snd)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)

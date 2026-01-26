@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,6 +9,8 @@ module LogOS.Domain.Opacity.NumberTheory.HP.Flow where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_; intro)
+
+open import LogOS.Computation.Core using (iterateStep)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -58,17 +60,13 @@ Flow-fixed↔Op-fixed K HP EF c =
     (λ tf → Flow-fixed→Op-fixed K HP c tf)
     (λ op → Op-fixed→Flow-fixed K HP EF c op)
 
-iter : ∀ {ℓ} {A : Set ℓ} → ℕ → (A → A) → A → A
-iter zero    f x = x
-iter (suc n) f x = iter n f (f x)
-
 intertwine-iter
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K  : Kernel Sig Q)
     (HP : HPInterface K)
   → ∀ n c →
-      HPInterface.embed HP (iter n (Endo.fn (Flow-Endo K)) c)
-      ≡ iter n (HPInterface.Op HP) (HPInterface.embed HP c)
+      HPInterface.embed HP (iterateStep (Endo.fn (Flow-Endo K)) n c)
+      ≡ iterateStep (HPInterface.Op HP) n (HPInterface.embed HP c)
 intertwine-iter K HP zero    c = refl
 intertwine-iter K HP (suc n) c =
   let F = Endo.fn (Flow-Endo K)
@@ -76,7 +74,7 @@ intertwine-iter K HP (suc n) c =
       E = HPInterface.embed HP
   in
   trans (intertwine-iter K HP n (F c))
-       (cong (iter n O) (HPInterface.intertwine HP c))
+       (cong (iterateStep O n) (HPInterface.intertwine HP c))
 
 Opⁿ-fixed→Flowⁿ-fixed
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -84,8 +82,8 @@ Opⁿ-fixed→Flowⁿ-fixed
     (HP : HPInterface K)
     (EF : EmbedFaithful K HP)
   → ∀ n c →
-      iter n (HPInterface.Op HP) (HPInterface.embed HP c) ≡ HPInterface.embed HP c
-      → iter n (Endo.fn (Flow-Endo K)) c ≡ c
+      iterateStep (HPInterface.Op HP) n (HPInterface.embed HP c) ≡ HPInterface.embed HP c
+      → iterateStep (Endo.fn (Flow-Endo K)) n c ≡ c
 Opⁿ-fixed→Flowⁿ-fixed K HP EF n c opⁿ =
   let E = HPInterface.embed HP in
   EmbedFaithful.embed-reflects≡ EF (trans (intertwine-iter K HP n c) opⁿ)
@@ -96,8 +94,8 @@ Flowⁿ-fixed→Opⁿ-fixed
     (K  : Kernel Sig Q)
     (HP : HPInterface K)
   → ∀ n c →
-      iter n (Endo.fn (Flow-Endo K)) c ≡ c
-      → iter n (HPInterface.Op HP) (HPInterface.embed HP c) ≡ HPInterface.embed HP c
+      iterateStep (Endo.fn (Flow-Endo K)) n c ≡ c
+      → iterateStep (HPInterface.Op HP) n (HPInterface.embed HP c) ≡ HPInterface.embed HP c
 Flowⁿ-fixed→Opⁿ-fixed K HP n c tfⁿ =
   let E = HPInterface.embed HP in
   trans (sym (intertwine-iter K HP n c)) (cong E tfⁿ)
@@ -108,8 +106,8 @@ Flowⁿ-fixed↔Opⁿ-fixed
     (HP : HPInterface K)
     (EF : EmbedFaithful K HP)
   → ∀ n c →
-      (iter n (Endo.fn (Flow-Endo K)) c ≡ c)
-      ↔ (iter n (HPInterface.Op HP) (HPInterface.embed HP c) ≡ HPInterface.embed HP c)
+      (iterateStep (Endo.fn (Flow-Endo K)) n c ≡ c)
+      ↔ (iterateStep (HPInterface.Op HP) n (HPInterface.embed HP c) ≡ HPInterface.embed HP c)
 Flowⁿ-fixed↔Opⁿ-fixed K HP EF n c =
   intro
     (λ tfⁿ → Flowⁿ-fixed→Opⁿ-fixed K HP n c tfⁿ)

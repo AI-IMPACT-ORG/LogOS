@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,10 +15,10 @@ open import LogOS.Syntax.Prop as Prop using (_↔_; ObsLeOn)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
 
-open import LogOS.Kernel
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 
 module For
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -38,7 +38,7 @@ module For
     → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) (Kernel.decode K δ)
 
   -- Soundness: refinement implies boundary entailment.
-  sound∂ : ∀ {γ δ} → ConPoset._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ) → Entails∂ γ δ
+  sound∂ : ∀ {γ δ} → ConPreorder._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ) → Entails∂ γ δ
   sound∂ {γ} {δ} le w satB =
     let
       cohγ = Kernel.sat-coh K w (Kernel.decode K γ)
@@ -55,7 +55,7 @@ module For
         → (∀ (w : LogOSSignature.Cosp Sig)
             → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
             → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) d)
-        → ConPoset._⊑_ CP c d
+        → ConPreorder._⊑_ CP c d
 
   open BoundaryAdequacy public
 
@@ -64,14 +64,14 @@ module For
     : BoundaryAdequacy
     → ∀ {γ δ}
     → Entails∂ γ δ
-    → ConPoset._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ)
+    → ConPreorder._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ)
   complete∂ BA ent = BoundaryAdequacy.reflect BA (λ w satB → ent w satB)
 
   complete∂-under = complete∂
 
   sound-complete∂
     : BoundaryAdequacy → ∀ {γ δ}
-    → ConPoset._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ) ↔ Entails∂ γ δ
+    → ConPreorder._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ) ↔ Entails∂ γ δ
   sound-complete∂ BA =
     Prop.intro (sound∂) (complete∂ BA)
 
@@ -99,18 +99,18 @@ module For
             → B w
             → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
             → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) d)
-        → ConPoset._⊑_ CP c d
+        → ConPreorder._⊑_ CP c d
 
   sound∂-budget
     : ∀ {B γ δ}
-    → ConPoset._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ)
+    → ConPreorder._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ)
     → Entails∂-budget B γ δ
   sound∂-budget le w _ satB = sound∂ le w satB
 
   complete∂-budget
     : ∀ {B} → BudgetedAdequacy B
     → ∀ {γ δ} → Entails∂-budget B γ δ
-    → ConPoset._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ)
+    → ConPreorder._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ)
   complete∂-budget BA ent = BudgetedAdequacy.reflect BA (λ w bw satB → ent w bw satB)
 
   complete∂-budget-under = complete∂-budget
@@ -118,7 +118,7 @@ module For
   sound-complete∂-budget
     : ∀ {B} → BudgetedAdequacy B
     → ∀ {γ δ}
-    → ConPoset._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ) ↔ Entails∂-budget B γ δ
+    → ConPreorder._⊑_ CP (Kernel.decode K γ) (Kernel.decode K δ) ↔ Entails∂-budget B γ δ
   sound-complete∂-budget BA =
     Prop.intro (sound∂-budget) (complete∂-budget BA)
 
@@ -133,7 +133,7 @@ module For
   ObsAdequacy =
     ∀ {c d}
     → ObsLeOn (Kernel.Sat_H_bnd K) c d
-    → ConPoset._⊑_ CP c d
+    → ConPreorder._⊑_ CP c d
 
   -- Boundary-observational adequacy restricted to `to∂` (same content as boundary
   -- adequacy, but phrased with ObsLeOn to expose the observer reading).
@@ -142,7 +142,7 @@ module For
   BoundaryObsAdequacy =
     ∀ {c d}
     → ObsLeOn (λ w c' → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c') c d
-    → ConPoset._⊑_ CP c d
+    → ConPreorder._⊑_ CP c d
 
   boundary→obs : BoundaryAdequacy → BoundaryObsAdequacy
   boundary→obs BA ent = BoundaryAdequacy.reflect BA ent

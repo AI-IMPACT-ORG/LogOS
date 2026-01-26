@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,8 +10,9 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.DeepDive.Communication where
 
-open import LogOS.Prelude
-open import LogOS.API.Minimal
+open import LogOS.API.Architecture as Architecture
+open Architecture.Downstream
+open Architecture.Kernels
 open import LogOS.Theorems.Boundary.Communication as Comm
 ```
 
@@ -27,18 +28,26 @@ Code (internal proofs/programs)
   --Interp-->  Form (an external reporting language)
 ```
 
-1. **Kernel-as-process (“decode is a channel”).**
+1. **Kernel-as-process (formal commutation).**
    The kernel internalises an admissible one-step evolution on `Code` as
    `FlowCode = Guard ∘ Body`. The kernel also exposes `decode : Code → Con_bnd`.
    The commuting law is part of the kernel interface:
    `decode (Guard γ) ≡ Flow (decode γ)` and `decode (Body γ) ≡ Body∂ (decode γ)`.
    Together these yield `decode (FlowCode γ) ≡ Flow (Body∂ (decode γ))`.
 
-2. **Boundary semantics (“Form is what a community can read”).**
+   Interpretation (analogy): you can read `decode` as a “channel” from internal
+   code to *communicable boundary meaning*. This does not add semantics: the
+   only literal claim is the commutation law above.
+
+2. **Boundary semantics (formal representation).**
    A `BoundarySemantics` instance chooses an external reporting language `Form`
    and an interpretation `Interp : Con_bnd → Form` together with a satisfaction
-   equivalence `Sat∂≈F`. This turns internal truth into externally checkable
-   statements.
+   equivalence `Sat∂≈F`. This is a **representation claim**: boundary
+   satisfaction and external satisfaction agree up to the provided equivalence.
+
+   Interpretation (analogy): you can read `Form` as “what a community can read”,
+   but the only literal content is the `Sat∂≈F` interface and theorems phrased
+   against it.
 
 If you also want **interop between external boundary logics**, add an import leg:
 
@@ -95,4 +104,6 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
 The central message: the library is designed so that “what can be communicated”
 is explicit (`BoundaryIO`), swappable (`BoundarySemantics`), and stable under
-computation (`FlowCode` commutes with `decode`).
+computation (`FlowCode` commutes with `decode` at one step). Limit/stabilisation
+claims (e.g. `μ Flow`, `Th*`) are separate and require explicit ω‑sup/continuity
+assumptions.

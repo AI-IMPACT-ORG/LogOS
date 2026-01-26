@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,8 +8,8 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.Assumptions.Diagonal where
 
 open import LogOS.Prelude
-open import Data.Product using (Σ; proj₁; proj₂; fst; snd)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; proj₁; proj₂; fst; snd)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -95,7 +95,7 @@ record QuoteSubst⊑ {ℓ}
                    : Set (lsuc ℓ) where
   open Kernel K
   private
-    _⊑_ = ConPoset._⊑_ (BulkBoundary.bnd BB)
+    _⊑_ = ConPreorder._⊑_ (BulkBoundary.bnd BB)
   field
     Code₁         : Set ℓ
     inst          : Code₁ → Code → Code
@@ -113,7 +113,7 @@ record QuoteSubst {ℓ}
                   : Set (lsuc ℓ) where
   open Kernel K
   private
-    _⊑_ = ConPoset._⊑_ (BulkBoundary.bnd BB)
+    _⊑_ = ConPreorder._⊑_ (BulkBoundary.bnd BB)
   field
     po   : BulkBoundaryPO BB
     core : QuoteSubst⊑ K
@@ -169,10 +169,10 @@ lawvereFix
   → InternalHomWitness K
   → (f : Kernel.Code K → Kernel.Code K)
   → Σ (Kernel.Code K) (λ s →
-      ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+      ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
         (Kernel.decode K s) (Kernel.decode K (f s))
       ×
-      ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+      ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
         (Kernel.decode K (f s)) (Kernel.decode K s))
 lawvereFix {K = K} QS f =
   let
@@ -190,8 +190,8 @@ lawvereFix {K = K} QS f =
     reprL = fst (repr s)
     reprR = snd (repr s)
 
-    left  = ConPoset.trans (BulkBoundary.bnd BB) selfL reprL
-    right = ConPoset.trans (BulkBoundary.bnd BB) reprR selfR
+    left  = ConPreorder.trans (BulkBoundary.bnd BB) selfL reprL
+    right = ConPreorder.trans (BulkBoundary.bnd BB) reprR selfR
   in
   s , (left , right)
 
@@ -238,7 +238,7 @@ lawvereDiag-⊑
     {K : Kernel Sig Q}
   → (QS : InternalHomWitness K)
   → (f  : Kernel.Code K → Kernel.Code K)
-  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
       (Kernel.decode K (lawvereDiag QS f))
       (Kernel.decode K (f (lawvereDiag QS f)))
 lawvereDiag-⊑ QS f = fst (proj₂ (lawvereFix QS f))
@@ -248,17 +248,17 @@ lawvereDiag-⊑ QS f = fst (proj₂ (lawvereFix QS f))
     {K : Kernel Sig Q}
   → (QS : InternalHomWitness K)
   → (f  : Kernel.Code K → Kernel.Code K)
-  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
       (Kernel.decode K (f (lawvereDiag QS f)))
       (Kernel.decode K (lawvereDiag QS f))
 ⊑-lawvereDiag QS f = snd (proj₂ (lawvereFix QS f))
 
--- A thin reflection principle: decode-equality implies provability of an implication
+-- A thin reflection principle: decoded “sameness” implies provability of an implication
 -- built with the object-level Imp constructor. This stays model-local.
 --
 -- Two variants are provided:
 -- - `DecodeImp⊑`: from boundary entailment/refinement.
--- - `DecodeImp` : from decode-level equality.
+-- - `DecodeImp` : from strict decode equality (`≡`).
 
 record DecodeImp⊑ {ℓ}
                   {Sig : LogOSSignature ℓ}
@@ -271,7 +271,7 @@ record DecodeImp⊑ {ℓ}
   open Provability Pr renaming (Prov to ⊢)
   open ProvabilityOps Op
   private
-    _⊑_ = ConPoset._⊑_ (BulkBoundary.bnd BB)
+    _⊑_ = ConPreorder._⊑_ (BulkBoundary.bnd BB)
   field
     from-decode⊑→imp : ∀ {φ ψ} → decode φ ⊑ decode ψ → ⊢ (Imp φ ψ)
 

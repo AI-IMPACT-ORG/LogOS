@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,23 +9,10 @@ module LogOS.Domain.Opacity.Applications.GRH where
 
 -- GRH as an application of the Opacity strand.
 --
--- This namespace is intentionally application-facing: it provides conditional
--- theorems that close the GRH/RH claim once you supply:
--- - an analytic criterion (e.g. Weil’s criterion, packaged as a probe lemma),
--- - and an explicit observability/positivity interface.
+-- This is a namespaced index surface. For curated entrypoints, prefer the pack
+-- surface `LogOS.Packs.Opacity.Experimental.Applications.GRH`.
 --
 -- The Opacity strand itself (ledgers, observability, opacity/barrier theorems)
 -- lives under `LogOS.Domain.Opacity.*`.
 
-open import LogOS.Domain.Opacity.Applications.GRH.HPGRHPack public
-open import LogOS.Domain.Opacity.Applications.GRH.HPGRHLimit public
-open import LogOS.Domain.Opacity.Applications.GRH.HPGRHLimitOmegaSup public
-
-open import LogOS.Domain.Opacity.Applications.GRH.ZetaBridge public
-open import LogOS.Domain.Opacity.Applications.GRH.ZetaHPIdentification public
-open import LogOS.Domain.Opacity.Applications.GRH.DiagonalToHPBridge public
-open import LogOS.Domain.Opacity.Applications.GRH.DiagonalAdapter public
-open import LogOS.Domain.Opacity.Applications.GRH.DiagonalNTemplate public
-
-open import LogOS.Domain.Opacity.Applications.GRH.Systems public
-open import LogOS.Domain.Opacity.Applications.GRH.ZFCBridge public
+open import LogOS.Domain.Opacity.Applications.GRH.All public

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,8 @@ module LogOS.QAdapters.QNatMul where
 
 open import LogOS.Prelude
 
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.NatOrder using
+open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude.NatOrder using
   ( _≤ℕ_
   ; z≤n
   ; ≤ℕ-refl
@@ -19,11 +19,11 @@ open import Data.NatOrder using
   ; not≤→≥
   ; antisym≤ℕ
   )
-open import Data.NatExtra using (_⊔ℕ_; max-left; max-right; ⊔ℕ-least; +-assoc; +-zeroˡ; +-zeroʳ)
+open import LogOS.Prelude.NatExtra using (_⊔ℕ_; max-left; max-right; ⊔ℕ-least; +-assoc; +-zeroˡ; +-zeroʳ)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.ScaleOps using (ScaleOps)
+open import LogOS.Minimal.ScaleOps using (ScaleOps; ScaleOpsLaws; BudgetOps)
 
-open import Data.NatLog2 using
+open import LogOS.Prelude.NatLog2 using
   ( one
   ; plusR-zeroˡ
   ; plusR-sucˡ
@@ -35,6 +35,7 @@ open import Data.NatLog2 using
   ; exp₂
   ; exp₂-+
   ; log₂
+  ; log₂-mono
   )
 
 -- Max-choice lemmas (total order).
@@ -111,3 +112,9 @@ QNatMul = record
 -- Operational view: treat multiplicative scales as log₂ step budgets.
 scaleOps : ScaleOps QNatMul
 scaleOps = record { budget = log₂ ; steps = λ n → n }
+
+scaleOpsLaws : ScaleOpsLaws QNatMul scaleOps
+scaleOpsLaws = record { steps-budget-mono = log₂-mono }
+
+budgetOps : BudgetOps QNatMul
+budgetOps = record { Ops = scaleOps ; laws = scaleOpsLaws }

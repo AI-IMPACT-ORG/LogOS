@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,9 +14,14 @@ open import LogOS.Prelude
 -- - heterogeneous wiring via satisfaction morphisms (`SatMor`)
 -- - the kernel tensor/endomap DSL for compositional wiring
 
-open import LogOS.Boundary.MultiIO public
-open import LogOS.Kernel.LogicKernel.TensorDSL public
-open import LogOS.Packs.Agents.Networks.Hetero public
+module Boundary where
+  open import LogOS.Boundary.MultiIO public
+
+module TensorDSL where
+  open import LogOS.Kernel.LogicKernel.TensorDSL public
+
+module Hetero where
+  open import LogOS.Packs.Agents.Networks.Hetero public
 
 module NetworkAgent where
   open import LogOS.Packs.Agents.Networks.NetworkAgent public

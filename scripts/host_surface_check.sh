@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: an Agda research library for foundational logic system architecture.
+# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -19,13 +19,13 @@ cd "${LIB_ROOT}"
 # builtins / primitive universe machinery. Everything else should depend on
 # these wrappers instead, making the library easier to port to other hosts.
 HOST_SURFACE_FILES=(
-  "Host/Level.agda"
-  "Data/Nat.agda"
-  "Data/Bool.agda"
-  "Data/List.agda"
-  "Data/Maybe.agda"
-  "Data/String.agda"
-  "Data/Relation/Binary/PropositionalEquality.agda"
+  "LogOS/Host/Level.agda"
+  "LogOS/Host/Nat.agda"
+  "LogOS/Host/Bool.agda"
+  "LogOS/Host/List.agda"
+  "LogOS/Host/Maybe.agda"
+  "LogOS/Host/String.agda"
+  "LogOS/Host/Relation/Binary/PropositionalEquality.agda"
 )
 
 filter_host_surface() {
@@ -70,7 +70,7 @@ scan_imports() {
 }
 
 # Match only actual import lines to avoid comments/documentation.
-HOST_IMPORTS_PATTERN='^[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+Agda\\.(Builtin\\.|Primitive\\b)'
+HOST_IMPORTS_PATTERN='^[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+Agda\.(Builtin\.|Primitive)'
 
 bad_imports="$(scan_imports "${HOST_IMPORTS_PATTERN}" | filter_host_surface)"
 if [[ -n "${bad_imports}" ]]; then

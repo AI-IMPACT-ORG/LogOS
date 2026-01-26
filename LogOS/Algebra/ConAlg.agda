@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,20 +10,20 @@ module LogOS.Algebra.ConAlg where
 open import LogOS.Prelude
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Adjunction
-open import Data.Relation.Binary.PropositionalEquality using (_≡_; refl; trans; cong; cong₂)
+open import LogOS.Prelude.Relation.Binary.PropositionalEquality using (_≡_; refl; trans; cong; cong₂)
 
--- Constraint algebra: bulk/boundary posets + monoids + lax monoidal adjunction
+-- Constraint algebra: bulk/boundary preorders + monoids + lax monoidal adjunction
 
 record ConAlg {ℓ : Level} : Set (lsuc (lsuc ℓ)) where
   field
     BB    : BulkBoundary ℓ
-    MBulk : MonoidalPoset (BulkBoundary.bulk BB)
-    MBnd  : MonoidalPoset (BulkBoundary.bnd  BB)
+    MBulk : MonoidalOps (BulkBoundary.bulk BB)
+    MBnd  : MonoidalOps (BulkBoundary.bnd  BB)
     Holo  : LaxMonoidalAdjunction BB MBulk MBnd
 
   open BulkBoundary BB public
-  open MonoidalPoset MBulk public renaming (_⊗_ to _⊗b_; I to Ib)
-  open MonoidalPoset MBnd  public renaming (_⊗_ to _⊗∂_; I to I∂)
+  open MonoidalOps MBulk public renaming (_⊗_ to _⊗b_; I to Ib)
+  open MonoidalOps MBnd  public renaming (_⊗_ to _⊗∂_; I to I∂)
   open LaxMonoidalAdjunction Holo public
 
 -- Homomorphism of constraint algebras (monotone, operation-preserving up to ≤)

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,7 +17,7 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (BulkBoundary)
 import LogOS.Minimal.Con.Rewrite as ConRewrite
 
-open import LogOS.Kernel
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 import LogOS.Theorems.Meta.Assumptions.Core as Assump
 open import LogOS.Theorems.Meta.Base using (NonTrivialC)
 import LogOS.Theorems.Meta.CHL.Core as CHL
@@ -44,7 +44,7 @@ module For
   prov-cut : ∀ {φ ψ} → Prov φ → Refines φ ψ → Prov ψ
   prov-cut = cut-refines
 
-  -- FlowCode (Box) preserves provability using the guarded fixed point.
+  -- Box preserves provability using the distinguished stable truth witness.
   prov-box : ∀ {φ} → Prov φ → Prov (Box φ)
   prov-box {φ} pr =
     let
@@ -64,7 +64,7 @@ module For
       ; nontriv = nt
       }
 
-  -- ProvabilityOps with Box fixed to FlowCode, Imp left as a parameter.
+  -- ProvabilityOps with Box fixed to the stable closure modality, Imp left as a parameter.
   mkOps
     : (Imp : Ty → Ty → Ty)
     → Assump.ProvabilityOps K
@@ -75,7 +75,7 @@ module For
       }
 
   -- Minimal Hilbert-style system for the CHL provability predicate.
-  -- Imp is provided externally; Box is fixed to FlowCode.
+  -- Imp is provided externally; Box is fixed to the stable closure modality.
 
   record Hilbert : Set (lsuc ℓ) where
     field
@@ -97,7 +97,7 @@ module For
       ; impRule = rules
       }
 
-  -- Modal rules induced by FlowCode on provability.
+  -- Modal rules induced by Box on provability.
   record ModalRules : Set (lsuc ℓ) where
     field
       Necessitation : ∀ {φ} → Prov φ → Prov (Box φ)

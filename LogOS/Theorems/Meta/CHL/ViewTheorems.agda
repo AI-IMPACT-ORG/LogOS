@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,14 +15,15 @@ open import LogOS.Syntax.Prop as Prop using (_↔_)
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Base.Signature.Hom using (SigHom)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary; ≡→≈CP)
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Kernel
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 
 import LogOS.Algebra.Quantale as Quantale
 import LogOS.Algebra.ConAlg as ConAlg
 import LogOS.Free.ConstraintsOverSig as ConOverSig
 import LogOS.Kernel.Boundary as KBoundary
+import LogOS.Kernel.Core as KCore
 import LogOS.Kernel.LogicKernel as LK
 import LogOS.Theorems.Meta.CHL.Core as Core
 import LogOS.Theorems.Meta.CHL.Category as Category
@@ -142,7 +143,7 @@ module For
 
     coh-H∂
       : ∀ (w : LogOSSignature.Cosp Sig)
-        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
       → Prop._↔_
           (HT.HLayer.Sat_H (Kernel.HTruth K) w c)
           (Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c)
@@ -188,16 +189,15 @@ module For
         coh₁ = Kernel.coh-LH K w φ
         coh₂ = Kernel.sat-coh K w (Kernel.TransH K φ)
         eq   = Def.FormulaType-decode φ
+        eq≈  = ≡→≈CP {CP = BulkBoundary.bnd (Kernel.BB K)} eq
         rew  : Prop._↔_
                  (Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) (Kernel.TransH K φ))
                  (Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w)
                    (C.denote (Def.FormulaType φ)))
         rew =
           Prop.intro
-            (λ sat →
-              subst (λ c → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c) (sym eq) sat)
-            (λ sat →
-              subst (λ c → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c) eq sat)
+            (λ sat → KCore.Sat_H_bnd-mono (Kernel.shape K) (snd eq≈) sat)
+            (λ sat → KCore.Sat_H_bnd-mono (Kernel.shape K) (fst eq≈) sat)
       in
       Prop.↔-trans coh₁ (Prop.↔-trans coh₂ rew)
 
@@ -206,6 +206,16 @@ module For
     CodeThinCat = Cat.CodeThinCat
     BoxFunctor = Cat.BoxFunctor
     Kernel2Cat = K2.KernelRef2Cat
+
+    -- Optional strengthening: if refinement proofs are thin/proof-irrelevant,
+    -- the usual category/functor laws become available (and are explicit).
+    ThinHom = Category.ThinHom
+    ThinCatLaws = Category.ThinCatLaws
+    EndoFunctorLaws = Category.EndoFunctorLaws
+
+    ThinRefines = Cat.ThinRefines
+    codeCat-laws = Cat.codeCat-laws
+    boxFunctor-laws = Cat.boxFunctor-laws
 
     Port2Cat
       : ∀ {ℓForm}
@@ -258,17 +268,24 @@ module For
       -- (“Safe reflection (literature-aligned)” section).
       -- Semantically polymorphic safety (generic observer core).
       open ObsCore public
-        using (SafeAdmissible)
+        using (SafeAdmissible; SafeAdmissible≈)
         renaming
-          ( Safe⋆           to Safe⋆-generic
-          ; safe⋆-sound     to safe⋆-sound-generic
-          ; safe⋆-ext       to safe⋆-ext-generic
-          ; safe⋆-stable    to safe⋆-stable-generic
-          ; safe⋆-admissible to safe⋆-admissible-generic
-          ; safe⋆-largest   to safe⋆-largest-generic
+          ( Safe⋆            to Safe⋆≡-generic
+          ; safe⋆-sound      to safe⋆≡-sound-generic
+          ; safe⋆-ext        to safe⋆≡-ext-generic
+          ; safe⋆-stable     to safe⋆≡-stable-generic
+          ; safe⋆-admissible to safe⋆≡-admissible-generic
+          ; safe⋆-largest    to safe⋆≡-largest-generic
+
+          ; Safe⋆≈           to Safe⋆-generic
+          ; safe⋆≈-sound     to safe⋆-sound-generic
+          ; safe⋆≈-ext       to safe⋆-ext-generic
+          ; safe⋆≈-stable    to safe⋆-stable-generic
+          ; safe⋆≈-admissible to safe⋆-admissible-generic
+          ; safe⋆≈-largest   to safe⋆-largest-generic
           )
 
-      -- Kernel-specific safe reflection (FlowCode-stable communicable truth).
+      -- Kernel-specific safe reflection (closure-stable communicable truth).
       open Comm public
         using (SafeReflection)
         renaming

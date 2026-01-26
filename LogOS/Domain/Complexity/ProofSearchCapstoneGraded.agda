@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,8 +10,8 @@ module LogOS.Domain.Complexity.ProofSearchCapstoneGraded where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_; _↔_)
 
-open import Data.Nat using (ℕ)
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Domain.Complexity.Poly using (PolyPred)

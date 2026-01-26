@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,16 +11,16 @@ module LogOS.Domain.InfoTheory.ObserverDPI where
 
 open import LogOS.Prelude
 
-open import LogOS.Minimal.Con using (ConPoset)
+open import LogOS.Minimal.Con using (ConPreorder)
 import LogOS.Domain.Complexity.DataProcessingInequality as DPI
 
 record ObserverChannel
   {ℓObs ℓI : Level}
   (Obs : Set ℓObs)
-  (IP  : ConPoset ℓI)
-  (info : Obs → ConPoset.Con IP)
+  (IP  : ConPreorder ℓI)
+  (info : Obs → ConPreorder.Con IP)
   : Set (lsuc (ℓObs ⊔ ℓI)) where
-  open ConPoset IP
+  open ConPreorder IP
   field
     run : Obs → Obs
     nonincreasing : ∀ o → _⊑_ (info (run o)) (info o)
@@ -28,11 +28,11 @@ record ObserverChannel
 module AsDPI
   {ℓObs ℓI : Level}
   {Obs : Set ℓObs}
-  (IP : ConPoset ℓI)
-  (info : Obs → ConPoset.Con IP)
+  (IP : ConPreorder ℓI)
+  (info : Obs → ConPreorder.Con IP)
   where
 
-  open ConPoset IP
+  open ConPreorder IP
 
   channels : DPI.ChannelFamily Obs
   channels =

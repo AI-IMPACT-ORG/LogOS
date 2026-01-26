@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,11 +8,11 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.Assumptions.Core where
 
 open import LogOS.Prelude
-open import Data.Product using (Σ)
+open import LogOS.Prelude.Product using (Σ)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Kernel
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 open import LogOS.Minimal.Con
 open import LogOS.Theorems.Meta.Base using (NonTrivialC)
 import LogOS.Theorems.Meta.ObserverCore as ObsCore
@@ -33,6 +33,52 @@ DecodeExtensional
 DecodeExtensional K P =
   ObsCore.DecodeExtensional (Kernel.decode K) P
 
+DecodeExtensional≈
+  : ∀ {ℓ ℓP} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (P : Kernel.Code K → Set ℓP)
+  → Set (ℓ ⊔ ℓP)
+-- Stronger, preorder-safe variant: `P` is insensitive to code representation
+-- up to decoded observational equality (mutual refinement in the boundary preorder).
+DecodeExtensional≈ K P =
+  ObsCore.DecodeExtensional≈ (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K) P
+
+DecodeExtensionalLike
+  : ∀ {ℓ ℓP} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : KernelLike Sig Q)
+    (P : KernelLike.Code K → Set ℓP)
+  → Set (ℓ ⊔ ℓP)
+-- `DecodeExtensionalLike K P` is the same predicate-compatibility condition,
+-- but only assumes the kernel *shape* (`KernelLike`), not guarded truth.
+DecodeExtensionalLike K P =
+  ObsCore.DecodeExtensional (KernelLike.decode K) P
+
+DecodeExtensionalLike≈
+  : ∀ {ℓ ℓP} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : KernelLike Sig Q)
+    (P : KernelLike.Code K → Set ℓP)
+  → Set (ℓ ⊔ ℓP)
+DecodeExtensionalLike≈ K P =
+  ObsCore.DecodeExtensional≈ (BulkBoundary.bnd (KernelLike.BB K)) (KernelLike.decode K) P
+
+DecodeExtensional≈→DecodeExtensional
+  : ∀ {ℓ ℓP} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+    {P : Kernel.Code K → Set ℓP}
+  → DecodeExtensional≈ K P
+  → DecodeExtensional K P
+DecodeExtensional≈→DecodeExtensional {K = K} {P = P} ext≈ γ₁ γ₂ eq =
+  ext≈ γ₁ γ₂ (≡→≈CP {CP = BulkBoundary.bnd (Kernel.BB K)} eq)
+
+DecodeExtensionalLike≈→DecodeExtensionalLike
+  : ∀ {ℓ ℓP} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : KernelLike Sig Q}
+    {P : KernelLike.Code K → Set ℓP}
+  → DecodeExtensionalLike≈ K P
+  → DecodeExtensionalLike K P
+DecodeExtensionalLike≈→DecodeExtensionalLike {K = K} {P = P} ext≈ γ₁ γ₂ eq =
+  ext≈ γ₁ γ₂ (≡→≈CP {CP = BulkBoundary.bnd (KernelLike.BB K)} eq)
+
 DecodeExtensionalFn
   : ∀ {ℓ ℓX} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
@@ -42,6 +88,60 @@ DecodeExtensionalFn
 -- Function-specialised variant: `f` respects decoded meaning.
 DecodeExtensionalFn K f =
   ∀ γ₁ γ₂ → Kernel.decode K γ₁ ≡ Kernel.decode K γ₂ → f γ₁ ≡ f γ₂
+
+DecodeExtensionalFn≈
+  : ∀ {ℓ ℓX} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    {X : Set ℓX}
+    (f : Kernel.Code K → X)
+  → Set (ℓ ⊔ ℓX)
+-- Preorder-safe variant: `f` respects decoded observational equality (mutual refinement).
+DecodeExtensionalFn≈ K f =
+  ∀ γ₁ γ₂
+  → _≈CP_ (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K γ₁) (Kernel.decode K γ₂)
+  → f γ₁ ≡ f γ₂
+
+DecodeExtensionalFn≈→DecodeExtensionalFn
+  : ∀ {ℓ ℓX} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : Kernel Sig Q}
+    {X : Set ℓX}
+    {f : Kernel.Code K → X}
+  → DecodeExtensionalFn≈ K f
+  → DecodeExtensionalFn K f
+DecodeExtensionalFn≈→DecodeExtensionalFn {K = K} ext≈ γ₁ γ₂ eq =
+  ext≈ γ₁ γ₂ (≡→≈CP {CP = BulkBoundary.bnd (Kernel.BB K)} eq)
+
+DecodeExtensionalLikeFn
+  : ∀ {ℓ ℓX} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : KernelLike Sig Q)
+    {X : Set ℓX}
+    (f : KernelLike.Code K → X)
+  → Set (ℓ ⊔ ℓX)
+DecodeExtensionalLikeFn K f =
+  ∀ γ₁ γ₂ → KernelLike.decode K γ₁ ≡ KernelLike.decode K γ₂ → f γ₁ ≡ f γ₂
+
+DecodeExtensionalLikeFn≈
+  : ∀ {ℓ ℓX} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : KernelLike Sig Q)
+    {X : Set ℓX}
+    (f : KernelLike.Code K → X)
+  → Set (ℓ ⊔ ℓX)
+DecodeExtensionalLikeFn≈ K f =
+  ∀ γ₁ γ₂
+  → _≈CP_ (BulkBoundary.bnd (KernelLike.BB K))
+          (KernelLike.decode K γ₁)
+          (KernelLike.decode K γ₂)
+  → f γ₁ ≡ f γ₂
+
+DecodeExtensionalLikeFn≈→DecodeExtensionalLikeFn
+  : ∀ {ℓ ℓX} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {K : KernelLike Sig Q}
+    {X : Set ℓX}
+    {f : KernelLike.Code K → X}
+  → DecodeExtensionalLikeFn≈ K f
+  → DecodeExtensionalLikeFn K f
+DecodeExtensionalLikeFn≈→DecodeExtensionalLikeFn {K = K} ext≈ γ₁ γ₂ eq =
+  ext≈ γ₁ γ₂ (≡→≈CP {CP = BulkBoundary.bnd (KernelLike.BB K)} eq)
 
 -- Kernel-independent provability scaffolding (reused by Löb/Gödel core).
 
@@ -79,8 +179,8 @@ record BoundaryFix {ℓ}
   open Kernel K
   private
     CP   = BulkBoundary.bnd BB
-    Con∂ = ConPoset.Con CP
-    _⊑_  = ConPoset._⊑_ CP
+    Con∂ = ConPreorder.Con CP
+    _⊑_  = ConPreorder._⊑_ CP
 
   -- Textbook side-condition for fixed-point theorems (Knaster–Tarski / Scott).
   Mono : (Con∂ → Con∂) → Set ℓ

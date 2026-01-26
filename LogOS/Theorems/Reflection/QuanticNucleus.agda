@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Theorems.Reflection.QuanticNucleus where
 
 open import LogOS.Prelude hiding (refl; trans) renaming (_⊔_ to _⊔ℓ_)
 open import LogOS.Algebra.Quantale public
-open import LogOS.Minimal.Con using (ConPoset; MonoOn)
+open import LogOS.Minimal.Con using (ConPreorder; MonoOn)
 
 record Nucleus {ℓ : Level} (Q : Quantale {ℓ}) : Set (lsuc ℓ) where
   open Quantale Q
@@ -18,8 +18,8 @@ record Nucleus {ℓ : Level} (Q : Quantale {ℓ}) : Set (lsuc ℓ) where
   field
     j         : Quantale.Con Q → Quantale.Con Q
     mono      : MonoOn CPQ j
-    infl      : ∀ (c : Quantale.Con Q) → ConPoset._⊑_ CPQ c (j c)
-    idemp-lax : ∀ (c : Quantale.Con Q) → ConPoset._⊑_ CPQ (j (j c)) (j c)
+    infl      : ∀ (c : Quantale.Con Q) → ConPreorder._⊑_ CPQ c (j c)
+    idemp-lax : ∀ (c : Quantale.Con Q) → ConPreorder._⊑_ CPQ (j (j c)) (j c)
     join-pres
       : ∀ (a b : Quantale.Con Q)
       → Quantale._≈_ Q (j (a ⊔Q b)) (j a ⊔Q j b)
@@ -33,7 +33,7 @@ record Fixed {ℓ : Level} {Q : Quantale {ℓ}} (N : Nucleus Q) : Set ℓ where
   open Quantale Q
   field
     val   : Quantale.Con Q
-    fixed : ConPoset._⊑_ (Quantale.CP Q) (j N val) val
+    fixed : ConPreorder._⊑_ (Quantale.CP Q) (j N val) val
 
 open Fixed public
 
@@ -42,14 +42,14 @@ quotient
   → Quantale.Con Q → Fixed N
 quotient N c = record { val = j N c ; fixed = idemp-lax N c }
 
-fixedConPoset
+fixedConPreorder
   : ∀ {ℓ} {Q : Quantale {ℓ}} (N : Nucleus Q)
-  → ConPoset ℓ
-fixedConPoset {Q = Q} N = record
+  → ConPreorder ℓ
+fixedConPreorder {Q = Q} N = record
   { Con  = Fixed N
-  ; _⊑_  = λ x y → ConPoset._⊑_ (Quantale.CP Q) (val x) (val y)
-  ; refl = ConPoset.refl (Quantale.CP Q)
-  ; trans = ConPoset.trans (Quantale.CP Q)
+  ; _⊑_  = λ x y → ConPreorder._⊑_ (Quantale.CP Q) (val x) (val y)
+  ; refl = ConPreorder.refl (Quantale.CP Q)
+  ; trans = ConPreorder.trans (Quantale.CP Q)
   }
 
 fixedQuantale
@@ -57,7 +57,7 @@ fixedQuantale
   → Quantale {ℓ}
 fixedQuantale {Q = Q} N =
   record
-    { CP = fixedConPoset N
+    { CP = fixedConPreorder N
     ; _⊔_ = λ x y → record
         { val = Quantale._⊔_ Q (val x) (val y)
         ; fixed =
@@ -72,14 +72,14 @@ fixedQuantale {Q = Q} N =
                   {d = val y}
                   (fixed x)
                   (fixed y)
-            in ConPoset.trans (Quantale.CP Q) step₁ step₂
+            in ConPreorder.trans (Quantale.CP Q) step₁ step₂
         }
     ; ⊥ = quotient N (Quantale.⊥ Q)
     ; ⊥-least = λ x →
         let
           step₁ = mono N (Quantale.⊥-least Q (val x))
           step₂ = fixed x
-        in ConPoset.trans (Quantale.CP Q) step₁ step₂
+        in ConPreorder.trans (Quantale.CP Q) step₁ step₂
     ; ⊔-ub₁ = λ x y → Quantale.⊔-ub₁ Q (val x) (val y)
     ; ⊔-ub₂ = λ x y → Quantale.⊔-ub₂ Q (val x) (val y)
     ; ⊔-least = λ {x} {y} {z} x≤z y≤z → Quantale.⊔-least Q x≤z y≤z
@@ -89,16 +89,16 @@ fixedQuantale {Q = Q} N =
             let
               step₁ = fst (mul-pres N (val x) (val y))
               step₂ = Quantale.·-mono Q (fixed x) (fixed y)
-            in ConPoset.trans (Quantale.CP Q) step₁ step₂
+            in ConPreorder.trans (Quantale.CP Q) step₁ step₂
         }
     ; e = quotient N (Quantale.e Q)
     ; ·-mono = λ {x} {y} {z} {w} x≤y z≤w → Quantale.·-mono Q x≤y z≤w
     ; ·-assoc = λ x y z → Quantale.·-assoc Q (val x) (val y) (val z)
     ; ·-idl = λ x →
         let
-            open ConPoset (Quantale.CP Q)
+            open ConPreorder (Quantale.CP Q)
             eQ = Quantale.e Q
-            step₁ : ConPoset._⊑_ (Quantale.CP Q) (Quantale._·_ Q (j N eQ) (val x)) (val x)
+            step₁ : ConPreorder._⊑_ (Quantale.CP Q) (Quantale._·_ Q (j N eQ) (val x)) (val x)
             step₁ =
               trans
                 (Quantale.·-mono Q refl (infl N (val x)))
@@ -107,7 +107,7 @@ fixedQuantale {Q = Q} N =
                   (trans
                     (mono N (fst (Quantale.·-idl Q (val x))))
                     (fixed x)))
-            step₂ : ConPoset._⊑_ (Quantale.CP Q) (val x) (Quantale._·_ Q (j N eQ) (val x))
+            step₂ : ConPreorder._⊑_ (Quantale.CP Q) (val x) (Quantale._·_ Q (j N eQ) (val x))
             step₂ =
               trans
                 (infl N (val x))
@@ -119,9 +119,9 @@ fixedQuantale {Q = Q} N =
         in step₁ , step₂
     ; ·-idr = λ x →
         let
-            open ConPoset (Quantale.CP Q)
+            open ConPreorder (Quantale.CP Q)
             eQ = Quantale.e Q
-            step₁ : ConPoset._⊑_ (Quantale.CP Q) (Quantale._·_ Q (val x) (j N eQ)) (val x)
+            step₁ : ConPreorder._⊑_ (Quantale.CP Q) (Quantale._·_ Q (val x) (j N eQ)) (val x)
             step₁ =
               trans
                 (Quantale.·-mono Q (infl N (val x)) refl)
@@ -130,7 +130,7 @@ fixedQuantale {Q = Q} N =
                   (trans
                     (mono N (fst (Quantale.·-idr Q (val x))))
                     (fixed x)))
-            step₂ : ConPoset._⊑_ (Quantale.CP Q) (val x) (Quantale._·_ Q (val x) (j N eQ))
+            step₂ : ConPreorder._⊑_ (Quantale.CP Q) (val x) (Quantale._·_ Q (val x) (j N eQ))
             step₂ =
               trans
                 (infl N (val x))
@@ -247,6 +247,6 @@ factoriseMor-unique {Q = Q} N {R = R} f stable g g∘q≈f x =
     gq≈f = g∘q≈f (val x)
 
   in
-  (ConPoset.trans (Qr.CP) gx≤ (fst gq≈f))
+  (ConPreorder.trans (Qr.CP) gx≤ (fst gq≈f))
   ,
-  (ConPoset.trans (Qr.CP) (snd gq≈f) gx≥)
+  (ConPreorder.trans (Qr.CP) (snd gq≈f) gx≥)

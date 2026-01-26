@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,10 +11,12 @@ open import LogOS.Prelude
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
+open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
+open import LogOS.Prelude.Product using (_×_; _,_; fst; snd; proj₁; proj₂)
 
 import LogOS.Theorems.Meta.TruthPositivity as TP
 open TP public using (TruthPositivity)
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 -- A “Weil criterion / explicit-formula” surface, phrased against an abstract
 -- spectral adapter RS and an observer-facing positivity interface TPo.
@@ -31,8 +33,19 @@ record WeilCriterion {ℓT ℓW ℓObs : Level}
   open TP.TruthPositivity TPo
   field
     probe : Spectral → Test
-    probe-observable : ∀ s → NontrivialZero s → Observable (probe s)
-    probe-pos→OnLine : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
+    probe-observable-ref : SatRefinement₀ Spectral
+                            (λ _ s → NontrivialZero s)
+                            (λ _ s → Observable (probe s))
+    probe-pos-ref : SatRefinement₀ Spectral
+                     (λ _ s → NontrivialZero s × W-pos (probe s))
+                     (λ _ s → OnLine s)
+
+  probe-observable : ∀ s → NontrivialZero s → Observable (probe s)
+  probe-observable s nz = sat-→₀ probe-observable-ref s nz
+
+  probe-pos→OnLine : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
+  probe-pos→OnLine s nz wp =
+    sat-→₀ probe-pos-ref s (nz , wp)
 
 record WeilCriterionWeak {ℓT ℓW ℓObs : Level}
                          (RS  : RiemannSpectral)
@@ -42,7 +55,13 @@ record WeilCriterionWeak {ℓT ℓW ℓObs : Level}
   open TP.TruthPositivity TPo
   field
     probe : Spectral → Test
-    probe-pos→OnLine : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
+    probe-pos-ref : SatRefinement₀ Spectral
+                     (λ _ s → NontrivialZero s × W-pos (probe s))
+                     (λ _ s → OnLine s)
+
+  probe-pos→OnLine : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
+  probe-pos→OnLine s nz wp =
+    sat-→₀ probe-pos-ref s (nz , wp)
 
 -- A decomposed (“more manageable”) variant: factor `probe-pos→OnLine` through an
 -- intermediate spectral predicate `Mid`. This is useful when the analytic
@@ -59,8 +78,14 @@ record WeilCriterionWeakSplit {ℓT ℓW ℓObs ℓMid : Level}
   field
     probe : Spectral → Test
     Mid   : Spectral → Set ℓMid
-    probe-pos→Mid : ∀ s → NontrivialZero s → W-pos (probe s) → Mid s
+    probe-pos-ref : SatRefinement₀ Spectral
+                     (λ _ s → NontrivialZero s × W-pos (probe s))
+                     (λ _ s → Mid s)
     Mid→OnLine    : ∀ s → Mid s → OnLine s
+
+  probe-pos→Mid : ∀ s → NontrivialZero s → W-pos (probe s) → Mid s
+  probe-pos→Mid s nz wp =
+    sat-→₀ probe-pos-ref s (nz , wp)
 
   probe-pos→OnLine : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
   probe-pos→OnLine s nz wp = Mid→OnLine s (probe-pos→Mid s nz wp)
@@ -73,7 +98,12 @@ collapseWeak
   → WeilCriterionWeak RS TPo
 collapseWeak WC = record
   { probe = WeilCriterionWeakSplit.probe WC
-  ; probe-pos→OnLine = WeilCriterionWeakSplit.probe-pos→OnLine WC
+  ; probe-pos-ref =
+      record
+        { sat-→ = λ _ s p →
+            WeilCriterionWeakSplit.Mid→OnLine WC s
+              (WeilCriterionWeakSplit.probe-pos→Mid WC s (fst p) (snd p))
+        }
   }
 
 record WeilCriterionSplit {ℓT ℓW ℓObs ℓMid : Level}
@@ -84,11 +114,22 @@ record WeilCriterionSplit {ℓT ℓW ℓObs ℓMid : Level}
   open TP.TruthPositivity TPo
   field
     probe : Spectral → Test
-    probe-observable : ∀ s → NontrivialZero s → Observable (probe s)
+    probe-observable-ref : SatRefinement₀ Spectral
+                            (λ _ s → NontrivialZero s)
+                            (λ _ s → Observable (probe s))
 
     Mid   : Spectral → Set ℓMid
-    probe-pos→Mid : ∀ s → NontrivialZero s → W-pos (probe s) → Mid s
+    probe-pos-ref : SatRefinement₀ Spectral
+                     (λ _ s → NontrivialZero s × W-pos (probe s))
+                     (λ _ s → Mid s)
     Mid→OnLine    : ∀ s → Mid s → OnLine s
+
+  probe-observable : ∀ s → NontrivialZero s → Observable (probe s)
+  probe-observable s nz = sat-→₀ probe-observable-ref s nz
+
+  probe-pos→Mid : ∀ s → NontrivialZero s → W-pos (probe s) → Mid s
+  probe-pos→Mid s nz wp =
+    sat-→₀ probe-pos-ref s (nz , wp)
 
   probe-pos→OnLine : ∀ s → NontrivialZero s → W-pos (probe s) → OnLine s
   probe-pos→OnLine s nz wp = Mid→OnLine s (probe-pos→Mid s nz wp)
@@ -96,16 +137,18 @@ record WeilCriterionSplit {ℓT ℓW ℓObs ℓMid : Level}
   toWeilCriterion : WeilCriterion RS TPo
   toWeilCriterion = record
     { probe            = probe
-    ; probe-observable = probe-observable
-    ; probe-pos→OnLine = probe-pos→OnLine
+    ; probe-observable-ref = probe-observable-ref
+    ; probe-pos-ref = record
+        { sat-→ = λ _ s p → probe-pos→OnLine s (fst p) (snd p)
+        }
     }
 
   toWeilCriterionWeak : WeilCriterionWeak RS TPo
   toWeilCriterionWeak = collapseWeak (record
-    { probe         = probe
-    ; Mid           = Mid
-    ; probe-pos→Mid = probe-pos→Mid
-    ; Mid→OnLine    = Mid→OnLine
+    { probe        = probe
+    ; Mid          = Mid
+    ; probe-pos-ref = probe-pos-ref
+    ; Mid→OnLine   = Mid→OnLine
     })
 
 toWeak
@@ -115,7 +158,7 @@ toWeak
   → WeilCriterion RS TPo → WeilCriterionWeak RS TPo
 toWeak WC = record
   { probe = WeilCriterion.probe WC
-  ; probe-pos→OnLine = WeilCriterion.probe-pos→OnLine WC
+  ; probe-pos-ref = WeilCriterion.probe-pos-ref WC
   }
 
 -- GRH_Without_Vacuity_Guards “on observable probes”: if a nontrivial zero has an observable probe and
@@ -142,11 +185,13 @@ GRH_Without_Vacuity_Guards-from-weak-criterion+complete
     (RS  : RiemannSpectral)
     (TPo : TP.TruthPositivity {ℓT} {ℓW} {ℓObs})
     (WC  : WeilCriterionWeak RS TPo)
-    (complete : ∀ s → RiemannSpectral.NontrivialZero RS s
-                     → TP.TruthPositivity.Observable TPo (WeilCriterionWeak.probe WC s))
+    (complete-ref : SatRefinement₀ (RiemannSpectral.Spectral RS)
+                      (λ _ s → RiemannSpectral.NontrivialZero RS s)
+                      (λ _ s → TP.TruthPositivity.Observable TPo (WeilCriterionWeak.probe WC s)))
   → GRH_Without_Vacuity_Guards RS
-GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo WC complete s nz =
-  GRH_Without_Vacuity_Guards-on-observable-probes RS TPo WC s nz (complete s nz)
+GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo WC complete-ref s nz =
+  GRH_Without_Vacuity_Guards-on-observable-probes RS TPo WC s nz
+    (sat-→₀ complete-ref s nz)
 
 -- One-line form: a full criterion (with probe observability) yields GRH_Without_Vacuity_Guards directly.
 
@@ -157,7 +202,8 @@ GRH_Without_Vacuity_Guards-from-WeilCriterion
     (WC  : WeilCriterion RS TPo)
   → GRH_Without_Vacuity_Guards RS
 GRH_Without_Vacuity_Guards-from-WeilCriterion RS TPo WC =
-  GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo (toWeak WC) (WeilCriterion.probe-observable WC)
+  GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo (toWeak WC)
+    (WeilCriterion.probe-observable-ref WC)
 
 -- Bridge lemmas: the split forms can be collapsed into the existing criterion
 -- records and then discharged by the existing GRH_Without_Vacuity_Guards lemmas.
@@ -167,11 +213,12 @@ GRH_Without_Vacuity_Guards-from-weak-split+complete
     (RS  : RiemannSpectral)
     (TPo : TP.TruthPositivity {ℓT} {ℓW} {ℓObs})
     (WC  : WeilCriterionWeakSplit {ℓMid = ℓMid} RS TPo)
-    (complete : ∀ s → RiemannSpectral.NontrivialZero RS s
-                     → TP.TruthPositivity.Observable TPo (WeilCriterionWeakSplit.probe WC s))
+    (complete-ref : SatRefinement₀ (RiemannSpectral.Spectral RS)
+                      (λ _ s → RiemannSpectral.NontrivialZero RS s)
+                      (λ _ s → TP.TruthPositivity.Observable TPo (WeilCriterionWeakSplit.probe WC s)))
   → GRH_Without_Vacuity_Guards RS
-GRH_Without_Vacuity_Guards-from-weak-split+complete RS TPo WC complete =
-  GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo (collapseWeak WC) complete
+GRH_Without_Vacuity_Guards-from-weak-split+complete RS TPo WC complete-ref =
+  GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo (collapseWeak WC) complete-ref
 
 GRH_Without_Vacuity_Guards-from-split
   : ∀ {ℓT ℓW ℓObs ℓMid}
@@ -218,7 +265,10 @@ GRH_Without_Vacuity_Guards-from-weak-criterion+class
   → GRH_Without_Vacuity_Guards RS
 GRH_Without_Vacuity_Guards-from-weak-criterion+class RS TPo WC OC probe-in-class =
   GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo WC
-    (probe-observable-fromClass RS TPo WC OC probe-in-class)
+    (record
+      { sat-→ = λ _ s nz →
+          probe-observable-fromClass RS TPo WC OC probe-in-class s nz
+      })
 
 -- --------------------------------------------------------------------------
 -- Standard pack skeletons (uniform API).
@@ -236,21 +286,23 @@ module QuartetWeilWeakCriterion {ℓT ℓW ℓObs : Level}
   record Assumptions : Set (lsuc (ℓT ⊔ ℓW ⊔ ℓObs)) where
     field
       WC       : WeilCriterionWeak RS TPo
-      complete : ∀ s → NontrivialZero s → Observable (WeilCriterionWeak.probe WC s)
+      complete-ref : SatRefinement₀ (RiemannSpectral.Spectral RS)
+                        (λ _ s → NontrivialZero s)
+                        (λ _ s → Observable (WeilCriterionWeak.probe WC s))
+
+    complete : ∀ s → NontrivialZero s → Observable (WeilCriterionWeak.probe WC s)
+    complete s nz = sat-→₀ complete-ref s nz
 
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
-
-  mkPack : (A : Assumptions) → Pack
-  mkPack =
-    Q.mkPack
+  module Q =
+    AppKit.MakeDerived Assumptions Claim
       (λ A →
         GRH_Without_Vacuity_Guards-from-weak-criterion+complete RS TPo
           (Assumptions.WC A)
-          (Assumptions.complete A))
+          (Assumptions.complete-ref A))
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
 module QuartetWeilCriterion {ℓT ℓW ℓObs : Level}
                (RS  : RiemannSpectral)
@@ -263,8 +315,7 @@ module QuartetWeilCriterion {ℓT ℓW ℓObs : Level}
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
-
-  mkPack : (A : Assumptions) → Pack
-  mkPack = Q.mkPack (λ A → GRH_Without_Vacuity_Guards-from-WeilCriterion RS TPo (Assumptions.WC A))
+  module Q =
+    AppKit.MakeDerived Assumptions Claim
+      (λ A → GRH_Without_Vacuity_Guards-from-WeilCriterion RS TPo (Assumptions.WC A))
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,32 +7,19 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Theorems.Reflection.NucleusMu where
 
-open import LogOS.Prelude hiding (refl; trans) renaming (_⊔_ to _⊔ℓ_)
-open import Data.List using (List; []; _∷_)
-open import LogOS.Minimal.Con using (ConPoset; MonoOn)
+open import LogOS.Prelude hiding (refl; trans; _⊔_)
+open import LogOS.Prelude.List using (List; []; _∷_; All; all[]; all∷; All-map) renaming (map to mapList)
+open import LogOS.Minimal.Con using (ConPreorder; MonoOn)
 open import LogOS.Minimal.Closure using (ClosureOp)
 open import LogOS.Minimal.Truth as Truth
-
--- Minimal list-wise predicate.
-data All {ℓ₁ ℓ₂ : Level} {A : Set ℓ₁}
-         (P : A → Set ℓ₂) : List A → Set (ℓ₁ ⊔ℓ ℓ₂) where
-  all[] : All P []
-  all∷  : ∀ {x xs} → P x → All P xs → All P (x ∷ xs)
-
-All-map
-  : ∀ {ℓ₁ ℓ₂ ℓ₃} {A : Set ℓ₁}
-    {P : A → Set ℓ₂} {Q : A → Set ℓ₃}
-  → (∀ x → P x → Q x)
-  → ∀ {xs} → All P xs → All Q xs
-All-map f all[] = all[]
-All-map f (all∷ px pxs) = all∷ (f _ px) (All-map f pxs)
+import LogOS.Theorems.Boundary.MuFusion as MuFusion
 
 -- Join-semilattice structure on a preorder.
 record JoinSemilattice {ℓ : Level} : Set (lsuc ℓ) where
   field
-    CP : ConPoset ℓ
+    CP : ConPreorder ℓ
 
-  open ConPoset CP public
+  open ConPreorder CP public
 
   infixl 6 _⊔_
 
@@ -48,18 +35,44 @@ record JoinSemilattice {ℓ : Level} : Set (lsuc ℓ) where
 -- and `_⊑_`, which leads to ambiguous projection resolution under `-W all
 -- -W error`. Use qualified names or open a specific `J` locally instead.
 
+-- Coherence between two “bottoms” that may otherwise be introduced
+-- independently:
+--
+-- - `JoinSemilattice.⊥` is the join-semilattice bottom used by `joinComponents`.
+-- - `OmegaCPO.⊥` is the ωCPO bottom used by Kleene iteration.
+--
+-- Without this (optional) coherence, some transport/naturality statements need
+-- extra “map ⊥ ≤ ⊥” assumptions even when the map is already strict w.r.t. the
+-- ωCPO structure.
+record BottomCoherence {ℓ : Level}
+  (J : JoinSemilattice {ℓ})
+  (ωCPO : Truth.GuardedCore.OmegaCPO (JoinSemilattice.CP J))
+  : Set (lsuc ℓ) where
+  private
+    CP : ConPreorder ℓ
+    CP = JoinSemilattice.CP J
+
+  open ConPreorder CP
+  open Truth.GuardedCore.OmegaCPO ωCPO renaming (⊥ to ω⊥)
+
+  field
+    ω⊥≤⊥ : _⊑_ ω⊥ (JoinSemilattice.⊥ J)
+
+  ⊥≤ω⊥ : _⊑_ (JoinSemilattice.⊥ J) ω⊥
+  ⊥≤ω⊥ = JoinSemilattice.⊥-least J ω⊥
+
 ⊔-mono
   : ∀ {ℓ} {J : JoinSemilattice {ℓ}} {a b c d : JoinSemilattice.Con J}
-  → ConPoset._⊑_ (JoinSemilattice.CP J) a c
-  → ConPoset._⊑_ (JoinSemilattice.CP J) b d
-  → ConPoset._⊑_ (JoinSemilattice.CP J)
+  → ConPreorder._⊑_ (JoinSemilattice.CP J) a c
+  → ConPreorder._⊑_ (JoinSemilattice.CP J) b d
+  → ConPreorder._⊑_ (JoinSemilattice.CP J)
       (JoinSemilattice._⊔_ J a b)
       (JoinSemilattice._⊔_ J c d)
 ⊔-mono {J = J} {c = c} {d = d} a≤c b≤d =
   let
     CP = JoinSemilattice.CP J
-    step₁ = ConPoset.trans CP a≤c (JoinSemilattice.⊔-ub₁ J c d)
-    step₂ = ConPoset.trans CP b≤d (JoinSemilattice.⊔-ub₂ J c d)
+    step₁ = ConPreorder.trans CP a≤c (JoinSemilattice.⊔-ub₁ J c d)
+    step₂ = ConPreorder.trans CP b≤d (JoinSemilattice.⊔-ub₂ J c d)
   in JoinSemilattice.⊔-least J step₁ step₂
 
 -- Closure components: monotone inflationary endomaps.
@@ -79,7 +92,7 @@ _≤ᵉ_
   → (JoinSemilattice.Con J → JoinSemilattice.Con J)
   → (JoinSemilattice.Con J → JoinSemilattice.Con J)
   → Set ℓ
-_≤ᵉ_ {J = J} F G = ∀ c → ConPoset._⊑_ (JoinSemilattice.CP J) (F c) (G c)
+_≤ᵉ_ {J = J} F G = ∀ c → ConPreorder._⊑_ (JoinSemilattice.CP J) (F c) (G c)
 
 -- Pointwise join of a list of components.
 joinComponents
@@ -95,7 +108,7 @@ joinComponents-mono
   → (Cs : List (Component J))
   → MonoOn (JoinSemilattice.CP J) (joinComponents {J = J} Cs)
 joinComponents-mono {J = J} [] {c} {d} _ =
-  ConPoset.refl (JoinSemilattice.CP J)
+  ConPreorder.refl (JoinSemilattice.CP J)
 joinComponents-mono {J = J} (C ∷ Cs) {c} {d} c≤d =
   ⊔-mono {J = J}
     (Component.mono C c≤d)
@@ -111,7 +124,7 @@ joinComponents-ub {J = J} (C ∷ Cs) =
       (λ c → JoinSemilattice.⊔-ub₁ J (op C c) (joinComponents {J = J} Cs c))
       (All-map
         (λ _ le c →
-          ConPoset.trans (JoinSemilattice.CP J) (le c)
+          ConPreorder.trans (JoinSemilattice.CP J) (le c)
             (JoinSemilattice.⊔-ub₂ J (op C c) (joinComponents {J = J} Cs c)))
         (joinComponents-ub {J = J} Cs))
 
@@ -142,12 +155,12 @@ module Generated
   step-mono : ∀ base → MonoOn CP (step base)
   step-mono base {c} {d} c≤d =
     ⊔-mono {J = J}
-      (ConPoset.refl CP)
+      (ConPreorder.refl CP)
       (⊔-mono {J = J} c≤d (joinComponents-mono {J = J} Cs c≤d))
 
   step-infl : ∀ base c → _⊑_ c (step base c)
   step-infl base c =
-    ConPoset.trans CP
+    ConPreorder.trans CP
       (⊔-ub₁ c (joinComponents {J = J} Cs c))
       (⊔-ub₂ base (c ⊔ joinComponents {J = J} Cs c))
 
@@ -180,25 +193,12 @@ module Generated
   step-mono-base {base} {base'} base≤base' c =
     ⊔-mono {J = J}
       base≤base'
-      (ConPoset.refl CP {c = c ⊔ joinComponents {J = J} Cs c})
+      (ConPreorder.refl CP {c = c ⊔ joinComponents {J = J} Cs c})
 
   generated-mono
     : ∀ {base base'} → _⊑_ base base' → _⊑_ (generated base) (generated base')
   generated-mono {base} {base'} base≤base' =
-    Truth.GuardedCore.OmegaCPO.least ωCPO
-      (iter (step base))
-      (generated base')
-      (λ n →
-        ConPoset.trans CP
-          (iter-mono n)
-          (Truth.GuardedCore.OmegaCPO.ub ωCPO (iter (step base')) n))
-    where
-      iter-mono : ∀ n → _⊑_ (iter (step base) n) (iter (step base') n)
-      iter-mono zero = ConPoset.refl CP
-      iter-mono (suc n) =
-        ConPoset.trans CP
-          (step-mono-base base≤base' (iter (step base) n))
-          (step-mono base' (iter-mono n))
+    μ-mono (step-mono base') (step-mono-base base≤base')
 
   -- Closure operator generated by the components, as an endomap on `Con`.
   --
@@ -220,7 +220,7 @@ module Generated
       generated-infl : ∀ base → _⊑_ base (generated base)
       generated-infl base =
         let ω⊥ = Truth.GuardedCore.OmegaCPO.⊥ ωCPO in
-        ConPoset.trans CP
+        ConPreorder.trans CP
           (⊔-ub₁ base (ω⊥ ⊔ joinComponents {J = J} Cs ω⊥))
           (Truth.GuardedCore.OmegaCPO.ub ωCPO (iter (step base)) (suc zero))
 
@@ -233,9 +233,9 @@ module Generated
           rest≤step =
             ⊔-ub₂ base (generated base ⊔ joinComponents {J = J} Cs (generated base))
         in
-        ConPoset.trans CP
+        ConPreorder.trans CP
           (⊔-ub₂ (generated base) (joinComponents {J = J} Cs (generated base)))
-          (ConPoset.trans CP rest≤step (generated-unfold-right base (SC base)))
+          (ConPreorder.trans CP rest≤step (generated-unfold-right base (SC base)))
 
       idemp : ∀ base → _⊑_ (generated (generated base)) (generated base)
       idemp base =
@@ -247,7 +247,145 @@ module Generated
           step≤ : _⊑_ (step (generated base) (generated base)) (generated base)
           step≤ =
             ⊔-least
-              (ConPoset.refl CP)
+              (ConPreorder.refl CP)
               (⊔-least
-                (ConPoset.refl CP)
+                (ConPreorder.refl CP)
                 (joinComponents≤ base))
+
+-- --------------------------------------------------------------------------
+-- Naturality / simulation: ω-continuous maps transport the generated closure.
+--
+-- This is the canonical “abstract interpretation” principle for `generated`:
+-- if `map` preserves ⊥ and binary joins (laxly), is ω-continuous (for chains),
+-- and commutes (laxly) with each component op, then it transports the Kleene μ
+-- of `step` as an inequality.
+--
+-- The proof is a single use of `μ-fusion≤` once the step-level commutation is
+-- packaged.
+-- --------------------------------------------------------------------------
+
+module Naturality
+  {ℓ₁ ℓ₂ : Level}
+  (J₁ : JoinSemilattice {ℓ₁})
+  (J₂ : JoinSemilattice {ℓ₂})
+  (ω₁ : Truth.GuardedCore.OmegaCPO (JoinSemilattice.CP J₁))
+  (ω₂ : Truth.GuardedCore.OmegaCPO (JoinSemilattice.CP J₂))
+  (Cs : List (Component J₁))
+  (mapC : Component J₁ → Component J₂)
+  where
+
+  private
+    CP₁ : ConPreorder ℓ₁
+    CP₁ = JoinSemilattice.CP J₁
+
+    CP₂ : ConPreorder ℓ₂
+    CP₂ = JoinSemilattice.CP J₂
+
+    module MF = MuFusion.For CP₁ CP₂
+
+    module JS₁ = JoinSemilattice J₁
+    module JS₂ = JoinSemilattice J₂
+
+    Cs₂ : List (Component J₂)
+    Cs₂ = mapList mapC Cs
+
+    module G₁ = Generated J₁ ω₁ Cs
+    module G₂ = Generated J₂ ω₂ Cs₂
+
+    trans₂ : ∀ {x y z} → JS₂._⊑_ x y → JS₂._⊑_ y z → JS₂._⊑_ x z
+    trans₂ = ConPreorder.trans CP₂
+
+    refl₂ : ∀ {x} → JS₂._⊑_ x x
+    refl₂ = ConPreorder.refl CP₂
+
+  module _
+    {map : JS₁.Con → JS₂.Con}
+    (M : MF.OmegaCPOMap ω₁ ω₂ map)
+    (map⊔≤ : ∀ a b → JS₂._⊑_ (map (a JS₁.⊔ b)) (map a JS₂.⊔ map b))
+    (comm-op : ∀ (C : Component J₁) c → JS₂._⊑_ (map (op C c)) (op (mapC C) (map c)))
+    (bot₁ : BottomCoherence J₁ ω₁)
+    (bot₂ : BottomCoherence J₂ ω₂)
+    where
+
+    private
+      map⊥≤ : JS₂._⊑_ (map JS₁.⊥) JS₂.⊥
+      map⊥≤ =
+        let
+          open MF.OmegaCPOMap M
+          open Truth.GuardedCore.OmegaCPO ω₁ renaming (⊥ to ω⊥₁)
+          ⊥≤ω⊥₁ : JS₁._⊑_ JS₁.⊥ ω⊥₁
+          ⊥≤ω⊥₁ = BottomCoherence.⊥≤ω⊥ bot₁
+
+          ω⊥₂≤⊥₂ : JS₂._⊑_ (map ω⊥₁) JS₂.⊥
+          ω⊥₂≤⊥₂ =
+            trans₂ strict⊥ (BottomCoherence.ω⊥≤⊥ bot₂)
+        in
+        trans₂
+          (mono-map (⊥≤ω⊥₁))
+          ω⊥₂≤⊥₂
+
+      joinComponents-map≤
+        : ∀ (Ds : List (Component J₁)) c
+        → JS₂._⊑_
+            (map (joinComponents {J = J₁} Ds c))
+            (joinComponents {J = J₂} (mapList mapC Ds) (map c))
+      joinComponents-map≤ [] c = map⊥≤
+      joinComponents-map≤ (C ∷ Ds) c =
+        trans₂
+          (map⊔≤ (op C c) (joinComponents {J = J₁} Ds c))
+          (⊔-mono {J = J₂}
+            (comm-op C c)
+            (joinComponents-map≤ Ds c))
+
+      step-map≤
+        : ∀ base c
+        → JS₂._⊑_
+            (map (G₁.step base c))
+            (G₂.step (map base) (map c))
+      step-map≤ base c =
+        let
+          -- First split the outer join.
+          outer : JS₂._⊑_
+                    (map (base JS₁.⊔ (c JS₁.⊔ joinComponents {J = J₁} Cs c)))
+                    (map base JS₂.⊔ map (c JS₁.⊔ joinComponents {J = J₁} Cs c))
+          outer = map⊔≤ base (c JS₁.⊔ joinComponents {J = J₁} Cs c)
+
+          -- Then split the inner join and transport the component join.
+          inner₁ : JS₂._⊑_
+                     (map (c JS₁.⊔ joinComponents {J = J₁} Cs c))
+                     (map c JS₂.⊔ map (joinComponents {J = J₁} Cs c))
+          inner₁ = map⊔≤ c (joinComponents {J = J₁} Cs c)
+
+          inner₂ : JS₂._⊑_
+                     (map c JS₂.⊔ map (joinComponents {J = J₁} Cs c))
+                     (map c JS₂.⊔ joinComponents {J = J₂} Cs₂ (map c))
+          inner₂ =
+            ⊔-mono {J = J₂}
+              refl₂
+              (joinComponents-map≤ Cs c)
+
+          inner : JS₂._⊑_
+                    (map (c JS₁.⊔ joinComponents {J = J₁} Cs c))
+                    (map c JS₂.⊔ joinComponents {J = J₂} Cs₂ (map c))
+          inner = trans₂ inner₁ inner₂
+
+          all : JS₂._⊑_
+                  (map base JS₂.⊔ map (c JS₁.⊔ joinComponents {J = J₁} Cs c))
+                  (map base JS₂.⊔ (map c JS₂.⊔ joinComponents {J = J₂} Cs₂ (map c)))
+          all = ⊔-mono {J = J₂} refl₂ inner
+        in
+        trans₂ outer all
+
+    generated-map≤
+      : ∀ base
+      → JS₂._⊑_
+          (map (G₁.generated base))
+          (G₂.generated (map base))
+    generated-map≤ base =
+      MF.μ-fusion≤
+        M
+        (G₁.step base)
+        (G₂.step (map base))
+        (G₂.step-mono (map base))
+        (G₁.step-infl base)
+        (step-map≤ base)

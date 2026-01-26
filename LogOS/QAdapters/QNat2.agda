@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,13 +9,13 @@ module LogOS.QAdapters.QNat2 where
 
 open import LogOS.Prelude
 
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ; weakenRight)
-open import Data.NatExtra using (_⊔ℕ_; max-left; max-right; ⊔ℕ-least; +-assoc; +-zeroˡ; +-zeroʳ; ⊔ℕ-distrib-+ʳ; ⊔ℕ-distrib-+ˡ)
-open import Data.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ; weakenRight)
+open import LogOS.Prelude.NatExtra using (_⊔ℕ_; max-left; max-right; ⊔ℕ-least; +-assoc; +-zeroˡ; +-zeroʳ; ⊔ℕ-distrib-+ʳ; ⊔ℕ-distrib-+ˡ)
+open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.ScaleOps using (ScaleOps)
+open import LogOS.Minimal.ScaleOps using (ScaleOps; ScaleOpsLaws; BudgetOps)
 
 -- Two-axis numeric adapter:
 -- - first component: “unitary/ordinary” work (depth/steps)
@@ -113,7 +113,7 @@ QNat2 = record
 -- Canonical embedding for the “measurement axis” (second component).
 --
 -- This mirrors `τ` (which targets the work/step axis). It is not part of the
--- minimal `QAdapter` record because the core only needs *one* time embedding,
+-- minimal `QAdapter` record because the core only needs *one* time homomorphism,
 -- but it is convenient for universality/physics-facing examples.
 
 μ : ℕ → QAdapter.Scale QNat2
@@ -138,6 +138,15 @@ QNat2 = record
 
 scaleOps : ScaleOps QNat2
 scaleOps = record { budget = λ g → fst g ; steps = λ n → n }
+
+scaleOpsLaws : ScaleOpsLaws QNat2 scaleOps
+scaleOpsLaws =
+  record
+    { steps-budget-mono = λ { {g = a₁ , _} {g' = a₂ , _} (a₁≤a₂ , _) → a₁≤a₂ }
+    }
+
+budgetOps : BudgetOps QNat2
+budgetOps = record { Ops = scaleOps ; laws = scaleOpsLaws }
 
 -- Coherence: interpreting the canonical embedding `τ` as a step budget yields
 -- exactly the original step count.

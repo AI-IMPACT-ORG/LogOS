@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,6 +10,11 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.Applications.Agents where
 
+-- Sync guard: these imports anchor the module paths this document references.
+-- If they drift, the docs build fails.
+import LogOS.Packs.Agents.Surface
+import LogOS.Packs.Agents.Experimental.Surface
+import LogOS.Packs.Agents.Applications.All
 
 ```
 
@@ -22,9 +27,20 @@ docs therefore act as a navigation layer over kernel-level theorems.
 
 Trust level:
 - **Stable surface:** `LogOS/Packs/Agents/Surface.agda` (no transformer/scaling or physics/RG-flow extensions).
-- **Experimental extensions:** `LogOS/Packs/Agents/Experimental/All.agda` (see `Experimental.Arguments`, `Experimental.Emit.TransformerTF`, `Experimental.Physics`, `Experimental.Learning.RGFlow`, and `Experimental.Capstone`).
+- **Experimental extensions:** `LogOS/Packs/Agents/Experimental/Surface.agda` (umbrella: `LogOS/Packs/Agents/Experimental/All.agda`; see `Experimental.Arguments`, `Experimental.Emit.TransformerTF`, `Experimental.Physics`, `Experimental.Learning.RGFlow`, and `Experimental.Capstone`).
 Experimental extensions are under evaluation and should be considered less
 stable than the stable surface.
+
+Wording discipline (guardrail)
+------------------------------
+This document uses domain terminology (“socket”, “agent”, “learning”, “RG”,
+“Maxwell”, “LLM”, …) as **interpretation**. The literal content is always the
+referenced Agda interface/theorem. In particular:
+
+- “Policy/update/training” = boundary constraints + monotone endomaps (and
+  optional ωCPO/μ fixed points) inside the kernel algebra.
+- “RG/thermo/CFT” wording = analogy for coarse‑graining + fixed points + resource
+  accounting; no physical laws are derived without an explicit model/axioms pack.
 
 The core idea is to treat an “agent” as an **open system** with an explicit
 boundary I/O view:
@@ -101,9 +117,9 @@ implicit.
     the edge translation commutes with flow and tensoring-in safety.
 - Network-as-agent wrapper: `LogOS/Packs/Agents/Networks/NetworkAgent.agda`
   - Pick a hub role, translate all role constraints to the hub, and aggregate.
-  - Aggregation is a parameter; any “network-as-agent” claim must name it.
-  - The aggregator is required to respect observational equivalence at the hub.
-- Re-exported via `LogOS/Packs/Agents/Networks/Core.agda` and the lab surface.
+- Aggregation is a parameter; any “network-as-agent” claim must name it.
+- The aggregator is required to respect observational equivalence at the hub.
+- Namespaced index surface: `LogOS/Packs/Agents/Networks/Core.agda` (and the lab surface).
 - Minimal example: `LogOS/Packs/Agents/Examples/HelloNetwork.agda`.
 - Concrete reindexing example: `LogOS/Packs/Agents/Examples/ReindexedNetwork.agda`.
   - Shows a non-identity signature map that collapses distinct atoms and
@@ -126,13 +142,13 @@ with boundary ports to produce the canonical, meaning-preserving translation.
 ## Monitoring and auditing (opacity-native)
 
 The pack is intentionally “opacity-native”: it models auditors as
-**decode-extensional partial-output observers**, so the existing diagonal / opacity
+**decode-extensional (up to decoded observational equality in the kernel case) partial-output observers**, so the existing diagonal / opacity
 meta-theorems apply as formal consequences of those observer definitions.
 
 - Monitoring endomaps: `LogOS/Packs/Agents/Safety/Monitor.agda`
-  - Canonical example: `defaultMonitor` (alias `enforceSafety`) — tensor in the
-    safety contract, then saturate at the kernel’s `sat` grade (a design choice,
-    not an unconditional guarantee).
+  - Canonical example: `defaultMonitor` — tensor in the safety contract, then
+    saturate at the kernel’s `sat` grade (a design choice, not an unconditional
+    guarantee).
 - Auditor surface: `LogOS/Packs/Agents/Safety/Audit.agda`
   - `Auditor` is an `Oracle` wrapper for the spectral separation output interface,
     defined for any process (and hence for any socket).
@@ -188,7 +204,7 @@ direction additionally uses Scott/ω-continuity of the update endomap (also an
 explicit assumption). This captures convergence inside the kernel rather than as
 an external meta-argument.
 
-## Neural-symbolic LLM view (soft + hard constraints)
+## Interpretation (analogy): neural-symbolic LLM view (soft + hard constraints)
 
 To make the neural-symbolic story explicit, the graded kernel machinery can be
 used as a soft layer:
@@ -201,8 +217,9 @@ used as a soft layer:
 - **Blend example:** `LogOS/Packs/Agents/Examples/NeuralSymbolicBlend.agda` shows
   the minimal pattern: apply a soft update, then refine by a symbolic constraint.
 
-This pins the "neural" component to the graded flow and the "symbolic" component
-to boundary constraints, both inside the same kernel algebra.
+Interpretation: this provides a precise *soft/hard constraint* split in the
+kernel algebra. Any claim about real LLM training only follows after you supply
+an explicit training model and justify the chosen observables/budgets.
 
 ## Telemetry contracts (observation-only)
 
@@ -245,12 +262,13 @@ general and audit-ready:
 - Landauer: a model supplies `LandauerIOAssumptions` (cost, merges predicate,
   and the lower-bound axiom for irreversible events).
 - Capacity: a model supplies `MeasurementCapacity` (measurement count and a
-  per-measurement information bound).
+  per-measurement information bound), optionally with
+  `MeasurementCapacityGuards` to rule out degenerate zero-capacity models.
 - DPI: a model supplies a channel class plus monotonicity of extracted
   information under admissible post-processing.
 
 These assumptions are **explicit parameters**, not hidden axioms; any instantiation
-must show exactly where the physics enters.
+must show where the physics enters.
 
 ### Capstone theorems (learning + energy) — experimental
 
@@ -650,7 +668,7 @@ Kolmogorov/Kt discovery predicate directly to the transformer training bridge:
 ### Explicit exponents (multiplicative scale)
 
 `LogOS/QAdapters/QNatMul.agda` supplies a specific multiplicative scale
-(`QNatMul`): scale composition is `mul`, time embeds by exponentiation (`exp₂`),
+(`QNatMul`): scale composition is `mul`, time is mapped by exponentiation (`exp₂`),
 and `pow` makes the scaling exponent explicit at the quantale level.
 
 This is a direct “theory → instantiation” link: the discovery predicate is
@@ -732,10 +750,10 @@ To situate the Maxwell-agent story in the broader library:
 - Physics-of-information surfaces live in `LogOS/Packs/Complexity/Experimental/PhysicsOfInformation.agda`
   (experimental) and are explained in `docs/Library.lagda.md` and `docs/Applications/Complexity.lagda.md`.
 - Universality machinery (shared processes, scheme equivalence) lives in
-  `LogOS/Packs/Universality/All.agda`, and is the reason universal evaluation
+  `LogOS/Packs/Universality/Surface.agda`, and is the reason universal evaluation
   is treated uniformly across agent frameworks.
 - Opacity boundaries (auditing and observability limits) live in
-  `LogOS/Packs/Opacity/Experimental/All.agda` (experimental) and explain why learning
+  `LogOS/Packs/Opacity/Experimental/Surface.agda` (experimental) and explain why learning
   evidence must be phrased at the boundary constraint level.
 
 ### Numerical stability (motivation, LogOS-native)
@@ -777,21 +795,22 @@ Agreement between the UniversalIR frameworks is available in two flavours:
 - Choice-scheme agreement: the same module provides `ChoiceSchemesRunEq` for
   the UniversalIR `Choice`-based schemes (the ones used by `Framework`).
 
-Other “known framework” modules are **interfaces or meta-theory surfaces** rather
-than embeddings:
+Other “known framework” modules are **mostly interfaces or meta-theory surfaces**;
+when they include translations into UniversalIR, they are intentionally minimal:
 
 - `LogOS/Packs/Agents/Frameworks/AIXI_Bounded.agda` and
   `LogOS/Packs/Agents/Frameworks/OOPS.agda` expose the generic `SchemeCategory`
-  machinery, and now include minimal **bounded PATask** embeddings into
+  machinery, and now include minimal **bounded PATask** translations into
   `UProcess` (`aixiChoice`/`oopsChoice`, with `aixiFramework`/`oopsFramework`).
   These are checked instantiations, not full RL or optimal‑search models.
 - `LogOS/Packs/Agents/Frameworks/GodelMachine.agda` and
   `LogOS/Packs/Agents/Frameworks/MetaReasoning.agda` re-export meta-theory
-  (Lob/Godel/no-omniscience) rather than a concrete process embedding.
+  (Lob/Godel/no-omniscience) rather than a concrete process translation.
 
-So, at present: **UniversalIR is the only provided, checked embedding** of
-“agent-like frameworks” into a shared process. To embed another framework into
-UniversalIR, supply a `Choice` into `UProcess` (and, if needed, a `ProcessHom`
+So, at present: **UniversalIR is the main provided, checked integration** of
+agent-like task languages into a shared process (`UProcess`), with reusable
+transport/agreement tooling. To integrate another framework into UniversalIR, supply
+a `Choice` into `UProcess` (and, if needed, a `ProcessHom`
 or a cost/budget-carrying `ProcessHomCost` / `ProcessHomCostWithGrade`, or the
 corresponding `mapChoice`/`mapChoiceLax` transport), then plug it into an
 `AgentSocket`.

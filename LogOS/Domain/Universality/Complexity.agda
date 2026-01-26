@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,15 +8,15 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Universality.Complexity where
 
 open import LogOS.Prelude
-open import Data.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc)
 -- equality primitives via Prelude
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Computation.Core
 open import LogOS.Computation.Blum
 open import LogOS.Syntax.Prop using (⊥; ¬_)
 -- Unit via Prelude; tt/⊤ available
-open import Data.Product using (Σ; _,_)
+open import LogOS.Prelude.Product using (Σ; _,_)
 open import LogOS.Domain.Universality.Core
 
 -- Decidable equality for ℕ (minimal)

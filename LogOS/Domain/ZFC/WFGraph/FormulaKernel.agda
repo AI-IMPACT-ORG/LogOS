@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,8 +15,8 @@ open import LogOS.Minimal.Con
 open import LogOS.Kernel
 open import LogOS.Syntax.Prop using (_↔_; intro)
 
-open import Data.Product using (Σ; _,_; _×_)
-open import Data.Fin using (Fin)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_)
+open import LogOS.Prelude.Fin using (Fin)
 
 open import LogOS.ObjectLogic.FOL.Semantics as FOLSem
 
@@ -128,15 +128,15 @@ module _ {ℓ : Level}
   γ* = setCode emptyN
 
   γ*-guard
-    : (ConPoset._⊑_ (BulkBoundary.bnd (WF.BB G S Ext P Fnd))
+    : (ConPreorder._⊑_ (BulkBoundary.bnd (WF.BB G S Ext P Fnd))
         (decode γ*)
         (decode (Guard (Body γ*))))
-    × (ConPoset._⊑_ (BulkBoundary.bnd (WF.BB G S Ext P Fnd))
+    × (ConPreorder._⊑_ (BulkBoundary.bnd (WF.BB G S Ext P Fnd))
         (decode (Guard (Body γ*)))
         (decode γ*))
   γ*-guard =
-    ConPoset.refl (BulkBoundary.bnd (WF.BB G S Ext P Fnd))
-    , ConPoset.refl (BulkBoundary.bnd (WF.BB G S Ext P Fnd))
+    ConPreorder.refl (BulkBoundary.bnd (WF.BB G S Ext P Fnd))
+    , ConPreorder.refl (BulkBoundary.bnd (WF.BB G S Ext P Fnd))
 
   reify : Code → Code
   reify γ = γ

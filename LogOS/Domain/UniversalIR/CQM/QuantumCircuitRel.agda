@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,64 +17,63 @@ module LogOS.Domain.UniversalIR.CQM.QuantumCircuitRel where
 
 open import LogOS.Prelude
 
-open import Data.List using (List; []; _∷_; _++_)
+open import LogOS.Prelude.List using (List; []; _∷_)
+open import LogOS.Domain.UniversalIR.Encoding using (length)
 
 open import LogOS.Syntax.Prop using (_↔_; intro)
 open import LogOS.Theorems.Meta.CQM using (Rel; _≈Rel_; DaggerSMC; RelDaggerSMC)
 open import LogOS.Domain.UniversalIR.Core.QuantumCircuit
-  using (Wires; flipAt; applyCNOT; applyTOFF)
-
--- Unitary-ish gate fragment (no branching/measurement).
--- (This is the fragment used by the dagger story.)
-
-data Gate : Set where
-  GNOP  : Gate
-  GX    : ℕ → Gate
-  GCNOT : ℕ → ℕ → Gate
-  GTOFF : ℕ → ℕ → ℕ → Gate
-
-applyGate : Gate → Wires → Wires
-applyGate GNOP ws = ws
-applyGate (GX i) ws = flipAt i ws
-applyGate (GCNOT c t) ws = applyCNOT c t ws
-applyGate (GTOFF a b t) ws = applyTOFF a b t ws
-
-runGates : List Gate → Wires → Wires
-runGates []       ws = ws
-runGates (g ∷ gs) ws = runGates gs (applyGate g ws)
-
-runGates-++ : ∀ gs₁ gs₂ ws → runGates (gs₁ ++ gs₂) ws ≡ runGates gs₂ (runGates gs₁ ws)
-runGates-++ []       gs₂ ws = refl
-runGates-++ (g ∷ gs) gs₂ ws = runGates-++ gs gs₂ (applyGate g ws)
+  using
+    ( Wires; GateProg; gates; gateProgOf; runGateProg; runGateProg-++
+    ; runInstrs; runGates-runInstrs
+    ; iterQC; iterQC-gateProg; mkQC; wires; _++g_
+    ; AllGateBound; WFCircuit; WFCircuit-gateProg
+    )
 
 -- Denotation into Rel: graph of the executable function.
 
-denote : List Gate → Rel {ℓR = lzero} Wires Wires
-denote gs ws ws' = ws' ≡ runGates gs ws
+denote : GateProg → Rel {ℓR = lzero} Wires Wires
+denote gs ws ws' = ws' ≡ runGateProg gs ws
 
--- Functoriality (sequential): denote (gs₁ ++ gs₂) = denote gs₂ ∘ denote gs₁.
--- We state this using the concrete composition of the Rel DaggerSMC instance.
+execRel : GateProg → Rel {ℓR = lzero} Wires Wires
+execRel gs ws ws' =
+  ws' ≡ wires (iterQC (length (gates gs)) (mkQC 0 (length ws) ws (gateProgOf gs)))
 
-denote-++ : ∀ gs₁ gs₂ → denote (gs₁ ++ gs₂) ≈Rel (DaggerSMC._∘_ RelDaggerSMC (denote gs₂) (denote gs₁))
-denote-++ gs₁ gs₂ ws ws' = intro to from
+-- Gate denotation agrees with the QC-instruction semantics for gate programs.
+
+denote-runInstrs
+  : ∀ gs ws ws' → denote gs ws ws' ↔ ws' ≡ runInstrs (gateProgOf gs) ws
+denote-runInstrs gs ws ws' = intro to from
   where
-    to
-      : denote (gs₁ ++ gs₂) ws ws'
-      → DaggerSMC._∘_ RelDaggerSMC (denote gs₂) (denote gs₁) ws ws'
-    to eq =
-      (runGates gs₁ ws , (refl , trans eq (runGates-++ gs₁ gs₂ ws)))
+    to : denote gs ws ws' → ws' ≡ runInstrs (gateProgOf gs) ws
+    to eq = trans eq (runGates-runInstrs (gates gs) ws)
 
-    from
-      : DaggerSMC._∘_ RelDaggerSMC (denote gs₂) (denote gs₁) ws ws'
-      → denote (gs₁ ++ gs₂) ws ws'
-    from (m , (mEq , ws'Eq)) =
-      trans
-        (trans ws'Eq (cong (runGates gs₂) mEq))
-        (sym (runGates-++ gs₁ gs₂ ws))
+    from : ws' ≡ runInstrs (gateProgOf gs) ws → denote gs ws ws'
+    from eq = trans eq (sym (runGates-runInstrs (gates gs) ws))
+
+denote-iterQC
+  : ∀ gs → denote gs ≈Rel execRel gs
+denote-iterQC gs ws ws' = intro to from
+  where
+    to : denote gs ws ws' → execRel gs ws ws'
+    to eq = trans eq (sym (iterQC-gateProg (gates gs) ws))
+
+    from : execRel gs ws ws' → denote gs ws ws'
+    from eq = trans eq (iterQC-gateProg (gates gs) ws)
+
+-- Gate programs are well-formed when their indices are in range.
+
+wfGateProg
+  : ∀ gs ws
+  → AllGateBound (length ws) (gates gs)
+  → WFCircuit (mkQC 0 (length ws) ws (gateProgOf gs))
+wfGateProg gs ws bounds =
+  WFCircuit-gateProg (length ws) (gates gs) ws refl bounds
+
 
 -- Dagger: for deterministic relations (graphs), dagger is just argument swap.
 
-denote† : List Gate → Rel {ℓR = lzero} Wires Wires
+denote† : GateProg → Rel {ℓR = lzero} Wires Wires
 denote† gs ws ws' = denote gs ws' ws
 
 denote-dagger : ∀ gs → denote† gs ≈Rel (DaggerSMC._† RelDaggerSMC (denote gs))
@@ -82,9 +81,29 @@ denote-dagger gs ws ws' = intro (λ eq → eq) (λ eq → eq)
 
 -- Monoidal product: independent gate programs on independent wire registers.
 
-denote⊗ : List Gate → List Gate → Rel {ℓR = lzero} (Wires × Wires) (Wires × Wires)
+denote⊗ : GateProg → GateProg → Rel {ℓR = lzero} (Wires × Wires) (Wires × Wires)
 denote⊗ gs₁ gs₂ (ws₁ , ws₂) (ws₁' , ws₂') =
-  (ws₁' ≡ runGates gs₁ ws₁) × (ws₂' ≡ runGates gs₂ ws₂)
+  (ws₁' ≡ runGateProg gs₁ ws₁) × (ws₂' ≡ runGateProg gs₂ ws₂)
 
 denote-⊗ : ∀ gs₁ gs₂ → denote⊗ gs₁ gs₂ ≈Rel (DaggerSMC._⊗₁_ RelDaggerSMC (denote gs₁) (denote gs₂))
 denote-⊗ gs₁ gs₂ (ws₁ , ws₂) (ws₁' , ws₂') = intro (λ p → p) (λ p → p)
+
+-- Functoriality (sequential): denote (g₁ ++g g₂) = denote g₂ ∘ denote g₁.
+
+denote-++
+  : ∀ gs₁ gs₂ → denote (gs₁ ++g gs₂) ≈Rel (DaggerSMC._∘_ RelDaggerSMC (denote gs₂) (denote gs₁))
+denote-++ gs₁ gs₂ ws ws' = intro to from
+  where
+    to
+      : denote (gs₁ ++g gs₂) ws ws'
+      → DaggerSMC._∘_ RelDaggerSMC (denote gs₂) (denote gs₁) ws ws'
+    to eq =
+      (runGateProg gs₁ ws , (refl , trans eq (runGateProg-++ gs₁ gs₂ ws)))
+
+    from
+      : DaggerSMC._∘_ RelDaggerSMC (denote gs₂) (denote gs₁) ws ws'
+      → denote (gs₁ ++g gs₂) ws ws'
+    from (m , (mEq , ws'Eq)) =
+      trans
+        (trans ws'Eq (cong (runGateProg gs₂) mEq))
+        (sym (runGateProg-++ gs₁ gs₂ ws))

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,14 +11,13 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Minimal.Con
 open import LogOS.Kernel
 open import LogOS.Kernel.Hom
-open import LogOS.Algebra.ConAlg
 open import LogOS.Kernel.Initial
 open import LogOS.Minimal.World
+open import LogOS.Theorems.Meta.DecodeTransportKit using (decode-mapCode-cong)
 
--- Category of Kernels for fixed Sig, Q, with hom-equality up to decode.
+-- Category of Kernels for fixed Sig, Q, with hom-equality up to strict decode equality (`≡`).
 
 record KernelCat {ℓ}
                  (Sig : LogOSSignature ℓ)
@@ -29,7 +28,7 @@ record KernelCat {ℓ}
     Hom   : (A B : Kernel Sig Q) → Set (lsuc (lsuc ℓ))
     _∘_   : ∀ {A B C} → Hom B C → Hom A B → Hom A C
     id    : ∀ {A} → Hom A A
-    -- Equality up to decode on code maps at the target kernel
+    -- Equality up to strict decode equality (`≡`) on code maps at the target kernel
     eqHom : ∀ {A B} → Hom A B → Hom A B → Set ℓ
     reflH : ∀ {A B} {h : Hom A B} → eqHom h h
     symH  : ∀ {A B} {h k : Hom A B} → eqHom h k → eqHom k h
@@ -51,14 +50,7 @@ KernelCat-instance Sig Q = record
   ; symH  = λ e γ → sym (e γ)
   ; transH = λ e₁ e₂ γ → trans (e₁ γ) (e₂ γ)
   ; congL = λ {A} {B} {C} {h₁} {h₂} g e γ →
-              let open KernelHom in
-              -- decodeC (mapCode g (mapCode h₁ γ))
-              -- = map∂ (con-hom g) (decodeB (mapCode h₁ γ))
-              -- = map∂ (con-hom g) (decodeB (mapCode h₂ γ)) [by e]
-              -- = decodeC (mapCode g (mapCode h₂ γ))
-              trans (map-decode g (mapCode h₁ γ))
-                    (trans (cong (λ x → ConAlgHom≡.map∂ (con-hom g) x) (e γ))
-                           (sym (map-decode g (mapCode h₂ γ))))
+              decode-mapCode-cong g (e γ)
   ; congR = λ {A} {B} {C} {h₁} {h₂} g e γ → e (KernelHom.mapCode g γ)
   }
 
@@ -88,7 +80,7 @@ module Laws {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ) where
     → eqHom ((h ∘ g) ∘ f) (h ∘ (g ∘ f))
   assoc h g f γ = refl
 
--- Initiality up to decode equality packaged as a theorem from InitialKernel
+-- Initiality up to strict decode equality (`≡`) packaged as a theorem from InitialKernel
 
 record InitialUpToDecode {ℓ}
                          (Sig : LogOSSignature ℓ)

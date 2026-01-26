@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,6 +11,7 @@ module LogOS.Ports.Semantic.VacuityGuards where
 -- constant adapters that erase boundary distinctions.
 
 open import LogOS.Prelude
+import LogOS.Syntax.Prop as Prop
 open import LogOS.Syntax.Prop using (¬_)
 
 open import LogOS.Base.Signature using (LogOSSignature; module LogOSSignature)
@@ -41,7 +42,30 @@ record PortVacuityGuards
     φ₀ φ₁ : Form
     sat₀ : SatF p φ₀
     unsat₁ : ¬ (SatF p φ₁)
-    import-distinct : ¬ (Import φ₀ ≡ Import φ₁)
+
+  -- Derived: the two formulas are definitional distinct (representation-level).
+  φ₀≢φ₁ : ¬ (φ₀ ≡ φ₁)
+  φ₀≢φ₁ eq = unsat₁ (subst (SatF p) eq sat₀)
+
+  -- Derived: boundary imports are definitional distinct.
+  import-distinct : ¬ (Import φ₀ ≡ Import φ₁)
+  import-distinct eq =
+    let
+      sat₀∂  = Prop.to (SatF≈∂ p φ₀) sat₀
+      sat₁∂  = subst (Sat∂ p) eq sat₀∂
+      sat₁   = Prop.from (SatF≈∂ p φ₁) sat₁∂
+    in
+    unsat₁ sat₁
+
+  -- Derived: boundary imports are observationally distinguishable (semantics-level).
+  import-obsDistinct : ¬ (Import φ₀ ≈∂[ B ] Import φ₁)
+  import-obsDistinct eq =
+    let
+      sat₀∂ = Prop.to (SatF≈∂ p φ₀) sat₀
+      sat₁∂ = Prop.to (eq p) sat₀∂
+      sat₁  = Prop.from (SatF≈∂ p φ₁) sat₁∂
+    in
+    unsat₁ sat₁
 
 record AdapterVacuityGuards
   {ℓ : Level}
@@ -64,5 +88,8 @@ record AdapterVacuityGuards
     φ₀ φ₁ : P1.Form
     sat₀ : P1.SatF p φ₀
     unsat₁ : ¬ (P1.SatF p φ₁)
-    φ₀≢φ₁ : ¬ (φ₀ ≡ φ₁)
     map-distinct : ¬ (map φ₀ ≡ map φ₁)
+
+  -- Derived: definitional distinctness on the source side (representation-level).
+  φ₀≢φ₁ : ¬ (φ₀ ≡ φ₁)
+  φ₀≢φ₁ eq = unsat₁ (subst (P1.SatF p) eq sat₀)

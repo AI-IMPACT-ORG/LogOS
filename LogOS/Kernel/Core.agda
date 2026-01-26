@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -40,8 +40,8 @@ record KernelShape {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
   field
     -- Constraints and lax monoidal adjunction
     BB     : BulkBoundary ℓ
-    MBulk  : MonoidalPoset (BulkBoundary.bulk BB)
-    MBnd   : MonoidalPoset (BulkBoundary.bnd  BB)
+    MBulk  : MonoidalOps (BulkBoundary.bulk BB)
+    MBnd   : MonoidalOps (BulkBoundary.bnd  BB)
     Holo   : LaxMonoidalAdjunction BB MBulk MBnd
 
     -- H-tier satisfaction and invariance (dependent on the chosen world)
@@ -49,23 +49,23 @@ record KernelShape {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     HInv   : HT.Invariance BB
 
     -- Boundary satisfaction + coherence (optional, internalized)
-    Sat_H_bnd : ∂Cosp → (ConPoset.Con (BulkBoundary.bnd BB)) → Set ℓ
-    sat-coh   : ∀ (w : Cosp) (c : ConPoset.Con (BulkBoundary.bnd BB)) →
+    Sat_H_bnd : ∂Cosp → (ConPreorder.Con (BulkBoundary.bnd BB)) → Set ℓ
+    sat-coh   : ∀ (w : Cosp) (c : ConPreorder.Con (BulkBoundary.bnd BB)) →
                 Prop._↔_ (HT.HLayer.Sat_H HTruth w c)
                          (Sat_H_bnd (to∂ w) c)
 
     -- S-tier: strict logic interface and translation into H-tier constraints
     Fml    : Set ℓ
     Strict : StrictLayer Fml
-    TransH : Fml → (ConPoset.Con (BulkBoundary.bnd BB))
+    TransH : Fml → (ConPreorder.Con (BulkBoundary.bnd BB))
     coh-LH : ∀ (w : Cosp) (φ : Fml) →
              Prop._↔_ (StrictLayer.Sat_S Strict w φ)
                       (HT.HLayer.Sat_H HTruth w (TransH φ))
 
     -- Code layer: guarded reflection and one-step computation core
     Code   : Set ℓ
-    encode : (ConPoset.Con (BulkBoundary.bnd BB)) → Code
-    decode : Code → (ConPoset.Con (BulkBoundary.bnd BB))
+    encode : (ConPreorder.Con (BulkBoundary.bnd BB)) → Code
+    decode : Code → (ConPreorder.Con (BulkBoundary.bnd BB))
 
     Guard         : Code → Code
     Body          : Code → Code
@@ -77,7 +77,7 @@ record KernelShape {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     reify         : Code → Code
 
     -- Boundary view of code body
-    Body∂         : (ConPoset.Con (BulkBoundary.bnd BB)) → (ConPoset.Con (BulkBoundary.bnd BB))
+    Body∂         : (ConPreorder.Con (BulkBoundary.bnd BB)) → (ConPreorder.Con (BulkBoundary.bnd BB))
 
 open KernelShape public
 
@@ -87,7 +87,7 @@ Sat_H_bnd-mono
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (S : KernelShape Sig Q)
   → ∀ {w c c'}
-  → ConPoset._⊑_ (BulkBoundary.bnd (KernelShape.BB S)) c c'
+  → ConPreorder._⊑_ (BulkBoundary.bnd (KernelShape.BB S)) c c'
   → KernelShape.Sat_H_bnd S (LogOSSignature.to∂ Sig w) c
   → KernelShape.Sat_H_bnd S (LogOSSignature.to∂ Sig w) c'
 Sat_H_bnd-mono {Sig = Sig} {Q = Q} S {w} {c} {c'} c≤c' sat =
@@ -132,7 +132,7 @@ record KernelShapeLaws
     )
   private
     BBₛ = KernelShape.BB S
-  open ConPoset (BulkBoundary.bnd BBₛ)
+  open ConPreorder (BulkBoundary.bnd BBₛ)
   field
     decode∘encode : ∀ c → decodeₛ (encodeₛ c) ≡ c
     γ*-guard      : (_⊑_ (decodeₛ γ*ₛ) (decodeₛ (Guardₛ (Bodyₛ γ*ₛ))))
@@ -156,7 +156,7 @@ record KernelLaws
     )
   private
     BBₛ = KernelShape.BB S
-  open ConPoset (BulkBoundary.bnd BBₛ)
+  open ConPreorder (BulkBoundary.bnd BBₛ)
   field
     shapeLaws    : KernelShapeLaws S
     mono-Body∂    : ∀ {c d} → _⊑_ c d → _⊑_ (Body∂ₛ c) (Body∂ₛ d)
@@ -174,13 +174,6 @@ FlowCode
   → KernelShape.Code S → KernelShape.Code S
 FlowCode S γ = KernelShape.Guard S (KernelShape.Body S γ)
 
--- Backwards-compatible alias.
-FlowCodeShape
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (S : KernelShape Sig Q)
-  → KernelShape.Code S → KernelShape.Code S
-FlowCodeShape = FlowCode
-
 -- Refinement on code via decode into boundary constraints.
 
 Code≤
@@ -188,32 +181,32 @@ Code≤
   → (S : KernelShape Sig Q)
   → KernelShape.Code S → KernelShape.Code S → Set ℓ
 Code≤ S γ δ =
-  ConPoset._⊑_ (BulkBoundary.bnd (KernelShape.BB S))
+  ConPreorder._⊑_ (BulkBoundary.bnd (KernelShape.BB S))
     (KernelShape.decode S γ)
     (KernelShape.decode S δ)
 
-CodePoset
+CodePreorder
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   → (S : KernelShape Sig Q)
-  → ConPoset ℓ
-CodePoset S =
+  → ConPreorder ℓ
+CodePreorder S =
   record
     { Con = KernelShape.Code S
     ; _⊑_ = Code≤ S
-    ; refl = ConPoset.refl (BulkBoundary.bnd (KernelShape.BB S))
-    ; trans = ConPoset.trans (BulkBoundary.bnd (KernelShape.BB S))
+    ; refl = ConPreorder.refl (BulkBoundary.bnd (KernelShape.BB S))
+    ; trans = ConPreorder.trans (BulkBoundary.bnd (KernelShape.BB S))
     }
 
 Code≈
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   → (S : KernelShape Sig Q)
   → KernelShape.Code S → KernelShape.Code S → Set ℓ
-Code≈ S = _≈CP_ (CodePoset S)
+Code≈ S = _≈CP_ (CodePreorder S)
 
 decode-mono
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   → (S : KernelShape Sig Q)
-  → MonoMap (CodePoset S) (BulkBoundary.bnd (KernelShape.BB S)) (KernelShape.decode S)
+  → MonoMap (CodePreorder S) (BulkBoundary.bnd (KernelShape.BB S)) (KernelShape.decode S)
 decode-mono S le = le
 
 decode-respects≈
@@ -226,7 +219,7 @@ decode-respects≈
       (KernelShape.decode S δ)
 decode-respects≈ S {γ} {δ} eq =
   monoMap-respects≈
-    {CP₁ = CodePoset S}
+    {CP₁ = CodePreorder S}
     {CP₂ = BulkBoundary.bnd (KernelShape.BB S)}
     {f = KernelShape.decode S}
     (decode-mono S)
@@ -238,7 +231,7 @@ record BodyMonotoneShape
   field
     mono-Body∂
       : ∀ {c d}
-      → ConPoset._⊑_ (BulkBoundary.bnd (KernelShape.BB S)) c d
-      → ConPoset._⊑_ (BulkBoundary.bnd (KernelShape.BB S))
+      → ConPreorder._⊑_ (BulkBoundary.bnd (KernelShape.BB S)) c d
+      → ConPreorder._⊑_ (BulkBoundary.bnd (KernelShape.BB S))
           (KernelShape.Body∂ S c)
           (KernelShape.Body∂ S d)

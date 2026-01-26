@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,41 +9,43 @@ module LogOS.Theorems.Meta.LimitPublicisation where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
-open import Data.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Minimal.Con using (ConPoset)
+open import LogOS.Minimal.Con using (ConPreorder; _≈CP_)
 open import LogOS.Kernel
 
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
+import LogOS.Theorems.Meta.BudgetedCommunicableTruth as BComm
+import LogOS.Theorems.Meta.ObserverCore as ObsCore
 
 -- A minimal preorder and cofinal-map notion (used to state “schedule independence”).
 
--- Compatibility wrapper: a “preorder on A” is just a `ConPoset` whose carrier is `A`.
+-- Compatibility wrapper: a “preorder on A” is just a `ConPreorder` whose carrier is `A`.
 --
 -- This keeps older call sites readable (they can write `Preorder A`), while the
--- underlying structure is still the shared `ConPoset`.
+-- underlying structure is still the shared `ConPreorder`.
 record Preorder {ℓ : Level} (A : Set ℓ) : Set (lsuc ℓ) where
   field
-    CP : ConPoset ℓ
-    Con≡ : ConPoset.Con CP ≡ A
+    CP : ConPreorder ℓ
+    Con≡ : ConPreorder.Con CP ≡ A
 
-  open ConPoset CP public
+  open ConPreorder CP public
 
   private
-    toCon : A → ConPoset.Con CP
+    toCon : A → ConPreorder.Con CP
     toCon = subst (λ X → X) (sym Con≡)
 
   infix 4 _≤_
   _≤_ : A → A → Set ℓ
-  a ≤ b = ConPoset._⊑_ CP (toCon a) (toCon b)
+  a ≤ b = ConPreorder._⊑_ CP (toCon a) (toCon b)
 
   ≤-refl : ∀ {a} → a ≤ a
-  ≤-refl {a} = ConPoset.refl CP {c = toCon a}
+  ≤-refl {a} = ConPreorder.refl CP {c = toCon a}
 
   ≤-trans : ∀ {a b c} → a ≤ b → b ≤ c → a ≤ c
-  ≤-trans ab bc = ConPoset.trans CP ab bc
+  ≤-trans ab bc = ConPreorder.trans CP ab bc
 
 record Cofinal {ℓA : Level}
                {A : Set ℓA} {B : Set ℓA}
@@ -137,13 +139,32 @@ TruthK→Pr {ℓ = ℓ} {ℓT = ℓT} K TruthK ext stable {γ} tγ =
   where
     A-self : Comm.AdmissibleComm {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓT} K TruthK TruthK
     A-self = record
-      { core =
-          record
-            { ext    = ext
-            ; sound  = λ {γ} t → t
-            ; stable = stable
-            }
+      { ext≈   = ext
+      ; sound  = λ {γ} t → t
+      ; stable = stable
       }
+
+-- Variant: many narratives phrase “stability” in terms of the kernel’s closure
+-- modality (`Box`) rather than the computational step (`FlowCode`).
+--
+-- Since `FlowCode γ` and `Box (Body γ)` coincide on decoded meaning, any
+-- decode-extensional predicate can translate between the two.
+
+TruthK→Pr-BoxBody
+  : ∀ {ℓ ℓT}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+    (TruthK : Kernel.Code K → Set ℓT)
+  → Comm.DecodeExtensional′ K TruthK
+  → (∀ γ → TruthK γ ↔ TruthK (Box K (Kernel.Body K γ)))
+  → ∀ {γ} → TruthK γ → Comm.Pr {ℓC = ℓT} K TruthK γ
+TruthK→Pr-BoxBody {ℓ = ℓ} {ℓT = ℓT} K TruthK ext stableBoxBody {γ} tγ =
+  TruthK→Pr {ℓ = ℓ} {ℓT = ℓT} K TruthK ext stableFlow {γ} tγ
+  where
+    module B = BComm.ForKernel K
+
+    stableFlow : ∀ γ′ → TruthK γ′ ↔ TruthK (FlowCode K γ′)
+    stableFlow = B.BoxBodyStable→FlowStable TruthK ext stableBoxBody
 
 -- Universe-lift (1 step): if γ is observable at level ℓC, then it is observable
 -- at level `lsuc ℓC` by lifting the witnessing predicate.
@@ -168,16 +189,13 @@ Pr-raise {ℓ = ℓ} {ℓT = ℓT} {ℓC = ℓC} K TruthK {γ} (CommP , (A , cγ
 
     A↑ : Comm.AdmissibleComm {ℓ = ℓ} {ℓT = ℓT} {ℓC = lsuc ℓC} K TruthK CommP↑
     A↑ = record
-      { core =
+      { ext≈   = λ γ₁ γ₂ dec≈ p → up (ObsCore.Admissible≈.ext≈ A γ₁ γ₂ dec≈ (down p))
+      ; sound  = λ {γ} p → ObsCore.Admissible≈.sound A (down p)
+      ; stable = λ γ′ →
+          let st = ObsCore.Admissible≈.stable A γ′ in
           record
-            { ext    = λ γ₁ γ₂ dec≡ p → up (Comm.AdmissibleComm.ext A γ₁ γ₂ dec≡ (down p))
-            ; sound  = λ {γ} p → Comm.AdmissibleComm.sound A (down p)
-            ; stable = λ γ′ →
-                let st = Comm.AdmissibleComm.stable A γ′
-                in record
-                  { to   = λ p → up (_↔_.to st (down p))
-                  ; from = λ p → up (_↔_.from st (down p))
-                  }
+            { to   = λ p → up (_↔_.to st (down p))
+            ; from = λ p → up (_↔_.from st (down p))
             }
       }
 
@@ -222,6 +240,11 @@ Pr-naturality
   → ∀ {γ} → Comm.Pr {ℓC = ℓC} K TruthK γ ↔ Comm.Pr {ℓC = ℓC} K TruthK (f γ)
 Pr-naturality {ℓC = ℓC} K TruthK f pres {γ} =
   record
-    { to   = λ p → Comm.comm⋆-ext {ℓC = ℓC} K TruthK γ (f γ) (sym (pres γ)) p
-    ; from = λ p → Comm.comm⋆-ext {ℓC = ℓC} K TruthK (f γ) γ (pres γ) p
+    { to   = λ p → Comm.comm⋆-ext {ℓC = ℓC} K TruthK γ (f γ) (eq→≈ (sym (pres γ))) p
+    ; from = λ p → Comm.comm⋆-ext {ℓC = ℓC} K TruthK (f γ) γ (eq→≈ (pres γ)) p
     }
+  where
+    CP = Comm.CodeCP K
+
+    eq→≈ : ∀ {c c' : ConPreorder.Con CP} → c ≡ c' → _≈CP_ CP c c'
+    eq→≈ eq rewrite eq = (ConPreorder.refl CP , ConPreorder.refl CP)

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Base.Signature.Hom using (SigHom)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Kernel
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 import LogOS.Kernel.Reindex as Reindex
 
 import LogOS.Theorems.Meta.CHL.Core as Core
@@ -39,8 +39,8 @@ module For
   reindex-decode : ∀ gamma → Kernel.decode Ksigma gamma ≡ Kernel.decode K gamma
   reindex-decode = Reindex.reindex-decode sigma K
 
-  reindex-box : ∀ gamma → FlowCode Ksigma gamma ≡ FlowCode K gamma
-  reindex-box = Reindex.reindex-FlowCode sigma K
+  reindex-step : ∀ gamma → FlowCode Ksigma gamma ≡ FlowCode K gamma
+  reindex-step = Reindex.reindex-FlowCode sigma K
 
 module WithFml
   {ℓ : Level}
@@ -64,5 +64,5 @@ module WithFml
   reindex-decode : ∀ gamma → Kernel.decode Ksigma gamma ≡ Kernel.decode K gamma
   reindex-decode = Reindex.reindexWithFml-decode sigma K mapFml
 
-  reindex-box : ∀ gamma → FlowCode Ksigma gamma ≡ FlowCode K gamma
-  reindex-box = Reindex.reindexWithFml-FlowCode sigma K mapFml
+  reindex-step : ∀ gamma → FlowCode Ksigma gamma ≡ FlowCode K gamma
+  reindex-step = Reindex.reindexWithFml-FlowCode sigma K mapFml

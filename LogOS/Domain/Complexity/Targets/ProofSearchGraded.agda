@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,10 +10,10 @@ module LogOS.Domain.Complexity.Targets.ProofSearchGraded where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import Data.Nat using (ℕ)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Product using (Σ; _,_; _×_; fst; snd; proj₁; proj₂)
-open import Data.NatOrder using (dec≤ℕ)
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_; fst; snd; proj₁; proj₂)
+open import LogOS.Prelude.NatOrder using (dec≤ℕ)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Computation.Decider as Dec using (dec×)
@@ -22,7 +22,7 @@ import LogOS.Domain.Complexity.LanguageWitnessW as LWW
 import LogOS.Domain.Complexity.PhysicsClassesWGraded as PCW
 import LogOS.Domain.Complexity.PhysicsClassesWCostGuardsGraded as PCWCG
 import LogOS.Domain.Complexity.PhysProofBridgeWGraded as PBW
-import LogOS.Domain.Complexity.ProofSystem as PSCore
+import LogOS.Syntax.ProofSystem as PSCore
 
 -- Grade-native proof search target (Route B):
 -- same structure as the ℕ version, but costs live in the grade.

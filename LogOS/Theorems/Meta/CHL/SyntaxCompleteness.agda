@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,10 +14,10 @@ open import LogOS.Syntax.Prop as Prop using (_↔_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
 
-open import LogOS.Kernel
+open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 import LogOS.Theorems.Meta.TruthLemma as TruthLemma
 import LogOS.Theorems.Meta.CHL.Completeness as CHLC
 
@@ -38,7 +38,7 @@ module For
   -- Proof calculus on strict formulas: refinement of translated constraints.
   infix 4 _⊢S_
   _⊢S_ : Kernel.Fml K → Kernel.Fml K → Set ℓ
-  φ ⊢S ψ = ConPoset._⊑_ CP (Kernel.TransH K φ) (Kernel.TransH K ψ)
+  φ ⊢S ψ = ConPreorder._⊑_ CP (Kernel.TransH K φ) (Kernel.TransH K ψ)
 
   -- Semantic entailment on the strict layer (all worlds).
   EntailsS : Kernel.Fml K → Kernel.Fml K → Set ℓ
@@ -58,10 +58,10 @@ module For
     → ST.StrictLayer.Sat_S (Kernel.Strict K) w ψ
 
   idS : ∀ {φ} → φ ⊢S φ
-  idS = ConPoset.refl CP
+  idS = ConPreorder.refl CP
 
   cutS : ∀ {φ ψ χ} → φ ⊢S ψ → ψ ⊢S χ → φ ⊢S χ
-  cutS = ConPoset.trans CP
+  cutS = ConPreorder.trans CP
 
   -- Soundness: derivability implies semantic entailment.
   soundS : ∀ {φ ψ} → φ ⊢S ψ → EntailsS φ ψ

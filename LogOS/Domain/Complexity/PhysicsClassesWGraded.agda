@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,9 +10,9 @@ module LogOS.Domain.Complexity.PhysicsClassesWGraded where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_; ⊥-elim)
 
-open import Data.Nat using (ℕ)
-open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s) public
+open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_; proj₁; proj₂)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s) public
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter using (QAdapter)
@@ -70,7 +70,7 @@ module For {ℓI ℓW ℓ ℓQ : Level}
   PhysPG : Language → Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓQ)))
   PhysPG L = Σ (PhysDeciderG L) (λ _ → ⊤ {ℓ = lzero})
 
-  -- NP with witness size (not finite-search NP).
+  -- NP with witness size (language-relative, not finite-search NP).
   record PhysWitnessW (L : Language) : Set (lsuc (lsuc (ℓ ⊔ ℓI ⊔ ℓW ⊔ ℓQ))) where
     field
       WS : LWW.WitnessSystemW {ℓI = ℓI} {ℓW = ℓW} {ℓ = ℓ} Input L
@@ -150,7 +150,7 @@ module Kernel
   (WSize : GradedKernel.Code K → ℕ)
   where
 
-  module R = TRG.ForNat K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
+  module R = TRG.UniformNatFromRuns K Input Size DetRun VerRun VerRunWith IsPoly gradeBound
   module W = R.WithWitnessSize WSize
 
   Con : Set ℓ
@@ -159,8 +159,8 @@ module Kernel
   PhysP : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓI ⊔ ℓP ⊔ ℓA)
   PhysP = R.DetPolyTimeBounded
 
-  PhysNPw : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓ ⊔ ℓI ⊔ ℓP ⊔ ℓA)
-  PhysNPw = W.PolyWitnessedTotalVerificationW
+  PhysTotalNPw : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓ ⊔ ℓI ⊔ ℓP ⊔ ℓA)
+  PhysTotalNPw = W.PolyTotalWitnessedVerificationW
 
   SuperPolyHardness : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓI ⊔ ℓP ⊔ ℓA)
   SuperPolyHardness = R.SuperPolyHardness
@@ -186,7 +186,7 @@ module KernelG
   (WSize : GradedKernel.Code K → ℕ)
   where
 
-  module R = TRG.For K Input Size DetRun VerRun VerRunWith
+  module R = TRG.UniformFromRuns K Input Size DetRun VerRun VerRunWith
   module G = R.GradeBounded PG
   module W = G.WithWitnessSizeG (PolyPred.isPoly Pℕ) WSize
 
@@ -196,8 +196,8 @@ module KernelG
   PhysP : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓ ⊔ ℓI ⊔ ℓA)
   PhysP = G.DetPolyTimeBoundedG
 
-  PhysNPw : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓ ⊔ ℓI ⊔ ℓA)
-  PhysNPw = W.PolyWitnessedTotalVerificationWG
+  PhysTotalNPw : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓ ⊔ ℓI ⊔ ℓA)
+  PhysTotalNPw = W.PolyTotalWitnessedVerificationWG
 
   SuperPolyHardness : ∀ {ℓA} (Acc : Con → Set ℓA) → Set (ℓ ⊔ ℓI ⊔ ℓA)
   SuperPolyHardness = G.SuperPolyHardnessG

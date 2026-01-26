@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -28,7 +28,9 @@ open import LogOS.Boundary.Port using (BoundaryPort)
 open import LogOS.Syntax.ProofSystem using (ProofSystem)
 
 open import LogOS.Ports.Semantic.Interlingua using (toPresentationC)
-open import LogOS.Ports.Semantic.SystemIO using (SystemIO; rebase)
+open import LogOS.Ports.Semantic.SatMor using (SatMor)
+open import LogOS.Ports.Semantic.SystemIO using (SystemIO; SystemIO↑; rebase; rebaseAlongSatMor)
+import LogOS.Ports.Semantic.Interoperability as Interop
 
 -- Build a `SystemIO` directly from a boundary port and tool interfaces.
 
@@ -91,3 +93,60 @@ rebaseToBoundaryPort
       {ℓWModel = ℓWModel}
       Name (LogOSSignature.∂Cosp Sig) (BulkBoundary.Con_bnd BB) (BoundaryIO.Sat∂ B)
 rebaseToBoundaryPort B P₁ sys = rebase (toPresentationC B P₁) sys
+
+rebaseViaPortAdapter
+  : ∀ {ℓName ℓ ℓForm₁ ℓForm₂ ℓWProver ℓWModel}
+    {Name : Set ℓName}
+    {Sig : LogOSSignature ℓ}
+    {Q   : QAdapter ℓ}
+    {W   : Worlds.WorldH Sig Q}
+    {BB  : BulkBoundary ℓ}
+    {H   : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B   : BoundaryIO Sig Q W BB H)
+    {P₁  : BoundaryPort {ℓForm = ℓForm₁} Sig Q W BB H B}
+    {P₂  : BoundaryPort {ℓForm = ℓForm₂} Sig Q W BB H B}
+  → Interop.PortAdapter B P₁ P₂
+  → SystemIO
+      {ℓForm = ℓForm₂}
+      {ℓWProver = ℓWProver}
+      {ℓWModel = ℓWModel}
+      Name (LogOSSignature.∂Cosp Sig) (BulkBoundary.Con_bnd BB) (BoundaryIO.Sat∂ B)
+  → SystemIO
+      {ℓForm = ℓForm₁}
+      {ℓWProver = ℓWProver}
+      {ℓWModel = ℓWModel}
+      Name (LogOSSignature.∂Cosp Sig) (BulkBoundary.Con_bnd BB) (BoundaryIO.Sat∂ B)
+rebaseViaPortAdapter B {P₁ = P₁} _ sys = rebase (toPresentationC B P₁) sys
+
+rebaseAlongSatMorToBoundaryPort
+  : ∀ {ℓName ℓ ℓForm₁ ℓForm₂ ℓWProver ℓWModel}
+    {Name : Set ℓName}
+    {Sig₁ Sig₂ : LogOSSignature ℓ}
+    {Q₁ Q₂ : QAdapter ℓ}
+    {W₁ : Worlds.WorldH Sig₁ Q₁}
+    {W₂ : Worlds.WorldH Sig₂ Q₂}
+    {BB₁ BB₂ : BulkBoundary ℓ}
+    {H₁ : (let module HT = Truth.HomotypicalTruth Sig₁ Q₁ W₁ in HT.HLayer) BB₁}
+    {H₂ : (let module HT = Truth.HomotypicalTruth Sig₂ Q₂ W₂ in HT.HLayer) BB₂}
+    (B₁ : BoundaryIO Sig₁ Q₁ W₁ BB₁ H₁)
+    (P₁ : BoundaryPort {ℓForm = ℓForm₁} Sig₁ Q₁ W₁ BB₁ H₁ B₁)
+    {B₂ : BoundaryIO Sig₂ Q₂ W₂ BB₂ H₂}
+  → SatMor
+      (LogOSSignature.∂Cosp Sig₁)
+      (BulkBoundary.Con_bnd BB₁)
+      (BoundaryIO.Sat∂ B₁)
+      (LogOSSignature.∂Cosp Sig₂)
+      (BulkBoundary.Con_bnd BB₂)
+      (BoundaryIO.Sat∂ B₂)
+  → SystemIO
+      {ℓForm = ℓForm₂}
+      {ℓWProver = ℓWProver}
+      {ℓWModel = ℓWModel}
+      Name (LogOSSignature.∂Cosp Sig₂) (BulkBoundary.Con_bnd BB₂) (BoundaryIO.Sat∂ B₂)
+  → SystemIO↑
+      {ℓForm = ℓForm₁}
+      {ℓWProver = ℓWProver}
+      {ℓWModel = ℓWModel}
+      Name (LogOSSignature.∂Cosp Sig₁) (BulkBoundary.Con_bnd BB₁) (BoundaryIO.Sat∂ B₁)
+rebaseAlongSatMorToBoundaryPort B₁ P₁ m sys =
+  rebaseAlongSatMor m (toPresentationC B₁ P₁) sys

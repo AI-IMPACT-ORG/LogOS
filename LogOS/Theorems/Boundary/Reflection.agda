@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -31,7 +31,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
   private
     CP = BulkBoundary.bnd BB
-    module CP = ConPoset CP
+    module CP = ConPreorder CP
 
   -- Boundary observational equivalence on codes: two codes agree when they
   -- induce the same boundary observations across all boundary contexts.

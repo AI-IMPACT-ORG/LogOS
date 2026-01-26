@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,12 +10,50 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.Views.HoTT_3Level where
 
-open import LogOS.Docs.Views.View_HoTT_3Level public
+-- Typechecked “view surface” for the 3-level HoTT-style reading (S/H/G).
+--
+-- Keep this module lightweight to avoid name clashes when imported alongside
+-- other views/tests.
+
+open import LogOS.Prelude public
+open import LogOS.Base.Signature using (LogOSSignature)
+open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Kernel using (Kernel)
+import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheorems
+
+module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (K : Kernel Sig Q)
+  where
+  module V = ViewTheorems.For K
+  open V.HoTT3Level public
+
+  private
+    coh-SH-exists : _
+    coh-SH-exists = coh-SH
+
+    coh-H∂-exists : _
+    coh-H∂-exists = coh-H∂
+
+    decode-Box-exists : _
+    decode-Box-exists = decode-Box
+
+    guarded-fixed-exists : _
+    guarded-fixed-exists = guarded-fixed
+
+    stable-truth-exists : _
+    stable-truth-exists = stable-truth
+
+    projection-exists : _
+    projection-exists = V.Projections.projection
 ```
 
 This note explains the intended “3-level HoTT” reading of the LogOS architecture.
 It is deliberately explicit about what is *implemented* vs what is an *optional axiom*
 you may add on top.
+
+Interpretation (analogy):
+where this note mentions physics/complexity as motivation, treat that as interpretation only.
+The authoritative claims are exactly the typechecked theorem surfaces cited below.
 
 Theorem spine (authoritative)
 -----------------------------
@@ -46,8 +84,9 @@ LogOS names the tiers:
 
 2) **H — Homotypical**
    - A satisfaction predicate `Sat_H` for boundary constraints.
-   - An invariance/projector `Inv_H` (a nucleus/closure operator) that captures “truth up to
-     invariance” in the target model.
+   - An invariance/projector `Inv_H` (inflationary, idempotent‑lax). If you additionally assume
+     monotonicity for `Inv_H`, it upgrades to a closure/nucleus operator; LogOS keeps that
+     strength explicit (bundle: `HomotypicalTruth.InvarianceMono` in `LogOS/Minimal/Truth.agda`).
    - This tier is designed so theorems are phrased in terms of *structure* and *transport*
      rather than definitional equalities.
 
@@ -83,20 +122,21 @@ The coherence laws between tiers are **fields of the Kernel record** (`LogOS/Ker
 open import LogOS.Prelude
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 open import LogOS.Kernel using (Kernel)
 open import LogOS.Syntax.Prop using (_↔_)
 import LogOS.Minimal.Truth as Truth
 
-module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) where
-  module HT = Truth.HomotypicalTruth Sig Q (Kernel.HWorld K)
-  sat-coh-typed
-    : ∀ (w : LogOSSignature.Cosp Sig)
-        (c : ConPoset.Con (BulkBoundary.bnd (Kernel.BB K)))
-    → _↔_
-        (HT.HLayer.Sat_H (Kernel.HTruth K) w c)
-        (Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c)
-  sat-coh-typed = Kernel.sat-coh K
+private
+  module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) where
+    module HT = Truth.HomotypicalTruth Sig Q (Kernel.HWorld K)
+    sat-coh-typed
+      : ∀ (w : LogOSSignature.Cosp Sig)
+          (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
+      → _↔_
+          (HT.HLayer.Sat_H (Kernel.HTruth K) w c)
+          (Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c)
+    sat-coh-typed = Kernel.sat-coh K
 ```
 
 Why this is “HoTT-style” (and not just “3 modules”)
@@ -136,7 +176,7 @@ This is the poset analogue of univalence at truncation level 0:
 
 > if `c ⊑ d` and `d ⊑ c`, then `c ≡ d`.
 
-In the library this is exactly the optional “upgrade from preorder to partial order”
+In the library this is the optional “upgrade from preorder to partial order”
 provided by `PartialOrder` in `LogOS/Minimal/Con.agda`.
 
 ### Faithfulness of embeddings (univalence-like reflection principle)

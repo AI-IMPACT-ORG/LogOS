@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,6 +13,7 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
+open import LogOS.Ports.Semantic.SatMor using (SatRefinement; SatRefinement₀; composeSatRefinement; sat-→₀)
 
 open import LogOS.Domain.Opacity.NumberTheory.HP.Interface as HPi
 open import LogOS.Domain.Opacity.NumberTheory.HP.Flow as HP
@@ -35,12 +36,23 @@ record ZetaOpBridgeFinite {ℓ}
   open RiemannSpectral RS
   open HPi.HPInterface HP
   field
-    c : Spectral → ConPoset.Con (BulkBoundary.bnd BB)
-    zero→OpFixed : ∀ s → NontrivialZero s →
-      Op (embed (c s)) ≡ embed (c s)
-    opFixed→OnLine : ∀ s →
-      Op (embed (c s)) ≡ embed (c s)
-      → OnLine s
+    c : Spectral → ConPreorder.Con (BulkBoundary.bnd BB)
+    zero-ref : SatRefinement₀ Spectral
+                (λ _ s → NontrivialZero s)
+                (λ _ s → Op (embed (c s)) ≡ embed (c s))
+
+    opFixed-ref : SatRefinement₀ Spectral
+                   (λ _ s → Op (embed (c s)) ≡ embed (c s))
+                   (λ _ s → OnLine s)
+
+  zero→OpFixed : ∀ s → NontrivialZero s → Op (embed (c s)) ≡ embed (c s)
+  zero→OpFixed s nz = sat-→₀ zero-ref s nz
+
+  opFixed→OnLine : ∀ s → Op (embed (c s)) ≡ embed (c s) → OnLine s
+  opFixed→OnLine s fixed = sat-→₀ opFixed-ref s fixed
+
+  zero→OnLine : ∀ s → NontrivialZero s → OnLine s
+  zero→OnLine s nz = sat-→₀ (composeSatRefinement zero-ref opFixed-ref) s nz
 
 mkHPAssumptions
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -52,8 +64,14 @@ mkHPAssumptions
   → HPFinite.HPGRHAssumptions Sig Q K HP EF RS
 mkHPAssumptions K HP EF RS B = record
   { c = ZetaOpBridgeFinite.c B
-  ; OpFixedOnZero = ZetaOpBridgeFinite.zero→OpFixed B
-  ; OpFixed→OnLine = ZetaOpBridgeFinite.opFixed→OnLine B
+  ; zero-ref =
+      record
+        { sat-→ = λ _ s nz → ZetaOpBridgeFinite.zero→OpFixed B s nz
+        }
+  ; opFixed-ref =
+      record
+        { sat-→ = λ _ s fixed → ZetaOpBridgeFinite.opFixed→OnLine B s fixed
+        }
   }
 
 GRH_Without_Vacuity_Guards_from_finite
@@ -79,14 +97,29 @@ record ZetaOpBridgeLimit {ℓ}
   open Kernel K
   open RiemannSpectral RS
   field
-    c : Spectral → ConPoset.Con (BulkBoundary.bnd BB)
-    zero→OpᵢFixed : ∀ i s → NontrivialZero s →
-      HPLimit.ApproxHP.Opᵢ AHP i (HPLimit.ApproxHP.embedᵢ AHP i (c s))
-        ≡ HPLimit.ApproxHP.embedᵢ AHP i (c s)
-    op∞Fixed→OnLine : ∀ s →
-      HPLimit.ApproxHP.Op∞ AHP (HPLimit.ApproxHP.embed∞ AHP (c s))
-        ≡ HPLimit.ApproxHP.embed∞ AHP (c s)
-      → OnLine s
+    c : Spectral → ConPreorder.Con (BulkBoundary.bnd BB)
+    zero-ref : SatRefinement (HPLimit.ResIdx.I (HPLimit.ApproxHP.idx AHP)) Spectral
+                (λ _ s → NontrivialZero s)
+                (λ i s →
+                  HPLimit.ApproxHP.Opᵢ AHP i (HPLimit.ApproxHP.embedᵢ AHP i (c s))
+                    ≡ HPLimit.ApproxHP.embedᵢ AHP i (c s))
+
+    opFixed-ref : SatRefinement₀ Spectral
+                   (λ _ s →
+                      HPLimit.ApproxHP.Op∞ AHP (HPLimit.ApproxHP.embed∞ AHP (c s))
+                        ≡ HPLimit.ApproxHP.embed∞ AHP (c s))
+                   (λ _ s → OnLine s)
+
+  zero→OpᵢFixed : ∀ i s → NontrivialZero s →
+    HPLimit.ApproxHP.Opᵢ AHP i (HPLimit.ApproxHP.embedᵢ AHP i (c s))
+      ≡ HPLimit.ApproxHP.embedᵢ AHP i (c s)
+  zero→OpᵢFixed i s nz = SatRefinement.sat-→ zero-ref i s nz
+
+  op∞Fixed→OnLine : ∀ s →
+    HPLimit.ApproxHP.Op∞ AHP (HPLimit.ApproxHP.embed∞ AHP (c s))
+      ≡ HPLimit.ApproxHP.embed∞ AHP (c s)
+    → OnLine s
+  op∞Fixed→OnLine s fixed = sat-→₀ opFixed-ref s fixed
 
 mkHP∞Assumptions
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -98,9 +131,16 @@ mkHP∞Assumptions
   → HPLimit.HP∞GRHAssumptions K AHP RS
 mkHP∞Assumptions K AHP RS B i = record
   { c = ZetaOpBridgeLimit.c B
-  ; Op∞FixedOnZero = λ s nz →
-      HPLimit.derive-Op∞Fixed K AHP RS (ZetaOpBridgeLimit.c B) i (ZetaOpBridgeLimit.zero→OpᵢFixed B) s nz
-  ; Op∞Fixed→OnLine = ZetaOpBridgeLimit.op∞Fixed→OnLine B
+  ; zero-ref =
+      record
+        { sat-→ = λ _ s nz →
+            HPLimit.derive-Op∞Fixed K AHP RS (ZetaOpBridgeLimit.c B) i
+              (ZetaOpBridgeLimit.zero→OpᵢFixed B) s nz
+        }
+  ; opFixed-ref =
+      record
+        { sat-→ = λ _ s fixed → ZetaOpBridgeLimit.op∞Fixed→OnLine B s fixed
+        }
   }
 
 GRH_Without_Vacuity_Guards_from_limit

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module LogOS.Domain.UniversalIR.Core.Minsky where
 open import LogOS.Prelude
 open import LogOS.Domain.UniversalIR.Core.Utils
 
-open import Data.List using (List; []; _∷_)
+open import LogOS.Prelude.List using (List; []; _∷_)
 
 -- 1) Minsky machines (4 registers) ------------------------------------------
 
@@ -56,6 +56,18 @@ stepM m with lookupDefault HALT (prog m) (pc m)
 ... | DECJZ r j k with getReg r m
 ... | zero    = setPC k m
 ... | suc n   = setPC j (setReg r n m)
+
+-- Observer-facing boundary (default: output register r0).
+
+boundaryOutput : BoundaryObs MinskyCode
+boundaryOutput = record { Obs = ℕ ; observe = r0 }
+
+Effect : Set₁
+Effect = EffectAt boundaryOutput
+
+infix 4 _⊨_
+_⊨_ : MinskyCode → Effect → Set
+m ⊨ E = (m ⊨ᵇ boundaryOutput) E
 
 -- Fuel helper for the standard DECJZ/INC loop used in the addition demos.
 -- For an initial counter value `n`, this is exactly 2·n + 1 steps:

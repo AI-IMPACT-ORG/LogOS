@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Minimal.Adapter where
 
-open import Host.Level using (Level; lsuc)
+open import LogOS.Prelude.Level using (Level; lsuc)
 open import LogOS.Prelude using (_≡_; refl; ⊤; tt; ttℓ)
 
 -- Quantale + Time adapter as a single parameter.

@@ -1,10 +1,10 @@
-# LogOS: an Agda research library for foundational logic system architecture.
+# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
 cff-version: 1.2.0
 message: "If you use this library in your work, please cite it."
-title: "LogOS — Kernel + Packs (Agda)"
+title: "LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning"
 type: software
 license: GPL-3.0-only
 authors:

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,12 +9,12 @@ module LogOS.QAdapters.QNat where
 
 open import LogOS.Prelude
 
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ; weakenRight)
-open import Data.NatExtra using (_⊔ℕ_; max-left; max-right; ⊔ℕ-least; +-assoc; +-zeroˡ; +-zeroʳ; ⊔ℕ-distrib-+ʳ; ⊔ℕ-distrib-+ˡ)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ; weakenRight)
+open import LogOS.Prelude.NatExtra using (_⊔ℕ_; max-left; max-right; ⊔ℕ-least; +-assoc; +-zeroˡ; +-zeroʳ; ⊔ℕ-distrib-+ʳ; ⊔ℕ-distrib-+ˡ)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.ScaleOps using (ScaleOps)
+open import LogOS.Minimal.ScaleOps using (ScaleOps; ScaleOpsLaws; BudgetOps)
 
 -- Numeric quantale+time adapter: costs are naturals with preorder ≤ and monoid +.
 -- This is the default “step counting / time” adapter used by many demos.
@@ -72,3 +72,9 @@ QNat = record
 
 scaleOps : ScaleOps QNat
 scaleOps = record { budget = λ n → n ; steps = λ n → n }
+
+scaleOpsLaws : ScaleOpsLaws QNat scaleOps
+scaleOpsLaws = record { steps-budget-mono = λ le → le }
+
+budgetOps : BudgetOps QNat
+budgetOps = record { Ops = scaleOps ; laws = scaleOpsLaws }

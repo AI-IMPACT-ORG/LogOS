@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,6 +9,7 @@ module LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStable where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
+open import LogOS.Prelude.Product using (fst; snd)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -17,7 +18,7 @@ open import LogOS.Kernel
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
 import LogOS.Theorems.Meta.MathTruth as MT
 import LogOS.Theorems.Meta.LimitPublicisation as LP
-import LogOS.Theorems.Meta.QuartetCore as Quartet
+import LogOS.Theorems.Meta.ApplicationKit as AppKit
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
@@ -28,11 +29,14 @@ import LogOS.Domain.Opacity.ZetaTruthLedger as Ledger
 
 -- Variant of the meet-limit bridge where the per-regulator “completeness” premise
 -- is reduced to a plain truth fact `Wᵢ i (probe s)`, provided each regulator
--- predicate is itself Flow-stable and decode-extensional.
+-- predicate is itself stable under the kernel’s closure modality (and
+-- decode-extensional).
 --
 -- This matches the informal axiom “stable properties are observable”: if a
--- regulator predicate Wᵢ is already stable under FlowCode (and extensional),
--- then Wᵢ implies its own publicisation `Pr Wᵢ` by `LP.TruthK→Pr`.
+-- regulator predicate Wᵢ is already stable under the kernel’s Box modality,
+-- then Wᵢ implies its own publicisation `Pr Wᵢ`. Since `FlowCode γ` and
+-- `Box (Body γ)` coincide on decoded meaning, this is equivalent to the
+-- original FlowCode-stability formulation for decode-extensional predicates.
 
 record AccessibleWeilMeetLimitBridgeStable {ℓ ℓW : Level}
                                            {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -55,7 +59,7 @@ record AccessibleWeilMeetLimitBridgeStable {ℓ ℓW : Level}
 
     -- Each regulator predicate is stable/extensional (so it is self-observable).
     Wᵢ-ext : ∀ i → Comm.DecodeExtensional′ K (Wᵢ i)
-    Wᵢ-stable : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (FlowCode K γ))
+    Wᵢ-stableBoxBody : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (Box K (Kernel.Body K γ)))
 
     -- Plain finite evidence: at every regulator, the probe test satisfies Wᵢ.
     holdsᵢ : ∀ i s → NontrivialZero s → Wᵢ i (WPI.WeilProbeImplication.probe WProbe s)
@@ -65,13 +69,17 @@ record AccessibleWeilMeetLimitBridgeStable {ℓ ℓW : Level}
     : ∀ i s → NontrivialZero s
       → Comm.Pr {ℓC = ℓW} K (Wᵢ i) (WPI.WeilProbeImplication.probe WProbe s)
   completeᵢ i s nz =
-    LP.TruthK→Pr K (Wᵢ i) (Wᵢ-ext i) (Wᵢ-stable i) (holdsᵢ i s nz)
+    LP.TruthK→Pr-BoxBody K (Wᵢ i) (Wᵢ-ext i) (Wᵢ-stableBoxBody i) (holdsᵢ i s nz)
 
   WC∞ : Ledger.ZetaWeilCriterionWeak RS
           (MT.TruthPositivity-fromPr {ℓC = ℓW} K W∞)
   WC∞ = record
     { probe = WPI.WeilProbeImplication.probe WProbe
-    ; probe-pos→OnLine = WPI.WeilProbeImplication.probe-pos→OnLine WProbe
+    ; probe-pos-ref =
+        record
+          { sat-→ = λ _ s p →
+              WPI.WeilProbeImplication.probe-pos→OnLine WProbe s (fst p) (snd p)
+          }
     }
 
   complete∞
@@ -84,7 +92,10 @@ record AccessibleWeilMeetLimitBridgeStable {ℓ ℓW : Level}
   Ledger∞ = record
     { W-pos    = W∞
     ; WC       = WC∞
-    ; complete = λ s nz → complete∞ s nz (λ i → completeᵢ i s nz)
+    ; complete-ref =
+        record
+          { sat-→ = λ _ s nz → complete∞ s nz (λ i → completeᵢ i s nz)
+          }
     }
 
   GRH_Without_Vacuity_Guards-from-stable-bridge : GRH_Without_Vacuity_Guards RS
@@ -131,10 +142,7 @@ module QuartetMeetLimitStable
   Claim : Assumptions → Set
   Claim _ = GRH_Without_Vacuity_Guards RS
 
-  module Q = Quartet.Make Assumptions Claim
-  open Q public using (Pack; assumptionsOf; claimOf)
-
-  mkPack : (A : Assumptions) → Pack
-  mkPack =
-    Q.mkPack
+  module Q =
+    AppKit.MakeDerived Assumptions Claim
       (AccessibleWeilMeetLimitBridgeStable.GRH_Without_Vacuity_Guards-from-stable-bridge {RS = RS})
+  open Q public using (Pack; assumptionsOf; claimOf; mkPack)

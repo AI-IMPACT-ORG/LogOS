@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,7 +10,66 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.Views.ObserverSemantics where
 
-open import LogOS.Docs.Views.View_ObserverSemantics public
+-- Typechecked “view surface” for the observer-semantics reading.
+--
+-- Keep this module lightweight to avoid name clashes when imported alongside
+-- other views/tests.
+
+open import LogOS.Prelude public
+open import LogOS.Base.Signature using (LogOSSignature)
+open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Kernel using (Kernel)
+import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheorems
+import LogOS.Boundary.Telemetry as Telemetry
+
+module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (K : Kernel Sig Q)
+  where
+  module V = ViewTheorems.For K
+  open V.ObserverSemantics public
+
+  private
+    Entails∂-exists : _
+    Entails∂-exists = Entails∂
+
+    Entails∂-budget-exists : _
+    Entails∂-budget-exists = Entails∂-budget
+
+    BudgetedAdequacy-exists : _
+    BudgetedAdequacy-exists = BudgetedAdequacy
+
+    sound-complete∂-budget-exists : _
+    sound-complete∂-budget-exists = sound-complete∂-budget
+
+    boundaryIO-exists : _
+    boundaryIO-exists = boundaryIO
+
+    module _ (T : Telemetry.TelemetryTrace ℓ)
+             (P : Telemetry.ProgramTelemetryPort Sig Q (Kernel.HWorld K)
+                    (Kernel.BB K) (Kernel.HTruth K) boundaryIO T)
+             where
+      module TB = TelemetryBudget T P
+
+      budget-from-trace-exists : _
+      budget-from-trace-exists = TB.budget-from-trace
+
+    Safe⋆-generic-exists : _
+    Safe⋆-generic-exists = SafeReflection.Safe⋆-generic
+
+    Safe⋆-kernel-exists : _
+    Safe⋆-kernel-exists = SafeReflection.Safe⋆-kernel
+
+    safe⋆-core-kernel-exists : _
+    safe⋆-core-kernel-exists = SafeReflection.safe⋆-core-kernel
+
+    safe⋆-sound-kernel-exists : _
+    safe⋆-sound-kernel-exists = SafeReflection.safe⋆-sound-kernel
+
+    safe⋆-mono-Truth-kernel-exists : _
+    safe⋆-mono-Truth-kernel-exists = SafeReflection.safe⋆-mono-Truth-kernel
+
+    projection-exists : _
+    projection-exists = V.Projections.projection
 ```
 
 This note is a **non-canonical view** of the LogOS kernel: it is intentionally more
@@ -20,8 +79,8 @@ The goal is to make explicit how LogOS naturally supports an **observer-centric*
 semantics that aligns with:
 
 - *Categorical quantum mechanics* (CQM): processes, monoidal composition, and (optional) dagger structure,
-- Deutsch-style “physics as computation”: computation as physical process constrained by locality/causality/resources,
-- Aaronson-style “complexity as a physics statement”: what can be decided/observed under resource constraints.
+- “physics as computation”: computation as physical process constrained by locality/causality/resources,
+- “complexity as a physics statement”: what can be decided/observed under resource constraints.
 
 This is a documentation view: it does **not** claim that the library derives the laws
 of physics. Instead it shows where to *plug in* physically meaningful axioms/packs,
@@ -63,7 +122,7 @@ The Kernel does not assume a single global truth predicate. Instead, it provides
 - a G-tier closure step `Flow` on boundary constraints,
   with a distinguished (preorder) fixed point `Th*`.
 
-Physical reading:
+Interpretation (analogy):
 
 - **constraints** are propositions about a system-at-a-boundary,
 - **observation/interaction** is represented as *admissible steps* that transform constraints,
@@ -74,7 +133,7 @@ This matches a common physics posture:
 > a proposition is only “physically meaningful” insofar as it is stable under a specified
 > observation/communication regime.
 
-In the library, this is exactly why fixed-point structure is kept in preorder form: it’s
+In the library, this is one reason fixed-point structure is kept in preorder form: it’s
 an *observational* notion by default, and equality is an optional upgrade.
 
 Canonical instance (code)
@@ -86,13 +145,29 @@ uniformly from any CHL-facing `LogicKernel`, using the kernel’s own `FlowCode`
 
 Minimal vocabulary (formal)
 ---------------------------
-The following “physics words” are not metaphors: they are names for concrete, reusable interfaces.
+The following terms are used as names for concrete interfaces in this view. They
+do not, by themselves, assert a physics interpretation; that interpretation only
+comes from the chosen model/axioms.
 
 - **System**: a `LogicKernel Sig Q` (shared S/H/code shape plus a parameterised guarded tier).
 - **State of knowledge at the boundary**: a boundary constraint `c : Con` in the boundary preorder.
 - **Decoded meaning of code**: `decode : Code → Con` from the kernel.
 - **Observer step / admissible interaction**: the derived operational step on code
-  `FlowCode : Code → Code` (defined as `Guard ∘ Body`).
+  `BoxAt step (Body _) : Code → Code` (“compute then stabilise”).
+  In a `LogicKernel`, this is decode-equivalent to the raw operational step
+  `FlowCode : Code → Code` (defined as `Guard ∘ Body`); see
+  `ObserverFromLogicKernel.For.decode-stepFlowCode≡decode-step` and the induced
+  observer equivalence `ObserverFromLogicKernel.For.Observable⋆↔Observable⋆-FlowCode`.
+- **Stabilization / “what survives communication”**: the kernel-derived closure modality on code
+  `Box` (and graded `BoxAt g`), defined as `encode (Flow g (decode γ))`
+  (`LogOS/Kernel.agda`, `LogOS/Kernel/Graded.agda`, `LogOS/Kernel/LogicKernel.agda`).
+- **Step invariance (decode-level)**: `ObserverCore.Pred⋆≈` only depends on the step up to decoded observational equality.
+  If `decode (step γ) ≈ decode (step′ γ)` for all `γ`, then `Pred⋆≈` for `step` and `step′` are equivalent
+  (`ObserverCore.Pred⋆≈-cong-step` in `LogOS/Theorems/Meta/ObserverCore.agda`).
+  (Legacy, ≡-based: `ObserverCore.Pred⋆-cong-step`.)
+- **Step transport (packaged)**: the same hypothesis also transports *stability* and *admissibility* for
+  decode-extensional predicates, via `ObserverCore.StepTransport≈` (it bundles `stableUnder`, `admissible`, and `Pred⋆≈↔`).
+  (Legacy, ≡-based: `ObserverCore.StepTransport`.)
 - **Truth predicate** (choice): any `TruthK : Code → Set` (e.g. “true at world w” below).
 - **Observable / communicable fragment** (canonical from a `TruthK`): the *largest admissible* predicate
   `Observable⋆ TruthK` (largest w.r.t. `_≤Pred_` (pointwise implication) among predicates that are decode‑extensional,
@@ -106,6 +181,11 @@ The following “physics words” are not metaphors: they are names for concrete
   restricts observers to propositional ones (no large witnesses).
 - **Truth at a world** (canonical example of a `TruthK`): `TruthAt w γ := Sat_H_bnd (to∂ w) (decode γ)`
   (see `ObserverFromLogicKernel.For.TruthAt`).
+- **Guarded truth at a world** (canonical “stable fragment” of `TruthAt`): the largest admissible,
+  decode‑extensional, step‑stable predicate contained in `TruthAt w`, packaged as
+  `LogOS/Theorems/Meta/GuardedTruthAt.agda`. This can be presented using either
+  “compute-then-stabilise” or `FlowCode`; see
+  `GuardedTruthAt.For.GuardedTruthAt↔GuardedTruthAt-FlowCode`.
 - **Refinement preserves truth** (alignment with the 2-category): if `f ⇒ g` as 2-cells of kernel morphisms,
   then `TruthAt w (mapCode f γ) → TruthAt w (mapCode g γ)` (see
   `ObserverFromLogicKernel.RefinementPreservesTruthAt` and `Meta/RefinementSoundness`).
@@ -120,12 +200,13 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 import LogOS.Kernel.LogicKernel as LK
 import LogOS.Theorems.Meta.ObserverFromLogicKernel as ObsLK
 
-module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : LK.LogicKernel Sig Q) where
-  module O = ObsLK.For {Sig = Sig} {Q = Q} K
-  TruthAt-explicit
-    : ∀ (w : LogOSSignature.Cosp Sig) (γ : LK.LogicKernel.Code K)
-    → O.TruthAt w γ ≡ LK.LogicKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) (LK.LogicKernel.decode K γ)
-  TruthAt-explicit _ _ = refl
+private
+  module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : LK.LogicKernel Sig Q) where
+    module O = ObsLK.For {Sig = Sig} {Q = Q} K
+    TruthAt-explicit
+      : ∀ (w : LogOSSignature.Cosp Sig) (γ : LK.LogicKernel.Code K)
+      → O.TruthAt w γ ≡ LK.LogicKernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) (LK.LogicKernel.decode K γ)
+    TruthAt-explicit _ _ = refl
 ```
 
 ## 2) Observers as processes: the Endo DSL and tensor
@@ -170,13 +251,14 @@ A typical physics/quantum split is:
 - unitary/local evolution (reversible, information-preserving), vs
 - measurement / forgetting / coarse-graining (non-unitary, information-destroying or gaining).
 
-LogOS already has a natural landing pad for exactly this split:
+LogOS already has a natural landing pad for this split:
 
-- `LogOS/Domain/Complexity/MeasurementCapacity.agda` (record `NonUnitaryCapacity`),
+- `LogOS/Domain/Complexity/MeasurementCapacity.agda` (records `MeasurementCapacity`,
+  `NonUnitaryCapacity`, with optional non-vacuity guards),
 - `LogOS/Domain/Complexity/DataProcessingInequality.agda` (DPI interface/axiom pack: channels + an information measure monotone under post-processing),
 - `LogOS/Domain/Complexity/ObservabilityBudgetGraded.agda` (bundle time + non-unitary + information capacities).
 
-Observer semantics reading:
+Interpretation (analogy):
 
 - “local unitary evolution” lives in the **choice of computation surface** (e.g. circuit stepper),
 - “measurement/forgetting” is modeled by a **budgeted global capability** (a separate resource axis),
@@ -242,7 +324,7 @@ structures computation and physical constraints.
   instead of being spread across multiple complexity/universality modules.
 - Cleaner statements of “physical bottleneck ⇒ separation” theorems as **observer-limited** claims:
   what cannot be observed/decided under the allowed regime.
-- A clearer bridge to CQM and the Deutsch/Aaronson narratives:
+- A clearer bridge to CQM and computational-physics narratives:
   computations are processes; observers are restricted process families; impossibility theorems are resource bounds.
 
 Pointers (where to connect)
@@ -250,7 +332,8 @@ Pointers (where to connect)
 - Kernel closure/reflection: `LogOS/Kernel.agda`
 - Endomap/tensor DSL: `LogOS/Kernel/TensorDSL.agda`
 - Physical budgets: `LogOS/Domain/Complexity/ObservabilityBudgetGraded.agda`
-- Non-unitary/info axioms: `LogOS/Domain/Complexity/MeasurementCapacity.agda` (record `NonUnitaryCapacity`),
+- Non-unitary/info axioms: `LogOS/Domain/Complexity/MeasurementCapacity.agda` (records `MeasurementCapacity`,
+  `NonUnitaryCapacity`, plus optional non-vacuity guards),
   `LogOS/Domain/Complexity/DataProcessingInequality.agda`
 - Complexity physical story: `docs/Applications/Complexity.lagda.md`
 - Circuit surface: `LogOS/Domain/UniversalIR/Core/QuantumCircuit.agda`

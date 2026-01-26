@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -24,11 +24,11 @@ module LogOS.Theorems.Meta.Kleene2 where
 -- - partial-order form: decode-level equality (≡)
 
 open import LogOS.Prelude
-open import Data.Product using (Σ; _,_; _×_)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary; BulkBoundaryPO)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary; BulkBoundaryPO)
 open import LogOS.Kernel using (Kernel)
 
 open import LogOS.Theorems.Meta.Assumptions.Diagonal as Diag
@@ -57,8 +57,8 @@ module For
     : InternalHomWitness K
     → (f : Code → Code)
     → Σ Code (λ s →
-        ConPoset._⊑_ (BulkBoundary.bnd BB) (decode s) (decode (f s))
-      × ConPoset._⊑_ (BulkBoundary.bnd BB) (decode (f s)) (decode s))
+        ConPreorder._⊑_ (BulkBoundary.bnd BB) (decode s) (decode (f s))
+      × ConPreorder._⊑_ (BulkBoundary.bnd BB) (decode (f s)) (decode s))
   Kleene2-⊑ = lawvereFix {K = K}
 
   -- Convenience: canonical fixed-point chooser (diagonal operator).
@@ -66,11 +66,11 @@ module For
   diag = lawvereDiag {K = K}
 
   diag-⊑ : (IH : InternalHomWitness K) (f : Code → Code)
-         → ConPoset._⊑_ (BulkBoundary.bnd BB) (decode (diag IH f)) (decode (f (diag IH f)))
+         → ConPreorder._⊑_ (BulkBoundary.bnd BB) (decode (diag IH f)) (decode (f (diag IH f)))
   diag-⊑ = lawvereDiag-⊑ {K = K}
 
   ⊑-diag : (IH : InternalHomWitness K) (f : Code → Code)
-         → ConPoset._⊑_ (BulkBoundary.bnd BB) (decode (f (diag IH f))) (decode (diag IH f))
+         → ConPreorder._⊑_ (BulkBoundary.bnd BB) (decode (f (diag IH f))) (decode (diag IH f))
   ⊑-diag = ⊑-lawvereDiag {K = K}
 
   -- Kleene-2 / SRT, partial-order form:

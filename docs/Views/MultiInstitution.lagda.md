@@ -1,5 +1,5 @@
 <!--
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,7 +10,100 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.Views.MultiInstitution where
 
-open import LogOS.Docs.Views.View_MultiInstitution public
+-- Typechecked “view surface” for the multi-institution presentation.
+--
+-- Keep this module lightweight to avoid name clashes when imported alongside
+-- other views/tests.
+
+open import LogOS.Prelude public
+open import LogOS.Base.Signature using (LogOSSignature)
+open import LogOS.Base.Signature.Hom using (SigHom)
+open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Kernel using (Kernel)
+import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheorems
+import LogOS.Ports.Semantic.InterlinguaStrictReindex as StrictReindex
+import LogOS.Ports.Semantic.Interoperability as Interoperability
+import LogOS.Adapters.Views.SatMor as ViewSatMor
+import LogOS.Ports.Semantic.InterlinguaStrictKernel
+import LogOS.Ports.Semantic.InterlinguaCodeKernel
+
+module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (K : Kernel Sig Q)
+  where
+  module V = ViewTheorems.For K
+  open V.MultiInstitution public
+  module Reindex = ViewTheorems.Reindex
+  module ReindexWithFml = ViewTheorems.ReindexWithFml
+  module ReindexingSatisfaction = ViewTheorems.ReindexingSatisfaction
+  module ReindexingSatisfactionWithFml = ViewTheorems.ReindexingSatisfactionWithFml
+  module ReindexingSatisfactionWithFmlLogic = ViewTheorems.ReindexingSatisfactionWithFmlLogic
+
+  private
+    coh-SH-exists : _
+    coh-SH-exists = coh-SH
+
+    coh-H∂-exists : _
+    coh-H∂-exists = coh-H∂
+
+    rename∂-exists : _
+    rename∂-exists = SentenceLayer.rename∂
+
+    rename∂-id-exists : _
+    rename∂-id-exists = SentenceLayer.rename∂-id
+
+    rename∂-compose-exists : _
+    rename∂-compose-exists = SentenceLayer.rename∂-compose
+
+    interp∂-rename-exists : _
+    interp∂-rename-exists = SentenceLayer.interp∂-rename
+
+    module _ {Sig₁ Sig₂ : LogOSSignature ℓ}
+             (σ : SigHom Sig₁ Sig₂)
+             (K₂ : Kernel Sig₂ Q)
+             where
+      module RS₀ = ReindexingSatisfaction σ K₂
+
+      SatS-precompose-exists : _
+      SatS-precompose-exists = RS₀.SatS-precompose
+
+      SatH-precompose-exists : _
+      SatH-precompose-exists = RS₀.SatH-precompose
+
+      SatHbnd-precompose-exists : _
+      SatHbnd-precompose-exists = RS₀.SatHbnd-precompose
+
+    module _ {Sig₁ Sig₂ : LogOSSignature ℓ}
+             (σ : SigHom Sig₁ Sig₂)
+             (K₂ : Kernel Sig₂ Q)
+             {Fml₁ : Set ℓ}
+             (mapFml : Fml₁ → Kernel.Fml K₂)
+             where
+      module RS₁ = ReindexingSatisfactionWithFml σ K₂ mapFml
+      module SR = StrictReindex.ForKernel σ K₂ mapFml
+
+      SatS-precompose-mapFml-exists : _
+      SatS-precompose-mapFml-exists = RS₁.SatS-precompose
+
+      translate≈mapFml-exists : _
+      translate≈mapFml-exists = SR.translate≈mapFml
+
+      mapFml-unique-exists : _
+      mapFml-unique-exists = SR.mapFml-unique
+
+    heteroCanonicalAdapter-exists : _
+    heteroCanonicalAdapter-exists = Interoperability.heteroCanonicalAdapter
+
+    heteroAdapter-unique-exists : _
+    heteroAdapter-unique-exists = Interoperability.heteroAdapter-unique
+
+    satMor-strict-to-boundary-exists : _
+    satMor-strict-to-boundary-exists = ViewSatMor.satMor-strict-to-boundary
+
+    satMor-code-to-boundary-exists : _
+    satMor-code-to-boundary-exists = ViewSatMor.satMor-code-to-boundary
+
+    projection-exists : _
+    projection-exists = V.Projections.projection
 ```
 
 This note is a documentation artefact written in a paper-ready style. It gives a
@@ -160,9 +253,10 @@ Define an institution $\mathcal{I}_S(K)$ (“S-tier”) by:
 - $\mathrm{Mod}_S(\Sigma) :=$ the discrete category on the set $\mathrm{World}$,
 - satisfaction: $w \models_S \varphi$ iff $\mathrm{Sat}_S(w,\varphi)$.
 
-**Remark.** One can strengthen $\mathrm{Mod}_S$ and $\mathrm{Mod}_H$ to preorder categories using the kernel’s
-world order (`WorldH._≤ctx_`) and rely on monotonicity of satisfaction. This note keeps models discrete to
-stay maximally conservative.
+**Remark.** One can strengthen $\mathrm{Mod}_S$ and $\mathrm{Mod}_H$ to preorder categories using a chosen
+context relation (`WorldH._≤ctx_`) and rely on monotonicity of satisfaction. When you want the explicit
+preorder laws for `_≤ctx_`, supply `CtxPreorder` from `LogOS/Minimal/WorldLaws.agda`. This note keeps
+models discrete to stay maximally conservative.
 
 ### H-institution: boundary constraints
 
@@ -243,7 +337,7 @@ $$
 $$
 
 This can be read as: the G-tier closure operator is **internalized** by a single admissible
-code step. This is exactly the interface used by the diagonal/Rice/Tarski-style meta theorems,
+code step. This is the interface used by the diagonal/Rice/Tarski-style meta theorems,
 while keeping all assumptions explicit.
 
 ## Reference

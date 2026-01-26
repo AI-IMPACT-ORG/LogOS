@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Universality.Kernel where
 
 open import LogOS.Prelude
-open import Data.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc)
 
 open import LogOS.Domain.Universality.Core
 open import LogOS.Base.Signature
@@ -24,12 +24,28 @@ open import LogOS.Kernel.Graded
 -- A Kernel whose Code is CoreUCode and whose Guarded step (Guard ∘ Body) is stepCoreU.
 -- (Universality core.)
 
--- Trivial signature and world
+-- Minimal signature and world (observation contexts are explicit).
 Sig : LogOSSignature lzero
 Sig = record
-  { sorts = record { Iface = ⊤ ; Cosp = ⊤ ; ∂Cosp = ⊤ }
-  ; cospanOps = record { src = λ _ → tt ; tgt = λ _ → tt ; idC = λ _ → tt ; _∘C_ = λ _ _ → tt ; _⊕C_ = λ _ _ → tt ; _⊗C_ = λ _ _ → tt }
-  ; boundaryOps = record { src∂ = λ _ → tt ; tgt∂ = λ _ → tt ; id∂ = λ _ → tt ; _∘∂_ = λ _ _ → tt ; _⊕∂_ = λ _ _ → tt ; _⊗∂_ = λ _ _ → tt ; from∂ = λ _ → tt ; to∂ = λ _ → tt }
+  { sorts = record { Iface = ⊤ ; Cosp = ℕ ; ∂Cosp = ℕ }
+  ; cospanOps = record
+      { src = λ _ → tt
+      ; tgt = λ _ → tt
+      ; idC = λ _ → zero
+      ; _∘C_ = λ _ _ → zero
+      ; _⊕C_ = λ _ _ → zero
+      ; _⊗C_ = λ _ _ → zero
+      }
+  ; boundaryOps = record
+      { src∂ = λ _ → tt
+      ; tgt∂ = λ _ → tt
+      ; id∂ = λ _ → zero
+      ; _∘∂_ = λ _ _ → zero
+      ; _⊕∂_ = λ _ _ → zero
+      ; _⊗∂_ = λ _ _ → zero
+      ; from∂ = λ x → x
+      ; to∂ = λ x → x
+      }
   }
 
 Q : QAdapter lzero
@@ -40,15 +56,31 @@ module W = Worlds Sig
 HWorld : W.WorldH Q
 HWorld = record { _≤ctx_ = λ _ _ → ⊤ ; WFlow = λ _ _ → tt ; wflow-refl = λ _ → tt ; wflow-trans = λ _ _ _ → tt }
 
--- Trivial poset and monoid on boundary constraints
-conPoset : ConPoset lzero
-conPoset = record { Con = ⊤ ; _⊑_ = λ _ _ → ⊤ ; refl = tt ; trans = λ _ _ → tt }
+-- Trivial preorder and monoid on boundary constraints
+conPreorder : ConPreorder lzero
+conPreorder = record { Con = ⊤ ; _⊑_ = λ _ _ → ⊤ ; refl = tt ; trans = λ _ _ → tt }
+
+-- Explicit degeneracy witness: boundary order is top.
+topOrderConPreorder : TopOrder conPreorder
+topOrderConPreorder = record { top = λ _ _ → tt }
 
 BB : BulkBoundary lzero
-BB = record { bulk = conPoset ; bnd = conPoset }
+BB = record { bulk = conPreorder ; bnd = conPreorder }
 
-MBnd : MonoidalPoset (BulkBoundary.bnd BB)
+MBnd : MonoidalOps (BulkBoundary.bnd BB)
 MBnd = record { _⊗_ = λ _ _ → tt ; I = tt ; mono⊗ = λ _ _ → tt }
+
+module HT = Truth.HomotypicalTruth Sig Q HWorld
+
+HTruth : HT.HLayer BB
+HTruth = record { Sat_H = λ _ _ → ⊤ ; mono-Con = λ _ _ → tt ; mono-ctx = λ _ _ → tt }
+
+-- Explicit degeneracy witness: H-tier truth is vacuous (always satisfied).
+vacuousHTruth : HT.VacuousHLayer HTruth
+vacuousHTruth = record { satAll = λ _ _ → tt }
+
+HInv : HT.Invariance BB
+HInv = record { Inv_H = λ c → c ; infl = λ _ → tt ; idemp-lax = λ _ → tt }
 
 -- Graded truth: in this kernel, grading is present but ignored (Flow is constant).
 -- This is the intended lightweight upgrade path: existing ungraded constructions lift
@@ -91,8 +123,8 @@ GUK = record
           ; bnd-⊗-lax = λ _ _ → tt
           ; bnd-I-lax = tt
           }
-      ; HTruth = record { Sat_H = λ _ _ → ⊤ ; mono-Con = λ _ _ → tt ; mono-ctx = λ _ _ → tt }
-      ; HInv   = record { Inv_H = λ c → c ; infl = λ _ → tt ; idemp-lax = λ _ → tt }
+      ; HTruth = HTruth
+      ; HInv   = HInv
       ; Sat_H_bnd = λ _ _ → ⊤
       ; sat-coh   = λ _ _ → record { to = λ _ → tt ; from = λ _ → tt }
       ; Fml    = ⊤

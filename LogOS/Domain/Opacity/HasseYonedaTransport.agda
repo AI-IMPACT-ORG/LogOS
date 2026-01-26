@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,6 +12,7 @@ open import LogOS.Syntax.Prop using (_↔_)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Minimal.Con
 open import LogOS.Kernel
 open import LogOS.Kernel.Hom using (KernelHom)
 open import LogOS.Kernel.Initial using (InitialKernel)
@@ -50,7 +51,8 @@ mkTest
 mkTest {IK = IK} K G r =
   KernelHom.mapCode (InitialKernel.foldK IK K) (mkTest₀ G r)
 
--- Semantic equality on codes: decode-level equality in the target kernel.
+-- Semantic equality on codes: decode-level observational equality (mutual refinement)
+-- in the target kernel.
 
 infix 4 _≈decode_
 
@@ -58,7 +60,8 @@ _≈decode_
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
   → Kernel.Code K → Kernel.Code K → Set ℓ
-_≈decode_ K γ₁ γ₂ = Kernel.decode K γ₁ ≡ Kernel.decode K γ₂
+_≈decode_ K γ₁ γ₂ =
+  _≈CP_ (Comm.CodeCP K) (Kernel.decode K γ₁) (Kernel.decode K γ₂)
 
 -- Canonicality: interpreting regulators via the fold is independent (up to decode)
 -- of the chosen morphism out of the initial kernel.
@@ -74,7 +77,7 @@ mkTest-canonical
                  (KernelHom.mapCode h (mkTest₀ G r))
 mkTest-canonical IK K G h r =
   let eq = Yoneda.yoneda-morphism-decode IK K h
-  in eq (mkTest₀ G r)
+  in ≡→≈CP {CP = Comm.CodeCP K} (eq (mkTest₀ G r))
 
 -- Practical corollary: any decode-extensional property on `K` holds of the
 -- canonical fold-interpretation iff it holds of the interpretation via any
@@ -94,13 +97,13 @@ mkTest-canonical-prop IK K G h P extP r =
     { to   = λ pr → extP (mkTest {IK = IK} K G r) (KernelHom.mapCode h (mkTest₀ G r))
                           (mkTest-canonical IK K G h r) pr
     ; from = λ pr → extP (KernelHom.mapCode h (mkTest₀ G r)) (mkTest {IK = IK} K G r)
-                          (sym (mkTest-canonical IK K G h r)) pr
+                          (≈CP-sym {CP = Comm.CodeCP K} (mkTest-canonical IK K G h r)) pr
     }
 
 -- Build a HasseObservableClass for the standard Pr-based observability semantics:
 -- - tests are codes,
 -- - observability is `Pr` for a chosen predicate W-pos,
--- - semantic equality is decode equality.
+-- - semantic equality is decode-level mutual refinement.
 
 hasseObservableClass-fromPr
   : ∀ {ℓ ℓW ℓC}
@@ -136,7 +139,7 @@ factorise-via-fold
   → (∀ s → _≈decode_ K (KernelHom.mapCode h (mkTest₀ G (sel s))) (probe s))
   → ∀ s → _≈decode_ K (mkTest {IK = IK} K G (sel s)) (probe s)
 factorise-via-fold IK K G probe sel h fact s =
-  trans (mkTest-canonical IK K G h (sel s)) (fact s)
+  ≈CP-trans {CP = Comm.CodeCP K} (mkTest-canonical IK K G h (sel s)) (fact s)
 
 -- If observability is defined as `Pr W-pos`, then observability of transported
 -- regulator tests is independent (up to decode) of the chosen morphism out of FreeK.
@@ -155,11 +158,11 @@ mkTest-observable-viaHom {ℓC = ℓC} IK K W-pos G h obs r =
   Comm.comm⋆-ext {ℓC = ℓC} K W-pos
     (KernelHom.mapCode h (mkTest₀ G r))
     (mkTest {IK = IK} K G r)
-    (sym (mkTest-canonical IK K G h r))
+    (≈CP-sym {CP = Comm.CodeCP K} (mkTest-canonical IK K G h r))
     (obs r)
 
 -- One-shot GRH_Without_Vacuity_Guards lemma: weak Weil criterion + Pr-based observability + Hasse-generator
--- factorisation (up to decode equality) yields GRH.
+-- factorisation (up to decoded observational equality / mutual refinement) yields GRH.
 
 GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator
   : ∀ {ℓ ℓW ℓC}
@@ -192,10 +195,11 @@ GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator {ℓ = ℓ} {ℓW 
   in
   HOC.GRH_Without_Vacuity_Guards-from-weak-criterion+Hasse RS TPo WC H probe-in-class
 
--- Specialization: if W-pos is itself decode-extensional and Flow-stable,
+-- Specialization: if W-pos is itself decode-extensional and kernel-stable
+-- (stable under `Box ∘ Body`),
 -- then `mkTest-observable` can be replaced by plain truth on generated tests.
 -- 
--- This packages the “stable truth is observable” step via `LP.TruthK→Pr`
+-- This packages the “stable truth is observable” step via `LP.TruthK→Pr-BoxBody`
 -- (with communicability level chosen as ℓW).
 
 GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator-stableTruth
@@ -208,7 +212,7 @@ GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator-stableTruth
     (WC : WCL.WeilCriterionWeak RS (MT.TruthPositivity-fromPr {ℓC = ℓW} K W-pos))
     (G  : HasseGenerator IK)
     (W-ext : Comm.DecodeExtensional′ K W-pos)
-    (W-stable : ∀ γ → W-pos γ ↔ W-pos (FlowCode K γ))
+    (W-stableBoxBody : ∀ γ → W-pos γ ↔ W-pos (Box K (Kernel.Body K γ)))
     (mkTest-true : ∀ r → W-pos (mkTest {IK = IK} K G r))
     (sel : ∀ s → RiemannSpectral.NontrivialZero RS s → Reg G)
     (mkTest∘sel≈probe
@@ -216,9 +220,9 @@ GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator-stableTruth
         → _≈decode_ K (mkTest {IK = IK} K G (sel s nz))
                      (WCL.WeilCriterionWeak.probe WC s))
   → GRH_Without_Vacuity_Guards RS
-GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator-stableTruth {ℓW = ℓW} IK K RS W-pos WC G W-ext W-stable mkTest-true sel mkTest∘sel≈probe =
+GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator-stableTruth {ℓW = ℓW} IK K RS W-pos WC G W-ext W-stableBoxBody mkTest-true sel mkTest∘sel≈probe =
   GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator {ℓC = ℓW} IK K RS W-pos WC G mkTest-observable sel mkTest∘sel≈probe
   where
     mkTest-observable : ∀ r → Comm.Pr {ℓC = ℓW} K W-pos (mkTest {IK = IK} K G r)
     mkTest-observable r =
-      LP.TruthK→Pr K W-pos W-ext W-stable (mkTest-true r)
+      LP.TruthK→Pr-BoxBody K W-pos W-ext W-stableBoxBody (mkTest-true r)

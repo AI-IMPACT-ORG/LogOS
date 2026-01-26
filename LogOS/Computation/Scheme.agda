@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,20 +8,20 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Computation.Scheme where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (_↔_; intro; to; from)
+open import LogOS.Syntax.Prop using (_↔_; intro; to; from; ↔-refl; ↔-sym; ↔-trans)
 
 open import LogOS.Computation.Core using (iterate; iterate-+; Computation)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset)
+open import LogOS.Minimal.Con using (ConPreorder; _≈CP_)
 open import LogOS.Minimal.Closure public renaming (ClosureOp to Closure)
-open import LogOS.Minimal.ScaleOps using (ScaleOps)
-open import Data.Product using (_×_; _,_; fst; snd)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; total≤ℕ)
+open import LogOS.Minimal.ScaleOps using (ScaleOps; BudgetOps)
+open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; total≤ℕ)
 
 -- A “computation scheme” packages:
 -- - a concrete representation (Code + compiler),
 -- - a dynamics (Step),
--- - a renormaliser/normaliser (Closure),
+-- - a closure operator (Close),
 -- - an observation/meaning extractor (decode),
 -- - and a quantale-valued step cost profile (QAdapter + stepCost).
 --
@@ -34,23 +34,23 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
               (Output : Set ℓO)
               : Set (lsuc (ℓI ⊔ ℓO ⊔ ℓC ⊔ ℓQ)) where
   field
-    CP      : ConPoset ℓC
-    Step    : ConPoset.Con CP → ConPoset.Con CP
-    Norm    : Closure CP
+    CP      : ConPreorder ℓC
+    Step    : ConPreorder.Con CP → ConPreorder.Con CP
+    Close    : Closure CP
 
-    compile : Input → ConPoset.Con CP
+    compile : Input → ConPreorder.Con CP
     fuel    : Input → ℕ
-    decode  : ConPoset.Con CP → Output
+    decode  : ConPreorder.Con CP → Output
 
     Q       : QAdapter ℓQ
-    stepCost : ConPoset.Con CP → QAdapter.Scale Q
+    stepCost : ConPreorder.Con CP → QAdapter.Scale Q
 
-  open ConPoset CP public using (Con; _⊑_; refl; trans)
-  open Closure Norm public renaming
-    ( cl        to normalize
-    ; mono      to normalize-mono
-    ; infl      to normalize-infl
-    ; idemp-lax to normalize-idemp-lax
+  open ConPreorder CP public using (Con; _⊑_; refl; trans)
+  open Closure Close public renaming
+    ( cl        to close
+    ; mono      to close-mono
+    ; infl      to close-infl
+    ; idemp-lax to close-idemp-lax
     )
   open QAdapter Q public using (Scale; _≤s_; _⊔s_; ⊥s; _·_; e)
 
@@ -60,11 +60,11 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
   exec : ℕ → Input → Con
   exec n x = iterate Comp n (compile x)
 
-  toNormalAt : ℕ → Input → Con
-  toNormalAt n x = normalize (exec n x)
+  toClosedAt : ℕ → Input → Con
+  toClosedAt n x = close (exec n x)
 
   run : Input → Output
-  run x = decode (toNormalAt (fuel x) x)
+  run x = decode (toClosedAt (fuel x) x)
 
   -- Grade-indexed execution: interpret a scale value as a step budget using `ScaleOps`.
   --
@@ -73,7 +73,10 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
   -- small-step iterations.
   run≤ : ScaleOps Q → Scale → Input → Output
   run≤ Ops b x =
-    decode (normalize (exec (ScaleOps.steps Ops (ScaleOps.budget Ops b)) x))
+    decode (close (exec (ScaleOps.steps Ops (ScaleOps.budget Ops b)) x))
+
+  run≤ᵇ : BudgetOps Q → Scale → Input → Output
+  run≤ᵇ Ops = run≤ (BudgetOps.Ops Ops)
 
   costExec : ℕ → Con → Scale
   costExec zero    c = e
@@ -99,15 +102,87 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
   -- model; different paradigms are then just different `Scheme` choices.
   -- ==========================================================================
 
+  -- Definitional halting: the stepper is literally stuck.
+  --
+  -- This is a strong notion (too strong for quotient-y state models).
+  halts≡ : Con → Set ℓC
+  halts≡ c = Step c ≡ c
+
+  -- Observational halting (preorder-level): the next step is indistinguishable
+  -- from the current state up to mutual refinement.
+  --
+  -- This is the right notion for quotient-y state models, where `Step c` may not
+  -- be definitional `c` but is still observationally stable.
   halts : Con → Set ℓC
-  halts c = Step c ≡ c
+  halts c = _≈CP_ CP (Step c) c
+
+  halts≡→halts : ∀ {c} → halts≡ c → halts c
+  halts≡→halts {c} eq rewrite eq = (ConPreorder.refl CP , ConPreorder.refl CP)
 
   NormalizesTo : Con → Con → Set ℓC
-  NormalizesTo c c' = Σ ℕ (λ n → iterate Comp n c ≡ c' × halts c')
+  NormalizesTo c c' = Σ ℕ (λ n → iterate Comp n c ≡ c' × halts≡ c')
 
   ComputesTo : Input → Output → Set (ℓC ⊔ ℓO)
   ComputesTo x y =
-    Σ Con (λ c' → NormalizesTo (compile x) c' × decode (normalize c') ≡ y)
+    Σ Con (λ c' → NormalizesTo (compile x) c' × decode (close c') ≡ y)
+
+  -- Observational (preorder) variant: keep the same reachability witness, but
+  -- weaken halting from definitional equality to mutual refinement.
+
+  NormalizesTo≈ : Con → Con → Set ℓC
+  NormalizesTo≈ c c' = Σ ℕ (λ n → iterate Comp n c ≡ c' × halts c')
+
+  NormalizesTo→NormalizesTo≈ : ∀ {c c'} → NormalizesTo c c' → NormalizesTo≈ c c'
+  NormalizesTo→NormalizesTo≈ (n , (reach , halt)) =
+    n , (reach , halts≡→halts halt)
+
+  ComputesTo≈ : Input → Output → Set (ℓC ⊔ ℓO)
+  ComputesTo≈ x y =
+    Σ Con (λ c' → NormalizesTo≈ (compile x) c' × decode (close c') ≡ y)
+
+  ComputesTo→ComputesTo≈ : ∀ {x y} → ComputesTo x y → ComputesTo≈ x y
+  ComputesTo→ComputesTo≈ (c' , (norm , out≡)) =
+    c' , (NormalizesTo→NormalizesTo≈ norm , out≡)
+
+  -- Closure-stable semantics: a computation is witnessed by some number of
+  -- steps after which the *closed* state is step-stable (up to ≈).
+  --
+  -- This is strictly weaker than `ComputesTo`/`ComputesTo≈` because it does not
+  -- require the raw execution state to be stable.
+
+  StabilizesTo : Input → Output → Set (ℓC ⊔ ℓO)
+  StabilizesTo x y =
+    Σ ℕ (λ n → decode (toClosedAt n x) ≡ y × halts (toClosedAt n x))
+
+  StabilizesWithin : Input → Scale → Output → Set (ℓC ⊔ ℓO ⊔ ℓQ)
+  StabilizesWithin x b y =
+    Σ ℕ (λ n → decode (toClosedAt n x) ≡ y × halts (toClosedAt n x) × costAt n x ≤s b)
+
+  -- Optional strengthening: connect `Close` and `Step`.
+  --
+  -- Minimal law: the closure produces step-stable states (up to ≈).
+
+  record SchemeLaws : Set (lsuc ℓC) where
+    field
+      close-halts : ∀ c → halts (close c)
+
+  toClosedAt-halts : SchemeLaws → ∀ n x → halts (toClosedAt n x)
+  toClosedAt-halts laws n x = SchemeLaws.close-halts laws (exec n x)
+
+  runIsStabilizesTo : SchemeLaws → ∀ x → StabilizesTo x (run x)
+  runIsStabilizesTo laws x =
+    fuel x , (LogOS.Prelude.refl , toClosedAt-halts laws (fuel x) x)
+
+  runIsStabilizesWithinCost
+    : SchemeLaws → ∀ x → StabilizesWithin x (cost x) (run x)
+  runIsStabilizesWithinCost laws x =
+    fuel x
+    , (LogOS.Prelude.refl , (toClosedAt-halts laws (fuel x) x , QAdapter.≤s-refl Q))
+
+  runIsStabilizesWithin
+    : SchemeLaws → ∀ x b → cost x ≤s b → StabilizesWithin x b (run x)
+  runIsStabilizesWithin laws x b cost≤ =
+    fuel x , (LogOS.Prelude.refl , (toClosedAt-halts laws (fuel x) x , cost≤))
 
   -- Cost/budgeted variant: compute within a quantale budget.
   --
@@ -116,11 +191,11 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
 
   NormalizesTo≤ : Scale → Con → Con → Set (ℓC ⊔ ℓQ)
   NormalizesTo≤ b c c' =
-    Σ ℕ (λ n → iterate Comp n c ≡ c' × halts c' × costExec n c ≤s b)
+    Σ ℕ (λ n → iterate Comp n c ≡ c' × halts≡ c' × costExec n c ≤s b)
 
   ComputesWithin : Input → Scale → Output → Set (ℓC ⊔ ℓO ⊔ ℓQ)
   ComputesWithin x b y =
-    Σ Con (λ c' → NormalizesTo≤ b (compile x) c' × decode (normalize c') ≡ y)
+    Σ Con (λ c' → NormalizesTo≤ b (compile x) c' × decode (close c') ≡ y)
 
   -- Unbudgeted semantics is exactly “there exists some budget”.
   --
@@ -321,47 +396,72 @@ ObsEq↔
   → Set (ℓI ⊔ ℓO ⊔ ℓC₁ ⊔ ℓC₂)
 ObsEq↔ S T = ∀ x y → Scheme.ComputesTo S x y ↔ Scheme.ComputesTo T x y
 
-ObsEq→ObsEq↔
-  : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
-    {Input : Set ℓI} {Output : Set ℓO}
-    {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
-    {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
-  → ObsEq S T → ObsEq↔ S T
-ObsEq→ObsEq↔ eq x y = intro (fst (eq x y)) (snd (eq x y))
+abstract
+  ObsEq↔-refl
+    : ∀ {ℓI ℓO ℓC ℓQ}
+      {Input : Set ℓI} {Output : Set ℓO}
+      (S : Scheme {ℓI} {ℓO} {ℓC} {ℓQ} Input Output)
+    → ObsEq↔ S S
+  ObsEq↔-refl S x y = ↔-refl
 
-ObsEq↔→ObsEq
-  : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
-    {Input : Set ℓI} {Output : Set ℓO}
-    {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
-    {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
-  → ObsEq↔ S T → ObsEq S T
-ObsEq↔→ObsEq eq x y = to (eq x y) , from (eq x y)
+  ObsEq↔-sym
+    : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
+      {Input : Set ℓI} {Output : Set ℓO}
+      {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
+      {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
+    → ObsEq↔ S T → ObsEq↔ T S
+  ObsEq↔-sym eq x y = ↔-sym (eq x y)
 
-ObsEq-refl
-  : ∀ {ℓI ℓO ℓC ℓQ}
-    {Input : Set ℓI} {Output : Set ℓO}
-    (S : Scheme {ℓI} {ℓO} {ℓC} {ℓQ} Input Output)
-  → ObsEq S S
-ObsEq-refl S _ _ = (λ p → p) , (λ p → p)
+  ObsEq↔-trans
+    : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂ ℓC₃ ℓQ₃}
+      {Input : Set ℓI} {Output : Set ℓO}
+      {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
+      {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
+      {U : Scheme {ℓI} {ℓO} {ℓC₃} {ℓQ₃} Input Output}
+    → ObsEq↔ S T → ObsEq↔ T U → ObsEq↔ S U
+  ObsEq↔-trans eST eTU x y = ↔-trans (eST x y) (eTU x y)
 
-ObsEq-sym
-  : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
-    {Input : Set ℓI} {Output : Set ℓO}
-    {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
-    {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
-  → ObsEq S T → ObsEq T S
-ObsEq-sym eq x y = snd (eq x y) , fst (eq x y)
+  ObsEq→ObsEq↔
+    : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
+      {Input : Set ℓI} {Output : Set ℓO}
+      {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
+      {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
+    → ObsEq S T → ObsEq↔ S T
+  ObsEq→ObsEq↔ eq x y = intro (fst (eq x y)) (snd (eq x y))
 
-ObsEq-trans
-  : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂ ℓC₃ ℓQ₃}
-    {Input : Set ℓI} {Output : Set ℓO}
-    {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
-    {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
-    {U : Scheme {ℓI} {ℓO} {ℓC₃} {ℓQ₃} Input Output}
-  → ObsEq S T → ObsEq T U → ObsEq S U
-ObsEq-trans eST eTU x y =
-  (λ p → fst (eTU x y) (fst (eST x y) p)) ,
-  (λ p → snd (eST x y) (snd (eTU x y) p))
+  ObsEq↔→ObsEq
+    : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
+      {Input : Set ℓI} {Output : Set ℓO}
+      {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
+      {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
+    → ObsEq↔ S T → ObsEq S T
+  ObsEq↔→ObsEq eq x y = to (eq x y) , from (eq x y)
+
+  ObsEq-refl
+    : ∀ {ℓI ℓO ℓC ℓQ}
+      {Input : Set ℓI} {Output : Set ℓO}
+      (S : Scheme {ℓI} {ℓO} {ℓC} {ℓQ} Input Output)
+    → ObsEq S S
+  ObsEq-refl S x y = (λ c → c) , (λ c → c)
+
+  ObsEq-sym
+    : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
+      {Input : Set ℓI} {Output : Set ℓO}
+      {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
+      {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
+    → ObsEq S T → ObsEq T S
+  ObsEq-sym eq x y = snd (eq x y) , fst (eq x y)
+
+  ObsEq-trans
+    : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂ ℓC₃ ℓQ₃}
+      {Input : Set ℓI} {Output : Set ℓO}
+      {S : Scheme {ℓI} {ℓO} {ℓC₁} {ℓQ₁} Input Output}
+      {T : Scheme {ℓI} {ℓO} {ℓC₂} {ℓQ₂} Input Output}
+      {U : Scheme {ℓI} {ℓO} {ℓC₃} {ℓQ₃} Input Output}
+    → ObsEq S T → ObsEq T U → ObsEq S U
+  ObsEq-trans eST eTU x y =
+    (λ c → fst (eTU x y) (fst (eST x y) c))
+    , (λ c → snd (eST x y) (snd (eTU x y) c))
 
 -- A tighter, executable observational equivalence:
 -- two schemes are equivalent iff they compute the same observed output under
@@ -423,7 +523,7 @@ FuelHalts
     {Input : Set ℓI} {Output : Set ℓO}
   → Scheme {ℓI} {ℓO} {ℓC} {ℓQ} Input Output
   → Set (ℓI ⊔ ℓC)
-FuelHalts S = ∀ x → Scheme.halts S (Scheme.exec S (Scheme.fuel S x) x)
+FuelHalts S = ∀ x → Scheme.halts≡ S (Scheme.exec S (Scheme.fuel S x) x)
 
 module FuelSound {ℓI ℓO ℓC ℓQ}
                  {Input : Set ℓI} {Output : Set ℓO}
@@ -434,11 +534,11 @@ module FuelSound {ℓI ℓO ℓC ℓQ}
   stableFrom≤
     : ∀ {m n c}
       → m ≤ℕ n
-      → halts (iterate Comp m c)
+      → halts≡ (iterate Comp m c)
       → iterate Comp n c ≡ iterate Comp m c
   stableFrom≤ {n = n} {c = c} z≤n halt0 = stable0 n c halt0
     where
-      stable0 : ∀ n c → halts c → iterate Comp n c ≡ c
+      stable0 : ∀ n c → halts≡ c → iterate Comp n c ≡ c
       stable0 zero    _ _ = refl
       stable0 (suc n) c hc =
         trans
@@ -449,8 +549,8 @@ module FuelSound {ℓI ℓO ℓC ℓQ}
 
   fixedpoint-unique
     : ∀ m n c
-      → halts (iterate Comp m c)
-      → halts (iterate Comp n c)
+      → halts≡ (iterate Comp m c)
+      → halts≡ (iterate Comp n c)
       → iterate Comp m c ≡ iterate Comp n c
   fixedpoint-unique m n c hm hn with total≤ℕ m n
   ... | inj₁ m≤n = sym (stableFrom≤ m≤n hm)
@@ -489,15 +589,15 @@ module FuelSound {ℓI ℓO ℓC ℓQ}
 
   computesTo→run : FuelHalts S → ∀ x y → ComputesTo x y → y ≡ run x
   computesTo→run fh x y (c' , (n , (reach , haltC')) , outEq) =
-    trans (sym outEq) (cong (λ c → decode (normalize c)) (sym eqFC))
+    trans (sym outEq) (cong (λ c → decode (close c)) (sym eqFC))
     where
       c0 = compile x
       f  = fuel x
 
-      haltN : halts (iterate Comp n c0)
-      haltN = subst halts (sym reach) haltC'
+      haltN : halts≡ (iterate Comp n c0)
+      haltN = subst halts≡ (sym reach) haltC'
 
-      haltF : halts (iterate Comp f c0)
+      haltF : halts≡ (iterate Comp f c0)
       haltF = fh x
 
       eqFC : iterate Comp f c0 ≡ c'
@@ -584,6 +684,15 @@ record ImplementsRel {ℓI ℓO ℓS ℓC ℓQ : Level}
   field
     sound : ∀ x y → Scheme.ComputesTo S x y → Algorithm.Spec A x y
 
+-- Closure-stable relational realization: any stabilized outcome must satisfy the spec.
+record ImplementsStableRel {ℓI ℓO ℓS ℓC ℓQ : Level}
+                           {Input : Set ℓI} {Output : Set ℓO}
+                           (A : Algorithm {ℓI} {ℓO} {ℓS} Input Output)
+                           (S : Scheme {ℓI} {ℓO} {ℓC} {ℓQ} Input Output)
+                           : Set (lsuc (ℓI ⊔ ℓO ⊔ ℓS ⊔ ℓC ⊔ ℓQ)) where
+  field
+    sound : ∀ x y → Scheme.StabilizesTo S x y → Algorithm.Spec A x y
+
 -- Schedule realization: the chosen schedule’s output satisfies the spec.
 record ImplementsRun {ℓI ℓO ℓS ℓC ℓQ : Level}
                      {Input : Set ℓI} {Output : Set ℓO}
@@ -592,6 +701,21 @@ record ImplementsRun {ℓI ℓO ℓS ℓC ℓQ : Level}
                      : Set (lsuc (ℓI ⊔ ℓO ⊔ ℓS ⊔ ℓC ⊔ ℓQ)) where
   field
     correct : ∀ x → Algorithm.Spec A x (Scheme.run S x)
+
+-- If closed states are step-stable (`SchemeLaws`), then closure-stable relational
+-- correctness implies schedule correctness (no fuel fixed point needed).
+stableRel→run
+  : ∀ {ℓI ℓO ℓS ℓC ℓQ}
+    {Input : Set ℓI} {Output : Set ℓO}
+    {A : Algorithm {ℓI} {ℓO} {ℓS} Input Output}
+    {S : Scheme {ℓI} {ℓO} {ℓC} {ℓQ} Input Output}
+  → Scheme.SchemeLaws S
+  → ImplementsStableRel A S
+  → ImplementsRun A S
+stableRel→run {S = S} laws rel = record
+  { correct = λ x →
+      ImplementsStableRel.sound rel x (Scheme.run S x) (Scheme.runIsStabilizesTo S laws x)
+  }
 
 -- If the schedule truly reaches a fixed point (`FuelHalts`), then relational
 -- correctness implies schedule correctness.
@@ -624,3 +748,22 @@ run→rel {A = A} {S = S} fh run =
         subst (Algorithm.Spec A x) (sym (FuelSound.computesTo→run S fh x y c))
           (ImplementsRun.correct run x)
     }
+
+-- ==========================================================================
+-- Bundles
+-- ==========================================================================
+
+-- A scheme together with the minimal law connecting its closure to dynamics.
+--
+-- This is the “honest default” bundle for downstream semantics: it makes
+-- explicit whether the scheme can justify claims phrased in terms of
+-- stabilisation after computation (rather than just fuel-based execution).
+record LawfulScheme {ℓI ℓO ℓC ℓQ : Level}
+                    (Input : Set ℓI)
+                    (Output : Set ℓO)
+                    : Set (lsuc (ℓI ⊔ ℓO ⊔ ℓC ⊔ ℓQ)) where
+  field
+    scheme : Scheme {ℓI} {ℓO} {ℓC} {ℓQ} Input Output
+    laws   : Scheme.SchemeLaws scheme
+
+  open Scheme scheme public

@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,10 +10,10 @@ module LogOS.ObjectLogic.FOL.Soundness where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop using (_↔_; intro; ⊥; ⊥-elim)
 
-open import Data.Fin using (Fin)
-open import Data.List using (_∷_)
-open import Data.Product using (_×_; Σ; _,_)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude.Fin using (Fin)
+open import LogOS.Prelude.List using (_∷_)
+open import LogOS.Prelude.Product using (_×_; Σ; _,_)
+open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
 
 open import LogOS.ObjectLogic.FOL.Syntax
 open import LogOS.ObjectLogic.FOL.Subst

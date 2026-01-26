@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,10 +15,10 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.World
 
--- Generic (lax) projector on a constraint poset.
+-- Generic (lax) projector on a constraint preorder.
 --
 -- This module provides the tier-specific *instances* of the shared projector
--- shape, and reexports the core definitions for backwards compatibility.
+-- shape and reexports the core definitions for convenience.
 
 open import LogOS.Theorems.Reflection.Projector public
 
@@ -40,7 +40,7 @@ module ForG {ℓ}
   open Truth.GuardedTruth Sig Q
 
   fromGuarded
-    : ∀ {CP : ConPoset ℓ}
+    : ∀ {CP : ConPreorder ℓ}
       (GC : GuardedClosure CP)
     → Projector CP
   fromGuarded GC = record
@@ -49,7 +49,7 @@ module ForG {ℓ}
     ; idemp-lax = GuardedClosure.idemp-lax GC
     }
 
--- From H-tier invariance on the boundary poset
+-- From H-tier invariance on the boundary preorder
 
 module ForH {ℓ}
              {Sig : LogOS.Base.Signature.LogOSSignature ℓ}
@@ -74,11 +74,11 @@ module ForGraded {ℓ} {Q : QAdapter ℓ} where
   module GT = Truth.GuardedCore
 
   fromGradedSat
-    : ∀ {CP : ConPoset ℓ}
+    : ∀ {CP : ConPreorder ℓ}
       (GC : GT.GradedClosure Q CP)
     → Projector CP
   fromGradedSat {CP = CP} GC =
-    let open ConPoset CP
+    let open ConPreorder CP
         open GT.GradedClosure GC
     in record
          { P = Flow sat

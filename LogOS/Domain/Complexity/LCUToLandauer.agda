@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,10 +10,11 @@ module LogOS.Domain.Complexity.LCUToLandauer where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_; ⊥)
 
-open import Data.Product using (Σ; _,_; _×_; fst; snd)
+open import LogOS.Prelude.Product using (Σ; _,_; _×_; fst; snd)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
 import LogOS.Theorems.Meta.Landauer as L
 
 -- A “locality/causality/local unitarity” axiom pack with enough structure to
@@ -52,7 +53,12 @@ record LCUObsAssumptions {ℓ : Level}
     cost : Cosp → S
 
     -- Core physical “dissipation axiom”: any observable-level non-unitary action costs ≥ L.
-    nonUnitary→lower : ∀ f → ¬ LocalUnitary f → _≤E_ L (cost f)
+    nonUnitary-ref : SatRefinement₀ Cosp
+                      (λ _ f → ¬ LocalUnitary f)
+                      (λ _ f → _≤E_ L (cost f))
+
+  nonUnitary→lower : ∀ f → ¬ LocalUnitary f → _≤E_ L (cost f)
+  nonUnitary→lower f nu = sat-→₀ nonUnitary-ref f nu
 
 -- Irreversible merge at the observable level: two distinct observations become equal.
 
@@ -85,6 +91,9 @@ toLandauer {Sig = Sig} {Q = Q} A =
     { L = LCUObsAssumptions.L A
     ; cost = LCUObsAssumptions.cost A
     ; Merges = Merges A
-    ; merges→lower = λ f m →
-        LCUObsAssumptions.nonUnitary→lower A f (merge→¬unitary A f m)
+    ; merge-ref =
+        record
+          { sat-→ = λ _ f m →
+              LCUObsAssumptions.nonUnitary→lower A f (merge→¬unitary A f m)
+          }
     }

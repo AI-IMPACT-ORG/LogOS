@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -68,11 +68,11 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       hom   : KH.GradedKernelHom K₁ K₂
       mono∂ :
         ∀ {c c'}
-        → ConPoset._⊑_ CP₁ c c'
-        → ConPoset._⊑_ CP₂ (ConAlgHom≡.map∂ (KH.GradedKernelHom.con-hom hom) c)
+        → ConPreorder._⊑_ CP₁ c c'
+        → ConPreorder._⊑_ CP₂ (ConAlgHom≡.map∂ (KH.GradedKernelHom.con-hom hom) c)
                            (ConAlgHom≡.map∂ (KH.GradedKernelHom.con-hom hom) c')
 
-    map∂₁ : ConPoset.Con CP₁ → ConPoset.Con CP₂
+    map∂₁ : ConPreorder.Con CP₁ → ConPreorder.Con CP₂
     map∂₁ = ConAlgHom≡.map∂ (KH.GradedKernelHom.con-hom hom)
 
     mapCode₁ : GradedKernel.Code K₁ → GradedKernel.Code K₂
@@ -174,9 +174,9 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   whisker-right {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} g {f = f} {f' = f'} ff' =
     whiskerL {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} g {f = f} {f' = f'} ff'
 
-  GradedKernelHomPoset
-    : GradedKernel Sig Q → GradedKernel Sig Q → ConPoset (lsuc (lsuc ℓ))
-  GradedKernelHomPoset K₁ K₂ =
+  GradedKernelHomPreorder
+    : GradedKernel Sig Q → GradedKernel Sig Q → ConPreorder (lsuc (lsuc ℓ))
+  GradedKernelHomPreorder K₁ K₂ =
     record
       { Con = GradedKernelHom₁ K₁ K₂
       ; _⊑_ = λ f g → Lift (lsuc (lsuc ℓ)) (f ⇒ g)
@@ -189,7 +189,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   GradedKernelThin2Cat =
     record
       { Obj = GradedKernel Sig Q
-      ; Hom = GradedKernelHomPoset
+      ; Hom = GradedKernelHomPreorder
       ; id  = λ {A} → idGradedKernelHom₁ A
       ; _∘_ = _∘₁_
       ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} le →
@@ -275,13 +275,10 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       step₂ = GradedKernel.step-grade K₂
       Flow₁ = GradedClosure.Flow (GradedKernel.GTruth K₁)
       Flow₂ = GradedClosure.Flow (GradedKernel.GTruth K₂)
-      Th⋆₁  = GradedClosure.Th* (GradedKernel.GTruth K₁)
-      Th⋆₂  = GradedClosure.Th* (GradedKernel.GTruth K₂)
     field
       preserves-step : ∀ c →
-        ConPoset._⊑_ CP₂ (GradedKernelHom₁.map∂₁ h (Flow₁ step₁ c))
+        ConPreorder._⊑_ CP₂ (GradedKernelHom₁.map∂₁ h (Flow₁ step₁ c))
                          (Flow₂ step₂ (GradedKernelHom₁.map∂₁ h c))
-      preserves-Th   : ConPoset._⊑_ CP₂ (GradedKernelHom₁.map∂₁ h Th⋆₁) Th⋆₂
 
   open GradedKernelHomFlow₁ public
 
@@ -299,19 +296,17 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       Flow₂ = GradedClosure.Flow (GradedKernel.GTruth K₂)
       map∂h = GradedKernelHom₁.map∂₁ h
       stepPres : ∀ c →
-        ConPoset._⊑_ CP₂ (map∂h (GradedClosure.Flow (GradedKernel.GTruth K₁) step₁ c))
+        ConPreorder._⊑_ CP₂ (map∂h (GradedClosure.Flow (GradedKernel.GTruth K₁) step₁ c))
                          (Flow₂ step₁ (map∂h c))
       stepPres c = FH.preserves-F step₁ c
-      stepGrade : ∀ c → ConPoset._⊑_ CP₂ (Flow₂ step₁ (map∂h c)) (Flow₂ step₂ (map∂h c))
+      stepGrade : ∀ c → ConPreorder._⊑_ CP₂ (Flow₂ step₁ (map∂h c)) (Flow₂ step₂ (map∂h c))
       stepGrade c =
         GradedClosure.mono-grade (GradedKernel.GTruth K₂)
           (KH.GradedKernelHomFlow.step≤ hf)
           (map∂h c)
     in
     record
-      { preserves-step = λ c → ConPoset.trans CP₂ (stepPres c) (stepGrade c)
-      ; preserves-Th   = FH.preserves-Th
-      }
+      { preserves-step = λ c → ConPreorder.trans CP₂ (stepPres c) (stepGrade c) }
 
   idGradedKernelHomFlow₁
     : ∀ (K : GradedKernel Sig Q)
@@ -319,9 +314,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   idGradedKernelHomFlow₁ K =
     let CP = BulkBoundary.bnd (GradedKernel.BB K) in
     record
-      { preserves-step = λ _ → ConPoset.refl CP
-      ; preserves-Th   = ConPoset.refl CP
-      }
+      { preserves-step = λ _ → ConPreorder.refl CP }
 
   composeGradedKernelHomFlow₁
     : ∀ {K₁ K₂ K₃ : GradedKernel Sig Q}
@@ -347,24 +340,15 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     record
       { preserves-step = λ c →
           let
-            stepA : ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
+            stepA : ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂))
                      (mapf (Flow₁ step₁ c))
                      (Flow₂ step₂ (mapf c))
             stepA = GradedKernelHomFlow₁.preserves-step ff c
-            stepA' : ConPoset._⊑_ CP₃ (mapg (mapf (Flow₁ step₁ c))) (mapg (Flow₂ step₂ (mapf c)))
+            stepA' : ConPreorder._⊑_ CP₃ (mapg (mapf (Flow₁ step₁ c))) (mapg (Flow₂ step₂ (mapf c)))
             stepA' = GradedKernelHom₁.mono∂ g stepA
-            stepB : ConPoset._⊑_ CP₃ (mapg (Flow₂ step₂ (mapf c))) (Flow₃ step₃ (mapg (mapf c)))
+            stepB : ConPreorder._⊑_ CP₃ (mapg (Flow₂ step₂ (mapf c))) (Flow₃ step₃ (mapg (mapf c)))
             stepB = GradedKernelHomFlow₁.preserves-step gg (mapf c)
-          in ConPoset.trans CP₃ stepA' stepB
-      ; preserves-Th =
-          let
-            stepA : ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K₂)) (mapf Th⋆₁) Th⋆₂
-            stepA = GradedKernelHomFlow₁.preserves-Th ff
-            stepA' : ConPoset._⊑_ CP₃ (mapg (mapf Th⋆₁)) (mapg Th⋆₂)
-            stepA' = GradedKernelHom₁.mono∂ g stepA
-            stepB : ConPoset._⊑_ CP₃ (mapg Th⋆₂) Th⋆₃
-            stepB = GradedKernelHomFlow₁.preserves-Th gg
-          in ConPoset.trans CP₃ stepA' stepB
+          in ConPreorder.trans CP₃ stepA' stepB
       }
 
   -- Flow-preserving 1-cells form a sub-2-category (same 2-cells, restricted 1-cells).

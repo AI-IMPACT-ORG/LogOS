@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -121,7 +121,10 @@ module ForPresentations
     H.ported-closure-naturality F F extF compat p φ
     where
       compat : H.Compatible F F
-      compat _ _ = Prop.↔-refl
+      compat =
+        record
+          { commute = λ _ _ → Prop.↔-refl
+          }
 
 -- ---------------------------------------------------------------------------
 -- Coherence: identity and composition of canonical translations.

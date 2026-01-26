@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -33,7 +33,7 @@ guard-naturality-decode
     (h  : KernelHom K₁ K₂)
     (ht : KernelHomFlow K₁ K₂ h)
     (γ  : Kernel.Code K₁)
-  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
                  (Kernel.decode K₂ (KernelHom.mapCode h (Kernel.Guard K₁ γ)))
                  (Endo.fn (Flow-Endo K₂)
                    (Kernel.decode K₂ (KernelHom.mapCode h γ)))
@@ -57,14 +57,14 @@ guard-naturality-decode {Sig = Sig} {Q = Q} K₁ K₂ h ht γ =
       eq₃ : Kernel.decode K₂ (KernelHom.mapCode h γ) ≡ map∂ (Kernel.decode K₁ γ)
       eq₃ = KernelHom.map-decode h γ
       -- desired inequality using preserves-F under map∂
-      step : ConPoset._⊑_ (BulkBoundary.bnd BB₂)
+      step : ConPreorder._⊑_ (BulkBoundary.bnd BB₂)
                          (map∂ (F₁ (Kernel.decode K₁ γ)))
                          (F₂ (map∂ (Kernel.decode K₁ γ)))
       step = preserves-F (Kernel.decode K₁ γ)
-  in subst (λ x → ConPoset._⊑_ (BulkBoundary.bnd BB₂) x
+  in subst (λ x → ConPreorder._⊑_ (BulkBoundary.bnd BB₂) x
                           (F₂ (Kernel.decode K₂ (KernelHom.mapCode h γ))))
            (sym (trans eq₁ (cong map∂ eq₂)))
-           (subst (λ y → ConPoset._⊑_ (BulkBoundary.bnd BB₂)
+           (subst (λ y → ConPreorder._⊑_ (BulkBoundary.bnd BB₂)
                            (map∂ (F₁ (Kernel.decode K₁ γ)))
                            (F₂ y))
                   (sym eq₃)
@@ -80,7 +80,7 @@ record GuardHom {ℓ}
                 (ht : KernelHomFlow K₁ K₂ h)
                 : Set (lsuc ℓ) where
   field
-    natural-decode : ∀ γ → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
+    natural-decode : ∀ γ → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
                                (Kernel.decode K₂ (KernelHom.mapCode h (Kernel.Guard K₁ γ)))
                                (Endo.fn (Flow-Endo K₂)
                                  (Kernel.decode K₂ (KernelHom.mapCode h γ)))
@@ -93,6 +93,45 @@ guardHom-from
   → GuardHom K₁ K₂ h ht
 guardHom-from K₁ K₂ h ht = record
   { natural-decode = guard-naturality-decode K₁ K₂ h ht }
+
+-- Box naturality at decode-level (lax): under a Kernel homomorphism with
+-- Flow preservation, decoding mapCode (Box₁ γ) lies below decoding Box₂ (mapCode γ).
+
+box-naturality-decode
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K₁ K₂ : Kernel Sig Q)
+    (h  : KernelHom K₁ K₂)
+    (ht : KernelHomFlow K₁ K₂ h)
+    (γ  : Kernel.Code K₁)
+  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
+      (Kernel.decode K₂ (KernelHom.mapCode h (Box K₁ γ)))
+      (Kernel.decode K₂ (Box K₂ (KernelHom.mapCode h γ)))
+box-naturality-decode {Sig = Sig} {Q = Q} K₁ K₂ h ht γ =
+  map-box-decode≤ {Sig = Sig} {Q = Q} {K₁ = K₁} {K₂ = K₂} {h = h} ht γ
+
+record BoxHom {ℓ}
+              {Sig : LogOSSignature ℓ}
+              {Q : QAdapter ℓ}
+              (K₁ K₂ : Kernel Sig Q)
+              (h  : KernelHom K₁ K₂)
+              (ht : KernelHomFlow K₁ K₂ h)
+              : Set (lsuc ℓ) where
+  field
+    natural-decode
+      : ∀ γ → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
+                 (Kernel.decode K₂ (KernelHom.mapCode h (Box K₁ γ)))
+                 (Kernel.decode K₂ (Box K₂ (KernelHom.mapCode h γ)))
+
+boxHom-from
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K₁ K₂ : Kernel Sig Q)
+    (h  : KernelHom K₁ K₂)
+    (ht : KernelHomFlow K₁ K₂ h)
+  → BoxHom K₁ K₂ h ht
+boxHom-from K₁ K₂ h ht =
+  record
+    { natural-decode = box-naturality-decode K₁ K₂ h ht
+    }
 
 -- Reify and body decode-level equalities (expose Kernel fields as theorems)
 
@@ -110,7 +149,7 @@ body-decode-eq
   → (Kernel.decode K (Kernel.Body K γ)) ≡ (Kernel.Body∂ K (Kernel.decode K γ))
 body-decode-eq K γ = Kernel.body-decode K γ
 
--- Reify compatibility with Guard/Body (up to decode-level equality).
+-- Reify compatibility with Guard/Body (up to strict decode equality (`≡`)).
 -- This is intentionally weaker than any extensionality/canonicity condition on `Code`.
 
 reify-guard-decode
@@ -163,7 +202,7 @@ decode-FlowCode-eq K γ =
 γ*-decode≤stepBody
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
-  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
       (Kernel.decode K (Kernel.γ* K))
       (Endo.fn (Flow-Endo K)
         (Kernel.Body∂ K (Kernel.decode K (Kernel.γ* K))))
@@ -173,12 +212,12 @@ decode-FlowCode-eq K γ =
     open Kernel K
     le = fst (Kernel.γ*-guard K)
     eq = decode-FlowCode-eq K (Kernel.γ* K)
-  in subst (λ x → ConPoset._⊑_ CP (Kernel.decode K (Kernel.γ* K)) x) eq le
+  in subst (λ x → ConPreorder._⊑_ CP (Kernel.decode K (Kernel.γ* K)) x) eq le
 
 stepBody≤γ*-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
-  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
       (Endo.fn (Flow-Endo K)
         (Kernel.Body∂ K (Kernel.decode K (Kernel.γ* K))))
       (Kernel.decode K (Kernel.γ* K))
@@ -188,7 +227,7 @@ stepBody≤γ*-decode K =
     open Kernel K
     le = snd (Kernel.γ*-guard K)
     eq = decode-FlowCode-eq K (Kernel.γ* K)
-  in subst (λ x → ConPoset._⊑_ CP x (Kernel.decode K (Kernel.γ* K))) eq le
+  in subst (λ x → ConPreorder._⊑_ CP x (Kernel.decode K (Kernel.γ* K))) eq le
 
 -- If the boundary preorder is antisymmetric (a partial order), γ* is an actual
 -- equality fixed point at decode-level.
@@ -214,8 +253,8 @@ decode-FlowCode-mono
     (K : Kernel Sig Q)
   → KCore.BodyMonotoneShape (Kernel.shape K)
   → ∀ {γ δ}
-  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K γ) (Kernel.decode K δ)
-  → ConPoset._⊑_ (BulkBoundary.bnd (Kernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K γ) (Kernel.decode K δ)
+  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
       (Kernel.decode K (FlowCode K γ))
       (Kernel.decode K (FlowCode K δ))
 decode-FlowCode-mono {Sig = Sig} {Q = Q} K bm {γ} {δ} le =
@@ -224,13 +263,13 @@ decode-FlowCode-mono {Sig = Sig} {Q = Q} K bm {γ} {δ} le =
     CP = BulkBoundary.bnd (Kernel.BB K)
     F = Truth.GuardedCore.GuardedClosure.Flow GTruth
     bodyLe = KCore.BodyMonotoneShape.mono-Body∂ bm le
-    flowLe : ConPoset._⊑_ CP (F (Kernel.Body∂ K (Kernel.decode K γ))) (F (Kernel.Body∂ K (Kernel.decode K δ)))
+    flowLe : ConPreorder._⊑_ CP (F (Kernel.Body∂ K (Kernel.decode K γ))) (F (Kernel.Body∂ K (Kernel.decode K δ)))
     flowLe = Truth.GuardedCore.GuardedClosure.mono GTruth bodyLe
     eqγ = decode-FlowCode-eq K γ
     eqδ = decode-FlowCode-eq K δ
-    flowLe' : ConPoset._⊑_ CP (F (Kernel.Body∂ K (Kernel.decode K γ))) (Kernel.decode K (FlowCode K δ))
-    flowLe' = subst (λ x → ConPoset._⊑_ CP (F (Kernel.Body∂ K (Kernel.decode K γ))) x) (sym eqδ) flowLe
-  in subst (λ x → ConPoset._⊑_ CP x (Kernel.decode K (FlowCode K δ))) (sym eqγ) flowLe'
+    flowLe' : ConPreorder._⊑_ CP (F (Kernel.Body∂ K (Kernel.decode K γ))) (Kernel.decode K (FlowCode K δ))
+    flowLe' = subst (λ x → ConPreorder._⊑_ CP (F (Kernel.Body∂ K (Kernel.decode K γ))) x) (sym eqδ) flowLe
+  in subst (λ x → ConPreorder._⊑_ CP x (Kernel.decode K (FlowCode K δ))) (sym eqγ) flowLe'
 
 -- Textbook alias: monotonicity of the operational step (FlowCode), under BodyMonotone.
 
@@ -249,7 +288,7 @@ reify≈ K γ =
     CP = BulkBoundary.bnd (Kernel.BB K)
     module R = ConRewrite.For CP
     eq = Kernel.reify-decode K γ
-    reflCP = ConPoset.refl CP
+    reflCP = ConPreorder.refl CP
   in
   ( R.substL (sym eq) reflCP
   , R.substR (sym eq) reflCP

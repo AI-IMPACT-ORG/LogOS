@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.SyntaxCore where
 
-open import Data.List using (List; []; _∷_; _++_)
+open import LogOS.Prelude.List using (List; []; _∷_; _++_)
 
 open import LogOS.Packs.Agents.Emit.IR.Backend using (Backend)
 import LogOS.Packs.Agents.Emit.IR.BackendSyntax as BackendSyntax

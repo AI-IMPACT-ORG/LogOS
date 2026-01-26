@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,10 +9,10 @@ module Tests.ContinuityOne where
 
 open import LogOS.Prelude
 
-open import LogOS.API.Minimal
+open import LogOS.API.Kernel
 open import LogOS.Minimal.Truth as Truth
 
--- One-point boundary poset and trivial structures
+-- One-point boundary preorder and trivial structures
 
 data One : Set where • : One
 
@@ -27,11 +27,11 @@ refl₁ = tt
 trans₁ : ∀ {x y z} → _≤₁_ x y → _≤₁_ y z → _≤₁_ x z
 trans₁ _ _ = tt
 
-ConPoset₁ : ConPoset lzero
-ConPoset₁ = record { Con = One ; _⊑_ = λ _ _ → ⊤ ; refl = tt ; trans = λ _ _ → tt }
+ConPreorder₁ : ConPreorder lzero
+ConPreorder₁ = record { Con = One ; _⊑_ = λ _ _ → ⊤ ; refl = tt ; trans = λ _ _ → tt }
 
 BB₁ : BulkBoundary lzero
-BB₁ = record { bulk = ConPoset₁ ; bnd = ConPoset₁ }
+BB₁ = record { bulk = ConPreorder₁ ; bnd = ConPreorder₁ }
 
 -- Minimal signature/adapter/world for a kernel over One
 

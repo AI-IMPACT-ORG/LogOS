@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,10 +11,11 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature; module LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPoset; BulkBoundary)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Minimal.Closure using (ClosureOp)
-open import Data.NatOrder using (_≤ℕ_)
+open import LogOS.Boundary.Telemetry using (TelemetryTrace)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_)
 open import LogOS.Syntax.Prop using (¬_)
 
 open import LogOS.Kernel using (Kernel)
@@ -53,7 +54,7 @@ module For
 
   private
     CP = BulkBoundary.bnd BB
-    _⊑_ = ConPoset._⊑_ CP
+    _⊑_ = ConPreorder._⊑_ CP
 
   module Forcing
     (C : ClosureOp (BulkBoundary.bnd BB))
@@ -64,13 +65,12 @@ module For
       LK = LKFrom.asLogicKernel K
 
     module JRel = EndoRel.FromClosureOp LK C
-    module JR = JRel.Rel
 
     J : Endo K
     J = GEndo.fromLKEndo JRel.J
 
     JClosureStep : Set (lsuc ℓ)
-    JClosureStep = JR.ClosureStep
+    JClosureStep = JRel.ClosureStep
 
     JClosed : Policy → Set ℓ
     JClosed c = _⊑_ (Endo.fn J c) c
@@ -80,9 +80,9 @@ module For
       → JClosureStep → RGStep g
     toRGStep J≤FlowAt s =
       mkClosureStepAt
-        (GEndo.fromLKEndo (JR.endo s))
-        (JR.infl s)
-        (λ c → ConPoset.trans CP (JR.leJ s c) (J≤FlowAt c))
+        (GEndo.fromLKEndo (JRel.endo s))
+        (JRel.infl s)
+        (λ c → ConPreorder.trans CP (JRel.leJ s c) (J≤FlowAt c))
 
     goal-preserved
       : (J≤FlowAt : _≤₂_ K J (Flow-EndoAt K g))
@@ -90,7 +90,7 @@ module For
       → JClosed goal
       → _⊑_ (applyRG (toRGStep J≤FlowAt s) goal) goal
     goal-preserved _ s goal closed =
-      ConPoset.trans CP (JR.leJ s goal) closed
+      ConPreorder.trans CP (JRel.leJ s goal) closed
 
     rg-least-stable
       : (J≤FlowAt : _≤₂_ K J (Flow-EndoAt K g))
@@ -119,13 +119,15 @@ module For
     module LC = LearningCost.For Sock
     module G = LC.Graded K
 
-    record RGPhysicsAssumptions : Set (lsuc (lsuc ℓ)) where
+    record RGPhysicsAssumptions {ℓT : Level} (T : TelemetryTrace ℓT)
+      : Set (lsuc (lsuc (ℓ ⊔ ℓT))) where
       field
         landauer : G.SoftLearningAssumptions
-        condensation : G.SoftLearningCondensationAssumptions
+        condensation : G.SoftLearningCondensationAssumptions T
 
     rg-physics-summary
-      : (A : RGPhysicsAssumptions)
+      : ∀ {ℓT} {T : TelemetryTrace ℓT}
+      → (A : RGPhysicsAssumptions T)
       → ∀ {g} (C : DPI.Channel Cosp) (s : RGStep g)
       → QAdapter._≤s_ Q
           (LIO.LandauerIOAssumptions.L (G.SoftLearningAssumptions.landauer (RGPhysicsAssumptions.landauer A)))
@@ -134,7 +136,7 @@ module For
         ×
         MC.MeasurementCapacity.info
           (LC.CondensationAssumptions.capacity
-            (G.SoftLearningCondensationAssumptions.condensation
+            (G.soft-condensation
               (RGPhysicsAssumptions.condensation A)))
           (DPI.Channel.run C (G.SoftLearningCondensationAssumptions.stepProgram
             (RGPhysicsAssumptions.condensation A) s))
@@ -142,11 +144,11 @@ module For
         MC.mul
           (MC.MeasurementCapacity.κ
             (LC.CondensationAssumptions.capacity
-              (G.SoftLearningCondensationAssumptions.condensation
+              (G.soft-condensation
                 (RGPhysicsAssumptions.condensation A))))
           (MC.MeasurementCapacity.meas
             (LC.CondensationAssumptions.capacity
-              (G.SoftLearningCondensationAssumptions.condensation
+              (G.soft-condensation
                 (RGPhysicsAssumptions.condensation A)))
             (G.SoftLearningCondensationAssumptions.stepProgram
               (RGPhysicsAssumptions.condensation A) s))

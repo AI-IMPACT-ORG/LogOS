@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: an Agda research library for foundational logic system architecture.
+# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -20,7 +20,7 @@ scan() {
   if command -v rg >/dev/null 2>&1; then
     local out status
     set +e
-    out="$(rg -n --glob '*.agda' --glob '*.lagda.md' --glob '!_build/**' --glob '!Data/**' --pcre2 -- "${pattern}" . 2>&1)"
+    out="$(rg -n --glob '*.agda' --glob '*.lagda.md' --glob '!_build/**' --pcre2 -- "${pattern}" . 2>&1)"
     status="$?"
     set -e
     if [[ "$status" -eq 2 ]]; then
@@ -33,7 +33,7 @@ scan() {
   else
     local out status
     set +e
-    out="$(grep -RIn --include='*.agda' --include='*.lagda.md' --exclude-dir='_build' --exclude-dir='Data' -E -- "${pattern}" . 2>&1)"
+    out="$(grep -RIn --include='*.agda' --include='*.lagda.md' --exclude-dir='_build' -E -- "${pattern}" . 2>&1)"
     status="$?"
     set -e
     if [[ "$status" -eq 2 ]]; then

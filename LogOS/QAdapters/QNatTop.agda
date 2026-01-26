@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,10 +10,10 @@ module LogOS.QAdapters.QNatTop where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (⊥)
 
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ; weakenRight)
-open import Data.NatExtra using (_⊔ℕ_; max-left; max-right; ⊔ℕ-least; +-assoc; +-zeroˡ; +-zeroʳ; ⊔ℕ-distrib-+ʳ; ⊔ℕ-distrib-+ˡ)
-open import Data.Ordinal as Ord using (Ord; fin; ω)
+open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ; weakenRight)
+open import LogOS.Prelude.NatExtra using (_⊔ℕ_; max-left; max-right; ⊔ℕ-least; +-assoc; +-zeroˡ; +-zeroʳ; ⊔ℕ-distrib-+ʳ; ⊔ℕ-distrib-+ˡ)
+open import LogOS.Prelude.Ordinal as Ord using (Ord; fin; ω)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.ScaleOps using (ScaleOps)
@@ -172,16 +172,23 @@ QNatTop = record
     +o-mono {a = fin m} {b = fin n} {c = fin p} {d = fin q} ab cd =
       +-mono ab cd
 
--- Operational view: interpret finite grades as step budgets.
--- Note: `budgetOrd` is a finite readout; it collapses ω to 0, while the order
--- on `Ord` still treats ω as the top grade.
+-- Operational readout (truncation): interpret grades as step budgets.
+--
+-- Important: `Ord` has a top grade `ω`, but ℕ has no top element. Therefore any
+-- map `Ord → ℕ` is necessarily not order-sound (cannot be monotone w.r.t. `≤o`).
+--
+-- The functions below are intentionally named `…Trunc` to signal that they are
+-- a *finite readout* used for operational testing/demos. Do not use them in
+-- theorems that assume “more budget ⇒ at least as many steps” unless you add an
+-- explicit law bundle that makes that assumption precise for the subset you
+-- care about (e.g. finite grades only).
 
-budgetOrd : Ord → ℕ
-budgetOrd (fin n) = n
-budgetOrd ω = zero
+budgetTrunc : Ord → ℕ
+budgetTrunc (fin n) = n
+budgetTrunc ω = zero
 
-stepsOrd : ℕ → ℕ
-stepsOrd n = n
+stepsTrunc : ℕ → ℕ
+stepsTrunc n = n
 
-scaleOps : ScaleOps QNatTop
-scaleOps = record { budget = budgetOrd ; steps = stepsOrd }
+scaleOpsTrunc : ScaleOps QNatTop
+scaleOpsTrunc = record { budget = budgetTrunc ; steps = stepsTrunc }

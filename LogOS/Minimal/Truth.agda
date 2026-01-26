@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Minimal.Truth where
 
 open import LogOS.Prelude
-open import Data.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
@@ -54,11 +54,11 @@ module HomotypicalTruth {ℓ : Level}
   ObsLeH {BB = BB} H c d =
     ∀ w → HLayer.Sat_H H w c → HLayer.Sat_H H w d
 
-  ObsHPoset
+  ObsHPreorder
     : ∀ {BB : BulkBoundary ℓ}
     → HLayer BB
-    → ConPoset ℓ
-  ObsHPoset {BB = BB} H =
+    → ConPreorder ℓ
+  ObsHPreorder {BB = BB} H =
     let open BulkBoundary BB in
     record
       { Con = Con_bnd
@@ -75,6 +75,9 @@ module HomotypicalTruth {ℓ : Level}
     → Set ℓ
   ObsEqH H c d = Prop.ObsEqOn (HLayer.Sat_H H) c d
 
+  module ObsEqH-Kit {BB : BulkBoundary ℓ} (H : HLayer BB) where
+    open Prop.ObsEqKit (Prop.obsEqKit (HLayer.Sat_H H)) public
+
   ObsEqH↔ObsLeH
     : ∀ {BB : BulkBoundary ℓ}
     → (H : HLayer BB)
@@ -84,6 +87,41 @@ module HomotypicalTruth {ℓ : Level}
         (Prop._∧_ (ObsLeH H c d) (ObsLeH H d c))
   ObsEqH↔ObsLeH H {c} {d} =
     Prop.ObsEqOn↔ObsLeOn {Sat = HLayer.Sat_H H} {x = c} {y = d}
+
+  -- Non-vacuity guard: `Sat_H` distinguishes at least two constraints.
+  --
+  -- Many kernel/model instances intentionally take `Sat_H = ⊤` for scaffolding,
+  -- in which case `ObsLeH`/`ObsEqH` collapse. This guard provides a reusable
+  -- witness that the induced observational preorder is nontrivial.
+
+  record VacuousHLayer {BB : BulkBoundary ℓ} (H : HLayer BB) : Set (lsuc ℓ) where
+    open BulkBoundary BB
+    field
+      satAll : ∀ w c → HLayer.Sat_H H w c
+
+  record NonVacuousHLayer {BB : BulkBoundary ℓ} (H : HLayer BB) : Set (lsuc ℓ) where
+    open BulkBoundary BB
+    field
+      w : Cosp
+      c₀ c₁ : Con_bnd
+      sat₀ : HLayer.Sat_H H w c₀
+      unsat₁ : Prop.¬ (HLayer.Sat_H H w c₁)
+
+    ¬ObsLe : Prop.¬ (ObsLeH H c₀ c₁)
+    ¬ObsLe le = unsat₁ (le w sat₀)
+
+    ¬ObsEq : Prop.¬ (ObsEqH H c₀ c₁)
+    ¬ObsEq eq = ¬ObsLe (fst (Prop.to (ObsEqH↔ObsLeH H) eq))
+
+  distinguishes→¬ObsLeH
+    : ∀ {BB : BulkBoundary ℓ}
+      {H : HLayer BB}
+      {c d : BulkBoundary.Con_bnd BB}
+      (w : Cosp)
+    → HLayer.Sat_H H w c
+    → Prop.¬ (HLayer.Sat_H H w d)
+    → Prop.¬ (ObsLeH H c d)
+  distinguishes→¬ObsLeH w satc unsatd le = unsatd (le w satc)
 
   -- Invariance closure (lax)
   record Invariance (BB : BulkBoundary ℓ) : Set (lsuc ℓ) where
@@ -110,14 +148,27 @@ module HomotypicalTruth {ℓ : Level}
       ; idemp-lax = Invariance.idemp-lax I
       }
 
+  -- Optional strengthening: bundle monotonicity so `Inv_H` can be used as a
+  -- genuine closure/nucleus operator.
+
+  record InvarianceMono (BB : BulkBoundary ℓ) : Set (lsuc ℓ) where
+    field
+      core : Invariance BB
+      mono-Inv_H : MonoOn (BulkBoundary.bnd BB) (Invariance.Inv_H core)
+
+    open Invariance core public
+
+    Inv_H-Closure : ClosureOp (BulkBoundary.bnd BB)
+    Inv_H-Closure = InvH-Closure core mono-Inv_H
+
   -- Bulk/boundary lax adjunction
   open import LogOS.Minimal.Adjunction using (LaxAdjunction; LaxMonoidalAdjunction)
 
 module GuardedCore {ℓ : Level} where
 
   -- Guarded closure with a (lax) fixed point Th*
-  record GuardedClosure (CP : ConPoset ℓ) : Set (lsuc ℓ) where
-    open ConPoset CP
+  record GuardedClosure (CP : ConPreorder ℓ) : Set (lsuc ℓ) where
+    open ConPreorder CP
     field
       -- Axiom: global flow step
       Flow        : Con → Con
@@ -135,7 +186,7 @@ module GuardedCore {ℓ : Level} where
   -- Forget the distinguished fixed point: a guarded closure always yields a
   -- plain closure operator.
   closureOfGuardedClosure
-    : ∀ {CP : ConPoset ℓ}
+    : ∀ {CP : ConPreorder ℓ}
     → GuardedClosure CP → ClosureOp CP
   closureOfGuardedClosure G =
     record
@@ -145,29 +196,145 @@ module GuardedCore {ℓ : Level} where
       ; idemp-lax = GuardedClosure.idemp-lax G
       }
 
-  -- Flow homomorphism (lax): map ∘ F₁ ⊑ F₂ ∘ map and map Th*₁ ⊑ Th*₂.
+  -- Flow homomorphism (lax): map ∘ F₁ ⊑ F₂ ∘ map.
   --
   -- Note: monotonicity of `map` itself (w.r.t. `_⊑_`) is intentionally not part
   -- of this record; it is usually supplied by the surrounding structure (e.g.
   -- kernel/constraint algebra homs provide a `MonoMap` separately).
-  record FlowHom (CP₁ CP₂ : ConPoset ℓ)
+  record FlowHom (CP₁ CP₂ : ConPreorder ℓ)
                  (G₁ : GuardedClosure CP₁)
                  (G₂ : GuardedClosure CP₂)
-                 (map : ConPoset.Con CP₁ → ConPoset.Con CP₂)
+                 (map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂)
                  : Set (lsuc ℓ) where
-    open ConPoset CP₂ using (_⊑_)
-    open GuardedClosure G₁ renaming (Flow to F₁; Th* to Th₁)
-    open GuardedClosure G₂ renaming (Flow to F₂; Th* to Th₂)
+    open ConPreorder CP₂ using (_⊑_)
+    open GuardedClosure G₁ renaming (Flow to F₁)
+    open GuardedClosure G₂ renaming (Flow to F₂)
     field
       preserves-F  : ∀ c → _⊑_ (map (F₁ c)) (F₂ (map c))
+
+  -- Optional strengthening: the flow homomorphism also transports the chosen
+  -- stabilised truth witness `Th*` as an inequality.
+  record FlowHomStable (CP₁ CP₂ : ConPreorder ℓ)
+                       (G₁ : GuardedClosure CP₁)
+                       (G₂ : GuardedClosure CP₂)
+                       (map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂)
+                       : Set (lsuc ℓ) where
+    open ConPreorder CP₂ using (_⊑_)
+    open GuardedClosure G₁ renaming (Th* to Th₁)
+    open GuardedClosure G₂ renaming (Th* to Th₂)
+    field
+      flow-hom     : FlowHom CP₁ CP₂ G₁ G₂ map
       preserves-Th : _⊑_ (map Th₁) Th₂
+
+    open FlowHom flow-hom public
+
+  -- Convenience bundle: a flow homomorphism together with monotonicity of `map`.
+
+  record FlowHomMono (CP₁ CP₂ : ConPreorder ℓ)
+                     (G₁ : GuardedClosure CP₁)
+                     (G₂ : GuardedClosure CP₂)
+                     (map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂)
+                     : Set (lsuc ℓ) where
+    field
+      flow-hom  : FlowHom CP₁ CP₂ G₁ G₂ map
+      mono-map : MonoMap CP₁ CP₂ map
+
+    open FlowHom flow-hom public
+
+  -- Composition of monotone flow homomorphisms.
+
+  composeFlowHomMono
+    : ∀ {CP₁ CP₂ CP₃ : ConPreorder ℓ}
+      {G₁ : GuardedClosure CP₁}
+      {G₂ : GuardedClosure CP₂}
+      {G₃ : GuardedClosure CP₃}
+      {f : ConPreorder.Con CP₁ → ConPreorder.Con CP₂}
+      {g : ConPreorder.Con CP₂ → ConPreorder.Con CP₃}
+    → FlowHomMono CP₁ CP₂ G₁ G₂ f
+    → FlowHomMono CP₂ CP₃ G₂ G₃ g
+    → FlowHomMono CP₁ CP₃ G₁ G₃ (λ x → g (f x))
+  composeFlowHomMono {CP₁ = CP₁} {CP₂ = CP₂} {CP₃ = CP₃} {f = f} {g = g} hf hg =
+    let
+      open FlowHomMono hf renaming (flow-hom to hf-core; mono-map to mono-f)
+      open FlowHomMono hg renaming (flow-hom to hg-core; mono-map to mono-g)
+      open FlowHom hf-core renaming (preserves-F to preserves-Ff)
+      open FlowHom hg-core renaming (preserves-F to preserves-Fg)
+    in
+    record
+      { flow-hom =
+          record
+            { preserves-F = λ c →
+                ConPreorder.trans CP₃
+                  (mono-g (preserves-Ff c))
+                  (preserves-Fg (f c))
+            }
+      ; mono-map =
+          compMonoMap {CP₁ = CP₁} {CP₂ = CP₂} {CP₃ = CP₃} {f = f} {g = g}
+            mono-f
+            mono-g
+      }
+
+  -- Identity (lax) flow homomorphism.
+
+  idFlowHom
+    : ∀ {CP : ConPreorder ℓ}
+      (G : GuardedClosure CP)
+    → FlowHom CP CP G G (λ x → x)
+  idFlowHom {CP = CP} _ =
+    record
+      { preserves-F  = λ _ → ConPreorder.refl CP }
+
+  idFlowHomStable
+    : ∀ {CP : ConPreorder ℓ}
+      (G : GuardedClosure CP)
+    → FlowHomStable CP CP G G (λ x → x)
+  idFlowHomStable {CP = CP} G =
+    record
+      { flow-hom     = idFlowHom {CP = CP} G
+      ; preserves-Th = ConPreorder.refl CP
+      }
+
+  idFlowHomMono
+    : ∀ {CP : ConPreorder ℓ}
+      (G : GuardedClosure CP)
+    → FlowHomMono CP CP G G (λ x → x)
+  idFlowHomMono {CP = CP} G =
+    record
+      { flow-hom  = idFlowHom {CP = CP} G
+      ; mono-map = idMonoMap {CP = CP}
+      }
+
+  -- Transport: a flow homomorphism induces a closure homomorphism between the
+  -- induced (unguarded) closure operators.
+
+  closureHomOfFlowHom
+    : ∀ {CP₁ CP₂ : ConPreorder ℓ}
+      {G₁ : GuardedClosure CP₁}
+      {G₂ : GuardedClosure CP₂}
+      {map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂}
+    → FlowHom CP₁ CP₂ G₁ G₂ map
+    → ClosureHom CP₁ CP₂ (closureOfGuardedClosure G₁) (closureOfGuardedClosure G₂) map
+  closureHomOfFlowHom fh =
+    record { preserves-cl = FlowHom.preserves-F fh }
+
+  closureHomMonoOfFlowHomMono
+    : ∀ {CP₁ CP₂ : ConPreorder ℓ}
+      {G₁ : GuardedClosure CP₁}
+      {G₂ : GuardedClosure CP₂}
+      {map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂}
+    → FlowHomMono CP₁ CP₂ G₁ G₂ map
+    → ClosureHomMono CP₁ CP₂ (closureOfGuardedClosure G₁) (closureOfGuardedClosure G₂) map
+  closureHomMonoOfFlowHomMono fh =
+    mkClosureHomMono
+      (FlowHomMono.mono-map fh)
+      (closureHomOfFlowHom (FlowHomMono.flow-hom fh))
 
   -- Graded guarded closure: grade-indexed flow + saturation grade for fixed points.
   record GradedClosure (Q : QAdapter ℓ)
-                       (CP : ConPoset ℓ)
+                       (CP : ConPreorder ℓ)
                        : Set (lsuc ℓ) where
     open QAdapter Q renaming (Scale to Grade; _≤s_ to _≤g_; _·_ to _∙_; e to ε)
-    open ConPoset CP
+    open ConPreorder CP
     field
       Flow       : Grade → Con → Con
       mono       : ∀ {g c c'} → _⊑_ c c' → _⊑_ (Flow g c) (Flow g c')
@@ -185,7 +352,7 @@ module GuardedCore {ℓ : Level} where
 
   -- Saturation grade induces a (plain) closure operator.
   closureOfGradedClosure-sat
-    : ∀ {Q : QAdapter ℓ} {CP : ConPoset ℓ}
+    : ∀ {Q : QAdapter ℓ} {CP : ConPreorder ℓ}
     → GradedClosure Q CP → ClosureOp CP
   closureOfGradedClosure-sat GC =
     record
@@ -327,38 +494,52 @@ module GuardedCore {ℓ : Level} where
 
   -- Graded flow homomorphism (same grade carrier).
   record GradedFlowHom {Q : QAdapter ℓ}
-                       (CP₁ CP₂ : ConPoset ℓ)
+                       (CP₁ CP₂ : ConPreorder ℓ)
                        (G₁ : GradedClosure Q CP₁)
                        (G₂ : GradedClosure Q CP₂)
-                       (map : ConPoset.Con CP₁ → ConPoset.Con CP₂)
+                       (map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂)
                        : Set (lsuc ℓ) where
-    open ConPoset CP₂ using (_⊑_)
-    open GradedClosure G₁ renaming (Flow to F₁; Th* to Th₁)
-    open GradedClosure G₂ renaming (Flow to F₂; Th* to Th₂)
+    open ConPreorder CP₂ using (_⊑_)
+    open GradedClosure G₁ renaming (Flow to F₁)
+    open GradedClosure G₂ renaming (Flow to F₂)
     field
       preserves-F  : ∀ g c → _⊑_ (map (F₁ g c)) (F₂ g (map c))
+
+  -- Optional strengthening: transport the chosen stabilised truth witness `Th*`.
+  record GradedFlowHomStable {Q : QAdapter ℓ}
+                             (CP₁ CP₂ : ConPreorder ℓ)
+                             (G₁ : GradedClosure Q CP₁)
+                             (G₂ : GradedClosure Q CP₂)
+                             (map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂)
+                             : Set (lsuc ℓ) where
+    open ConPreorder CP₂ using (_⊑_)
+    open GradedClosure G₁ renaming (Th* to Th₁)
+    open GradedClosure G₂ renaming (Th* to Th₂)
+    field
+      flow-hom     : GradedFlowHom CP₁ CP₂ G₁ G₂ map
       preserves-Th : _⊑_ (map Th₁) Th₂
+
+    open GradedFlowHom flow-hom public
 
   -- Graded flow homomorphism with a grade morphism.
   record GradedFlowHomWithGrade {Q₁ Q₂ : QAdapter ℓ}
-                                (CP₁ CP₂ : ConPoset ℓ)
+                                (CP₁ CP₂ : ConPreorder ℓ)
                                 (G₁ : GradedClosure Q₁ CP₁)
                                 (G₂ : GradedClosure Q₂ CP₂)
                                 (φ : GradeHom Q₁ Q₂)
-                                (map : ConPoset.Con CP₁ → ConPoset.Con CP₂)
+                                (map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂)
                                 : Set (lsuc ℓ) where
-    open ConPoset CP₂ using (_⊑_)
+    open ConPreorder CP₂ using (_⊑_)
     open GradedClosure G₁ renaming (Flow to F₁; Th* to Th₁; sat to sat₁)
     open GradedClosure G₂ renaming (Flow to F₂; Th* to Th₂; sat to sat₂)
     open GradeHom φ renaming (map to grade-map)
     field
       preserves-F  : ∀ g c → _⊑_ (map (F₁ g c)) (F₂ (grade-map g) (map c))
-      preserves-Th : _⊑_ (map Th₁) Th₂
       sat≤         : QAdapter._≤s_ Q₂ (grade-map sat₁) sat₂
 
   -- Forget grading by taking the saturation grade.
   forgetGradedClosure
-    : ∀ {Q : QAdapter ℓ} {CP : ConPoset ℓ}
+    : ∀ {Q : QAdapter ℓ} {CP : ConPreorder ℓ}
     → GradedClosure Q CP
     → GuardedClosure CP
   forgetGradedClosure {Q = Q} {CP = CP} GC =
@@ -373,9 +554,54 @@ module GuardedCore {ℓ : Level} where
     where
       open GradedClosure GC
 
+  -- Forget grading for graded flow homomorphisms (use saturation grades).
+
+  forgetGradedFlowHom
+    : ∀ {Q : QAdapter ℓ}
+      {CP₁ CP₂ : ConPreorder ℓ}
+      {G₁ : GradedClosure Q CP₁}
+      {G₂ : GradedClosure Q CP₂}
+      {map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂}
+    → GradedFlowHom {Q = Q} CP₁ CP₂ G₁ G₂ map
+    → FlowHom CP₁ CP₂ (forgetGradedClosure G₁) (forgetGradedClosure G₂) map
+  forgetGradedFlowHom {CP₂ = CP₂} {G₁ = G₁} {G₂ = G₂} {map = f} h =
+    let
+      open GradedClosure G₁ renaming (sat to sat₁)
+      open GradedClosure G₂ renaming (mono-grade to mono-grade₂; sat-top to sat-top₂)
+      open GradedFlowHom h
+    in
+    record
+      { preserves-F = λ c →
+          ConPreorder.trans CP₂
+            (preserves-F sat₁ c)
+            (mono-grade₂ (sat-top₂ sat₁) (f c))
+      }
+
+  forgetGradedFlowHomWithGrade
+    : ∀ {Q₁ Q₂ : QAdapter ℓ}
+      {CP₁ CP₂ : ConPreorder ℓ}
+      {G₁ : GradedClosure Q₁ CP₁}
+      {G₂ : GradedClosure Q₂ CP₂}
+      {φ : GradeHom Q₁ Q₂}
+      {map : ConPreorder.Con CP₁ → ConPreorder.Con CP₂}
+    → GradedFlowHomWithGrade {Q₁ = Q₁} {Q₂ = Q₂} CP₁ CP₂ G₁ G₂ φ map
+    → FlowHom CP₁ CP₂ (forgetGradedClosure G₁) (forgetGradedClosure G₂) map
+  forgetGradedFlowHomWithGrade {CP₂ = CP₂} {G₁ = G₁} {G₂ = G₂} {map = f} h =
+    let
+      open GradedClosure G₁ renaming (sat to sat₁)
+      open GradedClosure G₂ renaming (mono-grade to mono-grade₂)
+      open GradedFlowHomWithGrade h
+    in
+    record
+      { preserves-F = λ c →
+          ConPreorder.trans CP₂
+            (preserves-F sat₁ c)
+            (mono-grade₂ sat≤ (f c))
+      }
+
   -- Optional ω-CPO structure (finite-first via ω-approximants, Scott continuity)
-  record OmegaCPO (CP : ConPoset ℓ) : Set (lsuc ℓ) where
-    open ConPoset CP
+  record OmegaCPO (CP : ConPreorder ℓ) : Set (lsuc ℓ) where
+    open ConPreorder CP
     field
       ⊥      : Con
       isBot  : ∀ c → _⊑_ ⊥ c
@@ -388,10 +614,10 @@ module GuardedCore {ℓ : Level} where
   -- point induction. This is independent of any distinguished `Th*`.
 
   module Kleene
-    {CP : ConPoset ℓ}
+    {CP : ConPreorder ℓ}
     (ωCPO : OmegaCPO CP)
     where
-    open ConPoset CP
+    open ConPreorder CP
     open OmegaCPO ωCPO
 
     -- Iteration from ⊥ (Kleene approximants).
@@ -425,7 +651,7 @@ module GuardedCore {ℓ : Level} where
         iter≤c : _⊑_ (F c) c → ∀ n → _⊑_ (iter F n) c
         iter≤c _ zero = isBot c
         iter≤c pre (suc n) =
-          ConPoset.trans CP (monoF (iter≤c pre n)) pre
+          ConPreorder.trans CP (monoF (iter≤c pre n)) pre
 
     -- Scott-continuity (lax) for an endomap on an ωCPO preorder.
     record ScottContinuous (F : Con → Con) : Set (lsuc ℓ) where
@@ -440,7 +666,7 @@ module GuardedCore {ℓ : Level} where
       → (∀ n → _⊑_ (f n) (g n))
       → _⊑_ (supω f) (supω g)
     supω-mono {f} {g} f≤g =
-      least f (supω g) (λ n → ConPoset.trans CP (f≤g n) (ub g n))
+      least f (supω g) (λ n → ConPreorder.trans CP (f≤g n) (ub g n))
 
     -- Scott-continuity is stable under composition of monotone maps.
     ScottContinuous-comp
@@ -453,7 +679,7 @@ module GuardedCore {ℓ : Level} where
     ScottContinuous-comp {F = F} {G = G} monoF SCF monoG SCG =
       record
         { cont-ω = λ f mono-chain →
-            ConPoset.trans CP
+            ConPreorder.trans CP
               (monoF (ScottContinuous.cont-ω SCG f mono-chain))
               (ScottContinuous.cont-ω SCF (λ n → G (f n)) (λ n → monoG (mono-chain n)))
         }
@@ -472,9 +698,9 @@ module GuardedCore {ℓ : Level} where
           → MonoOn CP G
           → (∀ c → _⊑_ (F c) (G c))
           → ∀ n → _⊑_ (iter F n) (iter G n)
-        iter-mono {F = F} {G = G} _ _ zero = ConPoset.refl CP
+        iter-mono {F = F} {G = G} _ _ zero = ConPreorder.refl CP
         iter-mono {F = F} {G = G} monoG' leFG' (suc n) =
-          ConPoset.trans CP
+          ConPreorder.trans CP
             (leFG' (iter F n))
             (monoG' (iter-mono monoG' leFG' n))
 
@@ -503,7 +729,7 @@ module GuardedCore {ℓ : Level} where
       → (mono-chain : ∀ n → _⊑_ (iter F n) (iter F (suc n)))
       → _⊑_ (F (μ F)) (μ F)
     μ-unfold-right F SC mono-chain =
-      ConPoset.trans CP step₁ step₂
+      ConPreorder.trans CP step₁ step₂
       where
         open ScottContinuous SC
         step₁ : _⊑_ (F (μ F)) (supω (λ n → F (iter F n)))
@@ -524,11 +750,11 @@ module GuardedCore {ℓ : Level} where
       μ-unfold-right F SC (iter-mono-chain-infl F inflF)
 
   -- Optional continuity and finite-first specification, layered over GuardedClosure
-  record FiniteFirst (CP : ConPoset ℓ)
+  record FiniteFirst (CP : ConPreorder ℓ)
                       (GC : GuardedClosure CP)
                       (ωCPO : OmegaCPO CP)
                       : Set (lsuc ℓ) where
-    open ConPoset CP
+    open ConPreorder CP
     open GuardedClosure GC renaming (Flow to F; Th* to Th⋆)
     open OmegaCPO ωCPO
     field
@@ -544,17 +770,17 @@ module GuardedCore {ℓ : Level} where
 
   -- Induction principle (lax μ-induction) under FiniteFirst
   μ-induction
-    : ∀ {CP : ConPoset ℓ}
+    : ∀ {CP : ConPreorder ℓ}
       (GC : GuardedClosure CP)
       (ωCPO : OmegaCPO CP)
       (FF : FiniteFirst CP GC ωCPO)
-      (c : ConPoset.Con CP)
-      → ConPoset._⊑_ CP (GuardedClosure.Flow GC c) c
-      → ConPoset._⊑_ CP (GuardedClosure.Th* GC) c
+      (c : ConPreorder.Con CP)
+      → ConPreorder._⊑_ CP (GuardedClosure.Flow GC c) c
+      → ConPreorder._⊑_ CP (GuardedClosure.Th* GC) c
   μ-induction {CP} GC ωCPO FF c pre =
-    ConPoset.trans CP p sup≤c
+    ConPreorder.trans CP p sup≤c
     where
-      open ConPoset CP
+      open ConPreorder CP
       open GuardedClosure GC renaming (Flow to F; Th* to Th⋆)
       open OmegaCPO ωCPO
       open FiniteFirst FF renaming (approxS to A; base to baseEq; step to stepEq; Th⋆-as-sup to supineq)
@@ -564,7 +790,7 @@ module GuardedCore {ℓ : Level} where
       chain (suc n) =
         subst (λ x → _⊑_ x c)
               (sym (stepEq n))
-              (ConPoset.trans CP (GuardedClosure.mono GC (chain n)) pre)
+              (ConPreorder.trans CP (GuardedClosure.mono GC (chain n)) pre)
       sup≤c = least A c (λ n → chain n)
       pq : (_⊑_ Th⋆ (supω A)) × (_⊑_ (supω A) Th⋆)
       pq = supineq

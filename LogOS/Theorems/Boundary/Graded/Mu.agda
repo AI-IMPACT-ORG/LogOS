@@ -1,5 +1,5 @@
 {-
-LogOS: an Agda research library for foundational logic system architecture.
+LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ module LogOS.Theorems.Boundary.Graded.Mu where
 open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import Data.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Minimal.Con
 open import LogOS.Kernel.Graded
@@ -32,11 +32,11 @@ open import LogOS.Kernel.Graded
     (FF   : (let module GT = Truth.GuardedCore in GT.FiniteFirst)
              (BulkBoundary.bnd (GradedKernel.BB K))
              (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K)) ωCPO)
-    (c    : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K)))
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+    (c    : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K)))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
                  (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K)) c)
                  c
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
                  (GradedClosure.Th* (GradedKernel.GTruth K))
                  c
 μ-induction-K Sig Q K ωCPO FF c pre =
@@ -53,11 +53,11 @@ park-induction-K
     (FF   : (let module GT = Truth.GuardedCore in GT.FiniteFirst)
              (BulkBoundary.bnd (GradedKernel.BB K))
              (Truth.GuardedCore.forgetGradedClosure (GradedKernel.GTruth K)) ωCPO)
-    (c    : ConPoset.Con (BulkBoundary.bnd (GradedKernel.BB K)))
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+    (c    : ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K)))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
                  (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K)) c)
                  c
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
                  (GradedClosure.Th* (GradedKernel.GTruth K))
                  c
 park-induction-K = μ-induction-K
@@ -69,7 +69,7 @@ least-prefixed-point-K = park-induction-K
 μ-unfold-left
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : GradedKernel Sig Q)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
                  (GradedClosure.Th* (GradedKernel.GTruth K))
                  (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K))
                    (GradedClosure.Th* (GradedKernel.GTruth K)))
@@ -78,7 +78,7 @@ least-prefixed-point-K = park-induction-K
 μ-unfold-right
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : GradedKernel Sig Q)
-  → ConPoset._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
+  → ConPreorder._⊑_ (BulkBoundary.bnd (GradedKernel.BB K))
                  (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K))
                    (GradedClosure.Th* (GradedKernel.GTruth K)))
                  (GradedClosure.Th* (GradedKernel.GTruth K))
@@ -101,7 +101,7 @@ module Kleene
     module GT = Truth.GuardedCore
     CP = BulkBoundary.bnd (GradedKernel.BB K)
 
-  open ConPoset CP public
+  open ConPreorder CP public
   open GT.OmegaCPO ωCPO public
 
   module μ = GT.Kleene ωCPO
