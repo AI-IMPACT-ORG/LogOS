@@ -4,65 +4,42 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-# LogOS: an Agda library for logic-system architecture (ports/adapters)
+# LogOS: a model for AI-driven, human-on-the-loop, machine-checked formal reasoning
 
-This repository contains **LogOS**, a host-minimal Agda library that treats “logic
-systems” as interface-bearing components in a network, with explicit
-ports/adapters for translation and interoperability. The primary guardrail is
-the Agda checker plus a CI/policy harness (`make ci`, `make check-all`).
+This repository contains **LogOS**, a host-minimal Agda library that treats logic systems as interface-bearing components in a network, with explicit ports/adapters for translation and interoperability. 
+
+The way it was constructed, as well as its output can both be argued to be a model for AI-driven, human-on-the-loop, machine-checked formal reasoning, albeit for different meanings of the word model. This dual interpretation is ultimately made possible by the controlled self-referential character of the core logic contained within the repository, which leads to semantic polymorphism throughout the project.
+
 
 ## Dive right in
 
-Just download the library, ask your favorite code assistant (Codex, Claude Code, OpenCode, Cursor, etc.) to familiarise itself with the content of the library folders as a priming prompt. Watch it churn. Then start exploring, learning and building. 
+Download the repository. Ask your favorite code assistant (Codex, Claude Code, OpenCode, Cursor, etc.) to familiarise itself with the content of the repository folders as a priming prompt. Watch it churn. Then start exploring, learning and building. 
 
-A word of warning: LLMs become generally more coherent, but also occasionally more unstable for concentrated logic due to the presence of contextualised homonymy and polysemy in their training data. The coherence originates in the extreme coherence of the logic literature across papers. The guardrails mentioned below have been designed to safely and incrementally increase information coherence and consistency inside the repository. 
+A word of warning: LLMs become generally more coherent, but also occasionally more unstable context involving concentrated logic due to the presence of contextualised homonymy and polysemy in their training data. The coherence originates in the extreme coherence of the logic literature across papers. Aligning prompts with that literature raises bias, but reduces variance. Provocative questions raise variance, but reduce bias, or grounding in the literature. Semantic polymorphism makes this harder to navigate - chatbots cannot distinguish well between "literally" and "figuratively".
 
-To set expectations: this repository is the result of several *months* worth of COTS inference compute, mostly spent in dialog and mostly spent on correcting previous results. This is science, do not expect magic, even if it feels like it. On the other hand, the power of limitations seems larger than usually appreciated. 
+The guardrails mentioned below have been designed to safely and incrementally increase information coherence and consistency inside the repository. Note that the operator of the repository is included in this list. 
 
-## High level overview
+To set expectations: this repository is the result of several months worth of COTS inference compute, mostly spent in dialog and mostly spent on correcting and improving previous results. This is science, do not expect instant magic, even if the results feel like it. 
 
-Models are typically expressed in dedicated domain-specific formal languages,
-which makes interoperability across domains and communities difficult. LogOS
-focuses on an explicit translation architecture: boundaries are first-class, and
-translations are forced/unique when two presentations share the same boundary
-meaning (up to satisfaction).
+The key meta-insight in this library is that epistemic limitations are much more important than typically appreciated. The rather urgent question of interpretation of this insight is left out of scope here, as that seems to be a question of uncommunicable belief more than one of science. 
 
-Wording discipline (guardrail)
-------------------------------
-The docs try to distinguish four kinds of statements:
+## High level motivation and overview of results
 
-- **Literal (checked):** an Agda definition/lemma in the referenced file.
-- **Truth after computation (stabilized):** a statement about a closure/fixed
-  point (e.g. `Th*`, `Box`, `μ Flow`); by default this is only a *lax* fixed
-  point unless ω‑sup/continuity assumptions are supplied.
-- **Representational truth (presentation):** a statement transported through
-  `decode`/`encode`/`translate`/`SatMor`, i.e. preserved up to the relevant
-  satisfaction equivalence; this is not definitional equality.
-- **Analogy / interpretation:** explanatory metaphors (kernel, channel, RG,
-  “GRH”, …). These are explicitly marked as interpretations and never add
-  logical power; the formal content is always the cited Agda surface.
+Science provides formal tooling to distill information in formal models. As AI is among the most powerful technologies for information processing invented, it has the potential to revolutionise science, for instance by leveraging the cross-domain insights encoded in its training data. We show it is possible to operationalise core science model building by using COTS AI coding agents in a carefully designed environment grounded in Agda, a programming language for mathematical proofs. 
 
-The library includes a Curry–Howard–Lambek–shaped theorem bundle for its internal
-`LogicKernel` interface. Soundness is literal (checked); completeness-style
-statements are available only under explicit adequacy assumptions (see
-`docs/Views/CurryHowardLambek.lagda.md`).
+The main advance is an architecture for reflective logic systems, grounded in simple mathematical primitives (thin categories, lax operators and quantale-valued parameters), with a 3-tiered truth system. Novel is a truth notion as “stability under resource-constrained communication” in an observer semantics. The environment allows current gen AI agents to build, evaluate and refactor axiomatic dependencies of theories and theorems under human guidance. 
 
-The repository contains curated application packs (with explicit trust levels via
-`packTrust`), including ZF(C) set theory, computational universality via
-UniversalIR, information theory interfaces, and conditional “ledger” packs for
-opacity (GRH/RH-shaped) and complexity (P/NP-shaped). No classical proofs of GRH
-or P≠NP are claimed; those strands are packaged as conditional assumptions +
-reverse-mathematics templates.
+To showcase proof of value, we generalise hexagonal architecture patterns to foundational logic to separate a “OS kernel” from common axioms that form the basis of “application packs” with more specialised axiom sets. We showcase a constructive model of ZFC set theory as a legacy application, as well as a universal model of constrained computing that is remarkably closely aligned to the Church-Turing-Deutsch principle. Interestingly, these applications involve only slightly differing axiom packs. An agents pack provides an indication of immediate relevance to real-world design problems. 
 
-Interpretation note: the docs sometimes point to classical literature as
-inspiration (Curry–Howard–Lambek, Lawvere fixed points, universality, etc.). Such
-links are analogies/scaffolding; the only claims are the ones typechecked in the
-library under stated assumptions.
+We briefly investigate similar “reverse mathematics” applications to open problems, highlighting non-standard axiom sets that form conditional proofs. For complexity separation this formalises an argument by Aaronson up to semantic checks. Our results connect to known models across different domains, times and communities, showing a remarkable consilience across science and technology.
+
+A plausible conjecture supported by the results in this repository is that it contains an effective, axiomatic theory of information. This could have very broad impact in science, but also in information technology (IT). 
+
 
 
 ## Guardrails for AI-assisted development
 
-The epistemic status of the repository is somewhat unusual due to extensive use of coding agents. On the one hand, verifying all of these results requires a full research university worth of experts - this verification has not taken place yet (#understatement). On the other hand, it is verified to a standard that is very rare in academia or in industry through machine-checked code and a very broad variety of re-derivations and formalisations of known results. In this section we briefly show which guardrails have been deployed to guarantee epistemic safety, and indicate some limitations.
+The epistemic status of the repository is somewhat unusual due to extensive use of coding agents. On the one hand, verifying all of these results requires a full research university worth of experts - this verification has not taken place yet (#understatement). On the other hand, it is verified to a standard that is very rare in academia or in industry through machine-checked code as well as a very broad variety of re-derivations and formalisations of known results. In this section we briefly show which guardrails have been deployed to guarantee epistemic safety, and indicate some limitations.
 
 ### Agda
 Agda is a dependently typed programming language with tooling to act as a proof assistant.
@@ -73,9 +50,8 @@ Agda comes with some options for levels of type checking. This repo uses:
 - `--no-libraries -i .` — build without stdlib (host-minimal surface).
 
 ### Continuous Integration
-CI runs `make check-all` (policy checks + full typecheck of all `*.agda` and
-`*.lagda.md`) plus a library-file smoke test (`make agda-lib-check`). See
-`.github/workflows/ci.yml`.
+Continous integration is a development praxis where each new feature is immediately checked in a testing harness. Here the coding agents run CI after each bigger refactoring project. Currently, CI runs `make check-all` (policy checks + full typecheck of all `*.agda` and
+`*.lagda.md`) plus a library-file smoke test (`make agda-lib-check`). See`.github/workflows/ci.yml`.
 
 ### Software Quality
 Architecture and code quality are continuous concerns. We take the view that we rather solve explicit coding issues based on domain concerns than impose a rigid architecture.  In this repository code quality concerns correlate with particular concerns in mathematics of information science. To make this work we refactor often, including breaking refactors. A key goal is to keep the codebase as small as possible. Coding agents tend to prefer new development over reworking older parts - the user has to steer (hard) against this, otherwise spaghetti code is the result. 
@@ -105,7 +81,6 @@ No guardrailing on a software system of this level of complexity is perfect. The
 The biggest risk remaining is that of semantic divergence: the code not doing what the documentation says that its doing. By compartmentalising concerns through architecture this is mitigated - agents can check module-by-module. The loose coupling through ports and adapters also greatly reduces blast radii. AI-driven reviews have diminishing returns in their current state - the meaning of the system is largely approaching stability. Ultimately this remaining risk can only be fixed fully by external semantic peer-review. 
 
 A final risk is the Agda compiler itself - although this is not a green-fields development, soundness and consistency proofs in Agda code are only relative to the Agda compiler.
-
 
 ## Repository overview
 
