@@ -15,17 +15,19 @@ This "semantic polymorphism" of co-existing, overlapping interpretations is deep
 
 ## Dive right in
 
-Getting started could not be easier as the repository is made to be use with code agents. 
+This repository is made to be primarily used with code agents. 
 
 Download the repository. Ask your favorite code assistant (Codex, Claude Code, OpenCode, Cursor, etc.) to familiarise itself with the content of the repository folders as a'priming' prompt. Watch it churn for a while. Then start exploring, learning and building. For instance, ask to explain what is interesting. Or why this is an "unusually" broad model of information and information processing. 
 
-A word of warning: LLMs become generally more coherent, but occasionally also more unstable for context involving concentrated logic due to the presence of contextualised homonymy and polysemy in their training data. The coherence likely originates in the extreme coherence of the logic literature across papers. Aligning prompts with that literature raises bias, but reduces variance. Provocative questions and drives for particular interpretations or results raise variance, but reduce bias having less coverage in the literature. Semantic polymorphism makes all of this harder to navigate - chatbots need to spend tokens to distinguish between "literally" and "figuratively", or, related, syntax and semantics.
+Human-readable literate documentation is in the /docs folder. For logicians, the [Meredith sentences](docs/Views/MeredithSentences.lagda.md) are likely most interesting. For PL people, the [Curry-Howard-Lambek view](docs/Views/CurryHowardLambek.lagda.md), for physicists the [info-theory parts](docs/Applications/InfoTheory.lagda.md) and for software engineers the [architecture overview](docs/Architecture_Diagram.md).
+
+A word of warning: LLMs become generally more coherent, but occasionally also more unstable for context involving concentrated logic due to the presence of contextualised homonymy and polysemy in their training data. The coherence likely originates in the extreme coherence of the logic literature across papers. Aligning prompts with that literature raises bias, but reduces variance. Provocative questions and drives for particular novel interpretations or results raise variance, but reduce bias having less support in the logic literature. Semantic polymorphism makes all of this harder to navigate - chatbots need to spend tokens to distinguish between "literally" and "figuratively", or, related, syntax and semantics.
 
 The guardrails mentioned below have been designed to incrementally increase information coherence and consistency inside the repository. Note that the operator of the agents is included in this list - this repository is more a cybernetic armor than a golem. 
 
 To set expectations: this repository is the result of several months worth of COTS inference compute, mostly spent in dialog and mostly spent on understanding, correcting and improving previous results. Do not expect instant magic, even if the reported results feel like it. 
 
-The key meta-insight in this library is that epistemic limitations and cost ("the boundaries") are much more of an opportunity than typically appreciated in foundational science. The rather urgent question of interpretation of this insight is left out of scope here, as that seems to be a question of (uncommunicable) belief more than one of science. 
+
 
 ## High level motivation and overview of results
 
@@ -36,6 +38,9 @@ The main advance is an architecture for partially-reflective logic systems, grou
 To showcase proof of value, we generalise hexagonal architecture patterns to foundational logic to separate an abstraction we term "OS kernel" from common axioms that form the basis of "application packs" with more specialised axiom sets. We showcase a constructive model of [ZFC set theory](docs/Applications/ZFC.lagda.md) as a legacy application, as well as a universal model of constrained computing that is remarkably closely aligned to the [Church-Turing-Deutsch principle](docs/Applications/Universality.lagda.md). Interestingly, these applications involve only slightly differing axiom packs. An agents pack provides an indication of immediate relevance to real-world design problems. 
 
 We briefly investigate similar ["reverse mathematics"](docs/Applications/Complexity.lagda.md) applications to open problems, highlighting non-standard axiom sets that form conditional proofs. For complexity separation this formalises an argument by Aaronson up to semantic checks. Our results connect to known models across different domains, times and communities, showing a remarkable consilience across science and technology.
+
+The key meta-insight in this library is that epistemic limitations and cost ("the boundaries") are much more of an opportunity than typically appreciated in foundational science. The rather urgent question of interpretation of this insight is left out of scope here, as that seems to be a question of (uncommunicable) belief more than one of science.
+
 
 ## Meta-Conjecture
 
@@ -62,7 +67,7 @@ Continous integration is a development praxis where each new feature is immediat
 ### Software Quality
 Architecture and code quality are continuous concerns. We take the view that we rather solve explicit coding issues based on domain concerns than impose a rigid architecture upfront.  In this repository code quality concerns correlate with particular concerns in mathematics of information science. To make this work we refactor often, including breaking refactors. A key goal is to keep the codebase as small as possible. Coding agents tend to prefer new development over reworking older parts - the user has to steer (hard) against this, otherwise spaghetti code is the result. 
 
-Code architecture reviews are used to identify larger issues. A core pattern we use are [ports and adapters](docs/DeepDive/Architecture_PortsAdapters.lagda.md) from hexagonal architecture. The original motivation for this was isolating logic inside code components, which is the role we use it for here. We use it especially to separate "kernels" from "applications" for foundational logic. See [`docs/Architecture_Diagram.md`](docs/Architecture_Diagram.md) for a one-page visual overview of the architecture.
+Code architecture reviews are used to identify larger issues. A core pattern we use are [ports and adapters](docs/DeepDive/Architecture_PortsAdapters.lagda.md) from [hexagonal architecture](https://alistair.cockburn.us/hexagonal-architecture). The original motivation for this was isolating logic inside code components, which is the role we use it for here. We use it especially to separate "kernels" from "applications" for foundational logic. See [`docs/Architecture_Diagram.md`](docs/Architecture_Diagram.md) for a one-page visual overview of the architecture.
 
 A key insight to operationalise this is to let the agent focus on inconsistencies, instead of asking it to make things more consistent. The latter invites hallucinations. The first almost always finds something actionable. A clear sign of convergence is when the coding agent, after several rounds of improvements starts to focus only on the documentation. An interesting prompt is to ask to identify “bad code smells” or “bad architecture smells”. This works as it points the chatbot to the “refactoring to patterns” framework. Asking for focussed code improvements is also valuable, as long as the agent gets some idea of where to push towards. The operator remains responsible for vision and supervision. 
 
