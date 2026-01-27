@@ -44,11 +44,11 @@ The key meta-insight in this library is that epistemic limitations and cost ("th
 
 ## Meta-Conjecture
 
-A conjecture in science supported by the results in this repository is that the repository contains the core of a novel effective, [axiomatic theory of information](docs/Applications/InfoTheory.lagda.md). This could have very broad impact in science ranging from fundamental physics to sociology. This would certainly explain post-hoc the myriad of connections to core information technology (IT) and, by extension, to AI. Note this conjecture does not have to be fully proven to be immediately usefull when leveraging coding agents.
+A conjecture in science supported by the results in this repository is that the repository contains the core of a novel effective [axiomatic theory of information](docs/Applications/InfoTheory.lagda.md). This could have very broad impact in science ranging from fundamental physics to sociology. This would certainly explain post-hoc the myriad of connections to core information technology (IT) and, by extension, to AI. Note this conjecture does not have to be fully proven to be immediately usefull when leveraging coding agents.
 
 ## Guardrails for AI-assisted development
 
-The epistemic status of the repository is somewhat unusual due to extensive use of coding agents. On the one hand, verifying all of these results requires a full research university worth of experts - this verification has not taken place yet (#understatement). On the other hand, it is verified to a standard that is very rare in academia (or in industry) through machine-checked code as well as through a very broad variety of re-derivations and formalisations of known results. Not many articles mechanise ZFC Set Theory just to show a core technology is sane. In this section we briefly show which guardrails have been deployed to guarantee epistemic safety, and indicate some limitations.
+The epistemic status of the repository is somewhat unusual due to extensive use of coding agents. On the one hand, verifying all of these results using traditional methods requires a full research university worth of experts - this verification has not taken place yet (#understatement). On the other hand, it is verified to a standard that is very rare in academia (or in industry) through machine-checked code as well as through a very broad variety of re-derivations and formalisations of known results. Not many articles mechanise ZFC Set Theory just to show a core technology is sane. In this section we briefly show which guardrails have been deployed to guarantee epistemic safety, and indicate some limitations.
 
 ### Agda
 Agda is a dependently typed programming language with tooling to act as a proof assistant.
@@ -91,11 +91,11 @@ No guardrailing on a software system of this level of complexity is perfect. The
 
 The biggest risk remaining is that of semantic divergence: the code not doing what the documentation says that its doing. By compartmentalising concerns through architecture this is mitigated - agents can check module-by-module. The loose coupling through ports and adapters also greatly reduces blast radii. AI-driven reviews have diminishing returns in their current state - the meaning of the system is largely approaching stability. Ultimately this remaining risk can only be fixed fully by external semantic peer-review. 
 
-A final risk is the Agda compiler itself - although this is not a green-fields development, soundness and consistency proofs in Agda code are only relative to the Agda compiler.
+A final risk is the Agda compiler itself - although this is not a green-fields development, soundness and consistency proofs in Agda code are only relative to the Agda compiler. Exploratory implementations in Rocq and in Redex (not part of this release) indicate the core math is consistent.
 
 ## Repository overview
 
-The main documentation lives in `/docs`. Uploading `docs/LogOS_Core_Spec.lagda.md` or almost any of the other docs to a reasoning chatbot instantiates a conversational interface to start exploring the library. This uses the chatbot as an effective stochastic interpreter. Ensure that memory features of the chatbot are disabled to avoid polluting cross-conversation chatbot memory. For bonus points: ask the chatbot to use the library to explain why this tip works based on a density of information argument. Beware of sycophancy induced by logic: not all suggestions as "next steps" are achievable in finite time, or require technology you have to learn first. 
+The main documentation lives in `/docs`. Uploading `docs/LogOS_Core_Spec.lagda.md` or almost any of the other docs to a reasoning chatbot instantiates a conversational interface to start exploring the framework. This uses the chatbot as an effective stochastic interpreter. Ensure that memory features of the chatbot are disabled to avoid polluting cross-conversation chatbot memory. For bonus points: ask the chatbot to use the library to explain why this tip works based on a density of information argument. Beware of sycophancy induced by logic: not all suggestions as "next steps" are achievable in finite time, or require technology you have to formalise first. Also, often the suggestions of the chatbot adhere too closely to the literature, where a more efficient implementation in LogOS is possible. 
 
 ## Usage tips
 
