@@ -153,24 +153,23 @@ StageToCH-fromCH-μFlow {ℓ = ℓ} {Sig = Sig} {Q = Q} K CH ωCPO FF =
     module GT = Truth.GuardedTruth Sig Q
     module μ = GT.Kleene ωCPO
 
-    private
-      CP = BulkBoundary.bnd (Kernel.BB K)
+    CP = BulkBoundary.bnd (Kernel.BB K)
 
-      FlowSat : ConPreorder.Con CP → ConPreorder.Con CP
-      FlowSat = Endo.fn (Flow-Endo K)
+    FlowSat : ConPreorder.Con CP → ConPreorder.Con CP
+    FlowSat = Endo.fn (Flow-Endo K)
 
-      μFlow : ConPreorder.Con CP
-      μFlow = μ.μ FlowSat
+    μFlow : ConPreorder.Con CP
+    μFlow = μ.μ FlowSat
 
-      μ≤Flowμ : ConPreorder._⊑_ CP μFlow (FlowSat μFlow)
-      μ≤Flowμ = μ.μ-unfold-left FlowSat (Endo.mono (Flow-Endo K))
+    μ≤Flowμ : ConPreorder._⊑_ CP μFlow (FlowSat μFlow)
+    μ≤Flowμ = μ.μ-unfold-left FlowSat (Endo.mono (Flow-Endo K))
 
-      -- Build the Scott-continuity record for Flow from the FiniteFirst witness.
-      SCFlow : μ.ScottContinuous FlowSat
-      SCFlow = record { cont-ω = Truth.GuardedCore.FiniteFirst.cont-ω FF }
+    -- Build the Scott-continuity record for Flow from the FiniteFirst witness.
+    SCFlow : μ.ScottContinuous FlowSat
+    SCFlow = record { cont-ω = Truth.GuardedCore.FiniteFirst.cont-ω FF }
 
-      inflFlow : ∀ c → ConPreorder._⊑_ CP c (FlowSat c)
-      inflFlow = id≤Flow K
+    inflFlow : ∀ c → ConPreorder._⊑_ CP c (FlowSat c)
+    inflFlow = id≤Flow K
 
-      Flowμ≤μ : ConPreorder._⊑_ CP (FlowSat μFlow) μFlow
-      Flowμ≤μ = μ.μ-unfold-right-infl FlowSat SCFlow inflFlow
+    Flowμ≤μ : ConPreorder._⊑_ CP (FlowSat μFlow) μFlow
+    Flowμ≤μ = μ.μ-unfold-right-infl FlowSat SCFlow inflFlow

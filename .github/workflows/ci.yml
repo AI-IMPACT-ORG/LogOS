@@ -35,12 +35,12 @@ jobs:
           path: |
             ~/.cabal/store
             ~/.cabal/packages
-          key: ${{ runner.os }}-cabal-agda-2.7.0.1
+          key: ${{ runner.os }}-cabal-agda-2.8.0
 
       - name: Install Agda (pinned)
         run: |
           cabal update
-          cabal install Agda-2.7.0.1 --installdir="$HOME/.local/bin" --install-method=copy --overwrite-policy=always
+          cabal install Agda-2.8.0 --installdir="$HOME/.local/bin" --install-method=copy --overwrite-policy=always
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Full check (CI + full typecheck)

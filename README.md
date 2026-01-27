@@ -107,7 +107,7 @@ Always ensure good coding architecture (clean code, clean architecture for start
 
 ## Some features
 
-Requirements: Agda `2.7.0.1`.
+Requirements: Agda `2.8.0`.
 
 ```sh
 # Type-check the minimal API (no global libraries needed)
