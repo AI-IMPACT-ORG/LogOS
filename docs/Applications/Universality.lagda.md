@@ -60,7 +60,7 @@ Two complementary universality surfaces live side by side:
   separate non-vacuity/meaningfulness assumptions.
 
 In the “scheme” view, the library defines a canonical notion of **what computation is (in LogOS)**:
-as a fuel-free computation relation (`Sch.Scheme.ComputesTo`, i.e. “there exists a run to a definitional fixed point”)
+as a fuel-free computation relation (`Sch.Scheme.ComputesTo`, i.e. “there exists a run to an `≡`‑fixed point”)
 and its induced observational equivalence (`Sch.ObsEq`), plus an explicit operational budget
 layer (`Sch.ExecWithin` / `Sch.ReachesWithin`), rather than as a particular machine.
 For quotient-friendly “stability up to observation”, use the preorder/closure-stable variants
@@ -262,7 +262,7 @@ This is implemented in `LogOS/Domain/UniversalIR/ArbitraryTasks.agda`:
 
 - `UCodeTask = Fuelled UCode` and `runUCodeTask : UCodeTask → ℕ`
 - `MinskyTask = Fuelled MinskyCode` maps into `UCodeTask` via `UM`
-  (`embedMinskyTask`) and agrees definitionally:
+  (`embedMinskyTask`) and agrees by propositional equality (in fact `refl` after unfolding):
   `runMinskyTask≡runUCodeTask`
 
 ### Checked example: measurement cost axis

@@ -25,7 +25,7 @@ import LogOS.Kernel.Graded.Reachability as KR
 open import LogOS.Theorems.Boundary.Graded.Mu
 open import LogOS.Theorems.Code.Graded as Code
 
--- μ-style induction (boundary): prefixed points bound Th⋆ (thin wrapper over μ-induction-K).
+-- μ-style induction (boundary): prefixed points bound Th⋆ (lightweight wrapper over μ-induction-K).
 
 prefixed→Th⋆≤
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)

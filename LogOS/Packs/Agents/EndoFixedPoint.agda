@@ -16,7 +16,7 @@ open import LogOS.Minimal.Truth as Truth
 import LogOS.Packs.Agents.EndoFixedPointCore as Core
 
 -- Shared fixed-point wrappers for endomaps in application packs.
--- These are thin adapters around the kernel-level Kleene μ utilities.
+-- These are lightweight adapters around the kernel-level Kleene μ utilities.
 
 module LogicKernel where
   open import LogOS.Kernel.LogicKernel using (LogicKernel)

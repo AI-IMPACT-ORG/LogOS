@@ -25,6 +25,29 @@ module StrictTruth {ℓ : Level} (Sig : LogOSSignature ℓ) where
     field
       Sat_S : Cosp → Fml → Set ℓ
 
+  -- Semantic entailment on the strict layer (all observations).
+  EntailsS : ∀ {Fml : Set ℓ} → StrictLayer Fml → Fml → Fml → Set ℓ
+  EntailsS S φ ψ =
+    ∀ (w : Cosp)
+    → StrictLayer.Sat_S S w φ
+    → StrictLayer.Sat_S S w ψ
+
+  -- Budget predicates on observations.
+  Budget : Set (lsuc ℓ)
+  Budget = Cosp → Set ℓ
+
+  -- Budgeted entailment: restrict to observations satisfying `B`.
+  EntailsS-budget
+    : ∀ {Fml : Set ℓ}
+    → StrictLayer Fml
+    → Budget
+    → Fml → Fml → Set ℓ
+  EntailsS-budget S B φ ψ =
+    ∀ (w : Cosp)
+    → B w
+    → StrictLayer.Sat_S S w φ
+    → StrictLayer.Sat_S S w ψ
+
 module HomotypicalTruth {ℓ : Level}
                         (Sig : LogOSSignature ℓ)
                         (Q   : QAdapter ℓ)
@@ -183,7 +206,7 @@ module GuardedCore {ℓ : Level} where
       Th*-fixed   : (_⊑_ (Th*) (Flow Th*)) × (_⊑_ (Flow Th*) Th*)
       -- Approximants Th₀, Th₁, … and dcpo structure can be provided by models
 
-  -- Forget the distinguished fixed point: a guarded closure always yields a
+  -- Forget the distinguished fixed-point witness: a guarded closure always yields a
   -- plain closure operator.
   closureOfGuardedClosure
     : ∀ {CP : ConPreorder ℓ}

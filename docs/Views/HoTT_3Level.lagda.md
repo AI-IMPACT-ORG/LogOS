@@ -80,7 +80,8 @@ LogOS names the tiers:
 
 1) **S — Strict**
    - A formula carrier `Fml` and a satisfaction predicate `Sat_S`.
-   - Entailment is packaged in `StrictTruth.StrictLayer` (`LogOS/Minimal/Truth.agda`).
+   - Entailment is *derived* from `Sat_S` as `StrictTruth.EntailsS`
+     (`LogOS/Minimal/Truth.agda`).
 
 2) **H — Homotypical**
    - A satisfaction predicate `Sat_H` for boundary constraints.
@@ -94,8 +95,9 @@ LogOS names the tiers:
    - A closure operator on boundary constraints (a nucleus/projector). In the Kernel code this
      step is named `Flow` (field of `GuardedTruth.GuardedClosure`).
    - A distinguished (preorder) fixed point `Th*` (global stable truth). With optional antisymmetry
-     (and, for ω-limit results, `OmegaCPO`/continuity structure), this upgrades to a genuine least
-     fixed point for limit constructions.
+     (and, for μ/limit results, `OmegaCPO` + `FiniteFirst`), one can relate `Th*` to the Kleene
+     fixed point `μ Flow`. Antisymmetry only upgrades “leastness up to refinement” to
+     equality-level leastness.
    - This tier is the “stability/communication” layer: local truths become globally stable via
      the closure step.
 
@@ -155,8 +157,12 @@ In code, this appears as:
 - coherence records using `_↔_` from `LogOS/Syntax/Prop.agda`.
 
 ### 2) Modal/closure structure is explicit (Flow as a modality)
-The guarded tier packages a closure/nucleus `Flow`. Fixed points (preorder‑stable constraints:
-`Flow t ⊑ t`) of a nucleus are the
+The guarded tier packages a closure/nucleus `Flow`. The stable fragment can be
+presented as pre‑fixed points (`Flow t ⊑ t`); because `Flow` is inflationary, this
+is equivalent to stability up to mutual refinement (`t ≈ Flow t`) without assuming
+antisymmetry.
+
+Fixed points of a nucleus are the
 standard categorical semantics of a modality (monotone, inflationary, idempotent‑lax endomap),
 and under antisymmetry this upgrades to equality-level idempotence; LogOS makes this explicit
 at the boundary logic level.

@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.Transpiler.Category where
 
 -- Transpiler category: ports as objects, adapters as morphisms.
--- This is a thin alias over the existing port-category packaging.
+-- This is a lightweight alias over the existing port-category packaging.
 
 open import LogOS.Prelude
 

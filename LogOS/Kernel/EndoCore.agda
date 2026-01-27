@@ -81,7 +81,7 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
     let open LogicKernel (asLogicKernel K) in
     ConPreorder.trans (BulkBoundary.bnd BB) (fg c) (gh c)
 
-  -- Endomaps form a one-object thin 2-category; whiskering is inherited.
+  -- Endomaps form a one-object locally preordered 2-category; whiskering is inherited.
 
   EndoPreorder : (K : Obj) → ConPreorder (lsuc ℓ)
   EndoPreorder K =

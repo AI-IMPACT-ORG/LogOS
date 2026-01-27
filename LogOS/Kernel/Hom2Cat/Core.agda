@@ -270,7 +270,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
       (whiskerR {g = g} {g' = g'} f gg' γ)
       (whiskerL g' {f = f} {f' = f'} ff' γ)
 
-  -- Unit and associativity laws for the thin 2-category.
+  -- Unit and associativity laws for the locally preordered 2-category.
 
   id-left⇒
     : ∀ {K₁ K₂ : Obj}

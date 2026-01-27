@@ -49,10 +49,12 @@ module For {ℓ : Level}
   -- `FiniteFirst` provides a concrete approximant chain `approxS : ℕ → Con` with
   -- `approxS 0 = ⊥` and `approxS (suc n) = Flow (approxS n)`.
   --
-  -- The generic Kleene least fixed point is `μ Flow = supω (iter Flow)` where
-  -- `iter` is defined by the same equations. We expose the equivalence
-  -- (up to the preorder) so downstream theorems can talk about “stabilised truth
-  -- = μ Flow” under explicit ωCPO assumptions.
+  -- The generic Kleene μ construction is `μ Flow = supω (iter Flow)` where
+  -- `iter` is defined by the same equations. In general this μ is a least
+  -- *pre*-fixed point (Park induction); it becomes a (preorder) fixed point only
+  -- under additional continuity assumptions. We expose the equivalence (up to
+  -- the preorder) so downstream theorems can talk about “stabilised truth = μ
+  -- Flow” under explicit ωCPO assumptions.
 
   approxS≡iter-Flow
     : (ωCPO : OmegaCPO CP)

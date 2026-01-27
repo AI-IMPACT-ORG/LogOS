@@ -279,7 +279,8 @@ as well, hence $t$ is “fixed” up to preorder equivalence.
 Define an institution $\mathcal{I}_G(K)$ (“G-tier”) by:
 
 - $\mathrm{Sen}_G(\Sigma) := \mathrm{Con}_\partial$,
-- $\mathrm{Mod}_G(\Sigma) :=$ the preorder-category of fixed points $\mathrm{Fix}(\mathrm{Flow})$,
+- $\mathrm{Mod}_G(\Sigma) :=$ the preorder of fixed points $\mathrm{Fix}(\mathrm{Flow})$
+  (read as a thin category if you assume proof‑irrelevance for entailment proofs),
 - satisfaction: $t \models_G c$ iff $t \preceq c$ in the boundary preorder.
 
 In this view, $\mathrm{Th}^\ast$ is a distinguished model representing “global stable truth”.

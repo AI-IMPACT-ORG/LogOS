@@ -9,7 +9,7 @@ module LogOS.Packs.Agents.Experimental.Arguments.Transformer where
 
 -- Single entrypoint for the transformer-related developments in the Agents pack.
 --
--- This module is intentionally a thin re-export surface so papers/docs can point
+-- This module is intentionally a lightweight re-export surface so papers/docs can point
 -- to one stable path.
 
 module Formalization where

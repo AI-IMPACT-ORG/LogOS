@@ -34,7 +34,7 @@ import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TR
 
 -- Classical, literature-aligned P/NP interface:
 -- a language is an input predicate, and P/NP are defined via poly-time deciders
--- and poly-bounded witness verifiers. This is a thin rename of the
+-- and poly-bounded witness verifiers. This is a lightweight rename of the
 -- PhysicsClassesW/CostGuards interfaces with “cost” interpreted as time.
 --
 -- Instantiating cost/checkCost with a kernel-native graded route recovers the
@@ -173,4 +173,3 @@ module FromTruthRoute
 
     alignment : Alignment
     alignment = record { inP = fromInP ; inNP = fromInNP }
-

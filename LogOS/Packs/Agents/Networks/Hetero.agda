@@ -123,7 +123,7 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
     translateCon : Con r → Con s
     translateCon = SatHom.mapCon satHom
 
-  -- Thin 2-category of monotone maps between role boundary preorders.
+  -- Locally preordered 2-category of monotone maps between role boundary preorders.
   record MonoHom (r s : Role) : Set (lsuc (ℓ ⊔ ℓRole)) where
     field
       fn   : Con r → Con s

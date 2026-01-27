@@ -201,7 +201,8 @@ module For
       in
       Prop.↔-trans coh₁ (Prop.↔-trans coh₂ rew)
 
-  -- Categorical logic view: thin category + endofunctor + kernel 2-category interface.
+  -- Categorical logic view: ops-only preorder-category + endofunctor + kernel 2-category interface
+  -- (thin/lawful only under an explicit proof-irrelevance assumption).
   module CategoricalLogic where
     CodeThinCat = Cat.CodeThinCat
     BoxFunctor = Cat.BoxFunctor

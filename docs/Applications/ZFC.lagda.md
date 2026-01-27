@@ -91,7 +91,7 @@ kernel unchanged:
   closure operators used in forcing or sheaf semantics, phrased in a kernel-native
   way (this is *not* the ZFC forcing machinery; only the abstract closure-operator pattern).
   Completing this to textbook ZFC forcing would be an additional layer. Present a forcing
-  site (poset+coverage, or complete Boolean algebra) as a boundary presentation; define the
+  site (preorder+coverage, or complete Boolean algebra) as a boundary presentation; define the
   object-language forcing satisfaction `p ⊩ φ` as such a presentation/port; and prove a
   forcing theorem/truth lemma for that semantics, with genericity packaged as an explicit
   witness meeting the chosen cover/dense conditions.

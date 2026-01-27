@@ -245,7 +245,7 @@ For HP-style operator routes, the production library includes a formal
 - Generic barrier: `LogOS/Theorems/Meta/SpectralSeparationOutput.agda`
 - HP-specialized instance: `LogOS/Domain/Opacity/NumberTheory/HP/Opacity.agda`
 - Budgeted/graded strengthening (within-budget opacity): `LogOS/Domain/Opacity/NumberTheory/HP/Opacity.agda` (module `Budgeted`),
-  a thin wrapper over `LogOS/Theorems/Meta/BudgetedSeparationOutput.agda` (ℕ budgets) and
+  a lightweight wrapper over `LogOS/Theorems/Meta/BudgetedSeparationOutput.agda` (ℕ budgets) and
   `LogOS/Theorems/Meta/SpectralSeparationOutput.agda` (`GeneralB.WitnessCostB` for abstract budgets).
 
 This is the precise statement behind:

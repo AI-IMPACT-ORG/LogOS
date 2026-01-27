@@ -10,7 +10,7 @@ module LogOS.Domain.Opacity.WeilCriterionDagger where
 -- Convenience wrappers: present the Weil/explicit-formula route in a
 -- literature-aligned “quadratic positivity” form using a dagger/* structure.
 --
--- This does not strengthen any theorem: it is just a thin layer that turns a
+-- This does not strengthen any theorem: it is just a lightweight layer that turns a
 -- `DaggerTruthPositivity` pack into the existing `TruthPositivity` interface
 -- expected by `LogOS.Domain.Opacity.WeilCriterionLedger`.
 

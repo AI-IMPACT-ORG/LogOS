@@ -11,7 +11,7 @@ module LogOS.Kernel.Graded.Hom2Cat where
 --
 -- Implementation note: the 2-cell calculus is defined once for the CHL-facing
 -- `LogicKernel` interface (`LogOS.Kernel.LogicKernel.Hom2Cat`). This module is
--- a thin wrapper that:
+-- a lightweight wrapper that:
 -- - embeds graded kernels via `FromGradedKernel.asLogicKernel`;
 -- - reuses the `LogicKernel` 2-cell calculus by translating 1-cells.
 

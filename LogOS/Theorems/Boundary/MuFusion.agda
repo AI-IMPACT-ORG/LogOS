@@ -7,12 +7,12 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Theorems.Boundary.MuFusion where
 
--- μ-fusion / naturality for Kleene least fixed points.
+-- μ-fusion / naturality for Kleene μ (least pre-fixed points).
 --
 -- Core idea:
 -- if a map between ωCPO preorders preserves ⊥ and ω-sups (for chains) and commutes
--- laxly with an operator, then it transports the Kleene μ fixed point as an
--- inequality.
+-- laxly with an operator, then it transports the Kleene μ construction as an
+-- inequality `map (μ F) ⊑ μ G`.
 --
 -- This is the “one lemma to thread them all” for transporting μ-style stability
 -- statements across adapters once the relevant order/continuity assumptions are

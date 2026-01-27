@@ -272,7 +272,7 @@ module WithChoice where
   module Q {ℓ : Level} = AppKit.MakeDerived (Assumptions {ℓ}) (Claim {ℓ}) derive
   open Q public using (Pack; assumptionsOf; claimOf; mkPack)
 
--- Membership-is-edge packaging (thin, graph-first semantics).
+-- Membership-is-edge packaging (lightweight, graph-first semantics).
 module MembershipGraph where
   module For {ℓ : Level} (W : WFGraphStructure ℓ) where
     MG : MGS.MembershipGraph {ℓ}

@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Kernel.Hom2Cat where
 
--- Thin wrapper: instantiate the 2-categorical refinement calculus directly for
+-- Lightweight wrapper: instantiate the 2-categorical refinement calculus directly for
 -- ungraded kernels.
 
 open import LogOS.Prelude
@@ -82,7 +82,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
           lift (trans⇒ {f = f} {g = g} {h = h} (Lift.lower fg) (Lift.lower gh))
       }
 
-  -- Thin 2-cat view: kernel morphisms as 1-cells, refinement as 2-cells.
+  -- Locally preordered 2-cat view: kernel morphisms as 1-cells, refinement as 2-cells.
   KernelThin2Cat : Thin2Cat (lsuc (lsuc ℓ)) (lsuc (lsuc ℓ))
   KernelThin2Cat =
     record

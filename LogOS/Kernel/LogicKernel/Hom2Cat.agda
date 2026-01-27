@@ -72,7 +72,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ; cong-∘₁-≈   to cong-∘₁-≈
       )
 
-  -- Thin 2-category view (LogicKernel level) and its laws.
+  -- Locally preordered 2-category view (LogicKernel level) and its laws.
 
   LogicKernelHomPreorder
     : LogicKernel Sig Q → LogicKernel Sig Q → ConPreorder (lsuc (lsuc ℓ))

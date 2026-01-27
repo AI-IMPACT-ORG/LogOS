@@ -27,9 +27,10 @@ The design choice is recorded as a tiny pack:
 
 - `LogOS/Theorems/Meta/Safety/DesignChoice.agda`
 
-It contains only a `Kernel` instance. There are **no** implicit truth or
-provability predicates, no comprehension, and no diagonalization unless the user
-imports those explicit assumption records.
+It contains only a `Kernel` instance. There are **no** additional internal
+paradox-enabling predicates/operations (e.g. truth over code, provability,
+diagonalization, comprehension) unless the user imports explicit assumption
+packs.
 
 ### Architecture as consequence
 
@@ -38,11 +39,14 @@ From that minimal choice, the boundary/port/interlingua spine is derivable:
 - `LogOS/Theorems/Meta/Safety/ArchitectureFromSafety.agda`
 
 Key consequences (formalized):
-- Boundary I/O exists (`BoundaryIO`) and is the only built‑in notion of truth.
+- Boundary I/O exists (`BoundaryIO`): a derived boundary-facing satisfaction
+  interface (built from the kernel’s H-tier truth via `sat-coh`).
 - Canonical ports exist (boundary port + code port).
 - Canonical translation is forced (`Interlingua` / `PortAdapter` uniqueness).
-- Bootstrapping is a port equivalence (`bootstrap-iso`).
-- Guarded flow is the only built‑in fixpoint mechanism (`guard-decode`).
+- Bootstrapping is a port equivalence up to `Adapter≈` (`bootstrap-iso`).
+- Guarded truth provides a distinguished fixed-point witness (`Th*` and code
+  witness `γ*`); leastness/μ-induction requires explicit ωCPO/continuity
+  assumptions. (`guard-decode` is the Guard↔Flow coherence law.)
 
 This is *not* an extra axiom: it is a consequence of the kernel laws.
 

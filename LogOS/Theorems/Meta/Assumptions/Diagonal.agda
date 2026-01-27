@@ -253,7 +253,7 @@ lawvereDiag-⊑ QS f = fst (proj₂ (lawvereFix QS f))
       (Kernel.decode K (lawvereDiag QS f))
 ⊑-lawvereDiag QS f = snd (proj₂ (lawvereFix QS f))
 
--- A thin reflection principle: decoded “sameness” implies provability of an implication
+-- A minimal reflection principle: decoded “sameness” implies provability of an implication
 -- built with the object-level Imp constructor. This stays model-local.
 --
 -- Two variants are provided:

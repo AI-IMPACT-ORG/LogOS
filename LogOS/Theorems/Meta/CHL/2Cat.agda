@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.CHL.2Cat where
 
 -- 2-categorical view: kernels as objects, morphisms as 1-cells,
--- refinements as thin 2-cells.
+-- refinements as preorder 2-cells.
 
 open import LogOS.Prelude
 

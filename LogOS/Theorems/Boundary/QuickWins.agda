@@ -25,7 +25,7 @@ open import LogOS.Theorems.SemanticCut as Cut
 open import LogOS.Theorems.Code.Core as Code
 open import LogOS.Syntax.Prop as Prop
 
--- μ-style induction (boundary): prefixed points bound Th⋆ (thin wrapper over μ-induction-K).
+-- μ-style induction (boundary): prefixed points bound Th⋆ (lightweight wrapper over μ-induction-K).
 
 prefixed→Th⋆≤
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)

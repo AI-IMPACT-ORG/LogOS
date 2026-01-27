@@ -201,7 +201,7 @@ module For
     monoOn-respects≈ {CP = KCore.CodePreorder S} rawStep-monoOn eq
 
   -- --------------------------------------------------------------------------
-  -- Distinguished fixed point: stable truth as a code-level witness.
+  -- Distinguished fixed-point witness: stable truth as a code-level witness.
   -- --------------------------------------------------------------------------
 
   truth : Ty

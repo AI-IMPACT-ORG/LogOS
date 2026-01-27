@@ -12,7 +12,7 @@ module LogOS.Minimal.Closure where
 -- This is intentionally independent of any fixed-point witness (`Th*`): many
 -- applications (e.g. nuclei for forcing, publicisation/feasibility modalities,
 -- auditability closures) want a closure operator but do not want to commit to a
--- particular distinguished fixed point.
+-- particular distinguished fixed-point witness.
 
 open import LogOS.Prelude
 
@@ -33,12 +33,14 @@ open ClosureOp public
 -- Textbook notation (η/μ)
 -- ============================================================================
 --
--- A closure operator can be read as an idempotent monad on a preorder:
+-- Interpretation (preorder-as-category): a closure operator behaves like an
+-- idempotent monad:
 -- - η  is inflation (unit):      c ⊑ J c
 -- - μ  is lax idempotence:       J (J c) ⊑ J c
 --
 -- We keep these in a nested module to avoid polluting the global namespace
--- (other parts of LogOS use `μ` for Kleene-style least fixed points).
+-- (other parts of LogOS use `μ` for Kleene-style μ (least pre-fixed points;
+-- fixed points only under explicit continuity assumptions)).
 
 module Notation where
   η

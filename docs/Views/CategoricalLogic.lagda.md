@@ -67,10 +67,10 @@ Theorem spine (authoritative)
   `projection`.
 - The prose below is explanatory; the statements above are the authoritative claims.
 
-Thin categories from refinement
-------------------------------
+Preorder-category operations from refinement
+-------------------------------------------
 
-Every `ConPreorder` can be read as a preorder-style category:
+Every `ConPreorder` admits a preorder-category **operations** view:
 
 - objects: constraints `Con`
 - morphisms: refinement proofs `c ⊑ d`
@@ -83,17 +83,18 @@ judgmental equality.
 
 **Note (no proof-irrelevance assumed).** In Agda, a refinement proof `c ⊑ d` is a
 term of a type, and the library does not assume those proof types are
-subsingletons. So we do not rely on “thinness” (at most one morphism between two
-objects); we only use the preorder laws (`refl`, `trans`). If you add
-proof-irrelevance (or work in a truncated setting), the usual “thin category”
-reading becomes literal.
+subsingletons. So by default we treat this as an **ops-only** categorical façade:
+we use only the preorder laws (`refl`, `trans`) and avoid stating category laws
+as equalities of proofs. If you add proof-irrelevance (or work in a truncated
+setting), the usual thin-category reading (and equality-level laws) becomes
+literal.
 
-Monoidal structure and adjunction (categorical logic)
------------------------------------------------------
+Monoidal ops and lax adjunction (categorical logic)
+---------------------------------------------------
 
 The categorical logic structure that LogOS actually needs is:
 
-1. a monoidal structure on constraints (for “tensor/overlay” reasoning), and
+1. monoidal-*ops* on constraints (tensor/unit operations + monotonicity) for “tensor/overlay” reasoning, and
 2. a lax adjunction between bulk and boundary constraints (for open-system I/O).
 
 These are packaged in the Minimal layer:
@@ -113,7 +114,7 @@ At the Kernel level, the corresponding bundled interface is:
 which exposes:
 
 - a `BulkBoundary` of preorders (posets if antisymmetry is supplied),
-- monoidal structures on bulk and boundary, and
+- monoidal-*ops* on bulk and boundary, and
 - a lax monoidal adjunction `ext ⊣ bnd` (in the unit/counit-inequality sense).
 
 Cheap coherence (lax Beck–Chevalley / Frobenius)
@@ -122,7 +123,7 @@ Cheap coherence (lax Beck–Chevalley / Frobenius)
 Without importing full Lawvere semantics, LogOS still supports some “hyperdoctrine-shaped”
 coherence at the preorder (`_⊑_`) level:
 
-- **Frobenius (one-way)** from lax monoidality alone:
+- **Frobenius (one-way)** from the lax monoidal adjunction axioms:
   `LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda` (`Frobenius.frobenius-ext≤`).
 - **Boundary closure** induced by the adjunction, once monotonicity is supplied:
   `T = bnd ∘ ext` as a `ClosureOp` via `LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda`
@@ -174,8 +175,10 @@ compared by **refinement** rather than identified by equality.
 This expresses **irreversibility** directly: 2-cells need not be invertible, and
 composition respects refinement by whiskering (monotonicity).
 
-This is a **thin 2-category**: 2-cells are preorder proofs, vertical
-composition is transitivity, and the interchange law is trivial.
+This is a preorder-enriched (“locally preordered”) 2-category interface: 2-cells
+are refinement witnesses, vertical composition is transitivity, and interchange
+follows from whiskering monotonicity. If you additionally assume proof-irrelevance
+for refinement proofs, this becomes literally thin/locally posetal.
 
 In code:
 
@@ -185,7 +188,7 @@ In code:
   - `LogOS/Kernel/Graded/Hom2Cat.agda`
 - Shared wrapper record shapes (used by all instances):
   - `LogOS/Theorems/CategoryTheory/WrapperCore.agda` (`Ref2Cat`, `HoCat`)
-- Minimal thin 2-category packaging (from preorders):
+- Minimal preorder-enriched 2-category packaging (`Thin2Cat`) from preorders:
   - `LogOS/Minimal/Thin2Cat.agda`
 - Packaged “2-category-like” interfaces (lightweight, no extra axioms; instances only):
   - `LogOS/Theorems/CategoryTheory/Kernel2Cat.agda` (instantiates `Ref2Cat`)

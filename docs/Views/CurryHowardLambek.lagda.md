@@ -79,8 +79,10 @@ Exact claims (all kernel-native):
   inherited from the preorder (`LogOS/Theorems/Meta/CHL/Definition.agda`).
 - *model theory:* refinement implies entailment at the H-tier and the boundary
   tier (`LogOS/Theorems/Meta/CHL/ModelTheory.agda`).
-- *category theory:* codes form a thin category and `Box` (stable closure at `Th*`)
-  is a monotone endofunctor (`LogOS/Theorems/Meta/CHL/Category.agda`).
+- *category theory:* refinement gives an “ops-only” preorder-category view on
+  codes (thin/lawful only under proof-irrelevance), and `Box` is the induced
+  closure modality/endomap (`encode ∘ Flow ∘ decode`)
+  (`LogOS/Theorems/Meta/CHL/Category.agda`).
   (`Box` itself is kernel-level: `LogOS/Kernel.agda` / `LogOS/Kernel/Graded.agda`.)
 - *observer semantics:* guarded truth is stability under `Box` (closure-stability),
   exposed via the CHL guarded view (`LogOS/Theorems/Meta/CHL/Guarded.agda`);

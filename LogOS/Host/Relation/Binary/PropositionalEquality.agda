@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Host.Relation.Binary.PropositionalEquality where
 
--- Thin wrapper around Agda.Builtin.Equality to provide _≡_ and refl,
+-- Small wrapper around Agda.Builtin.Equality to provide _≡_ and refl,
 -- plus basic combinators sym/trans/cong, without the full stdlib.
 
 open import Agda.Builtin.Equality public using (_≡_; refl)
@@ -26,4 +26,3 @@ cong₂ f refl refl = refl
 
 subst : ∀ {ℓ₁ ℓ₂} {A : Set ℓ₁} (P : A → Set ℓ₂) {x y : A} → x ≡ y → P x → P y
 subst P refl p = p
-

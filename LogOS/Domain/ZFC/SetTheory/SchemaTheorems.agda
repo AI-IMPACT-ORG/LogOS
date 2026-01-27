@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.ZFC.SetTheory.SchemaTheorems where
 
 -- Canonical ZF/ZFC axiom-schema witnesses, exposed with standard names.
--- These are thin, name-aligned wrappers over the existing ZF/ZFC packs.
+-- These are lightweight, name-aligned wrappers over the existing ZF/ZFC packs.
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)

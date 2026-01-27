@@ -10,7 +10,7 @@ module LogOS.Minimal.Thin2Cat where
 open import LogOS.Prelude
 open import LogOS.Minimal.Con
 
--- Thin 2-category (preorder-enriched category) interface.
+-- Locally preordered 2-category (preorder-enriched category) interface.
 --
 -- This is meaning-only: it packages existing preorder structure without adding
 -- new axioms to the kernel. Laws are recorded separately to avoid forcing
@@ -101,8 +101,10 @@ module Thin2CatLawsEq
     → ((f ∘ g) ∘ h) ≡ (f ∘ (g ∘ h))
   assoc≡ {A} {D = D} f g h = ≈CP→≡ (poHom {A = A} {B = D}) (assoc f g h)
 
--- In a thin 2-category, 2-cells are preorder proofs. Horizontal composition
--- is just monotonicity in both arguments; vertical composition is `trans`.
+-- In a locally preordered 2-category, 2-cells are preorder proofs. Horizontal
+-- composition is just monotonicity in both arguments; vertical composition is
+-- `trans`. If you additionally assume proof-irrelevance/antisymmetry for the
+-- hom-preorders, the usual equality-level laws become available.
 
 comp-mono
   : ∀ {ℓObj ℓHom}

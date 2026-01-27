@@ -208,7 +208,7 @@ Fix `K : LogicKernel Sig Q` (`LogOS/Kernel/LogicKernel.agda`).
 Notation (barebones)
 --------------------
 - `γ, δ : Code` and `c, d : Con` (boundary constraints).
-- `γ ⊢ δ` = code refinement; `γ ≃ δ` = mutual refinement.
+- `γ ⊢ δ` = code refinement; `γ ≈ δ` = mutual refinement.
 - `c ⊑ d` = boundary refinement; `c ≈ d` = mutual refinement on the boundary preorder (`_≈CP_`).
 - `⟦γ⟧ := decode γ` and `η c := encode c`.
 - `ρ γ := reify γ` (safe self-reflection; observationally inert).
@@ -233,10 +233,10 @@ Meredith sentences (core)
 - (M₂) `⟦ρ γ⟧ ≡ ⟦γ⟧`
 - (M₃) `⟦B γ⟧ ≡ B∂ ⟦γ⟧`
 - (M₄) `⟦▹ γ⟧ ≡ Flow₍step₎ ⟦γ⟧`
-- (M₅) `★ ≃ FlowCode ★`
+- (M₅) `★ ≈ FlowCode ★`
 - (M₆) `⟦★⟧ ≡ Θ`
 - (M₇) `c ⊑ Flow₍sat₎ c` and `Flow₍sat₎ (Flow₍sat₎ c) ⊑ Flow₍sat₎ c`, and `Θ ⊑ Flow₍sat₎ Θ` and `Flow₍sat₎ Θ ⊑ Θ`
-- (M₈) `FlowCode γ ≃ □₍step₎ (B γ)`
+- (M₈) `FlowCode γ ≈ □₍step₎ (B γ)`
 
 Meredith sentences (resource spelling, optional)
 ------------------------------------------------

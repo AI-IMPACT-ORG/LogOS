@@ -16,7 +16,7 @@ module LogOS.Kernel.LogicKernel.EndoRelative where
 --
 -- This is the right abstraction boundary for nuclei/modality-style reasoning
 -- (forcing, publicisation, feasibility, auditability), without committing to the
--- kernel’s distinguished fixed point `Th*`.
+-- kernel’s distinguished fixed-point witness `Th*`.
 
 open import LogOS.Prelude
 

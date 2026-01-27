@@ -7,8 +7,12 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Theorems.Meta.CHL.Category where
 
--- Category-theory view: code refinements form a thin category, and `Box`
--- (stable closure at Th*) is a monotone endofunctor on it.
+-- Category-theory view: code refinements form an “ops-only” preorder-category
+-- (thin/lawful only under an explicit proof-irrelevance assumption), and `Box`
+-- is the induced closure modality/endofunctor (encode ∘ Flow ∘ decode).
+--
+-- The stabilised truth witness lives at the boundary (`Th*`); the code-level
+-- witness is `γ*` with `decode γ* ≡ Th*`.
 --
 -- Note: the core packaging here is intentionally “ops-only”: we do not assume
 -- proof-irrelevance for refinement proofs, so the usual category laws
@@ -108,7 +112,7 @@ module For
       ; _∘_ = λ g f → cut-refines f g
       }
 
-  -- Box acts as a monotone endofunctor on the thin code category.
+  -- Box acts as a monotone endofunctor on the code preorder-category façade.
   box-monoOn : MonoOn (KCore.CodePreorder (Kernel.shape K)) Box
   box-monoOn = C.box-monoOn
 

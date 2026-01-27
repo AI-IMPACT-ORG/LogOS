@@ -72,7 +72,7 @@ trans₂ K fg gh = λ c →
   let open LogicKernel K in
   ConPreorder.trans (BulkBoundary.bnd BB) (fg c) (gh c)
 
--- Endomaps form a one-object thin 2-category; whiskering is inherited.
+-- Endomaps form a one-object locally preordered 2-category; whiskering is inherited.
 
 EndoPreorder
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}

@@ -118,7 +118,7 @@ with `Pack.claim` as the canonical extractor.
    - Non-uniform adapter: `TruthRoute_Grade_Only.NonUniformNat.InP` and `TruthRoute_Grade_Only.NonUniformNat.WithWitnessSize.InNP`.
 
 4. **Classical interface (literature-aligned, ℕ-bound):** `LogOS/Domain/Complexity/PvsNPLedger.agda`
-   - Thin renaming of the grade-native physical classes specialized to ℕ-costs via `QNat` + `gradeBound = τ`.
+   - Lightweight renaming of the grade-native physical classes specialized to ℕ-costs via `QNat` + `gradeBound = τ`.
    - `FromTruthRoute` reinterprets
      `TruthRoute_Grade_Only.UniformNatFromRuns.InP` / `TruthRoute_Grade_Only.UniformNatFromRuns.WithWitnessSize.InNP`
      as classical `InP` / `InNP` once you map

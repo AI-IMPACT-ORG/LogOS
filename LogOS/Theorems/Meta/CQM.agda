@@ -13,7 +13,8 @@ module LogOS.Theorems.Meta.CQM where
 --
 -- The library already has the right primitives to tell a CQM story:
 -- - “processes” compose (Scheme/Process DSL)
--- - there is a monoidal structure (kernel tensor, product-like composition)
+-- - there are monoidal-*ops* primitives (kernel tensor/whiskering, product-like composition);
+--   textbook monoidal laws live in explicit law packs when assumed
 -- - there is a dagger notion (Meta/Dagger infrastructure)
 --
 -- This module provides a small *categorical interface* that can be instantiated by:

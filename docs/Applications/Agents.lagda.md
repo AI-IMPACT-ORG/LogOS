@@ -21,7 +21,7 @@ import LogOS.Packs.Agents.Applications.All
 This note is the publication-facing entrypoint for the **Agents** pack in the
 LogOS library.
 
-The pack stays intentionally thin: the kernel already contains most of the
+The pack stays intentionally lightweight: the kernel already contains most of the
 agent-like structure (boundary endomaps, wiring, and fixed points). The Agents
 docs therefore act as a navigation layer over kernel-level theorems.
 
@@ -86,7 +86,7 @@ open import LogOS.Packs.Agents.Experimental.Surface as AgentsX
 
 ## Agent networks (heterogeneous wiring)
 
-Agent networks are a thin layer over sockets: a **network** is just
+Agent networks are a lightweight layer over sockets: a **network** is just
 role-indexed sockets plus explicit edge adapters. Heterogeneous agents are
 first-class: each role can have its own signature/kernel, and edges are
 **satisfaction morphisms** (`SatMor`) between boundary interfaces.
@@ -184,7 +184,7 @@ Learning is expressed using the same kernel DSL as monitoring:
 - A **learning step** is a closure step (id <= update <= Flow), so it composes
   and stays within the kernel's saturation envelope.
 
-The concrete surfaces are thin wrappers:
+The concrete surfaces are lightweight wrappers:
 
 - `LogOS/Packs/Agents/Learning/Core.agda` — policies, updates, and learning steps.
 - `LogOS/Packs/Agents/Learning/FixedPoint.agda` — Kleene mu wrappers
@@ -289,7 +289,7 @@ See `LogOS/Packs/Agents/Experimental/Physics/LearningCost.agda`.
 
 LogOS can treat **RG coarse-graining** as a *graded closure step* in the learning
 DSL. This is the most kernel-native encoding: grades live in the quantale scale,
-and RG composition multiplies grades (a hidden monoidal/categorical structure).
+and RG composition multiplies grades (the explicit monoid/quantale structure of `Scale` in `QAdapter`).
 
 The new RG surface lives in `LogOS/Packs/Agents/Experimental/Learning/RGFlow.agda` and gives:
 

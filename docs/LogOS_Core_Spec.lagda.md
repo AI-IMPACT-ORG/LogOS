@@ -144,15 +144,16 @@ Reflection is an axis across S/H/G and the bulk↔boundary interface:
 - G/closure: `Flow` is a projector‑shape closure (`LogOS/Minimal/Truth.agda`).
 - H/invariance: `Inv_H` is a projector on boundary constraints (a closure/nucleus only once
   monotonicity is supplied as an extra assumption; bundle: `HomotypicalTruth.InvarianceMono`).
-- Holo: the **lax** adjunction `ext ⊣ bnd` yields induced projectors
-  (`LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda`).
+- Holo: once `ext`/`bnd` are monotone (bundle: `LaxAdjunctionMono` / `LaxMonoidalAdjunctionMono`),
+  the lax unit/counit induce projectors (`LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda`).
 - Port reflection: `CodePort` and the canonical boundary port are equivalent
   presentations of the same satisfaction, so the bootstrapping map is the
   canonical interlingua translation (not a bespoke compiler/transpiler).
   See `LogOS/Ports/Semantic/CanonicalPorts.agda` (definitions) and
   `LogOS/Theorems/Meta/Bootstrapping.agda` (`bootstrap-iso`).
 - Safety spine: the boundary/port/guarded-flow architecture is a consequence of
-  the “kernel‑only” design choice (no implicit truth/provability). See
+  the “kernel‑only” design choice (no additional truth-over-code/provability
+  layers unless explicitly imported). See
   `docs/Meta_Safety.lagda.md` and `LogOS/Theorems/Meta/Safety/*`.
 - Kernel-level nucleus theorems: `LogOS/Theorems/Reflection/QuanticNucleus.agda`
   (fixed points form a quantale + quotient factorization, given a nucleus that
@@ -166,7 +167,7 @@ Optional graded kernel
 ----------------------
 `LogOS.Kernel.Graded` adds grade‑indexed closure:
 - `GradedKernel` replaces `GuardedClosure` with `GradedClosure`.
-- `Guard` decodes to `Flow step-grade`; the distinguished fixed point is at `Flow sat`.
+- `Guard` decodes to `Flow step-grade`; the distinguished fixed-point witness lives at `Flow sat`.
   Use the provided promotion/shift lemmas (e.g. `guard-decode≤sat`, `toSatStep`).
 - Graded DSL and homs: `LogOS/Kernel/Graded/Endo.agda`, `LogOS/Kernel/Graded/Hom.agda`.
 - Re‑exports: `LogOS/Kernel/Graded/All.agda`; boundary lemmas in `LogOS/Theorems/Boundary/Graded/All.agda`.
@@ -244,7 +245,7 @@ is via `LogOS.Axioms.OmegaSup.Interface` (`ChainSup`) and is passed explicitly.
 
 Packs: Structure, Claims, Boundaries
 -----------------------------------
-The curated packs are thin wrappers over the kernel. Each pack makes its assumptions
+The curated packs are lightweight wrappers over the kernel. Each pack makes its assumptions
 explicit, states a clean claim, and avoids leaking application‑specific axioms into
 the core. The hook is kernel polymorphicity: the same kernel supports distinct
 semantic stories without changing the foundational definitions.
@@ -281,7 +282,7 @@ semantic stories without changing the foundational definitions.
   - Claim: agents as open systems via sockets/ports/contracts; monitoring/auditing
     is expressed in kernel endomaps.
   - Boundary: safety/audit conclusions rely on explicit opacity assumptions.
-  - Interest: the kernel already *is* an agent‑like system, so the pack is thin.
+  - Interest: the kernel already *is* an agent‑like system, so the pack is lightweight.
 
 Reusable libraries live under `LogOS/Domain/*` and `LogOS/Algebra/*`
 (HP interface, braiding helpers, ZF/ZFC adapters). Tests: `Tests/All.agda`.
@@ -321,12 +322,14 @@ Dependency details live with the theorems. Key entrypoints:
 
 Boundary Fixed Points (Non‑vacuous)
 -----------------------------------
-`BoundaryFix` (assumption pack) gives a fixed point for every monotone endomap.
+`BoundaryFix` (assumption pack) gives a fixed-point witness (up to mutual refinement)
+for every monotone endomap.
 `BoundaryFixFromScott` wraps Scott fixed points; a one‑point boundary gives a trivial instance.
 
 Projective Perspective (Fixed‑Point Logic)
 -----------------------------------------
-`Projector` is an inflationary, idempotent‑lax closure; fixed points form a sub‑preorder
+`Projector` is the inflationary, idempotent‑lax *projector shape* (monotonicity is optional);
+fixed points form a sub‑preorder
 (and a sub‑partial‑order if you additionally assume antisymmetry via `PartialOrder`).
 Instances: `Flow` (G‑tier) and `Inv_H` (H‑tier).
 

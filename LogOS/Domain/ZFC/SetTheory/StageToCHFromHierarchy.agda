@@ -121,8 +121,10 @@ StageToCH-fromCH {ℓ = ℓ} K CH =
 -- Optional variant: if a kernel supplies an explicit boundary ωCPO + a
 -- FiniteFirst (Scott-continuity) witness for Flow, we can use the Kleene μ of
 -- Flow (rather than the distinguished witness `Th⋆K`) as the infinity-stage
--- realisation. This supports “least fixed point / least model” style claims,
--- but keeps all extra structure explicit.
+-- realisation. This μ is always a least pre-fixed point; and under the explicit
+-- Scott-continuity + inflation hypotheses established below, it is also a fixed
+-- point (up to the boundary preorder). This supports “least model via μ” style
+-- claims, but keeps all extra structure explicit.
 
 StageToCH-fromCH-μFlow
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}

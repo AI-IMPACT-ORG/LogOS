@@ -28,7 +28,7 @@ record LaxAdjunction {ℓ : Level}
     counit-lax : ∀ (d : Con_bulk) → _⊑bulk_ (ext (bnd d)) d
 
 -- Aliases (η, ε) to make unit/counit shape explicit when using a LaxAdjunction
--- These are just thin wrappers; they do not add axioms.
+-- These are just lightweight wrappers; they do not add axioms.
 
 η
   : ∀ {ℓ} {BB : BulkBoundary ℓ}

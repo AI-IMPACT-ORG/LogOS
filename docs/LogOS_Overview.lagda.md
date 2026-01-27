@@ -172,7 +172,7 @@ themselves *inside* the logic:
     (`Box≡ExtendFlow` in `LogOS/Ports/Semantic/CanonicalPorts.agda`)
 - the fundamental coherence law (unguarded kernel):
   - `decode (Guard γ) ≡ Flow (decode γ)`
-  - graded variant: `decode (Guard γ) ≡ Flow step-grade (decode γ)` and the distinguished fixed point is
+  - graded variant: `decode (Guard γ) ≡ Flow step-grade (decode γ)` and the distinguished fixed-point witness is
     characterized at `Flow sat` (see `docs/LogOS_Core_Spec.lagda.md`).
 
 Intuition:
@@ -216,7 +216,8 @@ There are two presentations of the same boundary satisfaction:
 
 By interlingua, the translation between these ports is **forced**. In
 `LogOS/Theorems/Meta/Bootstrapping.agda`:
-- `bootstrap` is the canonical adapter `CodePort → BoundaryPort∂` (definitionally, see `bootstrap≡canonical`).
+- `bootstrap` is the canonical adapter `CodePort → BoundaryPort∂`
+  (by propositional equality `≡` — in fact `refl` after unfolding — see `bootstrap≡canonical`).
 - `unbootstrap` is the export back to code (`encode`) with the built‑in port
   equivalence `Sat∂≈F`.
 - The round‑trip laws are `translate-comp` + `translate-id`, not ad‑hoc proofs.
@@ -228,7 +229,7 @@ By interlingua, the translation between these ports is **forced**. In
 - `AsTranspiler` is the specialization of the general transpiler theorem
   (`LogOS/Theorems/Meta/Transpiler.agda`) to the stage0/stage1 ports.
 - `bootstrap≡canonical` and `bootstrap-transpiler≡canonical` show the
-  bootstrapping pass is definitionally the canonical transpiler.
+  bootstrapping pass is equal by `≡` (again `refl` after unfolding) to the canonical transpiler.
 - `Transpiler.Hetero` lifts the same story to satisfaction morphisms; the CHL
   strict/code transpilers are exposed as `compile-transpiler` instances in
   `LogOS/Theorems/Meta/CHL/Interoperability.agda`.
@@ -267,8 +268,9 @@ Exact claims (with proof surfaces):
   See `LogOS/Theorems/Meta/CHL/Definition.agda`.
 - **Soundness**: refinement implies semantic entailment at the H- and boundary
   tiers (`LogOS/Theorems/Meta/CHL/ModelTheory.agda`).
-- **Category view**: codes form a thin category and `FlowCode` is a monotone
-  endofunctor (`LogOS/Theorems/Meta/CHL/Category.agda`).
+- **Category view**: codes/refinement admit an “ops-only” preorder-category view
+  (thin/lawful only under an explicit proof-irrelevance assumption), and `Box`
+  is a monotone endomap on codes (`LogOS/Theorems/Meta/CHL/Category.agda`).
 - **Capstone bundle**: the views above are packaged as a single theorem
   (`LogOS/Theorems/Meta/CHL/Capstone.agda`).
 

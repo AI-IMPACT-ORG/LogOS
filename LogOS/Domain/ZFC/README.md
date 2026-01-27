@@ -52,7 +52,7 @@ Staging / DSL plumbing
 - `LogOS/Domain/ZFC/SetTheory/StageToCHFromHierarchy.agda` — generic adapter: any `CumulativeHierarchy K`
   can be wrapped as a `StageToCH K` using constant stages and the kernel’s canonical fixed-point witness `Th⋆`.
   If a model additionally provides a boundary `OmegaCPO` + `FiniteFirst` witness for Flow, `StageToCH-fromCH-μFlow`
-  realises the infinity stage by the Kleene μ of Flow (supporting “least fixed point” style claims under explicit assumptions).
+  realises the infinity stage by the Kleene μ of Flow (a least pre-fixed point in the boundary preorder, under explicit assumptions).
 - `LogOS/Domain/ZFC/SetTheory/CumulativeSurface.agda` — `stageToSurface` promotes `StageToCH` to `ZFDsl`.
 - `LogOS/Domain/ZFC/SetTheory/FromZFAxioms.agda` — converts `ZFAxioms K` to `CumulativeHierarchy K`.
 - `LogOS/Domain/ZFC/SetTheory/Derived.agda` — small derived set constructors/lemmas over `ZFAxioms`

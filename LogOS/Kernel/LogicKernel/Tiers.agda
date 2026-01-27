@@ -13,7 +13,7 @@ module LogOS.Kernel.LogicKernel.Tiers where
 -- This module makes the “four tiers” explicit for any `LogicKernel`:
 -- - S-tier: strict satisfaction `Sat_S`
 -- - H-tier: homotypical satisfaction `Sat_H` and boundary satisfaction `Sat_H_bnd`
--- - G-tier: guarded flow `Flow` and distinguished fixed point `Th*`
+-- - G-tier: guarded flow `Flow` and distinguished fixed-point witness `Th*`
 -- - R-tier: reflection layer `Code` with derived satisfaction `Sat_R` via `decode`
 --
 -- Everything here is *derived* from the kernel interface: no new axioms.
@@ -128,7 +128,7 @@ module For
               (LogicKernel.Body∂ K (LogicKernel.decode K γ))
   decode-FlowCode-step γ = LogOS.Kernel.LogicKernel.decode-FlowCode K γ
 
-  -- Distinguished fixed point lines up at the reflection boundary.
+  -- Distinguished fixed-point witness lines up at the reflection boundary.
   decode-γ*-is-Th*
     : LogicKernel.decode K (LogicKernel.γ* K) ≡ GTier.Th* (LogicKernel.G K)
   decode-γ*-is-Th* = LogicKernel.decode-γ* K

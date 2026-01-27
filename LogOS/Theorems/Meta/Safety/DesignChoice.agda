@@ -8,8 +8,9 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.Safety.DesignChoice where
 
 -- Design choice: the meta-theory assumes only the kernel interface.
--- Any paradox-enabling structure (truth predicates, provability, diagonalization,
--- comprehension, etc.) must be provided explicitly as separate assumption packs.
+-- Any additional internal paradox-enabling structure (truth over code,
+-- provability, diagonalization, comprehension, etc.) must be provided explicitly
+-- as separate assumption packs.
 
 open import LogOS.Prelude
 

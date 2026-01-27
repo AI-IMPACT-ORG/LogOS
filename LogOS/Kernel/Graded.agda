@@ -69,7 +69,7 @@ decode-FlowCode {Sig = Sig} {Q = Q} K γ =
 -- Step-grade vs saturation-grade friction reducers.
 --
 -- In a graded kernel, `Guard` decodes to a one-step `Flow step-grade`, while the
--- distinguished fixed point `Th*` lives at the saturation grade. The following
+-- distinguished fixed-point witness `Th*` lives at the saturation grade. The following
 -- derived lemmas make the grade shift explicit and help avoid accidental
 -- rewrites of step-grade facts as saturation facts.
 

@@ -29,7 +29,7 @@ import LogOS.Domain.ZFC.WFGraph.Textbook as Textbookₜ
 
 -- Single entrypoint for “WF-graph sets inside LogOS”.
 --
--- This module is intentionally a thin façade:
+-- This module is intentionally a lightweight façade:
 -- it reuses the existing WFGraph ZF development and exports a convenient bundle
 -- of surfaces at two layers:
 --

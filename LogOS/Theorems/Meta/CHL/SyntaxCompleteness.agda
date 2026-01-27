@@ -42,20 +42,13 @@ module For
 
   -- Semantic entailment on the strict layer (all worlds).
   EntailsS : Kernel.Fml K → Kernel.Fml K → Set ℓ
-  EntailsS φ ψ =
-    ∀ (w : LogOSSignature.Cosp Sig)
-    → ST.StrictLayer.Sat_S (Kernel.Strict K) w φ
-    → ST.StrictLayer.Sat_S (Kernel.Strict K) w ψ
+  EntailsS = ST.EntailsS (Kernel.Strict K)
 
   -- Budgeted strict entailment: only observations satisfying B.
   EntailsS-budget
     : (B : Budget)
     → Kernel.Fml K → Kernel.Fml K → Set ℓ
-  EntailsS-budget B φ ψ =
-    ∀ (w : LogOSSignature.Cosp Sig)
-    → B w
-    → ST.StrictLayer.Sat_S (Kernel.Strict K) w φ
-    → ST.StrictLayer.Sat_S (Kernel.Strict K) w ψ
+  EntailsS-budget B = ST.EntailsS-budget (Kernel.Strict K) B
 
   idS : ∀ {φ} → φ ⊢S φ
   idS = ConPreorder.refl CP

@@ -9,8 +9,8 @@ module LogOS.Theorems.CategoryTheory.AdjunctionMonads where
 
 -- Very general derived structure from an order-enriched (lax) adjunction:
 -- once `ext` and `bnd` are monotone, unit/counit inequalities induce
---   - a boundary closure operator  T = bnd ∘ ext   (monad on the preorder), and
---   - a bulk interior operator     S = ext ∘ bnd   (comonad on the preorder).
+--   - a boundary closure operator  T = bnd ∘ ext   (monad-style on the boundary preorder), and
+--   - a bulk interior operator     S = ext ∘ bnd   (comonad-style on the bulk preorder).
 
 open import LogOS.Prelude
 
@@ -80,7 +80,7 @@ module Derived
       (λ ext≤ → fst (adj c d) ext≤)
       (λ c≤ → snd (adj c d) c≤)
 
-  -- Boundary closure operator (monad on the preorder).
+  -- Boundary closure operator (monad-style on the boundary preorder).
 
   T : Con_bnd → Con_bnd
   T c = bnd (ext c)
@@ -100,7 +100,7 @@ module Derived
   T-mult-infl : ∀ c → _⊑bnd_ (T c) (T (T c))
   T-mult-infl c = T-mono (T-unit c)
 
-  -- Bulk interior operator (comonad on the preorder).
+  -- Bulk interior operator (comonad-style on the bulk preorder).
 
   S : Con_bulk → Con_bulk
   S d = ext (bnd d)
@@ -312,7 +312,8 @@ module Derived
 -- -------------------------------------------------------------------------
 --
 -- A very lightweight “hyperdoctrine-shaped” coherence statement that follows
--- from the *lax monoidal* structure alone (no pullbacks/fibrations required):
+-- from the lax monoidal adjunction axioms alone (no pullbacks/fibrations
+-- required):
 --
 --   ext (x ⊗∂ bnd y)  ⊑  ext x ⊗b y
 --

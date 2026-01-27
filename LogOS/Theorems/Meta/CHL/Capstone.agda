@@ -54,7 +54,8 @@ module For
       -- Model-theory: refinement implies boundary entailment.
       sound∂ : ∀ {γ δ} → C.Refines γ δ → Co.Entails∂ γ δ
 
-      -- Category-theory: code forms a thin category; Box is monotone.
+      -- Category-theory: code/refinement gives an ops-only preorder-category view
+      -- (thin/lawful only under an explicit proof-irrelevance assumption); Box is monotone.
       code-cat : Category.ThinCat ℓ
       box-mono : MonoOn (KCore.CodePreorder (Kernel.shape K)) C.Box
 

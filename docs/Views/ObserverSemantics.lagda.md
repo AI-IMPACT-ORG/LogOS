@@ -78,7 +78,7 @@ physical than the “classic logic” and “HoTT positioning” views.
 The goal is to make explicit how LogOS naturally supports an **observer-centric**
 semantics that aligns with:
 
-- *Categorical quantum mechanics* (CQM): processes, monoidal composition, and (optional) dagger structure,
+- *Categorical quantum mechanics* (CQM): processes, monoidal-*ops* composition, and (optional) dagger structure,
 - “physics as computation”: computation as physical process constrained by locality/causality/resources,
 - “complexity as a physics statement”: what can be decided/observed under resource constraints.
 
@@ -224,8 +224,10 @@ Physical reading:
 
 - an **observer** is a process that maps “what is asserted at the boundary” to an updated boundary assertion,
 - composition is sequential interaction,
-- tensor/whiskering is a monoidal “side-by-side” composition; it can be read as independence/parallelism
-  once a model interprets the tensor that way.
+- tensor/whiskering is a monoidal “side-by-side” composition in the *ops-first* sense:
+  a tensor/unit operation with monotonicity. Associativity/unit laws (and braiding/symmetry)
+  are optional and live in explicit law packs when you want textbook monoidal laws.
+  This can be read as independence/parallelism once a model interprets the tensor that way.
 
 Crucially, the process calculus is **ordered**: endomaps are compared by pointwise refinement (`_≤₂_`),
 so “being at least as informative / at least as strong” is part of the structure, not a derived notion.
@@ -236,9 +238,10 @@ This is the same order that appears as 2-cells in the kernel refinement 2-catego
 - `LogOS/Theorems/CategoryTheory/Kernel2Cat.agda` (refinement 2‑category interface)
 - `LogOS/Theorems/CategoryTheory/Kernel2CatGraded.agda` (refinement 2‑category interface)
 
-This is already the core shape of CQM: a monoidal setting of processes with
+This is already the core shape of CQM: a monoidal-*ops* setting of processes with
 parallel and sequential composition, where “systems” are the objects and “processes”
-are the morphisms. Symmetry/braiding is optional and lives in explicit algebra packs.
+are the morphisms. Symmetry/braiding (and other coherence laws) is optional and
+lives in explicit algebra packs.
 
 LogOS differs in emphasis: it does not start by postulating a dagger compact category;
 it starts by postulating only what the kernel needs (preorders + laxness), and then
@@ -278,7 +281,7 @@ events), making “measurement has a counted cost” a first-class notion.
 
 What is already structurally present in the production library:
 
-- **Monoidal process shape**: sequential composition + tensor/whiskering at the boundary (`TensorEndo` view).
+- **Monoidal-*ops* process shape**: sequential composition + tensor/whiskering at the boundary (`TensorEndo` view).
 - **Dagger-shaped hooks**: there is a dedicated meta development around dagger-like structure and positivity
   used by spectral/opacity packs (see `LogOS/Theorems/Meta/Dagger.agda` and related ledgers).
 - **Explicit circuit syntax**: UniversalIR includes an explicit circuit language and examples:
