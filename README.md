@@ -17,7 +17,7 @@ This "semantic polymorphism" of co-existing, overlapping interpretations is deep
 
 Getting started could not be easier as the repository is made to be use with code agents. 
 
-Download the repository. Ask your favorite code assistant (Codex, Claude Code, OpenCode, Cursor, etc.) to familiarise itself with the content of the repository folders as a'priming' prompt. Watch it churn for a while. Then start exploring, learning and building. For instance, ask to explain what is interesting. Or why this is an "unusally" broad model of information and information processing. 
+Download the repository. Ask your favorite code assistant (Codex, Claude Code, OpenCode, Cursor, etc.) to familiarise itself with the content of the repository folders as a'priming' prompt. Watch it churn for a while. Then start exploring, learning and building. For instance, ask to explain what is interesting. Or why this is an "unusually" broad model of information and information processing. 
 
 A word of warning: LLMs become generally more coherent, but occasionally also more unstable for context involving concentrated logic due to the presence of contextualised homonymy and polysemy in their training data. The coherence likely originates in the extreme coherence of the logic literature across papers. Aligning prompts with that literature raises bias, but reduces variance. Provocative questions and drives for particular interpretations or results raise variance, but reduce bias having less coverage in the literature. Semantic polymorphism makes all of this harder to navigate - chatbots need to spend tokens to distinguish between "literally" and "figuratively", or, related, syntax and semantics.
 
@@ -39,8 +39,7 @@ We briefly investigate similar ["reverse mathematics"](docs/Applications/Complex
 
 ## Meta-Conjecture
 
-A conjecture in science supported by the results in this repository is that the repository contains the core of a novel effective, [axiomatic theory of information](docs/Applications/InfoTheory.lagda.md). This could have very broad impact in science ranging from fundamental physics to sociology. Of immediate use is that it explains the myriad of connections to core information technology (IT) and, by extension, to AI. In a sense the conjecture is the information theory is a canonical model of the logic in this repository.
-
+A conjecture in science supported by the results in this repository is that the repository contains the core of a novel effective, [axiomatic theory of information](docs/Applications/InfoTheory.lagda.md). This could have very broad impact in science ranging from fundamental physics to sociology. This would certainly explain post-hoc the myriad of connections to core information technology (IT) and, by extension, to AI. Note this conjecture does not have to be fully proven to be immediately usefull when leveraging coding agents.
 
 ## Guardrails for AI-assisted development
 
