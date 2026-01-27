@@ -4,7 +4,7 @@
 
 AGDA        ?= agda
 AGDA_FLAGS  ?= --no-libraries -i . --safe --no-exact-split
-AGDA_WARN_FLAGS ?= -W all -W error
+AGDA_WARN_FLAGS ?= -W all -W noCoverageNoExactSplit -W error
 AGDA_CI_FLAGS ?= $(AGDA_FLAGS) $(AGDA_WARN_FLAGS)
 
 .PHONY: help clean test tests docs docs-curated ci ci-policy lint license-check license-headers-check honesty-check postulate-policy-check safe-options-check host-surface-check host-import-check pack-trust-check readme-pack-trust-check import-layer-check demo-isolation-check toy-sketch-location-check no-tabs-check dangerous-pragmas-check stable-surface-no-experimental-imports-check stable-surface-no-guardless-exports-check stable-surface-no-internal-mu-imports-check doc-analogy-markers-check bad-code-smells-check doc-reference-check doc-module-check legacy-isolation-check surface-namespace-check kernel-antisymmetry-check assumption-boundary-check reachability-check vacuity-check correctness-check agda-lib-check packs packs-zfc packs-universality packs-opacity packs-complexity packs-agents check-all check-all-clean make-all check-all-agda check-all-docs html
