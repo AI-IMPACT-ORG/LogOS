@@ -108,6 +108,9 @@ stable-surface-no-guardless-exports-check:
 stable-surface-no-internal-mu-imports-check:
 	@bash scripts/stable_surface_no_internal_mu_imports_check.sh
 
+doc-style-lint-check:
+	@bash scripts/doc_style_lint_check.sh
+
 doc-analogy-markers-check:
 	@bash scripts/doc_analogy_markers_check.sh
 
@@ -138,7 +141,7 @@ agda-lib-check:
 	@printf '%s\n' "$(CURDIR)/LogOS.agda-lib" > _build/local.agda-libraries
 	$(AGDA) --no-default-libraries --library-file=_build/local.agda-libraries -l LogOS --safe --no-exact-split $(AGDA_WARN_FLAGS) LogOS/API/Minimal.agda
 
-ci-policy: license-check license-headers-check honesty-check postulate-policy-check safe-options-check host-surface-check host-import-check pack-trust-check readme-pack-trust-check import-layer-check demo-isolation-check toy-sketch-location-check no-tabs-check dangerous-pragmas-check stable-surface-no-experimental-imports-check stable-surface-no-guardless-exports-check stable-surface-no-internal-mu-imports-check doc-analogy-markers-check bad-code-smells-check doc-reference-check doc-module-check legacy-isolation-check surface-namespace-check kernel-antisymmetry-check assumption-boundary-check reachability-check lint
+ci-policy: license-check license-headers-check honesty-check postulate-policy-check safe-options-check host-surface-check host-import-check pack-trust-check readme-pack-trust-check import-layer-check demo-isolation-check toy-sketch-location-check no-tabs-check dangerous-pragmas-check stable-surface-no-experimental-imports-check stable-surface-no-guardless-exports-check stable-surface-no-internal-mu-imports-check doc-style-lint-check doc-analogy-markers-check bad-code-smells-check doc-reference-check doc-module-check legacy-isolation-check surface-namespace-check kernel-antisymmetry-check assumption-boundary-check reachability-check lint
 
 ci: ci-policy vacuity-check correctness-check tests docs
 

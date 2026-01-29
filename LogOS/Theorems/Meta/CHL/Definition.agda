@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.CHL.Definition where
 
 -- CHL definition pack: propositions/types/programs/proofs are kernel-native.
--- Everything is stated up to refinement/observational equivalence, not equality.
+-- Everything is stated at preorder strength (refinement + mutual refinement), not equality.
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop using (_↔_)

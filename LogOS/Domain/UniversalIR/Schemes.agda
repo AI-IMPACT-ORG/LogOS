@@ -479,7 +479,7 @@ costExecPᵁ≤budget₂3n,n n u =
 -- Scheme-level cost envelope for any choice into the universal process.
 --
 -- This bridges the scheme interface (`Sch.cost`) to the process-level envelope
--- (`costExecPᵁ≤budget₂3n,n`) without assuming definitional equality.
+-- (`costExecPᵁ≤budget₂3n,n`) without relying on judgmental equality.
 
 costExecP≡costExecᵁ
   : ∀ {ℓI} {Input : Set ℓI}

@@ -114,7 +114,7 @@ nonvacuous-entropy+ {Sig = Sig} {Q = Q} A G =
   in
   f , (x , le)
 
--- Observational equivalence on observables defaults to definitional equality.
+-- Observational equality on observables defaults to propositional equality (`≡`).
 -- This keeps entropy well-behaved under (trivial) observation equality without
 -- committing to a richer observational semantics.
 

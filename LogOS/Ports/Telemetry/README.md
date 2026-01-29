@@ -15,7 +15,7 @@ Telemetry ports expose observation-only hooks for:
 - boundary programs (`∂Cosp` layer)
 
 The trace domain is a full `ConPreorder`. Observations are required to be monotone
-and to respect boundary observational equivalence.
+and to respect boundary observational equality.
 
 Program telemetry uses the observational preorder `ObsCospPreorder` (2-cells as
 refinements); equivalence is mutual refinement.

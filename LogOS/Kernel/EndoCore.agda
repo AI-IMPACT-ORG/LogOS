@@ -131,7 +131,7 @@ module WithOps {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (ops 
           (lift fg))
 
   -- Fixedness at a point in the boundary preorder, expressed in the LogOS style
-  -- as mutual refinement (not definitional equality).
+  -- as mutual refinement (not judgmental equality).
 
   FixedAt
     : ∀ {K : Obj}

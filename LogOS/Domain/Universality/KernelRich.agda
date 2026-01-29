@@ -35,7 +35,8 @@ observe = observeCore
 canon : CoreUCode → CoreUCode
 canon = canonCore
 
--- Constraints: both bulk and boundary are CoreUCode, ordered by observational equivalence.
+-- Constraints: both bulk and boundary are CoreUCode, ordered by observation equality
+-- (`observe u ≡ observe v`).
 conPreorderU : ConPreorder lzero
 conPreorderU = record
   { Con = CoreUCode

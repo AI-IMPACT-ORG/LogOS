@@ -61,7 +61,7 @@ Two complementary universality surfaces live side by side:
 
 In the “scheme” view, the library defines a canonical notion of **what computation is (in LogOS)**:
 as a fuel-free computation relation (`Sch.Scheme.ComputesTo`, i.e. “there exists a run to an `≡`‑fixed point”)
-and its induced observational equivalence (`Sch.ObsEq`), plus an explicit operational budget
+and its induced observational equality (`Sch.ObsEq`), plus an explicit operational budget
 layer (`Sch.ExecWithin` / `Sch.ReachesWithin`), rather than as a particular machine.
 For quotient-friendly “stability up to observation”, use the preorder/closure-stable variants
 (`halts`, `ComputesTo≈`, `StabilizesTo`) in `LogOS/Computation/Scheme.agda`.

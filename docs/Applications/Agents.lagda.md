@@ -38,7 +38,7 @@ This document uses domain terminology (“socket”, “agent”, “learning”
 referenced Agda interface/theorem. In particular:
 
 - “Policy/update/training” = boundary constraints + monotone endomaps (and
-  optional ωCPO/μ fixed points) inside the kernel algebra.
+  optional ωCPO/Kleene μ (limit) reasoning) inside the kernel algebra.
 - “RG/thermo/CFT” wording = analogy for coarse‑graining + fixed points + resource
   accounting; no physical laws are derived without an explicit model/axioms pack.
 
@@ -118,7 +118,7 @@ implicit.
 - Network-as-agent wrapper: `LogOS/Packs/Agents/Networks/NetworkAgent.agda`
   - Pick a hub role, translate all role constraints to the hub, and aggregate.
 - Aggregation is a parameter; any “network-as-agent” claim must name it.
-- The aggregator is required to respect observational equivalence at the hub.
+- The aggregator is required to respect observational equality at the hub.
 - Namespaced index surface: `LogOS/Packs/Agents/Networks/Core.agda` (and the lab surface).
 - Minimal example: `LogOS/Packs/Agents/Examples/HelloNetwork.agda`.
 - Concrete reindexing example: `LogOS/Packs/Agents/Examples/ReindexedNetwork.agda`.
@@ -142,7 +142,7 @@ with boundary ports to produce the canonical, meaning-preserving translation.
 ## Monitoring and auditing (opacity-native)
 
 The pack is intentionally “opacity-native”: it models auditors as
-**decode-extensional (up to decoded observational equality in the kernel case) partial-output observers**, so the existing diagonal / opacity
+**decode-extensional (up to decoded mutual refinement in the kernel case, `_≈K_`) partial-output observers**, so the existing diagonal / opacity
 meta-theorems apply as formal consequences of those observer definitions.
 
 - Monitoring endomaps: `LogOS/Packs/Agents/Safety/Monitor.agda`
@@ -162,7 +162,7 @@ The agent pack reuses kernel theorems directly; these are the main hooks for
 monitoring/auditing and policy composition:
 
 - `LogOS/Theorems/Reflection/QuanticNucleus.agda` — nucleus laws at the kernel boundary;
-  fixed points form a quantale and the quotient map has the expected factorisation
+  nucleus-stable elements (pre-fixed points, hence fixed up to `≈`) form a quantale and the quotient map has the expected factorisation
   for `j`-invariant functions (`f (j x) ≡ f x`) for any
   quantale equipped with a nucleus (monotone/inflationary/idempotent‑lax, plus
   join/multiplication preservation up to `≈`). A canonical instance is the budget quantale
@@ -199,8 +199,8 @@ The concrete surfaces are lightweight wrappers:
 
 High-level training loops can be modeled as updates on policies. The μ-policy
 construction is available **once you supply an `OmegaCPO` on the boundary preorder**
-(an explicit model-local assumption), and the stronger “μ is a fixed point”
-direction additionally uses Scott/ω-continuity of the update endomap (also an
+(an explicit model-local assumption), and the stronger unfold-right direction
+(hence “μ is fixed up to refinement”) additionally uses Scott/ω-continuity of the update endomap (also an
 explicit assumption). This captures convergence inside the kernel rather than as
 an external meta-argument.
 
@@ -217,7 +217,7 @@ used as a soft layer:
 - **Blend example:** `LogOS/Packs/Agents/Examples/NeuralSymbolicBlend.agda` shows
   the minimal pattern: apply a soft update, then refine by a symbolic constraint.
 
-Interpretation: this provides a precise *soft/hard constraint* split in the
+Interpretation (analogy): this provides a precise *soft/hard constraint* split in the
 kernel algebra. Any claim about real LLM training only follows after you supply
 an explicit training model and justify the chosen observables/budgets.
 
@@ -231,7 +231,7 @@ boundary constraints:
   lemma (no semantic effect on the kernel).
 - `LogOS/Boundary/Telemetry.agda` — generic lemmas
   `telemetry-respects-≈∂` / `telemetry-respects-≈∂Cosp` show telemetry is stable
-  under observational equivalence (so monitors can’t change meaning).
+  under observational equality (so monitors can’t change meaning).
 
 This lets the agent surface state telemetry obligations without smuggling in
 operational effects: telemetry is just another boundary observer.
@@ -296,11 +296,11 @@ The new RG surface lives in `LogOS/Packs/Agents/Experimental/Learning/RGFlow.agd
 - `RGStep g = ClosureStepAt K g`: RG updates are closure steps at grade `g`.
 - `rg-compose` + `rg-promote`: RG morphisms compose by grade multiplication and
   can be promoted along the quantale order (lax enrichment).
-- `rg-μ`, `rg-unfold-left`: RG fixed points exist via Kleene μ on the boundary ωCPO.
-- `rg-unfold-right`: the “μ is a fixed point” direction additionally assumes
+- `rg-μ`, `rg-unfold-left`: Kleene μ RG policy + unfold-left inequality (`rg-μ s ⊑ applyRG s (rg-μ s)`).
+- `rg-unfold-right`: unfold-right inequality (`applyRG s (rg-μ s) ⊑ rg-μ s`), additionally assumes
   `ScottContinuous` for the update endomap (`RGFlow.rg-unfold-right`).
-- `rg-least-stable`: **classification result** — the μ-fixed point is the least
-  RG-stable policy among all post-fixed points.
+- `rg-least-stable`: **classification result** — the Kleene μ policy `rg-μ` is the least
+  RG-stable (pre-fixed) policy.
 - `RGLyapunov` + `rg-lyapunov-iter`: quantale-valued Lyapunov potentials give a
   monotone “energy/complexity” descent for RG iterations.
 - `CFunction` / `AFunction`: CFT-aligned analogs; values live in `Time` and are
@@ -318,7 +318,7 @@ The new RG surface lives in `LogOS/Packs/Agents/Experimental/Learning/RGFlow.agd
   only the step (or one-sided composition) is available.
 - `c-theorem-iter`, `c-theorem-fixed`, `a-theorem-iter`, `a-theorem-fixed`:
   formal monotonicity, plus μ‑minimality results: the μ policy `rg-μ` is least among
-  RG‑stable policies, hence minimises these observables among post‑fixed points.
+  RG‑stable policies, hence minimises these observables among pre‑fixed points.
 - `rg-learning-cost`: RG steps are soft updates, so Landauer bounds apply
   directly (physics-aware optimization).
 
@@ -338,7 +338,7 @@ The formal scaling-law spine is packaged in
 - `obs-μ≤stable`: least RG-stable policies minimise observables (phase-transition
   anchor).
 - `ScalingBound` + `scalingBound-from-stable`: code-level policies above the
-  μ-fixed point inherit the bound.
+  μ-policy `rg-μ` inherit the bound.
 - `scalingBound-reify`: reflection closure (reify is observationally inert).
 - `Public` submodule: if `step-grade = sat`, the bound is publicised via
   `LimitPublicisation`, and `scalingBound-public-reify` shows reify-invariance
@@ -387,7 +387,7 @@ structure-level transformer interface that is still **LogOS-native**:
 - `TrainingDynamics`: an RG step + scaling dimension, plus a parameter update
   consistent with the boundary update (`train-correct`).
 - `IsTrainedStable`: trained transformers as RG-stable policies.
-- `ConvergesToMu`: a Scott-continuity route to the canonical μ fixed point.
+- `ConvergesToMu`: a Scott-continuity route to the canonical Kleene μ object (and hence the unfold-right inequality).
 - `trained-scalingBound` and `trainedMu-scalingBound`: scaling-law consequences
   derived directly from the kernel (via RGFlow + ScalingLaws).
 
@@ -724,8 +724,8 @@ Theorems (proved in Agda):
 
 - `μPolicy-unfold-left` and `μPolicy-induction` (learning fixed points, under the explicit
   boundary `OmegaCPO` hypothesis carried by `Learning.FixedPoint.For`).
-- `rg-least-stable` (least RG-stable fixed point, under boundary `OmegaCPO`).
-- `rg-μ-fixed` (μ is a fixed point, additionally assumes `ScottContinuous` for the RG update endomap).
+- `rg-least-stable` (least RG-stable policy via Kleene μ, under boundary `OmegaCPO`).
+- `rg-μ-fixed` (μ is fixed up to refinement, additionally assumes `ScottContinuous` for the RG update endomap).
 - `scalingBound-from-stable` (scaling law from RG stability, in `ScalingLaws.For` with
   a graded kernel + boundary `OmegaCPO`).
 - `learning-cost-lower-bound` (Landauer lower bound, assuming `LandauerIOAssumptions`).

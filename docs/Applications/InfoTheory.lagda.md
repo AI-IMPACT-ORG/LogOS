@@ -104,7 +104,7 @@ lemma most downstream uses want:
 Everything beyond that is packaged as a small number of additional assumption records:
 
 - DPI: `DPIFacts` adds just one extra law (`klTerm-scale`), and then derives the finite KL DPI.
-- Capacity: `CapacityFacts` is an interface (mutual information is definitional; achievability/converse are abstract).
+- Capacity: `CapacityFacts` is an interface (mutual information is defined here; achievability/converse are abstract).
 - Thermo/RG: `RGFacts` + `LandauerShannonFacts` are interfaces connecting coarse‑graining entropy increase to an abstract cost lower bound.
 
 ## Connection back to LogOS (observer/semantics view)

@@ -127,7 +127,7 @@ following explicit assumptions in a record (ledger):
    - This does not assume totality.
 3) Budget function is decode-extensional up to `_≈K_`
    - `ProofSearchOpacitySpine.For.BudgetBy` (budget + extensionality)
-   - Keeps budget discipline aligned with the kernel's decoded observational equality (`_≈K_` / mutual refinement).
+   - Keeps budget discipline aligned with the kernel's decoded mutual refinement (`_≈K_`).
 4) Witness cost / physical budget
    - ℕ-cost surface: `BudgetedSeparationOutput.WitnessCost`
    - General budgets: `SpectralSeparationOutput.GeneralB.WitnessCostB`

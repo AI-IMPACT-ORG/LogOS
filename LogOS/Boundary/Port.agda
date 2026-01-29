@@ -19,7 +19,7 @@ open import LogOS.Syntax.Prop as Prop
 open import LogOS.Boundary.IO
 open import LogOS.Boundary.Semantics
 
--- Boundary observational equivalence induced by a `BoundaryIO`.
+-- Boundary observational equality induced by a `BoundaryIO`.
 
 infix 4 _≈∂[_]_
 _≈∂[_]_ : ∀ {ℓ}

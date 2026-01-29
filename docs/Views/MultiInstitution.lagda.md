@@ -4,7 +4,7 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-% LogOS — Classic (Model-Theoretic) Presentation as a Multi-Institution
+% View — Multi-Institution (Classic Model Theory)
 
 ```agda
 {-# OPTIONS --safe #-}
@@ -113,9 +113,46 @@ It is intentionally “implementation-aligned”: where the Agda library does no
 expose a notion as a packaged categorical structure (e.g. a `Category` record),
 we make the weakest presentation consistent with the implemented interfaces.
 In particular, this note sometimes works **at fixed signature** (so signatures
-can be treated as a discrete/one-object category), while also pointing to the
+can be treated as the terminal category), while also pointing to the
 nontrivial signature-change interfaces that *do* exist (`SigHom`, `reindexKernel`,
 `reindexKernelWithFml`, and the optional `rename∂` sentence layer).
+
+Interpretation (analogy):
+this document is a derived presentation (“view”) over the same kernel interfaces;
+it does not add logical power.
+
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+
+Scope (formal)
+--------------
+- Parameter: `Kernel Sig Q`.
+- Surface: `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `MultiInstitution`).
+
+Adapter mapping to the literature (quick table)
+-----------------------------------------------
+
+| Literature concept | LogOS identifier(s) | Notes |
+|---|---|---|
+| Signatures (objects) | `LogOSSignature` | Kernel parameter; not a global “category of all signatures” by default. |
+| Signature morphisms | `SigHom` (`LogOS/Base/Signature/Hom.agda`) | Identity/composition available; enough for institution-style satisfaction conditions. |
+| Sentences (`Sen`) | strict formulas `Fml`, optional boundary sentence layer `Con∂` + `rename∂` | `Sen` can be taken trivial-on-morphisms, or made nontrivial via `rename∂`/`mapFml`. |
+| Models (`Mod`) | worlds/contexts `Cosp` (optionally a preorder via `_≤ctx_`) | Presented conservatively as discrete unless you assume `CtxPreorder`. |
+| Satisfaction | `Sat_S`, `Sat_H`, `Sat_H_bnd` | Three-tier interface (S/H/∂) rather than a single `⊨`. `Sat_H (w , c)` is world‑indexed; `Sat_H_bnd (to∂ w , c)` is the boundary-indexed coherence. |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); mostly orthogonal to the institution story. |
+| Satisfaction condition | `Sat*-precompose` lemmas under reindexing | Implemented as literal precomposition in theorems (reindexing surface). |
+| Inter-institution translations | ports/adapters, hetero canonical adapters | “Presentation independence” is a first-class boundary feature. |
+
+Assumptions (explicit)
+----------------------
+- For a textbook institution category story, you may additionally assume/introduce packaged categorical structure on `SigHom` and on the chosen model notion; the core development stays conservative.
+- Nontrivial sentence translation is **optional**: the kernel always supports model reduct (`reindexKernel`), while `Sen(σ)` can be added via strict formula translation (`reindexKernelWithFml`) and/or the free boundary sentence layer (`rename∂`).
+
+What is novel here (residual vs the literature)
+-----------------------------------------------
+- Matches literature: the institution components (signatures, models, sentences, satisfaction condition) as reindexing + satisfaction lemmas.
+- Weaker/lax by default: the core stays conservative (no global “category of all signatures/models” is assumed; nontrivial sentence translation is optional).
+- Added by ports/adapters: presentation independence and heterogeneous translation live as first-class structure (interlingua + `SatMor`).
+- Assumption-scoped: closure/stability (G) and reflection (Code) are extra LogOS structure beyond the bare institution reading, and any completeness/adequacy is explicit.
 
 Theorem spine (authoritative)
 -----------------------------
@@ -229,9 +266,13 @@ We use the following correspondence to the Agda fields:
 - $\mathrm{Fml} :=$ strict-layer formulas,
 - $\mathrm{Sat}_S(w,\varphi)$ and $\mathrm{Sat}_H(w,c)$ are the S- and H-layer satisfactions,
 - $\mathrm{Flow} : \mathrm{Con}_\partial \to \mathrm{Con}_\partial$ is a closure/nucleus
-  (this is the `Flow` field of `GuardedTruth.GuardedClosure` in the Kernel/Minimal code),
-- $\mathrm{Th}^\ast$ is a distinguished (preorder) fixed point witness (global stable truth),
+  (this is the `Flow` field of `Truth.GuardedCore.GuardedClosure` in `LogOS/Minimal/Truth.agda`),
+- $\mathrm{Th}^\ast$ is a distinguished (preorder) (lax) fixed point witness (interpretation: “global stable truth”),
 - $\mathrm{Trans}_H : \mathrm{Fml} \to \mathrm{Con}_\partial$ is the S→H translation.
+
+Disambiguation: this section uses $\mathrm{Con}_\partial$ for **semantic** boundary constraints (the boundary preorder).
+Separately, the library also provides an optional **syntactic** boundary sentence layer `Con∂` with renaming `rename∂`
+(see `LogOS/Free/ConstraintsOverSig.agda`), which can be used as an institution-style `Sen` if desired.
 
 The kernel coherence laws include:
 $$
@@ -242,13 +283,13 @@ $$
   \mathrm{decode}(\mathrm{Guard}(\gamma)) \;\equiv\; \mathrm{Flow}(\mathrm{decode}(\gamma)).
 $$
 where $\equiv$ should be read as the library’s propositional equality (Agda’s `_≡_`),
-not a definitional equality.
+not a judgmental equality.
 
 ### S-institution: strict formulas
 
 Define an institution $\mathcal{I}_S(K)$ (“S-tier”) by:
 
-- $\mathbf{Sig}$: the one-object discrete category (we fix the kernel signature in this section),
+- $\mathbf{Sig}$: the terminal category (we fix the kernel signature in this section),
 - $\mathrm{Sen}_S(\Sigma) := \mathrm{Fml}$,
 - $\mathrm{Mod}_S(\Sigma) :=$ the discrete category on the set $\mathrm{World}$,
 - satisfaction: $w \models_S \varphi$ iff $\mathrm{Sat}_S(w,\varphi)$.
@@ -266,10 +307,10 @@ Define an institution $\mathcal{I}_H(K)$ (“H-tier”) by:
 - $\mathrm{Mod}_H(\Sigma) :=$ the discrete category on $\mathrm{World}$,
 - satisfaction: $w \models_H c$ iff $\mathrm{Sat}_H(w,c)$.
 
-### G-institution: stable theories (Flow fixed points)
+### G-institution: stable theories (Flow pre-fixed points)
 
 The guarded tier is most naturally a **consequence/closure** interface. A standard
-model-theoretic presentation uses **fixed points** of the closure operator as models.
+model-theoretic presentation uses **pre-fixed points** (stable constraints) of the closure operator as models.
 
 Let $\mathrm{Fix}(\mathrm{Flow})$ be the set of constraints $t \in \mathrm{Con}_\partial$
 that are **stable** under the closure, i.e. $\mathrm{Flow}(t) \preceq t$ (pre‑fixed points).
@@ -279,13 +320,17 @@ as well, hence $t$ is “fixed” up to preorder equivalence.
 Define an institution $\mathcal{I}_G(K)$ (“G-tier”) by:
 
 - $\mathrm{Sen}_G(\Sigma) := \mathrm{Con}_\partial$,
-- $\mathrm{Mod}_G(\Sigma) :=$ the preorder of fixed points $\mathrm{Fix}(\mathrm{Flow})$
+- $\mathrm{Mod}_G(\Sigma) :=$ the preorder of stable constraints $\mathrm{Fix}(\mathrm{Flow})$
   (read as a thin category if you assume proof‑irrelevance for entailment proofs),
 - satisfaction: $t \models_G c$ iff $t \preceq c$ in the boundary preorder.
 
-In this view, $\mathrm{Th}^\ast$ is a distinguished model representing “global stable truth”.
+This is the standard “theories as models” (Lindenbaum-style) move: stable constraints represent theories,
+and satisfaction is entailment in the underlying preorder.
+
+In this view, $\mathrm{Th}^\ast$ is a distinguished stable constraint (hence a canonical “model” in $\mathcal{I}_G$).
+Interpretation (analogy): “global stable truth”.
 Under additional order/continuity structure (not assumed in the minimal kernel interface),
-one can upgrade this to a “least (pre)fixed point / least model (in the boundary preorder)”
+one can upgrade this to a “least pre-fixed point / least model (in the boundary preorder)”
 presentation (e.g. via `OmegaCPO` + `FiniteFirst`, and antisymmetry if you want equality-level leastness).
 
 ## Multi-institution structure (S/H/G together)
@@ -316,7 +361,7 @@ and define:
 
 The map $H \to G$ is not primarily a sentence translation; it is a change of **model class**:
 G-models are the $\mathrm{Flow}$-stable constraints, and satisfaction is the underlying
-preorder entailment. This is a standard way to express “truth as closure/fixed point” in a
+preorder entailment. This is a standard way to express “truth as closure/(pre)fixed point” in a
 classical model-theoretic idiom.
 
 ## Reflection (Kernel I/O) as internal syntax for G
@@ -337,9 +382,16 @@ $$
   \mathrm{decode}(\mathrm{Guard}(\gamma)) \;\equiv\; \mathrm{Flow}(\mathrm{decode}(\gamma)).
 $$
 
-This can be read as: the G-tier closure operator is **internalized** by a single admissible
+This can be read as: the G-tier closure operator is **internalised** by a single admissible
 code step. This is the interface used by the diagonal/Rice/Tarski-style meta theorems,
 while keeping all assumptions explicit.
+
+Cross references
+----------------
+- Views index: `docs/Views/All.lagda.md`
+- CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`
+- Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
+- Observer semantics (physics-of-information interpretation): `docs/Views/ObserverSemantics.lagda.md`
 
 ## Reference
 

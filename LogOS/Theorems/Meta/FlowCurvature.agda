@@ -74,7 +74,7 @@ module For
     monoPlusRight {b = b} {c = c} z≤n = leAddLeft b c
     monoPlusRight (s≤s p) = s≤s (monoPlusRight p)
 
-    -- Transport ≤ along definitional equality on the right-hand side.
+    -- Transport ≤ along propositional equality (`≡`) on the right-hand side.
     substRight : ∀ {a b c} → b ≡ c → a ≤ℕ b → a ≤ℕ c
     substRight refl p = p
 

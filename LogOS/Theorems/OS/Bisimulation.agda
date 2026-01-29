@@ -17,20 +17,23 @@ open import LogOS.Kernel
 open import LogOS.Theorems.Boundary.Reflection as BR
 
 -- “Full bisimulation” in the most LogOS-native OS sense:
--- bisimulation is *boundary observational equivalence*.
+-- bisimulation is *boundary observational equality*.
 --
 -- This avoids inventing an internal small-step relation: LogOS is an open system,
 -- so the only behaviour that matters is what the explicit boundary can observe.
 --
--- If you additionally assume observational completeness (Extension),
--- you recover a full-abstraction statement: bisimilarity ⇔ decoded observational equality
--- (and hence ⇔ strict decode equality when the boundary preorder is antisymmetric).
+-- This module also exposes the basic implication:
+-- propositional equality of decoded constraints implies bisimilarity.
+--
+-- Stronger “full abstraction” statements (upgrading observational equality to
+-- propositional equality, or relating it to preorder antisymmetry) require
+-- additional extensionality/completeness hypotheses and are stated elsewhere.
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
          (K : Kernel Sig Q) where
   open Kernel K
 
-  -- Bisimulation on codes (by definition, boundary observational equivalence).
+  -- Bisimulation on codes (by definition, boundary observational equality).
   Bisim : Code → Code → Set ℓ
   Bisim = BR._≈∂_ K
 

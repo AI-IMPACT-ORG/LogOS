@@ -120,7 +120,7 @@ boundary realiser is required to be stable under `Flow`.
 
 If a model supplies `OmegaCPO` + `FiniteFirst` for the boundary preorder, then
 `StageToCH-fromCH-μFlow` replaces the distinguished witness `Th⋆K` with the **Kleene μ**
-of `Flow`. This gives a least (pre)fixed-point interpretation of the infinity stage in the
+of `Flow`. This gives a least pre-fixed-point interpretation of the infinity stage in the
 boundary preorder, without adding any axioms to the kernel.
 
 ## Axiom ledger (WFGraph route)

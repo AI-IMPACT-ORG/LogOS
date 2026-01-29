@@ -89,7 +89,7 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
   Import∘Export≈C p c =
     Prop.↔-trans (SatC≈F p c) (SatF≈C p (Export c))
 
-  -- Imports/exports respect observational equivalence.
+  -- Imports/exports respect observational equality.
 
   Export-respects-ObsEqC
     : ∀ {c d}

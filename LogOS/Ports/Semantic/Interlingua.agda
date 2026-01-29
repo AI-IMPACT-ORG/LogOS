@@ -84,7 +84,7 @@ module For
 
     module C = Core.ForPresentations {SatC = BoundaryIO.Sat∂ B} (toPresentationC B P₁) (toPresentationC B P₂)
 
-  -- Boundary observational equivalence (w.r.t. `Sat∂`).
+  -- Boundary observational equality (w.r.t. `Sat∂`).
 
   infix 4 _≈∂_
   _≈∂_ : Con_bnd → Con_bnd → Set ℓ

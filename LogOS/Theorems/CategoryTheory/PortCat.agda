@@ -59,7 +59,7 @@ module For
   _≈⇒_ {B = B} f g =
     ∀ p φ → SatF B p (map f φ) ↔ SatF B p (map g φ)
 
-  -- (Helper) A satisfaction-preserving map respects observational equivalence.
+  -- (Helper) A satisfaction-preserving map respects observational equality.
   respects-ObsEq
     : ∀ {A B}
     → (h : PortHom A B)

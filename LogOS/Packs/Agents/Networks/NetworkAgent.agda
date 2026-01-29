@@ -20,13 +20,13 @@ open import LogOS.Packs.Agents.Networks.Hetero using (AgentNetwork)
 --
 -- There is no canonical aggregation; it is an explicit parameter. Any claim
 -- about “the network as an agent” therefore depends on the chosen aggregator.
--- The record also requires aggregation to respect observational equivalence
+-- The record also requires aggregation to respect observational equality
 -- at the hub, ensuring observable behavior is well-defined.
 
 record NetworkAgent {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   : Set (lsuc (lsuc (ℓ ⊔ ℓTask ⊔ ℓRole))) where
 
-  -- Aggregation is required to respect observational equivalence at the hub.
+  -- Aggregation is required to respect observational equality at the hub.
   -- This makes the “network-as-agent” view well-defined up to the hub’s
   -- observable boundary behavior.
   AggRespectsObsEqAt

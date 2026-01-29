@@ -29,15 +29,18 @@ This repo uses a small amount of overloaded terminology. In the docs we try to
 separate these meanings explicitly:
 
 - **Literal (checked):** an Agda definition/lemma in the referenced file.
-- **Truth after computation (stabilized):** a statement about a closure/fixed
-  point (e.g. `Th*`, `Box`, `μ Flow`) — usually only a *lax* fixed point unless
+- **Truth after stabilisation (closure):** a statement about a closure/fixed
+  point (e.g. `Th*`, `Box`, Kleene `μ Flow`) — usually only a *lax* fixed point unless
   extra domain structure (ω‑sups, continuity) is assumed.
 - **Representational truth (presentation):** a statement transported through
   `decode`/`encode`/`translate`/`SatMor`, i.e. preserved up to the relevant
-  satisfaction equivalence; this is not definitional equality.
+  satisfaction equivalence; this is not judgmental equality.
 - **Analogy / interpretation:** physics/CS/maths metaphors (kernel, channel, RG,
   “GRH”, …). These are explicitly labeled as interpretations and do not add
   logical power; the formal content is the cited Agda surface.
+
+Notation (used throughout the docs): `≡` is propositional equality, `c ⊑ d` is (directed) refinement in a preorder,
+`c ≈ d` is mutual refinement (two inequalities), and `P ↔ Q` is a satisfaction equivalence (paired implications).
 
 Where to start:
 - Architecture + entrypoints: `docs/LogOS_Overview.lagda.md`

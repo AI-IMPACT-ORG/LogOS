@@ -4,7 +4,7 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-% Kernel Claim Register (Literal vs Stabilized vs Representational)
+% Kernel Claim Register (Literal vs Stabilisation vs Representational)
 
 ```agda
 {-# OPTIONS --safe #-}
@@ -93,11 +93,14 @@ Reading discipline (guardrail)
 This repository distinguishes four kinds of statements:
 
 - **Literal (checked):** a definition/lemma typechecked by Agda.
-- **Truth after computation (stabilized):** a closure/fixed-point statement (e.g. `Th*`, `Box`, `μ Flow`).
+- **Truth after stabilisation (closure):** a closure/fixed-point style statement (e.g. `Th*`, `Box`, Kleene `μ Flow`).
   By default, these are only *lax* fixed points (two inequalities), unless extra domain structure is assumed.
 - **Representational truth (presentation):** a statement transported through ports/adapters (satisfaction equivalences),
-  not definitional equality of syntax/terms.
+  not judgmental equality of syntax/terms.
 - **Analogy / interpretation:** explanatory metaphors; they never add logical power.
+
+Notation (used throughout the docs): `≡` is propositional equality, `c ⊑ d` is (directed) refinement in a preorder,
+`c ≈ d` is mutual refinement (two inequalities), and `P ↔ Q` is a satisfaction equivalence (paired implications).
 
 This page is a compact “claim register”: it points to the **exact code surfaces**
 that define what each phrase means.
@@ -110,16 +113,16 @@ that define what each phrase means.
   This repackages a kernel shape together with a parameterised guarded tier (`GTier`) so the same interface covers
   ungraded and graded kernels uniformly.
 
-## “Truth after computation” (stabilized, but only lax by default)
+## Truth after stabilisation (closure; lax by default)
 
-- **Code step:** `LogOS/Kernel/Core.agda` (`FlowCode`) and `LogOS/Kernel/LogicKernel.agda` (`FlowCode`).
-  This is the operational one-step update on code (`Guard ∘ Body`).
+- **Operational code step:** `LogOS/Kernel/Core.agda` (`FlowCode`) and `LogOS/Kernel/LogicKernel.agda` (`FlowCode`).
+  This is the one-step update on code (`Guard ∘ Body`).
 - **Closure modality:** `LogOS/Kernel/LogicKernel.agda` (`BoxAt`, `Box`).
   These are *code-level* modalities defined by `encode ∘ Flow ∘ decode`.
 - **Distinguished “stable truth”:** `LogOS/Kernel/LogicKernel.agda` (`GTier.Th*` / `Th*`).
-  By default this is only a *lax fixed point* (`Th* ⊑ Flow sat Th*` and `Flow sat Th* ⊑ Th*`), not a least fixed point.
+  By default this is only a *lax fixed point* (`Th* ⊑ Flow sat Th*` and `Flow sat Th* ⊑ Th*`), not a least pre-fixed point.
 
-If you want least-fixed-point strength (and induction principles), the explicit domain-theoretic assumptions live in:
+If you want leastness/μ-induction strength (and to relate `Th*` to Kleene `μ`), the explicit domain-theoretic assumptions live in:
 
 - `LogOS/Minimal/Truth.agda` (`OmegaCPO`, `FiniteFirst`, Kleene `μ`).
 - `LogOS/Theorems/Boundary/ContinuityCore.agda` (connects `Th*` with Kleene `μ` under `FiniteFirst`/`OmegaCPO`).
@@ -144,7 +147,7 @@ The “presentation-independent” API uses satisfaction equivalence as the noti
 - Boundary ports: `LogOS/Boundary/Port.agda` (`BoundaryPort`) and interlingua translation:
   `LogOS/Ports/Semantic/Interlingua.agda`.
 
-Statements of the form “X is preserved by translation” are usually **up to satisfaction** (a `↔`), not definitional `≡`.
+Statements of the form “X is preserved by translation” are usually **up to satisfaction** (a `↔`), not propositional `≡`.
 
 Limit/stabilisation transport for presentations (Kleene `μ`) is also explicitly packaged:
 
@@ -157,7 +160,7 @@ Many kernels/models deliberately support “scaffold” instantiations where sat
 To prevent accidental over-interpretation, “meaningfulness” is expressed as explicit guards:
 
 - Kernel guards: `LogOS/Kernel/LogicKernel/VacuityGuards.agda` (`KernelVacuityGuards`).
-  These witnesses are **observational** (distinguishable by boundary satisfaction), not merely definitional.
+  These witnesses are **observational** (distinguishable by boundary satisfaction), not merely “by definition”.
 - Port/adapter guards: `LogOS/Ports/Semantic/VacuityGuards.agda` (`PortVacuityGuards`, `AdapterVacuityGuards`).
 - Quantale/scale guards: `LogOS/QAdapters/Guards.agda` (`QAdapterVacuityGuards`).
 

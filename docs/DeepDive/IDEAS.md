@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-3.0-only
 
 # Deep Dive — IDEAS (What’s Now in Reach)
 
-This file collects forward-looking extensions that fit LogOS “as-is” (preorders, lax laws, observational equality), especially where a small amount of domain theory / locale theory can improve coherence across packs without adding logical power.
+This file collects forward-looking extensions that fit LogOS “as-is” (preorders, lax laws, satisfaction-induced observational equality), especially where a small amount of domain theory / locale theory can improve coherence across packs without adding logical power.
 
 Interpretation (analogy):
 this file may use cross-domain metaphors (e.g. “locale”, “RG”) as motivation; the only formal content is what is stated in the cited Agda modules.
@@ -22,9 +22,9 @@ The repository now has reusable “glue” that systematically turns step-level 
 
 ## Near-term, high-leverage directions (now in reach)
 
-### 1) Functorial stabilized truth (`Th*`) from Flow commutation
+### 1) Functorial stabilised truth (`Th*`) from Flow commutation
 
-**Move:** make “preserves stabilized truth” a derived lemma: if a map is ω-continuous (preserves ⊥ and ω-sups of chains) and commutes with `Flow` up to refinement, then it transports the stabilised truth fixed point.
+**Move:** make “preserves stabilised truth” a derived lemma: if a map is ω-continuous (preserves ⊥ and ω-sups of chains) and commutes with `Flow` up to refinement, then it transports the stabilised truth fixed point.
 
 **Anchor points:** `LogOS/Minimal/Truth.agda`, `LogOS/Kernel/Hom.agda`, `LogOS/Kernel/Infinite/Lemmas.agda`, `LogOS/Theorems/Boundary/MuFusion.agda`, `LogOS/Theorems/Boundary/Continuity.agda`.
 

@@ -4,7 +4,7 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-% LogOS as a 3-Level HoTT-Style System (S / H / G)
+% View — HoTT-Style Positioning (S/H/G + Reflection)
 
 ```agda
 {-# OPTIONS --safe #-}
@@ -55,6 +55,37 @@ Interpretation (analogy):
 where this note mentions physics/complexity as motivation, treat that as interpretation only.
 The authoritative claims are exactly the typechecked theorem surfaces cited below.
 
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+
+Scope (formal)
+--------------
+- Parameter: `Kernel Sig Q`.
+- Surface: `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `HoTT3Level`).
+
+Adapter mapping to the literature (quick table)
+-----------------------------------------------
+
+| Literature concept | LogOS identifier(s) | Notes |
+|---|---|---|
+| “Levels” / strata of meaning | S/H/G tiers (`Sat_S`, `Sat_H (w , c)`, `Flow` + `Th*`) | These are explicit interfaces, not universe levels. |
+| Equivalence-first coherence | `_↔_` (`LogOS/Syntax/Prop.agda`) | Used for tier coherences instead of judgmental equality. |
+| Modality / local operator | `Flow` (guarded closure) | Inflationary + idempotent-lax; pre-fixed points (hence fixed up to `≈`) are “stable truths”. |
+| Truncation/extensionality upgrades | antisymmetry / proof-irrelevance packs | Upgrades mutual refinement to equality when assumed. |
+| Reflection (syntax-in-logic) | `Code`, `encode`, `decode`, `Guard`, `Body` | A reflective interface, not an additional truth layer. |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); used for graded/budgeted variants. |
+
+Assumptions (explicit)
+----------------------
+- This repo does **not** assume univalence/HITs/univalent universes globally; any extensionality is local and explicit.
+- Equality-level “HoTT laws” typically require **proof-irrelevance** (for refinement proofs) and/or **antisymmetry** (for constraint preorders).
+
+What is novel here (residual vs the literature)
+-----------------------------------------------
+- Matches literature: “transport-first” coherence (equivalences/bi-implications) and stratified semantics.
+- Weaker/lax by default: no global HoTT axiom set (no univalence/HITs assumed); refinement and closure live at preorder strength.
+- Added by ports/adapters: tier coherences are explicit interfaces, and stability is a named closure modality (`Flow`, `Th*`) rather than a meta-level convention.
+- Assumption-scoped: equality-level upgrades (proof-irrelevance/antisymmetry) and μ/limit facts (ωCPO/finite-first/continuity bundles) are explicit hypotheses.
+
 Theorem spine (authoritative)
 -----------------------------
 - `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `HoTT3Level`):
@@ -83,22 +114,23 @@ LogOS names the tiers:
    - Entailment is *derived* from `Sat_S` as `StrictTruth.EntailsS`
      (`LogOS/Minimal/Truth.agda`).
 
-2) **H — Homotypical**
-   - A satisfaction predicate `Sat_H` for boundary constraints.
+2) **H — Homotypical** (LogOS term: world-/context-indexed boundary semantics)
+   - A satisfaction predicate `Sat_H (w , c)` for boundary constraints.
    - An invariance/projector `Inv_H` (inflationary, idempotent‑lax). If you additionally assume
      monotonicity for `Inv_H`, it upgrades to a closure/nucleus operator; LogOS keeps that
      strength explicit (bundle: `HomotypicalTruth.InvarianceMono` in `LogOS/Minimal/Truth.agda`).
    - This tier is designed so theorems are phrased in terms of *structure* and *transport*
-     rather than definitional equalities.
+     rather than judgmental equalities.
 
 3) **G — Guarded**
    - A closure operator on boundary constraints (a nucleus/projector). In the Kernel code this
-     step is named `Flow` (field of `GuardedTruth.GuardedClosure`).
-   - A distinguished (preorder) fixed point `Th*` (global stable truth). With optional antisymmetry
+     step is named `Flow` (the `Flow` field of `Truth.GuardedCore.GuardedClosure` in `LogOS/Minimal/Truth.agda`).
+     Unlike `Inv_H`, `Flow` already includes monotonicity in its interface.
+   - A distinguished (preorder) (lax) fixed point witness `Th*` (interpretation: “global stable truth”). With optional antisymmetry
      (and, for μ/limit results, `OmegaCPO` + `FiniteFirst`), one can relate `Th*` to the Kleene
-     fixed point `μ Flow`. Antisymmetry only upgrades “leastness up to refinement” to
+     least pre-fixed point `μ Flow`. Antisymmetry only upgrades “leastness up to refinement” to
      equality-level leastness.
-   - This tier is the “stability/communication” layer: local truths become globally stable via
+   - Interpretation (analogy): this tier is the “stability/communication” layer: local truths become globally stable via
      the closure step.
 
 4) **R — Reflection (Code)**
@@ -116,7 +148,7 @@ LogOS names the tiers:
 The coherence laws between tiers are **fields of the Kernel record** (`LogOS/Kernel.agda`):
 
 - `coh-LH` connects strict S-truth to H-truth via `TransH : Fml → Con_bnd` using a *bi-implication*
-  (`_↔_`), not a definitional equality.
+  (`_↔_`), not a judgmental equality.
 - `sat-coh` connects world-indexed H-truth to boundary-indexed H-truth via `to∂`.
 
 ```agda
@@ -147,7 +179,7 @@ Two design choices are key:
 
 ### 1) Equivalences are first-class (and equality is not forced)
 Across the repo, “coherence” is phrased as `_↔_` (pairs of functions) and order inequalities,
-not definitional equalities. This mirrors the HoTT discipline:
+not judgmental equalities. This mirrors the HoTT discipline:
 
 - identify structure via equivalence/transport,
 - treat equality (judgmental or propositional) as *additional structure*, not the default.
@@ -168,7 +200,7 @@ and under antisymmetry this upgrades to equality-level idempotence; LogOS makes 
 at the boundary logic level.
 
 This is what powers:
-- “local truth vs global truth” theorems (fixed point transport),
+- “local truth vs global truth” theorems (stable truth transport),
 - diagonal/Rice/Tarski meta-theorems phrased at decode level,
 - physics/complexity “resource bottleneck” interfaces phrased as closure-stability claims.
 
@@ -176,8 +208,8 @@ Where “univalence” fits (what exists today)
 -------------------------------------------
 LogOS already contains the **slots** where univalence-like upgrades live:
 
-### Univalence for posets / preorders (0-truncated univalence)
-The core is preorder-based. If you assume antisymmetry, then “mutual entailment” becomes equality.
+### Poset extensionality (analogy: 0-truncated univalence)
+The core is preorder-based. As an analogy: if you assume antisymmetry, then “mutual entailment” becomes equality.
 This is the poset analogue of univalence at truncation level 0:
 
 > if `c ⊑ d` and `d ⊑ c`, then `c ≡ d`.
@@ -206,7 +238,7 @@ Instead, the repo is engineered so that:
 1) the core stays small and host-minimal,
 2) equivalence-first reasoning is the default (via `_↔_`, projectors, and transport),
 3) univalence-like principles can be added as *explicit, scoped* assumption packs
-   where the application warrants it (e.g. collapsing observational equivalence classes).
+   where the application warrants it (e.g. collapsing mutual-refinement classes under antisymmetry/proof-irrelevance).
 
 How to use this in writing
 --------------------------
@@ -218,7 +250,9 @@ If you want a precise, publication-friendly sentence:
 
 Cross references
 ----------------
+- Views index: `docs/Views/All.lagda.md`
 - Kernel definition and coherence fields: `LogOS/Kernel.agda`
 - Minimal tier interfaces: `LogOS/Minimal/Truth.agda`
 - Preorders/partial orders: `LogOS/Minimal/Con.agda`
 - `_↔_` and negation discipline: `LogOS/Syntax/Prop.agda`
+- CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`

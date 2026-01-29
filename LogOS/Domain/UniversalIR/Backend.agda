@@ -18,7 +18,7 @@ open import LogOS.Domain.UniversalIR.IR using (lowerToIR; decode)
 --
 -- Note: this module exposes a step-budgeted `exec`/`decodeAt` convenience API.
 -- The scheme-centric semantics (“machines as schemes”, fuel-free normalisation,
--- observational equivalence) lives in `LogOS.Computation.Scheme` and
+-- observational equality) lives in `LogOS.Computation.Scheme` and
 -- `LogOS.Domain.UniversalIR.Schemes`.
 
 record Backend {ℓI ℓB : Level} (Input : Set ℓI) (BrandCode : Set ℓB)

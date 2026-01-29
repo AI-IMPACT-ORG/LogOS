@@ -80,7 +80,7 @@ module For
 
   open TrainingDynamics public
 
-  -- Stability transport along definitional equality.
+  -- Stability transport along propositional equality (`≡`).
   stable-subst
     : ∀ {g} {s : RGStep g} {c d : Policy}
     → c ≡ d

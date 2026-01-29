@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Domain.Opacity.Indistinguishability where
 
--- Indistinguishability as observational equivalence, with adapters as simulators.
+-- Indistinguishability as observational equality, with adapters as simulators.
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_; ↔-sym; ↔-trans)

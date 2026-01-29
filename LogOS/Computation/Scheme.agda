@@ -112,7 +112,7 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
   -- from the current state up to mutual refinement.
   --
   -- This is the right notion for quotient-y state models, where `Step c` may not
-  -- be definitional `c` but is still observationally stable.
+  -- be judgmentally equal to `c` but is still observationally stable.
   halts : Con → Set ℓC
   halts c = _≈CP_ CP (Step c) c
 
@@ -127,7 +127,7 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
     Σ Con (λ c' → NormalizesTo (compile x) c' × decode (close c') ≡ y)
 
   -- Observational (preorder) variant: keep the same reachability witness, but
-  -- weaken halting from definitional equality to mutual refinement.
+  -- weaken halting from judgmental equality to mutual refinement.
 
   NormalizesTo≈ : Con → Con → Set ℓC
   NormalizesTo≈ c c' = Σ ℕ (λ n → iterate Comp n c ≡ c' × halts c')
@@ -367,7 +367,7 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
     (m + n) , ExecWithin-+ {m = m} {n = n} ew₁ ew₂
 
 -- ==========================================================================
--- Observational equivalence (semantics is the set of possible outputs)
+-- Observational equality (semantics is the set of possible outputs)
 --
 -- This is the standard “same computation” notion in a setting where
 -- computation is defined relationally (big-step / normalization style).
@@ -385,7 +385,7 @@ ObsEq S T =
     (Scheme.ComputesTo S x y → Scheme.ComputesTo T x y)
   × (Scheme.ComputesTo T x y → Scheme.ComputesTo S x y)
 
--- A more `LogOS.Syntax.Prop`-aligned presentation: observational equivalence as
+-- A more `LogOS.Syntax.Prop`-aligned presentation: observational equality as
 -- pointwise logical equivalence (`↔`) of the computed-output relation.
 
 ObsEq↔
@@ -463,7 +463,7 @@ abstract
     (λ c → fst (eTU x y) (fst (eST x y) c))
     , (λ c → snd (eST x y) (snd (eTU x y) c))
 
--- A tighter, executable observational equivalence:
+-- A tighter, executable observational equality:
 -- two schemes are equivalent iff they compute the same observed output under
 -- their chosen (possibly representation-specific) fuel schedule.
 --

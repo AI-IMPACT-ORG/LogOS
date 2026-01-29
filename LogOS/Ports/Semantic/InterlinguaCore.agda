@@ -10,7 +10,7 @@ module LogOS.Ports.Semantic.InterlinguaCore where
 -- Kernel-independent “interlingua” core:
 -- ports over a shared satisfaction relation induce canonical translations,
 -- unique up to satisfaction, and closure/normalisation operators commute with
--- these translations once they respect observational equivalence.
+-- these translations once they respect observational equality.
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop

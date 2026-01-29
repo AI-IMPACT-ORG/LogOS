@@ -4,7 +4,7 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-% Categorical Logic — LogOS (Computational Trinity)
+% View — Categorical Logic (Computational Trinity)
 
 ```agda
 {-# OPTIONS --safe #-}
@@ -57,6 +57,44 @@ This note states the **categorical-logic leg** of the “computational trinity�
 for the production LogOS library. The guiding principle is: we keep category
 theory *out of the core signature*, but the core structures already *are*
 categorical once you look at them through the right lens.
+
+Interpretation (analogy):
+this document is a derived presentation (“view”) over the same kernel interfaces;
+it does not add logical power.
+
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+
+Scope (formal)
+--------------
+- Parameter: `Kernel Sig Q`.
+- Surface: `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `CategoricalLogic`).
+
+Adapter mapping to the literature (quick table)
+-----------------------------------------------
+
+| Literature concept | LogOS identifier(s) | Notes |
+|---|---|---|
+| Preorder as a thin category | `ConPreorder` (`LogOS/Minimal/Con.agda`) | “Category laws” are ops-level unless you assume proof-irrelevance. |
+| Monoidal structure on a preorder (ops vs laws) | `MonoidalOps` / `MonoidalLaws` (`LogOS/Minimal/Adjunction.agda`) | Ops are always available; laws are opt-in. |
+| (Lax) adjunction / Galois connection | `LaxAdjunction`, `GaloisConnection` (`LogOS/Minimal/Adjunction.agda`) | Kernel uses the lax (inequality) form by default. |
+| Frobenius reciprocity (lax) | `Frobenius.frobenius-ext≤` (`LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda`) | One-way inequality; avoids collapsing irreversible structure. |
+| Beck–Chevalley (lax) | `LogOS/Theorems/CategoryTheory/BeckChevalley.agda` | Presented as commutation squares up to refinement. |
+| Kernel morphisms as 1-cells, refinement as 2-cells | `LogOS/Kernel/Hom2Cat.agda`, `LogOS/Kernel/Graded/Hom2Cat.agda`, `LogOS/Kernel/LogicKernel/Hom2Cat.agda`, `LogOS/Theorems/CategoryTheory/Kernel2Cat.agda` | Locally preordered 2-category interface. |
+| Ports/adapters as a 2-category | `LogOS/Theorems/CategoryTheory/Port2Cat.agda` | “Presentation independence” is expressed as 2-cells (`↔`-equivalences). |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete) + time map. |
+
+Assumptions (explicit)
+----------------------
+- **Proof-irrelevance** (or truncation) is needed if you want to treat refinement proofs as equalities of morphisms (literal thin categories).
+- **Antisymmetry** is needed if you want to upgrade mutual refinement `c ⊑ d × d ⊑ c` to propositional equality `c ≡ d` (partial order reading).
+- **Monoidal laws** are not assumed by default: if you want textbook monoidal categories, add `MonoidalLaws`/`Monoidal`.
+
+What is novel here (residual vs the literature)
+-----------------------------------------------
+- Matches literature: preorder-as-thin-category structure, monoidal/adjunction patterns, and coherence theorems (Frobenius/Beck–Chevalley).
+- Weaker/lax by default: 2-cells are refinement witnesses (directed/irreversible), and “laws” are ops-level unless you assume proof-irrelevance/antisymmetry.
+- Added by ports/adapters: “presentation independence” is expressed as port-level translation/naturality rather than as a single privileged syntax.
+- Assumption-scoped: any equality-level categorical structure is an explicit upgrade (e.g. `MonoidalLaws`, antisymmetry/proof-irrelevance packs).
 
 Theorem spine (authoritative)
 -----------------------------
@@ -134,24 +172,25 @@ coherence at the preorder (`_⊑_`) level:
 Quantale enrichment (resource-aware categories)
 ----------------------------------------------
 
-The quantitative adapter `QAdapter` is a **finite‑join unital quantale** (`Scale`, i.e. a join‑semilattice
-with bottom and a monoid multiplication distributing over join) with a
+The quantitative adapter `QAdapter` is a **unital quantale in the finite-join sense** (not complete): `Scale` is a preorder with a
+binary join (`_⊔s_`) and bottom (`⊥s`), and a monoid multiplication (`_·_`, `e`) distributing over join, with a
 time monoid homomorphism `τ : Time → Scale`. This supplies the generic “budget algebra” used across
 universality, complexity, and opacity.
 
 Categorically:
-- `WorldH` equips strict worlds with a `WFlow : WorldS → WorldS → Scale` satisfying lax unit/associativity,
+- `WorldH` equips strict worlds with a `WFlow : WorldS → WorldS → Scale` satisfying the identity and composition
+  inequalities (`e ≤ WFlow w w` and `WFlow w w' · WFlow w' w'' ≤ WFlow w w''`),
   i.e. a category enriched over the **monoidal preorder** underlying `Scale` (using `_·_`, `e`, and `_≤s_`).
   The Kripke-style context relation `_≤ctx_` (often taken as a preorder) is used for satisfaction monotonicity.
   When you want the preorder reading, supply `CtxPreorder` from `LogOS/Minimal/WorldLaws.agda`.
-- The graded kernel (`LogOS/Kernel/Graded.agda`) indexes the boundary flow by grades `g : Scale`,
+- In graded kernels (`LogOS/Kernel/Graded.agda`), the boundary flow is indexed by grades `g : Scale`,
   enabling resource-aware closure/normalisation arguments.
 
-Category of kernels (morphisms up to strict decode equality)
+Category of kernels (morphisms up to decoded `≡`)
 --------------------------------------------
 
 For a fixed signature `Sig` and adapter `Q`, kernels form a category where the
-notion of equality on morphisms is **strict decode equality** (two morphisms are
+notion of equality on morphisms is **strict propositional decode equality (`≡`)** (two morphisms are
 identified if they induce the same decoded boundary constraint at the target).
 Concretely, this is pointwise: `eqHom f g` iff `∀ γ → decode (mapCode f γ) ≡ decode (mapCode g γ)`.
 
@@ -195,10 +234,10 @@ In code:
   - `LogOS/Theorems/CategoryTheory/Kernel2CatGraded.agda` (instantiates `Ref2Cat`)
   - `LogOS/Theorems/CategoryTheory/Port2Cat.agda` (ports/adapters; satisfaction-equivalence as 2-cells)
 
-The 1-category `KernelCat` is the decode-level 1D façade: it identifies morphisms
-by strict decode equality (`eqHom`). Conceptually, this *presents* the locally
-posetal quotient of the refinement 2-category (it is not implemented as a
-quotient type).
+The 1-category `KernelCat` is the decode-equality 1D façade: it identifies morphisms
+by decoded propositional equality (`eqHom`). This is compatible with the refinement
+2-category reading (both are phrased at decode level), but it is *not* implemented
+as a quotient of the refinement preorder on 1-cells.
 
 2-category of ports/adapters (boundary-level)
 ---------------------------------------------
@@ -250,6 +289,13 @@ layer. The incremental development lives in:
 - `LogOS/Theorems/CategoryTheory/Yoneda.agda`
 
 This is the categorical counterpart to the meta-theory transport pipeline:
-initial object + morphisms up to observational equality ⇒ principled transport of
+initial object + morphisms up to decoded sameness (`_≃K_` / `_≈K_`) ⇒ principled transport of
 structures along folds, without claiming more extensionality than the boundary
 actually supports.
+
+Cross references
+----------------
+- Views index: `docs/Views/All.lagda.md`
+- Multi-institution (classic model theory): `docs/Views/MultiInstitution.lagda.md`
+- CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`
+- Topos-shaped nuclei/sheaves reading: `docs/Views/Topos.lagda.md`

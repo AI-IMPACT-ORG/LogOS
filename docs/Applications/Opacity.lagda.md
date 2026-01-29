@@ -67,11 +67,11 @@ W-pos (truth/positivity on tests)
 
 Opacity is also used as a *semantic indistinguishability* interface:
 
-- `LogOS/Domain/Opacity/Indistinguishability.agda` — observational equivalence
+- `LogOS/Domain/Opacity/Indistinguishability.agda` — observational equality
   on boundary ports and preservation by port adapters (simulators), plus the
   ObsEqF‑functorial lemma `simulator-preserves-ObsEqF`.
 - `LogOS/Domain/Opacity/TelemetryInvariant.agda` — telemetry traces are stable
-  under observational equivalence (observation-only discipline).
+  under observational equality (observation-only discipline).
 
 Guarded vs guardless application claim (canonical vs raw):
 
@@ -233,8 +233,8 @@ module Budgeted-Scale-Snippet where
       module G = GB.General Scale _≤s_ CB
 ```
 
-Interpretation: for any budget policy `Bnd : Code → Scale`, `G.no-total-within-budget Bnd …`
-says there is no decode-extensional (up to decoded observational equality, `_≈K_`) oracle that is total *and* always produces a witness
+Concretely, for any budget policy `Bnd : Code → Scale`, `G.no-total-within-budget Bnd …`
+says there is no decode-extensional (up to decoded mutual refinement, `_≈K_`) oracle that is total *and* always produces a witness
 whose grade is ≤ `Bnd γ`. This aligns directly with graded kernels by taking budgets in `Scale`.
 
 ## HP (Hilbert–Pólya) opacity theorem (no total spectral oracle)
@@ -252,7 +252,7 @@ This is the precise statement behind:
 
 > a fully explicit, total “spectral certificate oracle” for the global object is blocked
 
-more precisely: given a decode-extensional (up to decoded observational equality, `_≈K_`) oracle surface (`SpectralSeparationOutput`) and a
+more precisely: given a decode-extensional (up to decoded mutual refinement, `_≈K_`) oracle surface (`SpectralSeparationOutput`) and a
 Tarski-style truth diagonal (`TruthDiagonal`), diagonalization forces an explicit code where the
 oracle must return `undefined`. In particular, no such oracle can be total.
 

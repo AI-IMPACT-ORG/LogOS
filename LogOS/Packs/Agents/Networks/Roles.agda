@@ -18,7 +18,7 @@ open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Boundary.MultiIO using (MultiBoundaryIO)
 
--- Role-indexed observational equivalence induced by a `MultiBoundaryIO`.
+-- Role-indexed observational equality induced by a `MultiBoundaryIO`.
 
 module For
   {ℓ : Level}

@@ -98,7 +98,7 @@ module For
     square-unique S =
       translate-unique (CommutingSquare.map S) (CommutingSquare.commute S)
 
-  -- Translation respects observational equivalence (relative to pulled-back observers).
+  -- Translation respects observational equality (relative to pulled-back observers).
   translate-respects-ObsEq
     : ∀ {φ ψ}
     → P1.ObsEqF φ ψ

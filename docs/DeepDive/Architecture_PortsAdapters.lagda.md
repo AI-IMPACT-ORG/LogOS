@@ -70,7 +70,7 @@ The key claim is not “there are many modules”, but:
 > if two external systems present the *same* boundary satisfaction relation, then
 > the meaning‑preserving translation between them is **forced** (up to satisfaction),
 > and closure/extension steps commute with that translation **provided** the chosen
-> boundary endomap respects boundary observational equivalence (the explicit
+> boundary endomap respects boundary observational equality (the explicit
 > extensionality hypothesis in `ported-closure-naturality`, which can be bundled as
 > an `ObsEndo∂` witness).
 
@@ -84,13 +84,8 @@ A second, more “full‑metal modularity” claim is also supported:
 
 Interpretation (analogy): an OO reading (without mutable state)
 --------------------------------------------------------------
-This is explanatory only (not a formal claim): you can read the architecture in
-“OO words” as long as you keep the formal boundaries explicit.
-
-- “Object” = a kernel instance (`LogOS/Kernel.agda`, `LogOS/Kernel/LogicKernel.agda`).
-- “Interface/port” = boundary I/O + presentations (`LogOS/Boundary/IO.agda`, `LogOS/Boundary/Port.agda`).
-- “Adapter” = canonical translation / view transport (`LogOS/Ports/Semantic/Interlingua.agda`, `LogOS/Kernel/Reindex.agda`).
-- “Wiring” = categorical composition of processes (`LogOS/Computation/SchemeCategory.agda`).
+See `docs/LogOS_Overview.lagda.md` for the OO analogy. This note stays focused on
+the port/adapters spine and the precise (typed) translation/naturality claims.
 
 ## Layer 1: signatures + signature morphisms
 

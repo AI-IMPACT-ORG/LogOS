@@ -4,7 +4,7 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-% Meredith Sentences — LogicKernel / CHL (Ultra-Compact Core Math)
+% View — Meredith Sentences (LogicKernel / CHL Core)
 
 ```agda
 {-# OPTIONS --safe #-}
@@ -41,7 +41,8 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   -- ------------------------------------------------------------------------
   -- Meredith anchors (LogicKernel interface, unpacked as named lemmas).
   --
-  -- These are not extra axioms: each is definitional or a field/lemma in
+  -- These are not extra axioms: each is a field/lemma (often `refl` after
+  -- unfolding the canonical bridges) in
   -- `LogOS/Kernel/LogicKernel.agda`.
   -- ------------------------------------------------------------------------
 
@@ -105,7 +106,7 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   Meredith₇-idemp-sat = LK.GTier.idemp-sat (LK.LogicKernel.G K)
 
   -- CHL-facing operational anchor: raw step agrees (up to mutual refinement) with
-  -- “compute then stabilise at the step grade”.
+  -- “compute-then-stabilise at the step grade”.
   Meredith₈-flowCode≈boxAt-step-body
     : ∀ γ →
       Core.Code≈ (LK.LogicKernel.shape K)
@@ -141,7 +142,7 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     boxAt≤Box = D.boxAt≤Box
 
   -- ------------------------------------------------------------------------
-  -- μ-level stabilization anchors (M₉–M₁₀ in the prose).
+  -- μ-level stabilisation anchors (M₉–M₁₀ in the prose).
   -- ------------------------------------------------------------------------
 
   private
@@ -205,6 +206,50 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
 Fix `K : LogicKernel Sig Q` (`LogOS/Kernel/LogicKernel.agda`).
 
+Interpretation (analogy):
+this document is a derived presentation (“view”) over the CHL-facing `LogicKernel`;
+it does not add logical power.
+
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+
+Scope (formal)
+--------------
+- Parameter: `LogicKernel Sig Q`.
+- Derived from: any `Kernel Sig Q` via `LogOS/Kernel/LogicKernel/FromKernel.agda`.
+
+Adapter mapping to the literature (quick table)
+-----------------------------------------------
+
+| Literature concept | LogOS identifier(s) | Notes |
+|---|---|---|
+| “Axiom poem” / compact interface axioms | (M₁–M₈) anchors in `LogicKernel` | Not additional axioms: each line is a field/lemma (often `refl` after unfolding canonical bridges). |
+| Closure/modality □ | `Flow` / `BoxAt` / `Box` | In graded form: `BoxAt g γ := encode (Flow g (decode γ))`. `Box` is the ungraded/saturation instance. |
+| Stable truth / fixed point invariant | `Th*`, `γ*` | `Th*` is a distinguished (preorder) (lax) fixed point witness; μ-characterisation is optional. |
+| Kleene μ / least pre-fixed point | `μ` (when `OmegaCPO` + `FiniteFirst`) | Limit semantics is explicit and hypothesis-driven. |
+| Resource/quantale indexing | `BudgetedTier` (grades `g`) | Purely an optional view: it does not add logical power to the core. |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); used via the graded/budgeted tier. |
+
+Assumptions (explicit)
+----------------------
+- (M₁–M₈) are kernel fields/lemmas (no extra hypotheses).
+- (M₉–M₁₀) require explicit ωCPO/continuity hypotheses, as stated.
+- The resource spelling requires `BudgetedTier K` (it is not part of the minimal kernel).
+
+What is novel here (residual vs the literature)
+-----------------------------------------------
+- Matches literature: a compact “axiom poem” presentation (Meredith‑style) of a logical interface, with explicit anchors into the mechanized kernel fields.
+- Weaker/lax by default: no hidden proof-irrelevance/antisymmetry; stability is expressed up to refinement/mutual refinement, not as judgmental equalities.
+- Added by ports/adapters: code/reflection (`encode`/`decode`/`reify`) and compute‑then‑stabilise anchors make the CHL-facing kernel story interoperable across presentations.
+- Assumption-scoped: μ/limit and resource/budget strengthenings are separate, explicitly‑hypothesized layers (ωCPO/continuity, `BudgetedTier`).
+
+Theorem spine (authoritative)
+-----------------------------
+- LogicKernel core laws: `LogOS/Kernel/LogicKernel.agda` (the anchored `Meredith₁`–`Meredith₈` fields/lemmas above).
+- Resource/budget view (optional): `LogOS/Kernel/LogicKernel/BudgetedTier.agda`.
+- μ/least-pre-fixed-point characterisation (optional): `LogOS/Theorems/Boundary/ContinuityCore.agda` (`Th*≈μFlow`).
+- μ-fusion transport (optional): `LogOS/Theorems/Boundary/MuFusion.agda` (`preserves-Th*-from-Flow`).
+- The prose below is explanatory; the Agda anchors above are the authoritative claims.
+
 Notation (barebones)
 --------------------
 - `γ, δ : Code` and `c, d : Con` (boundary constraints).
@@ -214,16 +259,21 @@ Notation (barebones)
 - `ρ γ := reify γ` (safe self-reflection; observationally inert).
 - `B := Body`, `B∂ := Body∂`, `▹ := Guard`.
 - `FlowCode γ := ▹ (B γ)`  (raw operational step).
-- `g : Step` (step index; becomes a budget/resource when `BudgetedTier` is assumed),
+- `g : Step` (step index). Canonical bridges: from `Kernel`, `Step = ⊤` (no nontrivial budgets);
+  from `GradedKernel`, `Step = QAdapter.Scale Q` (`LogOS/Kernel/LogicKernel/FromKernel.agda`,
+  `LogOS/Kernel/LogicKernel/FromGradedKernel.agda`).
   `Flow₍g₎ : Con → Con`, `□₍g₎ γ := η (Flow₍g₎ ⟦γ⟧)`.
-  When `K` comes from a graded kernel, `Step` is the resource scale `Scale` of `Q`
-  (`QAdapter`), with order `≤` and multiplication `·` (`LogOS/Kernel/LogicKernel/BudgetedTier.agda`).
+  A `BudgetedTier K` equips `Step` with an order `≤g` and multiplication `·g` (plus `sat-top`,
+  monotonicity, and lax composition). Canonical instances are provided in
+  `LogOS/Kernel/LogicKernel/BudgetedTier.agda` (`budgetedTierFromKernel`, `budgetedTierFromGradedKernel`).
 - `□ γ := □₍sat₎ γ`, `★ := γ*`, `Θ := Th*`.
 - `μ F` = Kleene μ (ω-sup of iterates from `⊥`, when `OmegaCPO` is assumed).
+  (Disambiguation: this is unrelated to the notation `ClosureOp.Notation.μ` for “monad multiplication”
+  of a closure operator; see `LogOS/Minimal/Closure.agda`.)
 
 Reading note (guardrail): (M₁–M₇) are kernel fields/lemmas re-exported by this
 module (the `Quotes` section above).
-(M₈) is a derived coherence lemma (“compute then stabilise at the step grade”).
+(M₈) is a derived coherence lemma (“compute-then-stabilise at the step grade”).
 (M₉–M₁₀) are limit-level strengthenings and require the stated ωCPO/continuity
 hypotheses.
 
@@ -243,7 +293,7 @@ Meredith sentences (resource spelling, optional)
 If you assume a `BudgetedTier K` (`LogOS/Kernel/LogicKernel/BudgetedTier.agda`):
 - (R₁a) `g ≤ h ⇒ □₍g₎ γ ⊢ □₍h₎ γ`
 - (R₁b) `□₍h₎ (□₍g₎ γ) ⊢ □₍g·h₎ γ`  (apply `g` then `h`)
-- (R₁c) `□₍g₎ γ ⊢ □γ`  (since `sat` is top)
+- (R₁c) `□₍g₎ γ ⊢ □γ`  (by `BudgetedTier.sat-top`)
 
 Meredith sentences (limit semantics, explicit hypotheses)
 ---------------------------------------------------------
@@ -258,3 +308,9 @@ These hypothesis sets are available as explicit bundles:
 - `MuFusion.For.Th*TransportAssumptions` (adds ω-continuity of `map` and lax flow commutation).
 
 Typechecked anchor surface: this document (`docs/Views/MeredithSentences.lagda.md`).
+
+Cross references
+----------------
+- Views index: `docs/Views/All.lagda.md`
+- CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`
+- Observer semantics (physics-of-information interpretation): `docs/Views/ObserverSemantics.lagda.md`

@@ -48,6 +48,8 @@ import LogOS.Theorems.Meta.Assumptions
 
 For a newcomer-friendly architecture overview, see `docs/LogOS_Overview.lagda.md`.
 
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+
 Overview
 --------
 This file is a compact, code‑accurate summary of the LogOS core. All axioms are
@@ -57,9 +59,9 @@ Hook: one kernel, many semantics — packs and views add structure without chang
 Conventions and Notation
 ------------------------
 - Levels: records are level‑polymorphic; higher universes appear only when fields range over `Set`.
-- Equality: propositional `_≡_` only; decode‑observational equality is `_≈K_` (preferred) and strict decode equality is `_≃K_` (both from `LogOS/Syntax/Eq.agda`, module `ForKernel`).
+- Equality: propositional `_≡_` only; decoded mutual refinement is `_≈K_` (preferred) and strict decoded equality is `_≃K_` (both from `LogOS/Syntax/Eq.agda`, module `ForKernel`).
 - Orders: preorders by default; antisymmetry is optional (`PartialOrder` in `LogOS/Minimal/Con.agda`).
-- Coherence: use `_↔_` (pairs of maps), not definitional equality.
+- Coherence: use `_↔_` (pairs of maps), not judgmental equality.
 - Bottom/negation: `⊥` and `¬_` from `LogOS.Syntax.Prop`.
 
 Universe/Prelude
@@ -92,7 +94,7 @@ from∂-sig Sig = LogOSSignature.from∂ Sig
 
 Adapter and Worlds (S/H/G)
 --------------------------
-`QAdapter` packages a finite‑join unital quantale‑like structure (a preorder with binary join/bottom
+`QAdapter` packages a unital quantale in the finite‑join sense (a preorder with binary join/bottom
 and a monoid multiplication distributing over joins) plus a time monoid homomorphism `τ : Time → Scale`;
 ω‑sup / infinite-join completeness is *not* assumed on `Scale` (ω‑sup interfaces live separately via
 `OmegaCPO`/`FiniteFirst`).
@@ -111,7 +113,7 @@ Truth Interfaces (S/H/G)
 ------------------------
 `LogOS.Minimal.Truth` packages S/H/G layers:
 - `StrictTruth.StrictLayer` (`Sat_S`)
-- `HomotypicalTruth.HLayer` (`Sat_H`, monotonicity) + `HomotypicalTruth.Invariance` (`Inv_H`, `infl`, `idemp-lax`)
+- `HomotypicalTruth.HLayer` (world‑indexed `Sat_H (w , c)`, monotonicity) + `HomotypicalTruth.Invariance` (`Inv_H`, `infl`, `idemp-lax`)
 - `GuardedTruth.GuardedClosure` (`Flow`, `mono`, `infl`, `idemp-lax`, `Th*`, `Th*-fixed`)
 - Optional graded closure (`GuardedCore.GradedClosure`) and ω‑sup structure (`OmegaCPO`, `FiniteFirst`)
 `Th*` lives in preorder form. When ω‑sup structure is provided, `FiniteFirst`
@@ -156,12 +158,12 @@ Reflection is an axis across S/H/G and the bulk↔boundary interface:
   layers unless explicitly imported). See
   `docs/Meta_Safety.lagda.md` and `LogOS/Theorems/Meta/Safety/*`.
 - Kernel-level nucleus theorems: `LogOS/Theorems/Reflection/QuanticNucleus.agda`
-  (fixed points form a quantale + quotient factorization, given a nucleus that
+  (nucleus-stable elements (pre-fixed points, hence fixed up to `≈`) form a quantale + quotient factorisation, given a nucleus that
   preserves join/multiplication up to `≈`), `LogOS/Theorems/Reflection/NucleusMu.agda`
   (finite/list coverage → closure operator via Kleene μ; `OmegaCPO` required, and
   idempotence uses a Scott‑continuity witness), and `LogOS/Theorems/Reflection/ForcingSheaves.agda`
-  (preorder-site coverage: forcing/sheaves = fixed points of a local operator).
-No definitional identifications are assumed; see `LogOS/Theorems/Reflection/All.agda`.
+  (preorder-site coverage: forcing/sheaves = pre-fixed points (hence fixed up to `≈`) of a local operator).
+No judgmental identifications are assumed; see `LogOS/Theorems/Reflection/All.agda`.
 
 Optional graded kernel
 ----------------------
@@ -329,7 +331,7 @@ for every monotone endomap.
 Projective Perspective (Fixed‑Point Logic)
 -----------------------------------------
 `Projector` is the inflationary, idempotent‑lax *projector shape* (monotonicity is optional);
-fixed points form a sub‑preorder
+pre-fixed points (stable elements) form a sub‑preorder
 (and a sub‑partial‑order if you additionally assume antisymmetry via `PartialOrder`).
 Instances: `Flow` (G‑tier) and `Inv_H` (H‑tier).
 

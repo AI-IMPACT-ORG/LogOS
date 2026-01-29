@@ -49,7 +49,7 @@ ObsCospPreorder {Sig = Sig} B =
     ; trans = λ pq qr c sat → qr c (pq c sat)
     }
 
--- Boundary program observational equivalence induced by Sat∂.
+-- Boundary program observational equality induced by Sat∂.
 
 infix 4 _≈∂Cosp[_]_
 _≈∂Cosp[_]_

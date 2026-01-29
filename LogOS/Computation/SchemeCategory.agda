@@ -332,7 +332,7 @@ record ProcessHomCost
 
 open ProcessHomCost public
 
--- Cast helpers for the “same-Q up to definitional equality” story.
+-- Cast helpers for the “same-Q up to propositional equality” story.
 -- These keep proofs readable by localising the `subst (λ Q → ...)` noise.
 
 castScale→

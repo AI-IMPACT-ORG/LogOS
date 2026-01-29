@@ -4,7 +4,7 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-% Curry-Howard-Lambek - LogOS (Capstone View)
+% View — Curry–Howard–Lambek (CHL Capstone)
 
 ```agda
 {-# OPTIONS --safe #-}
@@ -55,10 +55,47 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
 This note states the **CHL capstone** of the LogOS kernel. It is deliberately
 preorder-safe and proof-relevant: everything is up to refinement/observational
-equivalence, not definitional equality.
+mutual refinement (`≈`), not judgmental equality.
 
 See also: `docs/Views/MeredithSentences.lagda.md` (ultra-compact “axiom poem”
-presentation of the same kernel interface).
+presentation of the CHL-facing `LogicKernel`, derived from any `Kernel` via
+`LogOS/Kernel/LogicKernel/FromKernel.agda`).
+
+Interpretation (analogy):
+this document is a derived presentation (“view”) over the same kernel interfaces;
+it does not add logical power.
+
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+
+Scope (formal)
+--------------
+- Parameter: `Kernel Sig Q`.
+- Surface: `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `CHL`).
+
+Adapter mapping to the literature (quick table)
+-----------------------------------------------
+
+| Literature concept | LogOS identifier(s) | Notes |
+|---|---|---|
+| Propositions / types | boundary constraints `Con_bnd`, strict formulas `Fml` | LogOS keeps S (strict) and H/∂ (boundary) layers explicit. |
+| Proofs / programs | `Code` (kernel code) | “Programs as proofs” is internalised as code + refinement. |
+| Entailment / derivability | code refinement `γ ⊢ δ`, boundary entailment (`Entails∂`) | Primary notion is directed refinement, not equality. |
+| Modality □ / closure | `Box` (ungraded), `BoxAt` (graded/LogicKernel) | `Box γ = encode (Flow (decode γ))` (`LogOS/Kernel.agda`). In the CHL-facing `LogicKernel`/graded setting: `BoxAt g γ = encode (Flow g (decode γ))` (`LogOS/Kernel/LogicKernel.agda`). |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); used by graded/budgeted variants. |
+| Soundness / completeness | `capstone`, `completeF`, budgeted variants | Completeness requires explicit (budgeted) adequacy assumptions. |
+| Presentation-independence | ports/adapters + interlingua | Boundary truth (`Sat_H (w , c)` and boundary-indexed `Sat_H_bnd (to∂ w , c)`) is transported across ports via satisfaction equivalence. |
+
+Assumptions (explicit)
+----------------------
+- **No proof-irrelevance/antisymmetry is assumed**: CHL statements are up to refinement/mutual refinement (`≈`).
+- **Completeness is conditional**: it requires explicit adequacy hypotheses (plain or budgeted); it is not a global kernel axiom.
+
+What is novel here (residual vs the literature)
+-----------------------------------------------
+- Matches literature: the CHL triangle (propositions/types, proofs/programs, entailment) as an internal kernel view.
+- Weaker/lax by default: all statements are up to refinement/mutual refinement (`≈`), not judgmental equality; closure is a preorder-level modality.
+- Added by ports/adapters: “compute-then-stabilise” is explicit (`Step = Box ∘ Body`, decode-equivalent to `FlowCode`), and translations between presentations are forced/unique up to satisfaction.
+- Assumption-scoped: completeness is conditional (plain or budgeted adequacy), never a global kernel axiom.
 
 Theorem spine (authoritative)
 -----------------------------
@@ -83,10 +120,10 @@ Exact claims (all kernel-native):
   codes (thin/lawful only under proof-irrelevance), and `Box` is the induced
   closure modality/endomap (`encode ∘ Flow ∘ decode`)
   (`LogOS/Theorems/Meta/CHL/Category.agda`).
-  (`Box` itself is kernel-level: `LogOS/Kernel.agda` / `LogOS/Kernel/Graded.agda`.)
+  (`Box` is kernel-level: `LogOS/Kernel.agda` / `LogOS/Kernel/Graded.agda`; grade-indexed `BoxAt` lives in `LogOS/Kernel/LogicKernel.agda`.)
 - *observer semantics:* guarded truth is stability under `Box` (closure-stability),
   exposed via the CHL guarded view (`LogOS/Theorems/Meta/CHL/Guarded.agda`);
-  `Step` is the canonical **logical** step “compute then stabilise”
+  `Step` is the canonical **logical** step “compute-then-stabilise”
   (`Box (Body _)` in `LogOS/Theorems/Meta/CHL/Core.agda`), and the raw operational step remains
   available as `RawStep = FlowCode`.
   In particular, `RawStep γ` is decode-equivalent to `Step γ`
@@ -149,3 +186,11 @@ Optional proof-theory packaging (Hilbert-style, Imp external, Box fixed to the C
 Canonical definitions of propositions, types, proofs, and programs:
 
 - `LogOS/Theorems/Meta/CHL/Definition.agda`
+
+Cross references
+----------------
+- Views index: `docs/Views/All.lagda.md`
+- Meredith sentences (ultra-compact LogicKernel/CHL core): `docs/Views/MeredithSentences.lagda.md`
+- Multi-institution (classic model theory): `docs/Views/MultiInstitution.lagda.md`
+- Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
+- Observer semantics (physics-of-information interpretation): `docs/Views/ObserverSemantics.lagda.md`

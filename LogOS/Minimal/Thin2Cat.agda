@@ -70,7 +70,7 @@ record Thin2CatPO {ℓObj ℓHom}
   field
     poHom : ∀ {A B} → PartialOrder (Hom A B)
 
--- Antisymmetry upgrades the `≈`-level 2-category laws to definitional equality.
+-- Antisymmetry upgrades the `≈`-level 2-category laws to propositional equality (`≡`).
 
 module Thin2CatLawsEq
   {ℓObj ℓHom}

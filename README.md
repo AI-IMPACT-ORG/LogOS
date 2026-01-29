@@ -6,11 +6,11 @@ SPDX-License-Identifier: GPL-3.0-only
 
 # LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
 
-This repository contains **LogOS**, a host-minimal Agda library that treats logic systems as interface-bearing components in a network, with explicit ports/adapters for translation and interoperability. 
+This repository contains **LogOS**, a host-minimal Agda library that treats logic systems as interface-bearing components in a network, with explicit ports/adapters for translation and interoperability, and with resources and effects threaded as first-class structure.
 
 The way it was constructed, the content of the repository itself as well as the promise contained therein can all be interpreted as "models" for AI-driven, human-on-the-loop, machine-checked formal reasoning. 
 
-This "semantic polymorphism" of co-existing, overlapping interpretations is deeply related to the core mechanism described in this repository, which is partial self-reference. 
+This "semantic polymorphism" of co-existing, overlapping interpretations is deeply related to the core mechanism described in this repository, which is budgeted reflection through computation.
 
 
 ## Dive right in
@@ -35,6 +35,8 @@ Science provides formal tooling to distill information in formal models. As AI i
 
 The main advance is an architecture for partially-reflective logic systems, grounded in simple mathematical primitives (preorders/refinement (read as thin categories under proof-irrelevance), lax operators and quantale-valued parameters), with a [3-tiered truth system](docs/Kernel/ClaimRegister.lagda.md). Novel is a truth notion as "stability under resource-constrained communication" in an [observer semantics](docs/Views/ObserverSemantics.lagda.md). The environment allows current generation AI agents to build, evaluate and refactor axiomatic dependencies of theories and theorems under human guidance. 
 
+The kernel symbols and their relations support multiple, mutually consistent interpretations aligned with different logic traditions and abstractions: `docs/Views/MultiInstitution.lagda.md`, `docs/Views/HoTT_3Level.lagda.md`, `docs/Views/CategoricalLogic.lagda.md`, `docs/Views/Topos.lagda.md`, `docs/Views/ObserverSemantics.lagda.md`, `docs/Views/CurryHowardLambek.lagda.md`, `docs/Views/MeredithSentences.lagda.md`.
+
 To showcase proof of value, we generalise hexagonal architecture patterns to foundational logic to separate an abstraction we term "OS kernel" from common axioms that form the basis of "application packs" with more specialised axiom sets. We showcase a constructive model of [ZFC set theory](docs/Applications/ZFC.lagda.md) as a legacy application, as well as a universal model of constrained computing that is remarkably closely aligned to the [Church-Turing-Deutsch principle](docs/Applications/Universality.lagda.md). Interestingly, these applications involve only slightly differing axiom packs. An agents pack provides an indication of immediate relevance to real-world design problems. 
 
 We briefly investigate similar ["reverse mathematics"](docs/Applications/Complexity.lagda.md) applications to open problems, highlighting non-standard axiom sets that form conditional proofs. For complexity separation this formalises an argument by Aaronson up to semantic checks. Our results connect to known models across different domains, times and communities, showing a remarkable consilience across science and technology.
@@ -55,6 +57,7 @@ Agda is a dependently typed programming language with tooling to act as a proof 
 Agda comes with some options for levels of type checking for its compiler. This repo uses:
 
 - `-W all -W error` — all warnings turned on; warnings are treated as errors.
+- CI currently disables `CoverageNoExactSplit` (`-W noCoverageNoExactSplit`) to avoid upstream warning noise in Agda’s builtin modules.
 - `--safe` — disallow certain unsafe pragmas/placeholders (still relative to the Agda checker).
 - `--no-libraries -i .` — build a external-minimal surface.
 
@@ -62,7 +65,7 @@ These flags show intent - they are however not a garuantee.
 
 ### Continuous Integration
 Continous integration is a development praxis where each new feature is immediately checked in a testing harness. Here the coding agents run CI after each bigger refactoring project. Currently, CI runs `make check-all` (policy checks + full typecheck of all `*.agda` and
-`*.lagda.md`) plus a library-file smoke test (`make agda-lib-check`). See`.github/workflows/ci.yml`.
+`*.lagda.md`) plus a library-file smoke test (`make agda-lib-check`). See `.github/workflows/ci.yml`.
 
 ### Software Quality
 Architecture and code quality are continuous concerns. We take the view that we rather solve explicit coding issues based on domain concerns than impose a rigid architecture upfront.  In this repository code quality concerns correlate with particular concerns in mathematics of information science. To make this work we refactor often, including breaking refactors. A key goal is to keep the codebase as small as possible. Coding agents tend to prefer new development over reworking older parts - the user has to steer (hard) against this, otherwise spaghetti code is the result. 
@@ -75,7 +78,7 @@ A key insight to operationalise this is to let the agent focus on inconsistencie
 An underrated technique to get a coding agent to perform larger scale operations to the end is to simply ask for the same thing several times. This resembles multi-passing for code optimisation in compilers. A variant of this involves resetting the coding agents memory, basically simulating getting a fresh “peer reviewer” to get a look. A more involved variant of multi-passing requires humans asking questions any developer would be asked by product owners, e.g. questions of performance, security and reliance. Regular architecture reviews using SOTA deep research is also part of a wider safety net.
 
 ### Documentation
-We employ documentation-as-code. There is a special file format for mixtures of text and code called literate Agda, by the file extension .lagda. We use this to institute some integration checking, as well as semantic scaffolding for the coding agents to have a "big picture" to orient along. A fair portion each cycle is spent removing inconsistencies from the documentation. 
+We employ documentation-as-code. The repository uses literate Agda (`*.lagda.md`) to mix text and machine-checked code. We use this to institute integration checking, as well as semantic scaffolding for the coding agents to have a "big picture" to orient along. A fair portion each cycle is spent removing inconsistencies from the documentation. 
 
 ### Literature
 We view existing literature as part of the wider safety net for especially scientific models. Especially important “textbook” results are useful as they are reflected deeply into the training corpus of chatbots. This is noticeable as chatbots tend to revert to the original, older literature somewhat over newer results. To surface newer results one typically has to push harder and more specifically. We use literature results partly as a class of “integration tests” that fail when a breaking change occurs.  
@@ -138,9 +141,12 @@ Start here (literate Agda):
 - Research-grade spec: `docs/LogOS_Core_Spec.lagda.md`
 
 Kernel views (polymorphicity): 
+- Views index: `docs/Views/All.lagda.md`
+- Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`
 - Multi-institution: `docs/Views/MultiInstitution.lagda.md`
 - 3-level HoTT-style: `docs/Views/HoTT_3Level.lagda.md`
 - Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
+- Topos-shaped reading (nuclei/sheaves): `docs/Views/Topos.lagda.md`
 - Observer semantics: `docs/Views/ObserverSemantics.lagda.md`
 - Curry-Howard-Lambek capstone: `docs/Views/CurryHowardLambek.lagda.md`
 - Meredith sentences (ultra-compact core math): `docs/Views/MeredithSentences.lagda.md`
@@ -206,7 +212,7 @@ Host surface (portability):
 - `make correctness-check` — correctness surfaces (soundness/adequacy)
 - `make packs` — type-check curated packs
 - `make html` — build HTML docs into `_build/html/`
-- `make check-all` — type-check every `*.agda` and `*.lagda.md` with `-W all -W error`
+- `make check-all` — type-check every `*.agda` and `*.lagda.md` with `-W all -W error` (CI suppresses `CoverageNoExactSplit`)
 
 ## License and Citation
 

@@ -53,21 +53,26 @@ Wording discipline (guardrail)
 ------------------------------
 The docs try to distinguish four kinds of statements:
 
+- Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+
 - **Literal (checked):** an Agda definition/lemma in the referenced file.
-- **Truth after computation (stabilized):** a statement about a closure/fixed
-  point (e.g. `Th*`, `Box`, `μ Flow`); by default this is only a *lax* fixed
-  point unless ω‑sup/continuity assumptions are supplied.
+- **Truth after stabilisation (closure):** a statement about a closure/fixed
+  point (e.g. `Th*`, `Box`, Kleene `μ Flow`); by default this is only a *lax*
+  fixed point unless ω‑sup/continuity assumptions are supplied.
 - **Representational truth (presentation):** a statement transported through
   `decode`/`encode`/`translate`/`SatMor`, i.e. preserved up to the relevant
-  satisfaction equivalence; this is not definitional equality.
+  satisfaction equivalence; this is not judgmental equality.
 - **Analogy / interpretation:** explanatory metaphors (kernel, channel, RG,
   “GRH”, …). These are explicitly marked as interpretations and never add
   logical power; the formal content is always the cited Agda surface.
 
+Notation (used throughout the docs): `≡` is propositional equality, `c ⊑ d` is (directed) refinement in a preorder,
+`c ≈ d` is mutual refinement (two inequalities), and `P ↔ Q` is a satisfaction equivalence (paired implications).
+
 In particular, “truth” in LogOS is tiered and local:
-- **Strict truth (S-tier):** satisfaction of strict formulas (`SatS` in the codebase).
-- **Boundary truth (H-tier):** satisfaction of boundary constraints (`Sat_H`), intended as communicable meaning.
-- **Stable truth (G-tier):** the distinguished fixed-point witness `Th*` for the guarded flow `Flow`.
+- **Strict truth (S-tier):** satisfaction of strict formulas (`Sat_S` in the codebase).
+- **Boundary truth (H-tier):** world‑indexed satisfaction of boundary constraints (`Sat_H`), coherent with boundary‑indexed `Sat_H_bnd` via `sat-coh`.
+- **Stable truth (G-tier):** the distinguished lax fixed-point witness `Th*` for the guarded flow `Flow` (interpretation: “global stable truth”).
   Leastness/μ‑induction is only available under extra domain structure (ω‑sups + continuity).
 
 Interpretation (analogy): an OO reading (without mutable state)
@@ -103,8 +108,8 @@ Kernel in One Page
 ------------------
 Technically, the kernel is parameterized by:
 - a signature `Sig : LogOSSignature ℓ` (cospan‑shaped world/boundary carriers + operations), and
-- a quantitative adapter `Q : QAdapter ℓ`, where `Scale` is a finite‑join unital quantale‑like
-  structure (budgets/grades; no infinite‑join completeness is assumed here) and `Time` maps
+- a quantitative adapter `Q : QAdapter ℓ`, where `Scale` is a unital quantale in the *finite‑join*
+  sense (budgets/grades; no infinite‑join completeness is assumed here) and `Time` maps
   into `Scale` via the monoid homomorphism `τ`.
 The optional graded kernel (`LogOS/Kernel/Graded.agda`) indexes the guarded flow as `Flow : Scale → Con_bnd → Con_bnd`.
 In this file, `Con_bnd` means the **boundary constraint** carrier (the `Con` of the boundary preorder), i.e.
@@ -117,23 +122,23 @@ The Kernel is the *integrated* model interface: it combines (i) your signature,
 The key design choice is: **truth is local and regulatable**.
 You do not assume a single static “global truth predicate”; instead you model a
 local boundary logic and a closure step (`Flow`) that represents the
-stabilization/communication of truth.
+stabilisation/communication of truth.
 
 ### The three tiers (S / H / G)
 LogOS separates three levels of truth:
 
 - **S (Strict / syntactic):** a formula language `Fml` and satisfaction `Sat_S`.
-- **H (Homotypical / semantic):** satisfaction `Sat_H` for boundary constraints,
+- **H (Homotypical / semantic):** world‑indexed satisfaction `Sat_H (w , c)` for boundary constraints,
   plus an invariance/projector `Inv_H` (truth “up to invariance”).
-- **G (Guarded / stabilized):** a guarded closure (`GTruth`) on boundary
-  constraints whose step is `Flow`, plus a distinguished (preorder) fixed point `Th*`
-  (global stable truth).
+- **G (Guarded / stabilised):** a guarded closure (`GTruth`) on boundary
+  constraints whose step is `Flow`, plus a distinguished (preorder) lax fixed-point witness `Th*`
+  (interpretation: “global stable truth”).
   With optional ω-limit structure (`OmegaCPO` + `FiniteFirst`) one can prove μ‑induction
-  (leastness among `Flow`‑stable constraints, in the boundary preorder). With optional
-  antisymmetry you can read that leastness at the level of equality. In that setting,
-  `Th*` is equivalent (up to mutual refinement) to the Kleene fixed point `μ Flow`
+  (leastness among `Flow`‑pre‑fixed constraints, in the boundary preorder). Under the same
+  assumptions, `Th*` is equivalent (up to mutual refinement) to the Kleene `μ Flow`
   (`LogOS/Theorems/Boundary/ContinuityCore.agda`), and its preservation along maps can
   be derived from `Flow` commutation + ωCPO structure (`LogOS/Theorems/Boundary/MuFusion.agda`).
+  Optional antisymmetry lets you read mutual refinement as equality.
   These hypotheses are packaged explicitly as:
   - `ContinuityCore.For.MuData` (ωCPO + finite-first approximants), and
   - `MuFusion.For.Th*TransportAssumptions` (adds ω-continuity of `map` and the lax commutation law).
@@ -260,7 +265,7 @@ CHL capstone (brutally honest)
 ------------------------------
 LogOS includes a kernel-native Curry–Howard–Lambek (CHL) view, but it is
 preorder-safe and proof-relevant: everything is stated up to refinement /
-observational equivalence, not definitional equality.
+mutual refinement (`≈`), not judgmental equality.
 
 Exact claims (with proof surfaces):
 - **Propositions / types / programs / proofs** are defined internally:

@@ -103,7 +103,7 @@ module For
       transT (telemetry-close s p) within
 
     -- Shareable budgeted learning: the shareable refinement on the canonical
-    -- port preserves budget witnesses up to definitional equality.
+    -- port preserves budget witnesses (by unfolding the shareable step).
     withinBudget-shareable-back
       : ∀ {b}
       → (mono : L.SatMonotone)

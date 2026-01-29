@@ -76,7 +76,7 @@ This note is a **non-canonical view** of the LogOS kernel: it is intentionally m
 physical than the “classic logic” and “HoTT positioning” views.
 
 The goal is to make explicit how LogOS naturally supports an **observer-centric**
-semantics that aligns with:
+semantics that shares minimal structural shape with:
 
 - *Categorical quantum mechanics* (CQM): processes, monoidal-*ops* composition, and (optional) dagger structure,
 - “physics as computation”: computation as physical process constrained by locality/causality/resources,
@@ -85,6 +85,41 @@ semantics that aligns with:
 This is a documentation view: it does **not** claim that the library derives the laws
 of physics. Instead it shows where to *plug in* physically meaningful axioms/packs,
 and what generic theorems LogOS then provides.
+
+Interpretation (analogy):
+this document is a derived presentation (“view”) over the same kernel interfaces;
+it does not add logical power.
+
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+
+Scope (formal)
+--------------
+- Parameter: `Kernel Sig Q` (as used by `ViewTheorems.For`).
+- Core observer layer: phrased for `LogicKernel Sig Q`, derived from any `Kernel Sig Q` via
+  `LogOS/Kernel/LogicKernel/FromKernel.agda`.
+
+Adapter mapping to the literature (quick table)
+-----------------------------------------------
+
+| Literature concept | LogOS identifier(s) | Notes |
+|---|---|---|
+| Observable/measurement outcome | boundary observation via `BoundaryIO` / ports | Presented as boundary satisfaction, not as a built-in probability calculus. |
+| Observer | predicates on `Code` (and/or telemetry traces) | Observers can carry witnesses (traces/certificates), hence universe levels matter. |
+| Coarse-graining / reindexing | `SigHom`, `reindexKernel`, port translations | Signature change and port/adapters both model “change of description”. |
+| Resource/budget algebra | `QAdapter` (scale) and `BudgetedTier` / telemetry budgets | Resource predicates are explicit assumptions, not hidden global axioms. |
+| Truth after stabilisation (closure) | guarded closure `Flow`, stable truth `Th*` | Stability is closure pre-fixedness (hence fixed up to `≈`), not judgmental equality. |
+
+Assumptions (explicit)
+----------------------
+- This view is interpretive: any *physical* axioms (e.g. symmetry, dagger, probabilistic structure) must be added explicitly as packs; the kernel does not assume them.
+- Completeness/adequacy claims are conditional (not global): budgeted adequacy is an explicit hypothesis.
+
+What is novel here (residual vs the literature)
+-----------------------------------------------
+- Matches literature: observer/coarse-graining ideas as explicit interface change (signature maps, port translations) and order-theoretic monotonicity statements.
+- Weaker/lax by default: no probabilistic/dagger structure is assumed; “stability” is closure pre-fixedness (hence fixed up to `≈`), not judgmental equality.
+- Added by ports/adapters: the observer boundary is a first-class semantic interface, and resource/budget indexing is supported by graded/budgeted variants without changing the core kernel.
+- Assumption-scoped: any physical axioms and any (budgeted) adequacy/completeness are explicit hypotheses, not global claims.
 
 Theorem spine (authoritative)
 -----------------------------
@@ -118,9 +153,9 @@ directions:
 
 The Kernel does not assume a single global truth predicate. Instead, it provides:
 
-- an H-tier satisfaction `Sat_H` (“local truth in a world/context”), and
+- an H-tier satisfaction `Sat_H (w , c)` (“local truth in a world/context”), and
 - a G-tier closure step `Flow` on boundary constraints,
-  with a distinguished (preorder) fixed point `Th*`.
+  with a distinguished (preorder) (lax) fixed point witness `Th*`.
 
 Interpretation (analogy):
 
@@ -149,19 +184,19 @@ The following terms are used as names for concrete interfaces in this view. They
 do not, by themselves, assert a physics interpretation; that interpretation only
 comes from the chosen model/axioms.
 
-- **System**: a `LogicKernel Sig Q` (shared S/H/code shape plus a parameterised guarded tier).
+- **System**: a `Kernel Sig Q`, or (when using the observer-core theorems directly) its derived `LogicKernel Sig Q` (write it as `K`).
 - **State of knowledge at the boundary**: a boundary constraint `c : Con` in the boundary preorder.
 - **Decoded meaning of code**: `decode : Code → Con` from the kernel.
 - **Observer step / admissible interaction**: the derived operational step on code
-  `BoxAt step (Body _) : Code → Code` (“compute then stabilise”).
+  `BoxAt (GTier.step (LogicKernel.G K)) (Body _) : Code → Code` (“compute-then-stabilise at the step grade”).
   In a `LogicKernel`, this is decode-equivalent to the raw operational step
   `FlowCode : Code → Code` (defined as `Guard ∘ Body`); see
   `ObserverFromLogicKernel.For.decode-stepFlowCode≡decode-step` and the induced
   observer equivalence `ObserverFromLogicKernel.For.Observable⋆↔Observable⋆-FlowCode`.
-- **Stabilization / “what survives communication”**: the kernel-derived closure modality on code
-  `Box` (and graded `BoxAt g`), defined as `encode (Flow g (decode γ))`
+- **Stabilisation / “what survives communication”**: the kernel-derived closure modality on code.
+  In graded form: `BoxAt g γ := encode (Flow g (decode γ))`. `Box` is the ungraded/saturation instance.
   (`LogOS/Kernel.agda`, `LogOS/Kernel/Graded.agda`, `LogOS/Kernel/LogicKernel.agda`).
-- **Step invariance (decode-level)**: `ObserverCore.Pred⋆≈` only depends on the step up to decoded observational equality.
+- **Step invariance (decode-level)**: `ObserverCore.Pred⋆≈` only depends on the step up to decoded mutual refinement (`≈`).
   If `decode (step γ) ≈ decode (step′ γ)` for all `γ`, then `Pred⋆≈` for `step` and `step′` are equivalent
   (`ObserverCore.Pred⋆≈-cong-step` in `LogOS/Theorems/Meta/ObserverCore.agda`).
   (Legacy, ≡-based: `ObserverCore.Pred⋆-cong-step`.)
@@ -238,7 +273,7 @@ This is the same order that appears as 2-cells in the kernel refinement 2-catego
 - `LogOS/Theorems/CategoryTheory/Kernel2Cat.agda` (refinement 2‑category interface)
 - `LogOS/Theorems/CategoryTheory/Kernel2CatGraded.agda` (refinement 2‑category interface)
 
-This is already the core shape of CQM: a monoidal-*ops* setting of processes with
+This matches a common minimal starting shape for CQM: a monoidal-*ops* setting of processes with
 parallel and sequential composition, where “systems” are the objects and “processes”
 are the morphisms. Symmetry/braiding (and other coherence laws) is optional and
 lives in explicit algebra packs.
@@ -272,10 +307,10 @@ This reframes many “no-go” arguments (diagonal/Rice/Tarski style) as **obser
 statements: a fully total oracle would exceed the allowed physical/observational regime.
 
 Quantitative note: in the production kernel, “resource” lives in the adapter `QAdapter` as a
-finite‑join unital quantale `Scale`. Sequential composition is modeled by quantale
+unital quantale in the finite-join sense (not complete) `Scale`. Sequential composition is modeled by quantale
 multiplication (`_·_`), alternative allowances by join (`_⊔s_`), and `⊥s` is the minimal budget.
 UniversalIR’s default cost model (`QNat2`) is a two-axis quantale (unitary work vs measurement
-events), making “measurement has a counted cost” a first-class notion.
+events; see `LogOS/QAdapters/QNat2.agda`), making “measurement has a counted cost” a first-class notion.
 
 ## 4) CQM alignment: what is already present vs what is an extension
 
@@ -291,7 +326,7 @@ What is intentionally *not* built into the kernel (and would be an “extension 
 
 - a full **dagger compact** structure with cups/caps and yanking laws,
 - a chosen **CPM/CP\* construction** for mixed-state/observable semantics,
-- locality/causality axioms (e.g. a factorization/screening-off law) as default assumptions.
+- locality/causality axioms (e.g. a factorisation/screening-off law) as default assumptions.
 
 This separation is a design choice: the kernel stays host-minimal and model-agnostic;
 physics-aligned structure is opt-in and explicit.
@@ -309,7 +344,7 @@ The minimal upgrade that makes the physics story explicit (without changing the 
    - an “observability” predicate: when is a proposition/test in the observable sector?
 
 3. **Locality/causality/local unitarity axioms** (scoped):
-   - locality: compositional factorization laws for independent subsystems,
+   - locality: compositional factorisation laws for independent subsystems,
    - causality: discarding/termination behaves functorially (no-signalling style constraints),
    - local unitarity: a reversible sublanguage/process class, separated from global non-unitary events.
 
@@ -340,3 +375,11 @@ Pointers (where to connect)
   `LogOS/Domain/Complexity/DataProcessingInequality.agda`
 - Complexity physical story: `docs/Applications/Complexity.lagda.md`
 - Circuit surface: `LogOS/Domain/UniversalIR/Core/QuantumCircuit.agda`
+
+Cross references
+----------------
+- Views index: `docs/Views/All.lagda.md`
+- CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`
+- Meredith sentences (LogicKernel / CHL core): `docs/Views/MeredithSentences.lagda.md`
+- Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
+- Topos-shaped nuclei/sheaves reading: `docs/Views/Topos.lagda.md`

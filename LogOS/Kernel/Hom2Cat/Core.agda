@@ -398,7 +398,7 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
     in
     R.substR eqDec (ConPreorder.refl CP₄)
 
-  -- “Homotopy” / observational equivalence: mutual refinement of 2-cells.
+  -- “Homotopy” / mutual refinement: 2-cells related by refinement both ways.
 
   infix 4 _≈_
   _≈_ : ∀ {K₁ K₂ : Obj} → Hom₁ K₁ K₂ → Hom₁ K₁ K₂ → Set ℓ
