@@ -15,8 +15,7 @@ open import LogOS.Prelude public
 
 This file fixes **canonical meanings** for specialised terms that appear across:
 - `docs/Views/*` (semantic views),
-- `docs/Applications/*` (packs),
-- `docs/Paper/*` (paper).
+- `docs/Applications/*` (packs).
 
 The goal is not to impose one literature vocabulary, but to make the adapter
 choices explicit and repeatable.
