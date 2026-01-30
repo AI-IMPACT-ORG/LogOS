@@ -32,6 +32,9 @@ considered less stable than the rest of the repository. It is a conditional
 application ledger; use its claims only with the stated vacuity guards and
 explicit axioms.
 
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 LogOS does **not** claim to prove classical analytic number theory. Instead it:
 
 1. makes the dependency graph explicit (an *axiom ledger*), and

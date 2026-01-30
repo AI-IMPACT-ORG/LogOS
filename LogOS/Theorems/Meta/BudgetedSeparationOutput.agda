@@ -84,7 +84,7 @@ module For
   -- Derived partial-output surface for a budget function B : Code → ℕ.
   --
   -- Note: to preserve extensionality, the budget function must itself be
-  -- decode-extensional up to decoded observational equality (e.g. depend only on
+  -- decode-extensional up to decoded mutual refinement (e.g. depend only on
   -- `decode γ` or its `size`).
 
   filterBudget : ℕ → (Witness ⊎ ⊤ {ℓ = lzero}) → (Witness ⊎ ⊤ {ℓ = lzero})

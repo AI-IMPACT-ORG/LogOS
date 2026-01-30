@@ -51,23 +51,16 @@ This keeps “what the logic *is*” separate from “how we *use* it”.
 
 Wording discipline (guardrail)
 ------------------------------
-The docs try to distinguish four kinds of statements:
+Canonical vocabulary and claim kinds live in:
 
 - Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+- Claim/assumption discipline (literal vs conditional, vacuity guards, typed anchors):
+  `docs/Kernel/ClaimRegister.lagda.md`.
 
-- **Literal (checked):** an Agda definition/lemma in the referenced file.
-- **Truth after stabilisation (closure):** a statement about a closure/fixed
-  point (e.g. `Th*`, `Box`, Kleene `μ Flow`); by default this is only a *lax*
-  fixed point unless ω‑sup/continuity assumptions are supplied.
-- **Representational truth (presentation):** a statement transported through
-  `decode`/`encode`/`translate`/`SatMor`, i.e. preserved up to the relevant
-  satisfaction equivalence; this is not judgmental equality.
-- **Analogy / interpretation:** explanatory metaphors (kernel, channel, RG,
-  “GRH”, …). These are explicitly marked as interpretations and never add
-  logical power; the formal content is always the cited Agda surface.
-
-Notation (used throughout the docs): `≡` is propositional equality, `c ⊑ d` is (directed) refinement in a preorder,
-`c ≈ d` is mutual refinement (two inequalities), and `P ↔ Q` is a satisfaction equivalence (paired implications).
+When precision matters in prose, always name the relation: propositional
+equality (`≡`), refinement (`⊑`), mutual refinement (`≈`), satisfaction
+equivalence (`↔`), observational equality (`ObsEq…`), or adapter equivalence
+(`Adapter≈`).
 
 In particular, “truth” in LogOS is tiered and local:
 - **Strict truth (S-tier):** satisfaction of strict formulas (`Sat_S` in the codebase).
@@ -75,231 +68,102 @@ In particular, “truth” in LogOS is tiered and local:
 - **Stable truth (G-tier):** the distinguished lax fixed-point witness `Th*` for the guarded flow `Flow` (interpretation: “global stable truth”).
   Leastness/μ‑induction is only available under extra domain structure (ω‑sups + continuity).
 
-Interpretation (analogy): an OO reading (without mutable state)
---------------------------------------------------------------
-This is explanatory only (not a formal claim): you can read the architecture in
-“OO words” as long as you keep the formal boundaries explicit.
+Interpretation labels (analogy)
+-------------------------------
+Interpretive labels (“kernel”, “channel”, “RG”, “GRH”, …) are used for
+orientation only; the formal content is the cited Agda surface.
 
-- “Object” = a `Kernel`/`LogicKernel` instance (`LogOS/Kernel.agda`, `LogOS/Kernel/LogicKernel.agda`).
-- “Interface/port” = boundary I/O + presentations (`LogOS/Boundary/IO.agda`, `LogOS/Boundary/Port.agda`).
-- “Adapter” = canonical translation / view transport (`LogOS/Ports/Semantic/Interlingua.agda`, `LogOS/Kernel/Reindex.agda`).
-- “Composition/wiring” = categorical process/kernels morphisms (`LogOS/Computation/SchemeCategory.agda`, `LogOS/Kernel/HomOverSig.agda`).
+For the canonical communication/boundary framing (including an OO‑shaped reading
+of ports/adapters), see `docs/DeepDive/Communication.lagda.md`.
 
-Canonical map of these layers:
-- `LogOS/API/Architecture.agda`
-- `docs/DeepDive/Architecture_PortsAdapters.lagda.md`
+For the ports/adapters spine, see `docs/DeepDive/Architecture_PortsAdapters.lagda.md`
+and the curated map `LogOS/API/Architecture.agda`.
 
 Host-Minimal Surface (Portability Claim)
 ----------------------------------------
 To make “LogOS could be hosted elsewhere” precise, the repo enforces a tiny host
-surface: only a short list of files may import `Agda.Builtin` modules / `Agda.Primitive`.
-Everything else depends on these wrappers.
+surface: only `LogOS/Host/*` may import `Agda.Builtin.*` / `Agda.Primitive`.
 
-See `scripts/host_surface_check.sh` for the authoritative allowlist (mirrored here for convenience):
-- `LogOS/Host/Level.agda`
-- `LogOS/Host/Nat.agda`
-- `LogOS/Host/Bool.agda`
-- `LogOS/Host/List.agda`
-- `LogOS/Host/Maybe.agda`
-- `LogOS/Host/String.agda`
-- `LogOS/Host/Relation/Binary/PropositionalEquality.agda`
+Everything else should import `LogOS.Prelude` (which re-exports the wrappers),
+not `Agda.*` directly.
+
+Enforced checks:
+- allowlist: `scripts/host_surface_check.sh`
+- no direct `LogOS.Host.*` imports outside the bridge: `scripts/host_import_check.sh`
 
 Kernel in One Page
 ------------------
-Technically, the kernel is parameterized by:
-- a signature `Sig : LogOSSignature ℓ` (cospan‑shaped world/boundary carriers + operations), and
-- a quantitative adapter `Q : QAdapter ℓ`, where `Scale` is a unital quantale in the *finite‑join*
-  sense (budgets/grades; no infinite‑join completeness is assumed here) and `Time` maps
-  into `Scale` via the monoid homomorphism `τ`.
-The optional graded kernel (`LogOS/Kernel/Graded.agda`) indexes the guarded flow as `Flow : Scale → Con_bnd → Con_bnd`.
-In this file, `Con_bnd` means the **boundary constraint** carrier (the `Con` of the boundary preorder), i.e.
-`ConPreorder.Con (BulkBoundary.bnd BB)` in the Kernel record.
+The kernel is parameterized by:
 
-The Kernel is the *integrated* model interface: it combines (i) your signature,
-(ii) constraint semantics (a boundary logic), (iii) a 3‑tier truth structure, and
-(iv) a reflective code interface.
+- a signature `Sig : LogOSSignature ℓ` (world/boundary carriers + operations), and
+- a quantitative adapter `Q : QAdapter ℓ` (a quantale‑like budget/grade algebra; finite joins by default).
 
-The key design choice is: **truth is local and regulatable**.
-You do not assume a single static “global truth predicate”; instead you model a
-local boundary logic and a closure step (`Flow`) that represents the
-stabilisation/communication of truth.
+In this file, `Con_bnd` means the carrier of boundary constraints: the `Con` of
+the boundary preorder.
 
-### The three tiers (S / H / G)
-LogOS separates three levels of truth:
+Integrated kernel interfaces:
 
-- **S (Strict / syntactic):** a formula language `Fml` and satisfaction `Sat_S`.
-- **H (Homotypical / semantic):** world‑indexed satisfaction `Sat_H (w , c)` for boundary constraints,
-  plus an invariance/projector `Inv_H` (truth “up to invariance”).
-- **G (Guarded / stabilised):** a guarded closure (`GTruth`) on boundary
-  constraints whose step is `Flow`, plus a distinguished (preorder) lax fixed-point witness `Th*`
-  (interpretation: “global stable truth”).
-  With optional ω-limit structure (`OmegaCPO` + `FiniteFirst`) one can prove μ‑induction
-  (leastness among `Flow`‑pre‑fixed constraints, in the boundary preorder). Under the same
-  assumptions, `Th*` is equivalent (up to mutual refinement) to the Kleene `μ Flow`
-  (`LogOS/Theorems/Boundary/ContinuityCore.agda`), and its preservation along maps can
-  be derived from `Flow` commutation + ωCPO structure (`LogOS/Theorems/Boundary/MuFusion.agda`).
-  Optional antisymmetry lets you read mutual refinement as equality.
-  These hypotheses are packaged explicitly as:
-  - `ContinuityCore.For.MuData` (ωCPO + finite-first approximants), and
-  - `MuFusion.For.Th*TransportAssumptions` (adds ω-continuity of `map` and the lax commutation law).
+- `KernelShape` (`LogOS/Kernel/Core.agda`): S/H/G tiers, boundary I/O, and reflection.
+- `Kernel` (`LogOS/Kernel.agda`) and `GradedKernel` (`LogOS/Kernel/Graded.agda`): concrete integrated records.
+- `LogicKernel` (`LogOS/Kernel/LogicKernel.agda`): a uniform surface that factors out the guarded tier so
+  ungraded and graded kernels share the same API.
 
-The coherence you must provide is explicit:
-- `coh-LH` links S‑truth to H‑truth via a translation `TransH : Fml → Con_bnd`.
-- `sat-coh` links world‑indexed H‑truth to boundary‑indexed H‑truth via `to∂`.
+Truth is tiered and local:
 
-```agda
--- Anchor: signature-level boundary wiring (avoid confusion with the constraint-level
--- `ext/bnd` adjunction in `Kernel.Holo`).
-to∂-anchor
-  : ∀ {ℓ} (Sig : LogOSSignature ℓ)
-  → LogOSSignature.Cosp Sig → LogOSSignature.∂Cosp Sig
-to∂-anchor Sig = LogOSSignature.to∂ Sig
+- S-tier: strict formulas + `Sat_S`.
+- H-tier: world‑indexed `Sat_H w c` and boundary‑indexed `Sat_H_bnd (to∂ w) c`, related by `sat-coh`.
+- G-tier: guarded closure `Flow` and distinguished witness `Th*` (a lax fixed point by default).
 
-from∂-anchor
-  : ∀ {ℓ} (Sig : LogOSSignature ℓ)
-  → LogOSSignature.∂Cosp Sig → LogOSSignature.Cosp Sig
-from∂-anchor Sig = LogOSSignature.from∂ Sig
-```
+Limit strength is assumption‑scoped: Kleene `μ` / μ‑induction, and derived transport theorems
+(`Th*≈μFlow`, μ‑fusion) require explicit ω‑sup/continuity hypotheses (see
+`docs/Kernel/ClaimRegister.lagda.md`).
 
-### Kernel I/O surface (the reflective boundary)
-Every Kernel exposes a tiny “I/O” API that makes inference steps speak about
-themselves *inside* the logic:
+Reflection makes computation speak: `Code`, `decode`, `encode`, and one-step
+`FlowCode = Guard ∘ Body` with decode commutation laws (see
+`docs/DeepDive/Communication.lagda.md`).
 
-- `encode : Con_bnd → Code`
-- `decode : Code → Con_bnd` with `decode (encode c) ≡ c` (pointwise; no function extensionality assumed)
-- `Guard : Code → Code` (one guarded step on code)
-- `GTruth` exposes `Flow : Con_bnd → Con_bnd` (closure step on constraints)
-- **stable closure on code** (derived, but exposed as API for convenience):
-  - ungraded: `Box : Code → Code` defined as `encode (Flow (decode γ))` (`LogOS/Kernel.agda`)
-  - graded: `BoxAt g : Code → Code` and `Box = BoxAt sat` (`LogOS/Kernel/Graded.agda`)
-  - uniform CHL-facing interface: `BoxAt`/`Box` for any `LogicKernel` (`LogOS/Kernel/LogicKernel.agda`)
-  - port view: `Box` is `BoundaryPort.Extend CodePort Flow` for the canonical `CodePort`
-    (`Box≡ExtendFlow` in `LogOS/Ports/Semantic/CanonicalPorts.agda`)
-- the fundamental coherence law (unguarded kernel):
-  - `decode (Guard γ) ≡ Flow (decode γ)`
-  - graded variant: `decode (Guard γ) ≡ Flow step-grade (decode γ)` and the distinguished fixed-point witness is
-    characterized at `Flow sat` (see `docs/LogOS_Core_Spec.lagda.md`).
-
-Intuition:
-- `Code` is the internal language of “programs / proofs / processes”.
-- `decode` interprets code as a boundary constraint.
-- `Guard` is a single *admissible step* of the system.
-- `Flow` (from `GTruth`) is the boundary‑level meaning of that step.
-
-This is the hook that makes “logic eats itself” precise: meta‑reasoning is
-phrased at `decode` level and transported via canonical folds.
+Full record/law details: `docs/LogOS_Core_Spec.lagda.md`.
 
 Bootstrapping (theorem surface)
 -------------------------------
-Bootstrapping here is a direct consequence of the port calculus, not a bespoke
-encoding trick.
+Bootstrapping is the forced interlingua translation between two canonical ports
+induced by a kernel (code port ↔ boundary port). It is packaged as adapter
+equivalence (`Adapter≈`) and uniqueness up to `Adapter≈`, not as an ad‑hoc
+compiler.
+
+See `docs/DeepDive/Architecture_PortsAdapters.lagda.md` and
+`LogOS/Theorems/Meta/Bootstrapping.agda`.
 
 Pass calculus (transpiler view)
 -------------------------------
-The same interlingua that forces bootstrapping yields a general transpiler
-calculus. Any port adapter is a semantics-preserving pass, uniquely determined
-by boundary satisfaction.
+Adapters compose into pipelines; the generic pass calculus is:
 
-- `LogOS/Theorems/Meta/Transpiler.agda` provides `Transpiler`, `Pipeline`, and
-  `Transpiler.Iso`.
-- `LogOS/Theorems/Meta/Transpiler/Operational.agda` provides a minimal small-step
-  and n-step operational semantics for kernel code (`FlowCode`) with a decode
-  simulation lemma.
-- `Transpiler.TypeSoundness` recasts pass correctness as preservation/reflection
-  of judgments at any chosen observer.
-- `Transpiler.Telemetry` lifts the same pass calculus to budgeted traces,
-  including a generic budget‑weakening lemma.
-- Bootstrapping is the canonical `Transpiler` instance for `Stage1Port → Stage0Port`.
-- CHL transpilers (named `compile` in code) are exposed as transpiler instances
-  (`Strict.Transpiler` and `Code.Transpiler`) in
-  `LogOS/Theorems/Meta/CHL/Interoperability.agda`.
+- `LogOS/Theorems/Meta/Transpiler.agda` (`Transpiler`, `Pipeline`, `Iso`)
+- `LogOS/Theorems/Meta/CHL/Interoperability.agda` (CHL-facing `compile` passes)
+- `LogOS/Theorems/Meta/Transpiler/Operational.agda` (small-step/n-step skeleton + decode simulation)
 
-There are two presentations of the same boundary satisfaction:
-- `CodePort`: formulas are `Kernel.Code`; import is `decode`; export/`Interp` is `encode`.
-- `BoundaryPort∂`: the canonical boundary port (formulas are boundary constraints).
-  Both live in `LogOS/Ports/Semantic/CanonicalPorts.agda`.
-
-By interlingua, the translation between these ports is **forced**. In
-`LogOS/Theorems/Meta/Bootstrapping.agda`:
-- `bootstrap` is the canonical adapter `CodePort → BoundaryPort∂`
-  (by propositional equality `≡` — in fact `refl` after unfolding — see `bootstrap≡canonical`).
-- `unbootstrap` is the export back to code (`encode`) with the built‑in port
-  equivalence `Sat∂≈F`.
-- The round‑trip laws are `translate-comp` + `translate-id`, not ad‑hoc proofs.
-- `bootstrap-iso` packages the result as a port equivalence up to `Adapter≈`.
-- `stage1→stage0-unique` / `stage0→stage1-unique` show adapters between stages
-  are unique up to observation.
-- The file also names `Stage0Port` (boundary) and `Stage1Port` (code) explicitly.
-- `Pipeline` witnesses pass composition as adapter composition.
-- `AsTranspiler` is the specialization of the general transpiler theorem
-  (`LogOS/Theorems/Meta/Transpiler.agda`) to the stage0/stage1 ports.
-- `bootstrap≡canonical` and `bootstrap-transpiler≡canonical` show the
-  bootstrapping pass is equal by `≡` (again `refl` after unfolding) to the canonical transpiler.
-- `Transpiler.Hetero` lifts the same story to satisfaction morphisms; the CHL
-  strict/code transpilers are exposed as `compile-transpiler` instances in
-  `LogOS/Theorems/Meta/CHL/Interoperability.agda`.
-- `Transpiler.Iso` is the general quasi-inverse notion; `BootstrapIso` is just
-  its specialization to the stage0/stage1 ports.
-- `Telemetry` adds `telemetry-erasure` (traces do not change semantics) and
-  budget weakening for trace order.
-- `Telemetry.BudgetedBootstrap` bundles `bootstrap` with a trace‑derived budget.
-- `FromGradedKernel` reuses the same theorem once a graded kernel is collapsed to `sat`.
-
-So bootstrapping is a *corollary* of the core architecture: it is the
-canonical interlingua between two presentations of the same boundary meaning.
+All correctness statements are phrased up to satisfaction equivalence (↔) / adapter
+equivalence (`Adapter≈`) rather than by syntactic identification.
 
 Safety spine (design choice → architecture)
 -------------------------------------------
-The kernel makes a deliberate design choice: it supplies **only** the core
-interface (no internal truth, provability, or comprehension). This forces the
-boundary/port/guarded‑flow architecture and keeps paradox‑enabling structure
-explicit and optional.
+The kernel makes a deliberate design choice: it supplies only the core
+interface (no built-in provability/comprehension). Paradox-enabling structure is
+kept explicit and optional.
 
-Formal spine + matrix:
-- `LogOS/Theorems/Meta/Safety/DesignChoice.agda`
-- `LogOS/Theorems/Meta/Safety/ArchitectureFromSafety.agda`
-- `LogOS/Theorems/Meta/Safety/AvoidanceList.agda`
-- `LogOS/Theorems/Meta/Safety/Matrix.agda` (paper-facing `SafetyMatrix`)
+See `docs/Meta_Safety.lagda.md` and `LogOS/Theorems/Meta/Safety/All.agda`.
 
 CHL capstone (brutally honest)
 ------------------------------
-LogOS includes a kernel-native Curry–Howard–Lambek (CHL) view, but it is
-preorder-safe and proof-relevant: everything is stated up to refinement /
-mutual refinement (`≈`), not judgmental equality.
+LogOS includes a kernel-native Curry–Howard–Lambek (CHL) view that stays
+preorder-safe and proof-relevant (no hidden antisymmetry/proof-irrelevance).
 
-Exact claims (with proof surfaces):
-- **Propositions / types / programs / proofs** are defined internally:
-  `Type = Code`, `Prop = Code`, `Program = Refines`, `Proof = Refines`.
-  See `LogOS/Theorems/Meta/CHL/Definition.agda`.
-- **Soundness**: refinement implies semantic entailment at the H- and boundary
-  tiers (`LogOS/Theorems/Meta/CHL/ModelTheory.agda`).
-- **Category view**: codes/refinement admit an “ops-only” preorder-category view
-  (thin/lawful only under an explicit proof-irrelevance assumption), and `Box`
-  is a monotone endomap on codes (`LogOS/Theorems/Meta/CHL/Category.agda`).
-- **Capstone bundle**: the views above are packaged as a single theorem
-  (`LogOS/Theorems/Meta/CHL/Capstone.agda`).
+- View note: `docs/Views/CurryHowardLambek.lagda.md`
+- Ultra-compact kernel core (Meredith-style anchors): `docs/Views/MeredithSentences.lagda.md`
+- Formal surfaces: `LogOS/Theorems/Meta/CHL/*` (including assumption-scoped completeness)
 
-Non-claims (explicitly **not** assumed):
-- No antisymmetry or proof-irrelevance is assumed.
-- No global completeness for strict syntax without an explicit adequacy axiom.
-- `TransH` is not assumed surjective onto boundary constraints.
-
-Completeness is **relative**:
-- Boundary-level completeness is available under a local adequacy assumption
-  on the image of `to∂` (`LogOS/Theorems/Meta/CHL/Completeness.agda`).
-- Strict-syntax completeness is available under the same adequacy assumption
-  (`LogOS/Theorems/Meta/CHL/SyntaxCompleteness.agda`).
-- Budgeted completeness is available when adequacy is assumed only for a chosen
-  budget predicate on observations (`LogOS/Theorems/Meta/CHL/Completeness.agda`,
-  `LogOS/Theorems/Meta/CHL/SyntaxCompleteness.agda`).
-- Kernel-aligned budget predicate from telemetry:
-  `LogOS/Boundary/Budget.agda`.
-- Flow: choose a telemetry trace budget `b`, set `B = budget-from-trace b`,
-  then assume `BudgetedAdequacy B` to obtain the budgeted completeness lemmas.
-- Formula completeness under budgets is exposed as `completeF-budget` in
-  `LogOS/Theorems/Meta/CHL/Definition.agda`.
-
-### Minimal entry points (recommended imports)
+Minimal entry points (recommended imports)
+-----------------------------------------
 - Minimal core: `LogOS/API/Minimal.agda`
 - Unified kernel interface: `LogOS/API/LogicKernel.agda` and `LogOS/Kernel/LogicKernel.agda`
 - Concrete kernel interface (unguarded G-tier): `LogOS/Kernel.agda`
@@ -308,88 +172,24 @@ Completeness is **relative**:
 
 One System, Many Views (Unifier)
 --------------------------------
-The codebase is organised so the same core interface admits multiple, mutually consistent
-readings without changing the kernel:
+The same kernel interfaces admit multiple expert-facing readings without
+changing the kernel. The views are documentation artefacts (typechecked sync
+guards); they do not add axioms.
 
-- View notes (index): `docs/Views/All.lagda.md`
+Start at `docs/Views/All.lagda.md` and pick a view note (each includes a small
+dictionary + a residual-vs-literature paragraph).
 
-- **Multi-institution:** S/H/G tiers as linked institutions; reindexing along signature maps is implemented
-  by `LogOS/Kernel/Reindex.agda` (world-only `reindexKernel`, plus `reindexKernelWithFml` for strict-formula translation),
-  and packaged heterogeneously in `LogOS/Kernel/HomOverSig.agda`.
-- **3-level HoTT-style:** S/H/G are explicit tiers of truth glued by equivalences/coherences; the reflection/code
-  layer provides the “+” (`encode/decode/Guard` in `LogOS/Kernel/Core.agda` / `LogOS/Kernel.agda`).
-- **Categorical logic (2-category view):** kernels (and their instances) form a preorder-enriched 2-dimensional refinement calculus
-  (`LogOS/Kernel/LogicKernel/Hom2Cat.agda`; wrapper records in `LogOS/Theorems/CategoryTheory/WrapperCore.agda`,
-  instantiated in `LogOS/Theorems/CategoryTheory/Kernel2Cat.agda`), and boundary ports/adapters package into a
-  boundary-level 2-category (`LogOS/Theorems/CategoryTheory/Port2Cat.agda`).
-- **Observer semantics:** “observer steps” are monotone endomaps on boundary constraints ordered by refinement
-  (`LogOS/Kernel/EndoCore.agda`, `LogOS/Kernel/TensorDSL.agda`).
+Navigation
+----------
+- Pack navigation landing page: `docs/Library.lagda.md`
+- Applications: `docs/Applications/`
+- Views (one kernel, many readings): `docs/Views/All.lagda.md`
+- Deep dives (implementation and motivation): `docs/DeepDive/`
+- Meta safety spine: `docs/Meta_Safety.lagda.md`
 
-Application Packs (What You Get)
---------------------------------
-This repo is organized so “big theorems” are opt‑in packs that do *not* contaminate
-the kernel.
-
-### ZFC (as a kernel application)
-- Narrative: `docs/Applications/ZFC.lagda.md`
-- Pack: `LogOS/Packs/ZFC/All.agda`
-- Stable lock surface: `LogOS/Packs/ZFC/Surface.agda` (umbrella: `LogOS/Packs/ZFC/All.agda`)
-- Forcing-like closure surface: `LogOS/Domain/ZFC/SetTheory/Dsl.agda`,
-  `LogOS/Domain/ZFC/SetTheory/StageToCHFromHierarchy.agda` (`μFlow` when `OmegaCPO` + `FiniteFirst` are supplied)
-
-### Computational universality (UniversalIR)
-- Narrative: `docs/Applications/Universality.lagda.md`
-- Stable surfaces: `LogOS/Packs/UniversalIR/Core.agda`, `LogOS/Packs/UniversalIR/Agreement.agda`
-- Stable lock surface: `LogOS/Packs/Universality/Surface.agda` (umbrella: `LogOS/Packs/Universality/All.agda`)
-- Meta-language refinement (scheme/process + contracts): `LogOS/MetaLanguage/All.agda`
-
-### Complexity (verification vs search; physical bottlenecks)
-- Narrative: `docs/DeepDive/Complexity.lagda.md`
-- Experimental surfaces: `LogOS/Packs/Complexity/Experimental/Core.agda`, `LogOS/Packs/Complexity/Experimental/PhysicsOfInformation.agda`
-- Physical separation story: `docs/Applications/Complexity.lagda.md`
-
-### Opacity (observability ledgers; conditional application)
-- Narrative: `docs/Applications/Opacity.lagda.md`
-- Experimental surface: `LogOS/Packs/Opacity/Experimental/Core.agda`
-- Optional application surfaces: `LogOS/Packs/Opacity/Experimental/Applications/*`
-- Vacuity guards (non-vacuity / non-tautology): `LogOS/Domain/Opacity/Meaningfulness.agda`
-  - Note: spectral claims (including GRH-style) live here as *conditional applications* (kept out of the core narrative).
-- Kernel-powered strengthenings (assumption weakenings): stable truth ⇒ observable (`TruthK→Pr`), meet-limit/cofinal scheduling, Hasse–Yoneda probe coverage
-- One-line GRH wrappers (operator/nucleus/forcing/Weil): `LogOS/Domain/Opacity/Applications/GRH/Systems.agda`
-
-### Information theory (Shannon-style interfaces)
-- Narrative: `docs/Applications/InfoTheory.lagda.md`
-- Stable lock surface: `LogOS/Packs/InfoTheory/Surface.agda` (umbrella: `LogOS/Packs/InfoTheory/All.agda`)
-- Application wrappers: `LogOS/Packs/InfoTheory/Applications/All.agda`
-
-### Agents (sockets + monitoring/auditing)
-- Narrative: `docs/Applications/Agents.lagda.md`
-- Stable lock surface: `LogOS/Packs/Agents/Surface.agda` (umbrella: `LogOS/Packs/Agents/All.agda`)
-- Experimental extensions (transformer/scaling + physics/RG-flow/capstones): `LogOS/Packs/Agents/Experimental/Surface.agda` (umbrella: `LogOS/Packs/Agents/Experimental/All.agda`)
-- Meta-language surface: `LogOS/Packs/Agents/MetaLanguage.agda`
-- Kernel-as-process constructors: `LogOS/Packs/Agents/Socket/FromKernel.agda`, `LogOS/Packs/Agents/Socket/FromGradedKernel.agda`
-- Heterogeneous networks: `LogOS/Packs/Agents/Networks/Hetero.agda`
-- Network-as-agent wrapper: `LogOS/Packs/Agents/Networks/NetworkAgent.agda`
-- Opacity hook (budgeted “no total auditor”): `LogOS/Packs/Agents/Safety/NoTotalAuditor.agda`
-  - Proof-search instantiation (experimental): `LogOS/Packs/Agents/Experimental/Safety/NoTotalAuditor.agda`
-
-Formal Attachments (Classic Logic + HoTT Reading)
--------------------------------------------------
-Companion documents make the “math paper” story explicit (as alternative readings of the same kernel):
-
-- Views index: `docs/Views/All.lagda.md`
-
-These are documentation artefacts; the authoritative source of truth is the Agda
-code under `LogOS/*` (including `LogOS/Domain/*`), plus the host surface wrappers in `LogOS/Host/*`.
-
-Meta-theory sanity checks
--------------------------
-The repo includes a small set of typechecked “view coherence” checks that exercise the bridge points
-between these presentations without adding axioms:
-
-- `Tests/ViewsMetaTheory.agda`
-
-Where to Find the Exact Definitions
------------------------------------
-- Research-grade record/law listing: `docs/LogOS_Core_Spec.lagda.md`
-- Curated CI surface: `make ci`
+Checks
+------
+- Policy/lint: `make ci-policy`
+- Full typecheck surface: `make ci`
+- Docs typecheck: `bash scripts/check_all_docs.sh`
+- View/meta-theory regression: `Tests/ViewsMetaTheory.agda`

@@ -27,7 +27,7 @@ open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; total≤ℕ)
 --
 -- This is designed so that different paradigms (Turing/Minsky, Church/λ, EVM,
 -- quantum, …) become different *scheme choices* that can be compared:
--- same meaning via `run`, different resource profiles via `cost`.
+-- same `run` behaviour via `run`, different resource profiles via `cost`.
 
 record Scheme {ℓI ℓO ℓC ℓQ : Level}
               (Input  : Set ℓI)

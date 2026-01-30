@@ -131,7 +131,7 @@ minskyExecWithinFactorsThroughU n m b m' ew =
   Cat.ExecWithin-map Minsky→UCost minskyMachineChoice n m b m' ew
 
 -- --------------------------------------------------------------------------
--- One concrete “same meaning, wildly different cost profile” example.
+-- One concrete “same `Sch.run` behaviour, wildly different cost profile” example.
 
 task23 : PATask
 task23 = mkTask Mul 2 3
@@ -213,7 +213,7 @@ minskyMachine23-execWithinFuelThroughU =
     minskyMachine23-execWithinFuel
 
 -- --------------------------------------------------------------------------
--- One-stroke “Minsky variants”: different resource accounting, same semantics.
+-- One-stroke “Minsky variants”: different resource accounting, same `Sch.run` behaviour.
 
 flatCost : MinskyCode → Budget
 flatCost _ = QAdapter.⊥s (Sch.Scheme.Q minskyMachineScheme)

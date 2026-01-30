@@ -72,7 +72,9 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     projection-exists = V.Projections.projection
 ```
 
-This note is a **non-canonical view** of the LogOS kernel: it is intentionally more
+Purpose
+-------
+This is a **non-canonical view** of the LogOS kernel: it is intentionally more
 physical than the “classic logic” and “HoTT positioning” views.
 
 The goal is to make explicit how LogOS naturally supports an **observer-centric**
@@ -91,6 +93,14 @@ this document is a derived presentation (“view”) over the same kernel interf
 it does not add logical power.
 
 Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
+Notation (local)
+----------------
+- `c ⊑ d`: refinement/entailment in a preorder.
+- `c ≈ d`: mutual refinement.
+- `P ↔ Q`: satisfaction equivalence.
+- `x ≡ y`: propositional equality (`_≡_`), not judgmental equality.
 
 Scope (formal)
 --------------
@@ -98,8 +108,8 @@ Scope (formal)
 - Core observer layer: phrased for `LogicKernel Sig Q`, derived from any `Kernel Sig Q` via
   `LogOS/Kernel/LogicKernel/FromKernel.agda`.
 
-Adapter mapping to the literature (quick table)
------------------------------------------------
+Dictionary (literature ↔ LogOS)
+-------------------------------
 
 | Literature concept | LogOS identifier(s) | Notes |
 |---|---|---|
@@ -107,12 +117,27 @@ Adapter mapping to the literature (quick table)
 | Observer | predicates on `Code` (and/or telemetry traces) | Observers can carry witnesses (traces/certificates), hence universe levels matter. |
 | Coarse-graining / reindexing | `SigHom`, `reindexKernel`, port translations | Signature change and port/adapters both model “change of description”. |
 | Resource/budget algebra | `QAdapter` (scale) and `BudgetedTier` / telemetry budgets | Resource predicates are explicit assumptions, not hidden global axioms. |
-| Truth after stabilisation (closure) | guarded closure `Flow`, stable truth `Th*` | Stability is closure pre-fixedness (hence fixed up to `≈`), not judgmental equality. |
+| Stabilised truth (closure) | guarded closure `Flow`, stable truth `Th*` | Stability is closure pre-fixedness (hence fixed up to `≈`), not judgmental equality. |
+
+Core definitions (literature style)
+-----------------------------------
+
+**Definition (Observer predicate).** An observer is a predicate on code
+(`Code → Set …`) equipped with two stability conditions:
+- decode-extensionality (depends only on decoded meaning, up to decoded mutual refinement), and
+- step-stability (invariant under the chosen code step).
+
+**Definition (Largest admissible/observable fragment).** `Observable⋆ TruthK` is
+the largest predicate (w.r.t. pointwise implication) that is decode-extensional,
+step-stable, and sound into a target truth predicate `TruthK`. This is the core
+construction of `ObserverCore` and is instantiated from any `LogicKernel` by
+`ObserverFromLogicKernel`.
 
 Assumptions (explicit)
 ----------------------
 - This view is interpretive: any *physical* axioms (e.g. symmetry, dagger, probabilistic structure) must be added explicitly as packs; the kernel does not assume them.
 - Completeness/adequacy claims are conditional (not global): budgeted adequacy is an explicit hypothesis.
+- Budgets are predicates on observations/traces (e.g. from telemetry); LogOS does not assume a built-in cost model.
 
 What is novel here (residual vs the literature)
 -----------------------------------------------
@@ -137,6 +162,29 @@ Theorem spine (authoritative)
   `projection`.
 - The prose below is explanatory; the statements above are the authoritative claims.
 
+Micro-example (two steps, same decoded behaviour)
+-------------------------------------------------
+The observer machinery is insensitive to the *presentation* of the code step,
+as long as the decoded step agrees up to decoded mutual refinement.
+
+In particular, for a `LogicKernel` the library relates:
+- the raw operational step `FlowCode : Code → Code`, and
+- the “compute then stabilise” step `BoxAt step (Body _)`,
+
+via a decode-level equality and then a packaged transport lemma for observer
+predicates (`StepTransport≈` / `Pred⋆≈-cong-step` in `ObserverCore`).
+
+Pointers (no repetition)
+------------------------
+- Kernel/tier bookkeeping: `docs/LogOS_Core_Spec.lagda.md`.
+- CHL-facing step story (`RawStep` vs `Step`): `docs/Views/CurryHowardLambek.lagda.md`.
+- Ports/adapters backbone (presentation transport): `docs/DeepDive/Architecture_PortsAdapters.lagda.md`.
+
+Extended discussion (optional)
+-----------------------------
+The remainder develops a richer “physics-of-information” narrative and points to
+downstream packs. The authoritative claims are the theorem surfaces cited above.
+
 Signature maps as coarse-graining (optional)
 --------------------------------------------
 In many physical readings, changing the “interface signature” corresponds to renaming observables
@@ -153,9 +201,9 @@ directions:
 
 The Kernel does not assume a single global truth predicate. Instead, it provides:
 
-- an H-tier satisfaction `Sat_H (w , c)` (“local truth in a world/context”), and
+- an H-tier satisfaction `Sat_H w c` (“local truth in a world/context”), and
 - a G-tier closure step `Flow` on boundary constraints,
-  with a distinguished (preorder) (lax) fixed point witness `Th*`.
+  with a distinguished lax fixed-point witness `Th*`.
 
 Interpretation (analogy):
 
@@ -189,15 +237,15 @@ comes from the chosen model/axioms.
 - **Decoded meaning of code**: `decode : Code → Con` from the kernel.
 - **Observer step / admissible interaction**: the derived operational step on code
   `BoxAt (GTier.step (LogicKernel.G K)) (Body _) : Code → Code` (“compute-then-stabilise at the step grade”).
-  In a `LogicKernel`, this is decode-equivalent to the raw operational step
+  In a `LogicKernel`, this is equal after decoding (≡) to the raw operational step
   `FlowCode : Code → Code` (defined as `Guard ∘ Body`); see
   `ObserverFromLogicKernel.For.decode-stepFlowCode≡decode-step` and the induced
-  observer equivalence `ObserverFromLogicKernel.For.Observable⋆↔Observable⋆-FlowCode`.
+  predicate equivalence (↔) `ObserverFromLogicKernel.For.Observable⋆↔Observable⋆-FlowCode`.
 - **Stabilisation / “what survives communication”**: the kernel-derived closure modality on code.
   In graded form: `BoxAt g γ := encode (Flow g (decode γ))`. `Box` is the ungraded/saturation instance.
   (`LogOS/Kernel.agda`, `LogOS/Kernel/Graded.agda`, `LogOS/Kernel/LogicKernel.agda`).
 - **Step invariance (decode-level)**: `ObserverCore.Pred⋆≈` only depends on the step up to decoded mutual refinement (`≈`).
-  If `decode (step γ) ≈ decode (step′ γ)` for all `γ`, then `Pred⋆≈` for `step` and `step′` are equivalent
+  If `decode (step γ) ≈ decode (step′ γ)` for all `γ`, then `Pred⋆≈` for `step` and `step′` are predicate-equivalent (↔)
   (`ObserverCore.Pred⋆≈-cong-step` in `LogOS/Theorems/Meta/ObserverCore.agda`).
   (Legacy, ≡-based: `ObserverCore.Pred⋆-cong-step`.)
 - **Step transport (packaged)**: the same hypothesis also transports *stability* and *admissibility* for
@@ -225,7 +273,8 @@ comes from the chosen model/axioms.
   then `TruthAt w (mapCode f γ) → TruthAt w (mapCode g γ)` (see
   `ObserverFromLogicKernel.RefinementPreservesTruthAt` and `Meta/RefinementSoundness`).
 - **Port/adapters calculus** (boundary-level 2-category): boundary ports are objects, adapters are 1-cells,
-  and adapter equivalence is the 2-cell notion (`LogOS/Theorems/CategoryTheory/Port2Cat.agda`).
+  and adapter equivalence `Adapter≈` (defined pointwise by satisfaction equivalence (↔)) is the 2-cell notion
+  (`LogOS/Theorems/CategoryTheory/Port2Cat.agda`).
 
 ```agda
   -- Anchor: `TruthAt` expands to `Sat_H_bnd (to∂ w) (decode γ)` by unfolding the definition (proof is `refl`).
@@ -365,8 +414,8 @@ structures computation and physical constraints.
 - A clearer bridge to CQM and computational-physics narratives:
   computations are processes; observers are restricted process families; impossibility theorems are resource bounds.
 
-Pointers (where to connect)
----------------------------
+Connections (where to connect)
+------------------------------
 - Kernel closure/reflection: `LogOS/Kernel.agda`
 - Endomap/tensor DSL: `LogOS/Kernel/TensorDSL.agda`
 - Physical budgets: `LogOS/Domain/Complexity/ObservabilityBudgetGraded.agda`

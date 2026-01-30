@@ -22,6 +22,9 @@ LogOS is designed for AI-assisted axiomatic modelling:
 - **CI policies check** architectural constraints (host surfaces, import layers,
   postulate policies) so that semantic boundaries do not silently collapse.
 
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 In this sense, LogOS is a *model-of-models*: it standardises how a “model” is
 packaged as explicit assumptions + a protected kernel interface + swappable
 semantic adapters + auditable translations.

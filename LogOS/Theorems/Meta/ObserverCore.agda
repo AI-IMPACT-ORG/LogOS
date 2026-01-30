@@ -230,7 +230,7 @@ Pred⋆-stable decode step TruthK γ =
 
 -- --------------------------------------------------------------------------
 -- Derived facts (≈-extensional variant): Pred⋆≈ is the largest admissible
--- predicate when decoded observational equality is mutual refinement.
+-- predicate when decode-extensionality uses mutual refinement.
 -- --------------------------------------------------------------------------
 
 Pred⋆≈-contains

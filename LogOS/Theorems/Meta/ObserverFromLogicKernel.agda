@@ -128,7 +128,7 @@ module For
 
   -- Concrete truth predicate induced by boundary satisfaction at a chosen world.
   --
-  -- This is extensional w.r.t. decoded observational equality (`≈`), using
+  -- This is extensional w.r.t. decoded mutual refinement (`≈`), using
   -- monotonicity of boundary satisfaction.
 
   TruthAt

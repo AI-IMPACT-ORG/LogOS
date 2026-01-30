@@ -22,6 +22,9 @@ open UAgree public
 This page is a checked pointer to two small, “headline” results used by the
 public narrative; the complexity/physics piece is still experimental.
 
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 Interpretation (analogy):
 “physics of information” is a naming convention for resource/cost interfaces.
 Only the cited Agda assumptions and theorems apply.

@@ -58,7 +58,7 @@ module For {ℓ ℓP : Level}
       ext    : BudgetExt budget
 
   -- A proof-search oracle: either return a proof code (with correctness) or abstain.
-  -- Extensionality is decode-level up to decoded observational equality (mutual refinement),
+  -- Extensionality is decode-level up to decoded mutual refinement,
   -- matching the GRH/opacity convention.
   record ProofSearchOracle (PS : PB.ProofSystem) : Set (lsuc (lsuc (ℓ ⊔ ℓP))) where
     field

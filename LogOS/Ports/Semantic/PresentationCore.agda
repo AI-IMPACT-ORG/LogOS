@@ -28,7 +28,7 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
     Import : Form → Con
     SatF≈C : ∀ p φ → SatF p φ ↔ SatC p (Import φ)
 
-  -- Observational equivalence induced by satisfaction.
+  -- Observational equality induced by satisfaction.
 
   ObsEqC : Con → Con → Set _
   ObsEqC = Prop.ObsEqOn SatC

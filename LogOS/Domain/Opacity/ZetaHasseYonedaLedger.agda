@@ -62,7 +62,7 @@ record ZetaHasseYonedaLedger {ℓ ℓW : Level}
     -- Finite truth on the regulator-generated tests.
     mkTest-true : ∀ r → W-pos (HY.mkTest {IK = IK} K G r)
 
-    -- Every nontrivial zero’s probe is (up to decoded observational equality / mutual refinement) one of the
+    -- Every nontrivial zero’s probe is (up to decoded mutual refinement) one of the
     -- regulator-generated tests.
     sel : ∀ s → NontrivialZero s → HY.Reg G
     mkTest∘sel≈probe

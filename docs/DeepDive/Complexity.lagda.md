@@ -19,6 +19,11 @@ import LogOS.Packs.Complexity.Experimental.Core
 This note is the single, publication-facing entrypoint for the **complexity**
 architecture in the production library.
 
+Trust level: **experimental** (surface: `LogOS/Packs/Complexity/Experimental/Core.agda`).
+
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 Interpretation (analogy):
 the “physics” wording in this strand is a label for explicit cost/budget interfaces and hardness assumptions,
 not a claim that LogOS derives physics from the kernel.
@@ -133,7 +138,7 @@ Canonical conditional route (kernel-native, minimal axioms):
 
 Non-uniform adapter (explicit, opt-in):
 
-- `TruthRoute_Grade_Only.NonUniform` (same semantics, but the encoding is explicit).
+- `TruthRoute_Grade_Only.NonUniform` (same claim surface, but the encoding is explicit).
 
 Non-deterministic spine (shared with opacity/observability):
 - `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (proof-search oracle + budgeted opacity barrier)

@@ -10,8 +10,8 @@ module LogOS.Ports.Semantic.Interlingua where
 -- Canonical “glue” between external boundary presentations.
 --
 -- If two external systems are ports over the same LogOS boundary satisfaction,
--- then the meaning-preserving translation between them is forced (up to the
--- satisfaction-equivalence notion of equality).
+-- then the canonical translation between them is forced (up to satisfaction),
+-- and it preserves and reflects satisfaction (↔) by construction.
 
 open import LogOS.Prelude
 
@@ -100,7 +100,7 @@ module For
   translate : Form₁ → Form₂
   translate = C.translate
 
-  -- Meaning preservation is forced: translation is sound+complete by construction.
+  -- Preservation/reflection of satisfaction (↔) is forced: translation is a ↔ by construction.
 
   translate-preserves-Sat
     : ∀ (p : ∂Cosp) (φ : Form₁)
@@ -117,7 +117,7 @@ module For
   Trans≈ : (Form₁ → Form₂) → (Form₁ → Form₂) → Set (ℓ ⊔ ℓForm₁)
   Trans≈ = _≈⇒_
 
-  -- A semantics-preserving translation is unique up to `≈⇒`.
+  -- A satisfaction-preserving-and-reflecting translation (`SemPreserving`) is unique up to `≈⇒`.
 
   SemPreserving : (Form₁ → Form₂) → Set (ℓ ⊔ ℓForm₁)
   SemPreserving t = ∀ (p : ∂Cosp) (φ : Form₁) → Prop._↔_ (SatF₁ p φ) (SatF₂ p (t φ))

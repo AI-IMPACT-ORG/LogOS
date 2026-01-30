@@ -17,7 +17,7 @@ open import LogOS.Minimal.Con
 open import LogOS.Kernel
 import LogOS.Theorems.Meta.ObserverCore as ObsCore
 
--- Decode-extensionality, but phrased w.r.t. decoded observational equality (`≈`).
+-- Decode-extensionality, but phrased w.r.t. decoded mutual refinement (`≈` on decoded constraints).
 
 CodeCP
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}

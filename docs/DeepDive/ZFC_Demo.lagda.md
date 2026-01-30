@@ -20,8 +20,9 @@ import LogOS.Packs.ZFC.WFGraph as ZFCPack
 ```
 
 This is a small, typechecked “proof-of-mechanisation” note: it shows how to do
-recognisable ZF reasoning (singleton, binary union, membership equivalences)
+recognisable ZF reasoning (singleton, binary union, membership ↔-laws)
 *inside the coded/formula-pack interface* used by the WFGraph route.
+All `↔`-laws here live inside that formula-pack satisfaction interface (`ZFAxiomsᶠ`); they are not a claim of a single global satisfaction relation over sets.
 
 For the forcing-like boundary closure (Flow/μFlow) that ties ZF back to the kernel,
 see `LogOS/Domain/ZFC/SetTheory/Dsl.agda` and `LogOS/Domain/ZFC/SetTheory/StageToCHFromHierarchy.agda`.

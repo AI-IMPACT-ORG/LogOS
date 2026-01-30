@@ -12,7 +12,8 @@ module LogOS.Theorems.Meta.TruthLemma where
 -- and H-tier truth is exactly boundary satisfaction (via `sat-coh`).
 --
 -- This is not a completeness theorem for a proof system; it is the internal
--- coherence principle that makes the three tiers denote the same semantics.
+-- coherence principle that relates the tiers by satisfaction equivalences (↔)
+-- along explicit translations (`TransH`, `to∂`).
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop using (_↔_)

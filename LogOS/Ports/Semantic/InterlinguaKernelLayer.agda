@@ -81,7 +81,7 @@ module For
     → H._≈⇒_ t compile
   compile-unique = H.translate-unique
 
-  -- Any semantic-preserving interpretation is observationally equivalent
+  -- Any `SemPreserving` interpretation is observationally equivalent
   -- to the canonical compiler.
   compile≈interp
     : ∀ (t : X → BoundaryPort.Form P)

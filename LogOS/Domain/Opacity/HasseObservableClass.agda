@@ -21,10 +21,9 @@ import LogOS.Domain.Opacity.WeilCriterionLedger as WCL
 -- plus an observer axiom that every such generated test is observable.
 --
 -- Key design choice: membership in the generated class is stated up to a chosen
--- “semantic equality” relation `_≈_` on tests. In code-based instantiations,
--- `_≈_` should be decoded observational equality (prefer mutual refinement in the
--- boundary preorder), so downstream lemmas only need decoded equivalence rather
--- than literal code equality.
+-- test relation `_≈_` on tests. In code-based instantiations, `_≈_` is intended
+-- to be decoded mutual refinement (in the boundary preorder), so
+-- downstream lemmas only need decoded mutual refinement rather than literal code equality.
 
 record HasseObservableClass {ℓT ℓW ℓObs ℓ≈ : Level}
                             (TPo : TP.TruthPositivity {ℓT} {ℓW} {ℓObs})
@@ -32,7 +31,7 @@ record HasseObservableClass {ℓT ℓW ℓObs ℓ≈ : Level}
   open TP.TruthPositivity TPo
   infix 4 _≈_
   field
-    -- Test-equivalence respected by observability.
+    -- Test relation respected by observability.
     _≈_ : Test → Test → Set ℓ≈
     obs-resp : ∀ {t u} → t ≈ u → Observable t → Observable u
 

@@ -11,6 +11,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module docs.Views.All where
 
 import docs.Views.MultiInstitution as MultiInstitution
+import docs.Views.UniversalLogic as UniversalLogic
 import docs.Views.HoTT_3Level as HoTT_3Level
 import docs.Views.CategoricalLogic as CategoricalLogic
 import docs.Views.Topos as Topos
@@ -27,6 +28,8 @@ view note is itself a typechecked Agda module (the top ` ```agda ` block), and
 the prose around it is explanatory only.
 
 Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline (typed anchors): `docs/Kernel/ClaimRegister.lagda.md`.
+When precision matters, always name the relation: satisfaction equivalence (`↔`), mutual refinement (`≈`), observational equality (`ObsEq…`), adapter equivalence (`Adapter≈`), or propositional equality (`≡`).
 
 Interpretation (analogy):
 some view titles use interpretive labels for orientation (e.g. “physics-of-information”); the formal content is the Agda development in the imported view modules.
@@ -34,6 +37,7 @@ some view titles use interpretive labels for orientation (e.g. “physics-of-inf
 Views (entrypoints)
 ------------------
 - Multi-institution (classic model theory): `docs/Views/MultiInstitution.lagda.md`
+- Universal logic (port-first logic systems): `docs/Views/UniversalLogic.lagda.md`
 - 3-level HoTT-style positioning: `docs/Views/HoTT_3Level.lagda.md`
 - Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
 - Topos-shaped reading (nuclei/sheaves; realizability orientation): `docs/Views/Topos.lagda.md`

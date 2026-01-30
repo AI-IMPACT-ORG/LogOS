@@ -106,8 +106,14 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     projection-exists = V.Projections.projection
 ```
 
-This note is a documentation artefact written in a paper-ready style. It gives a
-classic model-theoretic view of the LogOS kernel architecture as a **multi-institution**.
+Purpose
+-------
+This view presents the LogOS kernel in classic model-theoretic language, as a
+multi-institution-shaped interface: multiple satisfaction relations (S/H/∂, and
+optionally G/closure) linked by explicit coherence laws and explicit reindexing
+along signature morphisms.
+
+Two axes are kept explicit: reindexing along `SigHom` changes which satisfaction relation you talk about, while ports/adapters compare presentations of a fixed satisfaction relation.
 
 It is intentionally “implementation-aligned”: where the Agda library does not
 expose a notion as a packaged categorical structure (e.g. a `Category` record),
@@ -122,14 +128,22 @@ this document is a derived presentation (“view”) over the same kernel interf
 it does not add logical power.
 
 Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
+Notation (local)
+----------------
+- `c ⊑ d`: refinement/entailment in a preorder.
+- `c ≈ d`: mutual refinement.
+- `P ↔ Q`: satisfaction equivalence.
+- `x ≡ y`: propositional equality (`_≡_`), not judgmental equality.
 
 Scope (formal)
 --------------
 - Parameter: `Kernel Sig Q`.
 - Surface: `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `MultiInstitution`).
 
-Adapter mapping to the literature (quick table)
------------------------------------------------
+Dictionary (literature ↔ LogOS)
+-------------------------------
 
 | Literature concept | LogOS identifier(s) | Notes |
 |---|---|---|
@@ -137,10 +151,24 @@ Adapter mapping to the literature (quick table)
 | Signature morphisms | `SigHom` (`LogOS/Base/Signature/Hom.agda`) | Identity/composition available; enough for institution-style satisfaction conditions. |
 | Sentences (`Sen`) | strict formulas `Fml`, optional boundary sentence layer `Con∂` + `rename∂` | `Sen` can be taken trivial-on-morphisms, or made nontrivial via `rename∂`/`mapFml`. |
 | Models (`Mod`) | worlds/contexts `Cosp` (optionally a preorder via `_≤ctx_`) | Presented conservatively as discrete unless you assume `CtxPreorder`. |
-| Satisfaction | `Sat_S`, `Sat_H`, `Sat_H_bnd` | Three-tier interface (S/H/∂) rather than a single `⊨`. `Sat_H (w , c)` is world‑indexed; `Sat_H_bnd (to∂ w , c)` is the boundary-indexed coherence. |
+| Satisfaction | `Sat_S`, `Sat_H`, `Sat_H_bnd` | Three-tier interface (S/H/∂) rather than a single `⊨`. `Sat_H w c` is world‑indexed; `Sat_H_bnd (to∂ w) c` is the boundary-indexed coherence. |
 | Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); mostly orthogonal to the institution story. |
 | Satisfaction condition | `Sat*-precompose` lemmas under reindexing | Implemented as literal precomposition in theorems (reindexing surface). |
 | Inter-institution translations | ports/adapters, hetero canonical adapters | “Presentation independence” is a first-class boundary feature. |
+
+Core definitions (literature style)
+-----------------------------------
+
+**Definition (Institution satisfaction condition, LogOS form).** Reindexing is
+contravariant on models (`reindexKernel`) and (optionally) covariant on strict
+sentences (`reindexKernelWithFml` / `mapFml`). The satisfaction condition is
+presented in the library as explicit “precomposition” lemmas (`Sat*-precompose`)
+rather than as a global categorical axiom.
+
+**Definition (Multi-institution spine).** LogOS supplies multiple satisfaction
+relations (strict S and boundary H/∂) and coherence laws linking them (`coh-SH`,
+`coh-H∂`); additional structure (closure/stability, code/reflection) can be
+added as further layers without changing the basic institution-shaped reading.
 
 Assumptions (explicit)
 ----------------------
@@ -187,6 +215,28 @@ Theorem spine (authoritative)
   `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `Projections`),
   `projection`.
 - The prose below is explanatory; the statements above are the authoritative claims.
+
+Micro-example (the satisfaction condition as a lemma)
+-----------------------------------------------------
+Fix a signature morphism `σ` and a kernel `K₂`. The surface
+`ReindexingSatisfaction σ K₂` packages the satisfaction condition as literal
+precomposition:
+- `SatS-precompose`, `SatH-precompose`, and `SatHbnd-precompose`.
+
+This is the institution axiom in “proof-relevant” form: not a meta-level
+equation, but a named theorem you can transport and compose.
+
+Pointers (no repetition)
+------------------------
+- Kernel/tier bookkeeping: `docs/LogOS_Core_Spec.lagda.md`.
+- Ports/adapters and heterogeneous satisfaction morphisms: `docs/DeepDive/Architecture_PortsAdapters.lagda.md`.
+- μ/limit reasoning and hypotheses: `docs/Terminology.lagda.md` and `docs/Kernel/ClaimRegister.lagda.md`.
+
+Extended discussion (optional)
+-----------------------------
+The remainder recalls standard definitions (institution/multi-institution) and then
+spells out the LogOS correspondence in that idiom. The authoritative LogOS claims are
+the theorem surfaces cited above.
 
 ## Institutions (recall)
 
@@ -267,7 +317,7 @@ We use the following correspondence to the Agda fields:
 - $\mathrm{Sat}_S(w,\varphi)$ and $\mathrm{Sat}_H(w,c)$ are the S- and H-layer satisfactions,
 - $\mathrm{Flow} : \mathrm{Con}_\partial \to \mathrm{Con}_\partial$ is a closure/nucleus
   (this is the `Flow` field of `Truth.GuardedCore.GuardedClosure` in `LogOS/Minimal/Truth.agda`),
-- $\mathrm{Th}^\ast$ is a distinguished (preorder) (lax) fixed point witness (interpretation: “global stable truth”),
+- $\mathrm{Th}^\ast$ is a distinguished lax fixed-point witness (interpretation: “global stable truth”),
 - $\mathrm{Trans}_H : \mathrm{Fml} \to \mathrm{Con}_\partial$ is the S→H translation.
 
 Disambiguation: this section uses $\mathrm{Con}_\partial$ for **semantic** boundary constraints (the boundary preorder).
@@ -276,7 +326,7 @@ Separately, the library also provides an optional **syntactic** boundary sentenc
 
 The kernel coherence laws include:
 $$
-  \mathrm{Sat}_S(w,\varphi) \iff \mathrm{Sat}_H\!\bigl(w,\mathrm{Trans}_H(\varphi)\bigr)
+  \mathrm{Sat}_S(w,\varphi) \iff \mathrm{Sat}_H(w,\mathrm{Trans}_H(\varphi))
 $$
 and the reflective coherence law:
 $$
@@ -313,16 +363,16 @@ The guarded tier is most naturally a **consequence/closure** interface. A standa
 model-theoretic presentation uses **pre-fixed points** (stable constraints) of the closure operator as models.
 
 Let $\mathrm{Fix}(\mathrm{Flow})$ be the set of constraints $t \in \mathrm{Con}_\partial$
-that are **stable** under the closure, i.e. $\mathrm{Flow}(t) \preceq t$ (pre‑fixed points).
-Because `Flow` is inflationary in LogOS, this automatically implies $t \preceq \mathrm{Flow}(t)$
-as well, hence $t$ is “fixed” up to preorder equivalence.
+that are **stable** under the closure, i.e. $\mathrm{Flow}(t) ⊑ t$ (pre‑fixed points).
+Because `Flow` is inflationary in LogOS, this automatically implies $t ⊑ \mathrm{Flow}(t)$
+as well, hence $t$ is “fixed” up to mutual refinement ($≈$).
 
 Define an institution $\mathcal{I}_G(K)$ (“G-tier”) by:
 
 - $\mathrm{Sen}_G(\Sigma) := \mathrm{Con}_\partial$,
 - $\mathrm{Mod}_G(\Sigma) :=$ the preorder of stable constraints $\mathrm{Fix}(\mathrm{Flow})$
   (read as a thin category if you assume proof‑irrelevance for entailment proofs),
-- satisfaction: $t \models_G c$ iff $t \preceq c$ in the boundary preorder.
+- satisfaction: $t \models_G c$ iff $t ⊑ c$ in the boundary preorder.
 
 This is the standard “theories as models” (Lindenbaum-style) move: stable constraints represent theories,
 and satisfaction is entailment in the underlying preorder.

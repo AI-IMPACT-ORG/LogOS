@@ -21,6 +21,8 @@ This note makes one claim precise:
 > structure (truth predicates, provability, diagonalization, comprehension, etc.)
 > to be introduced explicitly as *assumption packs*.
 
+Audit rule: the available paradoxes are exactly those whose gate/assumption packs you import; importing only a `Kernel` instance keeps those gates closed.
+
 ### Design choice (core)
 
 The design choice is recorded as a tiny pack:
@@ -43,7 +45,7 @@ Key consequences (formalized):
   interface (built from the kernel’s H-tier truth via `sat-coh`).
 - Canonical ports exist (boundary port + code port).
 - Canonical translation is forced (`Interlingua` / `PortAdapter` uniqueness).
-- Bootstrapping is a port equivalence up to `Adapter≈` (`bootstrap-iso`).
+- Bootstrapping is an adapter equivalence `Adapter≈` between the canonical ports (`bootstrap-iso`).
 - Guarded truth provides a distinguished fixed-point witness (`Th*` and code
   witness `γ*`); leastness/μ-induction requires explicit ωCPO/continuity
   assumptions. (`guard-decode` is the Guard↔Flow coherence law.)

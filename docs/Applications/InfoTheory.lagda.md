@@ -55,6 +55,9 @@ private
 
 Trust level: **stable** (but *axiom-pack driven*).
 
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 This note is the publication-facing entrypoint for the **information theory**
 strand. LogOS does not attempt to rebuild real analysis; instead it packages
 Shannon-style facts about a real-number model (`ShannonFacts`) as an explicit

@@ -39,7 +39,7 @@ DecodeExtensional≈
     (P : Kernel.Code K → Set ℓP)
   → Set (ℓ ⊔ ℓP)
 -- Stronger, preorder-safe variant: `P` is insensitive to code representation
--- up to decoded observational equality (mutual refinement in the boundary preorder).
+-- up to decoded mutual refinement (in the boundary preorder).
 DecodeExtensional≈ K P =
   ObsCore.DecodeExtensional≈ (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K) P
 
@@ -95,7 +95,7 @@ DecodeExtensionalFn≈
     {X : Set ℓX}
     (f : Kernel.Code K → X)
   → Set (ℓ ⊔ ℓX)
--- Preorder-safe variant: `f` respects decoded observational equality (mutual refinement).
+-- Preorder-safe variant: `f` respects decoded mutual refinement.
 DecodeExtensionalFn≈ K f =
   ∀ γ₁ γ₂
   → _≈CP_ (BulkBoundary.bnd (Kernel.BB K)) (Kernel.decode K γ₁) (Kernel.decode K γ₂)

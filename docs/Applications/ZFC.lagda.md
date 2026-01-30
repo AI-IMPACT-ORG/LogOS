@@ -19,6 +19,11 @@ This note is the single, publication-facing entrypoint for the set-theory story:
 how the production LogOS library packages **ZF** (and optionally **ZFC**) as an
 application pack **without touching the Kernel**.
 
+Trust level: **stable** (lock surface: `LogOS/Packs/ZFC/Surface.agda`).
+
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 The key design choice is the same as in Metamath and most proof assistants:
 **schemata range over codes/formulas**, not over arbitrary Agda predicates.
 So “what is observable/usable” is the fragment that can be named and interpreted.
@@ -119,7 +124,7 @@ The ZF DSL makes this explicit: membership respects the global step `Flow`, and 
 boundary realiser is required to be stable under `Flow`.
 
 If a model supplies `OmegaCPO` + `FiniteFirst` for the boundary preorder, then
-`StageToCH-fromCH-μFlow` replaces the distinguished witness `Th⋆K` with the **Kleene μ**
+`StageToCH-fromCH-μFlow` replaces the distinguished witness `Th*` (historical name: `Th⋆K`) with the **Kleene μ**
 of `Flow`. This gives a least pre-fixed-point interpretation of the infinity stage in the
 boundary preorder, without adding any axioms to the kernel.
 

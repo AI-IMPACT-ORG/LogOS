@@ -93,9 +93,9 @@ Reading discipline (guardrail)
 This repository distinguishes four kinds of statements:
 
 - **Literal (checked):** a definition/lemma typechecked by Agda.
-- **Truth after stabilisation (closure):** a closure/fixed-point style statement (e.g. `Th*`, `Box`, Kleene `μ Flow`).
+- **Stabilised truth (closure):** a closure/fixed-point style statement (e.g. `Th*`, `Box`, Kleene `μ Flow`).
   By default, these are only *lax* fixed points (two inequalities), unless extra domain structure is assumed.
-- **Representational truth (presentation):** a statement transported through ports/adapters (satisfaction equivalences),
+- **Representational truth (presentation):** a statement transported through ports/adapters (satisfaction equivalences (↔)),
   not judgmental equality of syntax/terms.
 - **Analogy / interpretation:** explanatory metaphors; they never add logical power.
 
@@ -113,7 +113,7 @@ that define what each phrase means.
   This repackages a kernel shape together with a parameterised guarded tier (`GTier`) so the same interface covers
   ungraded and graded kernels uniformly.
 
-## Truth after stabilisation (closure; lax by default)
+## Stabilised truth (closure; lax by default)
 
 - **Operational code step:** `LogOS/Kernel/Core.agda` (`FlowCode`) and `LogOS/Kernel/LogicKernel.agda` (`FlowCode`).
   This is the one-step update on code (`Guard ∘ Body`).
@@ -141,7 +141,7 @@ One key “assumption-complete” transport theorem is:
 
 ## Representational truth (ports/adapters)
 
-The “presentation-independent” API uses satisfaction equivalence as the notion of sameness:
+The “presentation-independent” API uses satisfaction equivalence (↔) as the notion of sameness:
 
 - Boundary I/O: `LogOS/Boundary/IO.agda` (`BoundaryIO`).
 - Boundary ports: `LogOS/Boundary/Port.agda` (`BoundaryPort`) and interlingua translation:

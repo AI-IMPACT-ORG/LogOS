@@ -25,22 +25,18 @@ vacuous) and `deprecated` (migration marker; avoid for new work).
 
 Reading discipline (guardrail)
 ------------------------------
-This repo uses a small amount of overloaded terminology. In the docs we try to
-separate these meanings explicitly:
+For canonical vocabulary and claim kinds, use:
 
-- **Literal (checked):** an Agda definition/lemma in the referenced file.
-- **Truth after stabilisation (closure):** a statement about a closure/fixed
-  point (e.g. `Th*`, `Box`, Kleene `μ Flow`) — usually only a *lax* fixed point unless
-  extra domain structure (ω‑sups, continuity) is assumed.
-- **Representational truth (presentation):** a statement transported through
-  `decode`/`encode`/`translate`/`SatMor`, i.e. preserved up to the relevant
-  satisfaction equivalence; this is not judgmental equality.
-- **Analogy / interpretation:** physics/CS/maths metaphors (kernel, channel, RG,
-  “GRH”, …). These are explicitly labeled as interpretations and do not add
-  logical power; the formal content is the cited Agda surface.
+- `docs/Terminology.lagda.md` (relation words and μ phrasing).
+- `docs/Kernel/ClaimRegister.lagda.md` (literal vs conditional, vacuity guards, and typed anchors).
 
-Notation (used throughout the docs): `≡` is propositional equality, `c ⊑ d` is (directed) refinement in a preorder,
-`c ≈ d` is mutual refinement (two inequalities), and `P ↔ Q` is a satisfaction equivalence (paired implications).
+When precision matters in prose, always name the relation: propositional equality (`≡`),
+refinement (`⊑`), mutual refinement (`≈`), satisfaction equivalence (`↔`),
+observational equality (`ObsEq…`), or adapter equivalence (`Adapter≈`).
+
+Interpretation (analogy):
+some pack names use interpretive labels (e.g. “RG”, “GRH”, “physics-of-information”); the formal
+content is always the cited Agda surface, and any extra semantic strength comes only from explicit assumptions.
 
 Where to start:
 - Architecture + entrypoints: `docs/LogOS_Overview.lagda.md`
@@ -63,6 +59,7 @@ Major storylines (docs-first entrypoints):
 - Opacity / observability (experimental): `docs/Applications/Opacity.lagda.md`
 - Information theory (stable): `docs/Applications/InfoTheory.lagda.md`
 - Agents (socket + monitoring/auditing): `docs/Applications/Agents.lagda.md`
+- Agents (experimental extensions): `docs/Applications/Agents_Experimental.lagda.md`
 
 Curated packs (code-first entrypoints):
 - ZFC lock surface: `LogOS/Packs/ZFC/Surface.agda` (umbrella: `LogOS/Packs/ZFC/All.agda`; WFGraph quartets: `LogOS/Packs/ZFC/WFGraph.agda`)

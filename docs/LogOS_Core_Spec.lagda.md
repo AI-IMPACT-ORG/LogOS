@@ -55,6 +55,7 @@ Overview
 This file is a compact, code‑accurate summary of the LogOS core. All axioms are
 explicit record fields; continuity/fixpoint properties are model‑local assumptions.
 Hook: one kernel, many semantics — packs and views add structure without changing the core.
+Audit invariant: every module/path referenced below is a sync-guard import above, so drift breaks docs CI rather than silently changing the story.
 
 Conventions and Notation
 ------------------------
@@ -113,7 +114,7 @@ Truth Interfaces (S/H/G)
 ------------------------
 `LogOS.Minimal.Truth` packages S/H/G layers:
 - `StrictTruth.StrictLayer` (`Sat_S`)
-- `HomotypicalTruth.HLayer` (world‑indexed `Sat_H (w , c)`, monotonicity) + `HomotypicalTruth.Invariance` (`Inv_H`, `infl`, `idemp-lax`)
+- `HomotypicalTruth.HLayer` (world‑indexed `Sat_H w c`, monotonicity) + `HomotypicalTruth.Invariance` (`Inv_H`, `infl`, `idemp-lax`)
 - `GuardedTruth.GuardedClosure` (`Flow`, `mono`, `infl`, `idemp-lax`, `Th*`, `Th*-fixed`)
 - Optional graded closure (`GuardedCore.GradedClosure`) and ω‑sup structure (`OmegaCPO`, `FiniteFirst`)
 `Th*` lives in preorder form. When ω‑sup structure is provided, `FiniteFirst`
@@ -148,11 +149,11 @@ Reflection is an axis across S/H/G and the bulk↔boundary interface:
   monotonicity is supplied as an extra assumption; bundle: `HomotypicalTruth.InvarianceMono`).
 - Holo: once `ext`/`bnd` are monotone (bundle: `LaxAdjunctionMono` / `LaxMonoidalAdjunctionMono`),
   the lax unit/counit induce projectors (`LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda`).
-- Port reflection: `CodePort` and the canonical boundary port are equivalent
-  presentations of the same satisfaction, so the bootstrapping map is the
-  canonical interlingua translation (not a bespoke compiler/transpiler).
-  See `LogOS/Ports/Semantic/CanonicalPorts.agda` (definitions) and
-  `LogOS/Theorems/Meta/Bootstrapping.agda` (`bootstrap-iso`).
+- Port reflection: `CodePort` and the canonical boundary port are `Adapter≈`-equivalent **as ports**
+  (canonical adapters that are quasi-inverses up to satisfaction equivalence (↔)),
+  so the bootstrapping map is the canonical interlingua translation
+  (not a bespoke compiler/transpiler). See `LogOS/Ports/Semantic/CanonicalPorts.agda`
+  (definitions) and `LogOS/Theorems/Meta/Bootstrapping.agda` (`bootstrap-iso`).
 - Safety spine: the boundary/port/guarded-flow architecture is a consequence of
   the “kernel‑only” design choice (no additional truth-over-code/provability
   layers unless explicitly imported). See
@@ -324,7 +325,7 @@ Dependency details live with the theorems. Key entrypoints:
 
 Boundary Fixed Points (Non‑vacuous)
 -----------------------------------
-`BoundaryFix` (assumption pack) gives a fixed-point witness (up to mutual refinement)
+`BoundaryFix` (assumption pack) gives a fixed-point witness (up to mutual refinement (≈))
 for every monotone endomap.
 `BoundaryFixFromScott` wraps Scott fixed points; a one‑point boundary gives a trivial instance.
 

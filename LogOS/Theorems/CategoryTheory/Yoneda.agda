@@ -167,10 +167,10 @@ property-transport-unique IK K P DPP h pK =
 -- ============================================================================
 -- STEP 5: Code-Level Properties (LogOS-Native)
 -- ============================================================================
--- Properties on codes that respect decoded observational equality.
+-- Properties on codes that respect decoded mutual refinement.
 -- This is LogOS-native because it uses the code/reflection layer.
 
--- A property on codes that respects decoded observational equality.
+-- A property on codes that respects decoded mutual refinement.
 record CodeProperty {ℓ : Level}
                     {Sig : LogOSSignature ℓ}
                     {Q : QAdapter ℓ}
@@ -179,7 +179,7 @@ record CodeProperty {ℓ : Level}
                     : Set (lsuc ℓ) where
   open ForKernel K
   field
-    -- P respects decoded observational equality (mutual refinement).
+    -- P respects decoded mutual refinement.
     decode-extensional : ∀ {γ₁ γ₂} → γ₁ ≈K γ₂ → P γ₁ → P γ₂
 
 open CodeProperty public

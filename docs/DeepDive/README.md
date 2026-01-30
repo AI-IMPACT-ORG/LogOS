@@ -9,6 +9,10 @@ SPDX-License-Identifier: GPL-3.0-only
 This folder contains “how it works” and “why it’s shaped this way” notes. Many
 files are literate Agda and therefore typechecked by `make docs`.
 
+Shared anchors:
+- Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`
+- Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`
+
 Key entrypoints:
 - Ports/adapters spine (hexagonal architecture): `docs/DeepDive/Architecture_PortsAdapters.lagda.md`
 - PL mechanization spine (syntax/statics/dynamics): `docs/DeepDive/PLSpine.lagda.md`

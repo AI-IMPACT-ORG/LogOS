@@ -20,7 +20,7 @@ open import LogOS.Boundary.IO
 
 -- A generic bridge from H-tier satisfaction to an external boundary logic.
 -- Provide a BoundaryIO and an interpretation of boundary constraints into
--- external formulas with a semantic equivalence; derive a transport lemma.
+-- external formulas with a satisfaction equivalence (↔); derive a transport lemma.
 
 record BoundarySemantics {ℓ ℓForm}
                         (Sig : LogOSSignature ℓ)

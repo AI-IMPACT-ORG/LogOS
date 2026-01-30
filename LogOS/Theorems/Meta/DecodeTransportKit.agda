@@ -118,7 +118,7 @@ decode-mapCode-cong {K₁ = K₁} {K₂ = K₂} h {γ₁ = γ₁} {γ₂ = γ₂
     (trans (cong (ConAlgHom≡.map∂ (KernelHom.con-hom h)) eq)
       (sym (KernelHom.map-decode h γ₂)))
 
--- Convenience: turn a source decode equality into target decoded observational equality.
+-- Convenience: turn a source decode equality into target decoded mutual refinement.
 mapCode≈K-from-decode≡
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     {K₁ K₂ : Kernel Sig Q}

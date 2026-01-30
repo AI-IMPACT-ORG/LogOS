@@ -47,32 +47,58 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     projection-exists = V.Projections.projection
 ```
 
-This note explains the intended “3-level HoTT” reading of the LogOS architecture.
-It is deliberately explicit about what is *implemented* vs what is an *optional axiom*
-you may add on top.
+Purpose
+-------
+This view positions LogOS using “HoTT-style” language: a stratified system with
+explicit coherences between levels, and explicit choices about when (and
+whether) mutual refinement (≈) is upgraded to propositional equality (≡).
 
 Interpretation (analogy):
 where this note mentions physics/complexity as motivation, treat that as interpretation only.
 The authoritative claims are exactly the typechecked theorem surfaces cited below.
 
 Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
+Notation (local)
+----------------
+- `c ⊑ d`: refinement/entailment in a preorder.
+- `c ≈ d`: mutual refinement.
+- `P ↔ Q`: satisfaction equivalence.
+- `x ≡ y`: propositional equality (`_≡_`), not judgmental equality.
+When this note says “coherence”, it refers to `_↔_`-statements unless the text explicitly says `≡`.
 
 Scope (formal)
 --------------
 - Parameter: `Kernel Sig Q`.
 - Surface: `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `HoTT3Level`).
 
-Adapter mapping to the literature (quick table)
------------------------------------------------
+Dictionary (literature ↔ LogOS)
+-------------------------------
 
 | Literature concept | LogOS identifier(s) | Notes |
 |---|---|---|
-| “Levels” / strata of meaning | S/H/G tiers (`Sat_S`, `Sat_H (w , c)`, `Flow` + `Th*`) | These are explicit interfaces, not universe levels. |
+| “Levels” / strata of meaning | S/H/G tiers (`Sat_S`, `Sat_H w c`, `Flow` + `Th*`) | These are explicit interfaces, not universe levels. |
 | Equivalence-first coherence | `_↔_` (`LogOS/Syntax/Prop.agda`) | Used for tier coherences instead of judgmental equality. |
 | Modality / local operator | `Flow` (guarded closure) | Inflationary + idempotent-lax; pre-fixed points (hence fixed up to `≈`) are “stable truths”. |
 | Truncation/extensionality upgrades | antisymmetry / proof-irrelevance packs | Upgrades mutual refinement to equality when assumed. |
 | Reflection (syntax-in-logic) | `Code`, `encode`, `decode`, `Guard`, `Body` | A reflective interface, not an additional truth layer. |
 | Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); used for graded/budgeted variants. |
+
+Core definitions (literature style)
+-----------------------------------
+
+**Definition (Tier coherences).** A kernel provides explicit bridges:
+- S→H: `Sat_S w φ ↔ Sat_H w (TransH φ)` (coherence `coh-LH`), and
+- H→boundary indexing: `Sat_H w c ↔ Sat_H_bnd (to∂ w) c` (coherence `sat-coh`).
+
+**Definition (Stability).** A boundary constraint \(t\) is stable when
+\(\mathrm{Flow}(t) ⊑ t\) (pre-fixed point). Because `Flow` is inflationary,
+stability implies “fixed up to mutual refinement”.
+
+**Definition (Reflection coherence).** The guard step on code decodes to the
+guarded step on constraints (`guard-decode`), grounding “compute-then-stabilise”
+as a literal kernel law rather than a meta-level convention.
 
 Assumptions (explicit)
 ----------------------
@@ -81,7 +107,7 @@ Assumptions (explicit)
 
 What is novel here (residual vs the literature)
 -----------------------------------------------
-- Matches literature: “transport-first” coherence (equivalences/bi-implications) and stratified semantics.
+- Matches literature: “transport-first” coherence (`↔` / bi-implications) and stratified semantics.
 - Weaker/lax by default: no global HoTT axiom set (no univalence/HITs assumed); refinement and closure live at preorder strength.
 - Added by ports/adapters: tier coherences are explicit interfaces, and stability is a named closure modality (`Flow`, `Th*`) rather than a meta-level convention.
 - Assumption-scoped: equality-level upgrades (proof-irrelevance/antisymmetry) and μ/limit facts (ωCPO/finite-first/continuity bundles) are explicit hypotheses.
@@ -95,14 +121,32 @@ Theorem spine (authoritative)
   `projection`.
 - The prose below is explanatory; the statements above are the authoritative claims.
 
+Micro-example (two different equalities, used deliberately)
+-----------------------------------------------------------
+- Tier coherences are stated as `↔` (satisfaction equivalence), so they remain valid
+  under port/adaptor transport.
+- Reflection coherence is stated as `≡` (propositional equality of decoded constraints),
+  because it is a literal kernel law about decoding.
+
+Pointers (no repetition)
+------------------------
+- Kernel field map and tier glossary: `docs/LogOS_Core_Spec.lagda.md`.
+- μ/limit reasoning and hypotheses: `docs/Terminology.lagda.md` and `docs/Kernel/ClaimRegister.lagda.md`.
+- Institution-style presentation: `docs/Views/MultiInstitution.lagda.md`.
+
+Extended discussion (optional)
+-----------------------------
+Everything below elaborates on the reading above. The authoritative claims are the
+typechecked surfaces cited in the theorem spine.
+
 Key points:
 
 - LogOS is built as a **three-tier** system (S/H/G) with **explicit coherences**
   between the tiers.
-- The core does **not** assume “equality = equivalence” globally; it uses preorders and
-  explicit bi-implications. This is the host-minimal, transport-friendly default.
+- The core does **not** assume `_≡_` coincides with `_↔_` or with mutual refinement (`≈`);
+  it uses preorders and explicit bi-implications. This is the host-minimal, transport-friendly default.
 - “Univalence-like” principles appear as **opt-in upgrades** (e.g. antisymmetry / faithfulness),
-  allowing movement between an extensional (set-like) and a homotopical (equivalence-like) reading
+  allowing movement between an extensional (set-like) and a homotopical (`_↔_`-first) reading
   without changing the kernel.
 
 Three levels in the implementation
@@ -115,7 +159,7 @@ LogOS names the tiers:
      (`LogOS/Minimal/Truth.agda`).
 
 2) **H — Homotypical** (LogOS term: world-/context-indexed boundary semantics)
-   - A satisfaction predicate `Sat_H (w , c)` for boundary constraints.
+   - A satisfaction predicate `Sat_H w c` for boundary constraints.
    - An invariance/projector `Inv_H` (inflationary, idempotent‑lax). If you additionally assume
      monotonicity for `Inv_H`, it upgrades to a closure/nucleus operator; LogOS keeps that
      strength explicit (bundle: `HomotypicalTruth.InvarianceMono` in `LogOS/Minimal/Truth.agda`).
@@ -126,7 +170,7 @@ LogOS names the tiers:
    - A closure operator on boundary constraints (a nucleus/projector). In the Kernel code this
      step is named `Flow` (the `Flow` field of `Truth.GuardedCore.GuardedClosure` in `LogOS/Minimal/Truth.agda`).
      Unlike `Inv_H`, `Flow` already includes monotonicity in its interface.
-   - A distinguished (preorder) (lax) fixed point witness `Th*` (interpretation: “global stable truth”). With optional antisymmetry
+   - A distinguished lax fixed-point witness `Th*` (interpretation: “global stable truth”). With optional antisymmetry
      (and, for μ/limit results, `OmegaCPO` + `FiniteFirst`), one can relate `Th*` to the Kleene
      least pre-fixed point `μ Flow`. Antisymmetry only upgrades “leastness up to refinement” to
      equality-level leastness.
@@ -181,7 +225,7 @@ Two design choices are key:
 Across the repo, “coherence” is phrased as `_↔_` (pairs of functions) and order inequalities,
 not judgmental equalities. This mirrors the HoTT discipline:
 
-- identify structure via equivalence/transport,
+- identify structure via `_↔_` (bi-implication) and transport,
 - treat equality (judgmental or propositional) as *additional structure*, not the default.
 
 In code, this appears as:
@@ -191,7 +235,7 @@ In code, this appears as:
 ### 2) Modal/closure structure is explicit (Flow as a modality)
 The guarded tier packages a closure/nucleus `Flow`. The stable fragment can be
 presented as pre‑fixed points (`Flow t ⊑ t`); because `Flow` is inflationary, this
-is equivalent to stability up to mutual refinement (`t ≈ Flow t`) without assuming
+is the same as mutual refinement (`t ≈ Flow t`) without assuming
 antisymmetry.
 
 Fixed points of a nucleus are the
@@ -236,7 +280,7 @@ This 1.0 library does *not* claim “full HoTT” in the sense of:
 Instead, the repo is engineered so that:
 
 1) the core stays small and host-minimal,
-2) equivalence-first reasoning is the default (via `_↔_`, projectors, and transport),
+2) `_↔_`-first coherence is the default (via `_↔_`, projectors, and transport),
 3) univalence-like principles can be added as *explicit, scoped* assumption packs
    where the application warrants it (e.g. collapsing mutual-refinement classes under antisymmetry/proof-irrelevance).
 
@@ -244,7 +288,7 @@ How to use this in writing
 --------------------------
 If you want a precise, publication-friendly sentence:
 
-> LogOS is a three-tier logic (S/H/G) whose coherences are expressed by equivalences and closure
+> LogOS is a three-tier logic (S/H/G) whose coherences are expressed by satisfaction equivalences (↔) and closure
 > operators; univalence-like extensionality principles are optional, explicitly packaged upgrades
 > (antisymmetry/faithfulness), rather than hidden global axioms.
 

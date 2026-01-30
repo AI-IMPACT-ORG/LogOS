@@ -65,10 +65,14 @@ private
 This note makes the library’s **hexagonal architecture** explicit as a single
 canonical spine.
 
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 The key claim is not “there are many modules”, but:
 
 > if two external systems present the *same* boundary satisfaction relation, then
-> the meaning‑preserving translation between them is **forced** (up to satisfaction),
+> the translation between them is **forced** (unique up to satisfaction equivalence (↔)),
+> and it preserves and reflects satisfaction (↔),
 > and closure/extension steps commute with that translation **provided** the chosen
 > boundary endomap respects boundary observational equality (the explicit
 > extensionality hypothesis in `ported-closure-naturality`, which can be bundled as
@@ -78,14 +82,14 @@ A second, more “full‑metal modularity” claim is also supported:
 
 > if two presentations live over *different* satisfaction relations connected by a
 > satisfaction morphism (`SatMor`), then the canonical translation is again forced
-> (up to satisfaction), and closure steps commute with translation once they are
+> (up to satisfaction equivalence (↔)), and closure steps commute with translation once they are
 > compatible with that morphism (the explicit compatibility hypothesis in the
 > heterogeneous interlingua core).
 
 Interpretation (analogy): an OO reading (without mutable state)
 --------------------------------------------------------------
-See `docs/LogOS_Overview.lagda.md` for the OO analogy. This note stays focused on
-the port/adapters spine and the precise (typed) translation/naturality claims.
+See `docs/DeepDive/Communication.lagda.md` for the OO analogy. This note stays
+focused on the port/adapters spine and the precise (typed) translation/naturality claims.
 
 ## Layer 1: signatures + signature morphisms
 
@@ -98,7 +102,7 @@ the port/adapters spine and the precise (typed) translation/naturality claims.
 - `LogOS/Kernel/Reindex.agda`
 - `LogOS/Kernel/HomOverSig.agda`
 - Optional sentence-translation reindexing:
-  `reindexKernelWithFml` / `reindexLogicKernelWithFml` (syntax view change over the same semantics).
+  `reindexKernelWithFml` / `reindexLogicKernelWithFml` (syntax view change; satisfaction is related by the `Sat*-precompose` lemmas).
 - Canonical strict-syntax translation along reindexing:
   `LogOS/Ports/Semantic/InterlinguaStrictReindex.agda` (interlingua = `mapFml`).
 - Canonical heterogeneous adapter across changing satisfactions:
@@ -106,7 +110,7 @@ the port/adapters spine and the precise (typed) translation/naturality claims.
 - Strict reindexing adapter (one-liner):
   `LogOS/Ports/Semantic/Interoperability.agda` (`strictReindexAdapter`).
 
-## Layer 3: boundary I/O (communicable meaning)
+## Layer 3: boundary I/O (communicable boundary constraints)
 
 - `LogOS/Boundary/IO.agda`
 - `LogOS/Boundary/MultiIO.agda`
@@ -117,7 +121,7 @@ adjunction (aka `Kernel.Holo`).
 
 ## Layer 4: boundary presentations (semantic ports)
 
-Minimal port interface (export + import legs, with satisfaction equivalences):
+Minimal port interface (export + import legs, with satisfaction equivalences (↔)):
 
 - `LogOS/Boundary/Port.agda` (`BoundaryPort`)
 
@@ -126,6 +130,8 @@ Generic presentation interface over an arbitrary satisfaction relation:
 - `LogOS/Ports/Semantic/InterlinguaCore.agda` (`PresentationC`)
 
 ## Layer 5: canonical interlingua (forced translation)
+
+Rule of thumb: same satisfaction (`SatC`) ⇒ `Interlingua.translate`; different satisfactions ⇒ `SatMor` + heterogeneous interlingua (`HeteroInterlinguaCore`).
 
 If two boundary presentations sit over the same boundary satisfaction relation,
 the canonical translation is “route through the shared constraints”:
@@ -140,7 +146,7 @@ This is implemented and proved in:
 
 Theorems (names):
 - `translate-preserves-Sat` (preserves and reflects satisfaction (`↔`) by construction)
-- `translate-unique` (uniqueness up to satisfaction‑equivalence `Trans≈`/`≈⇒`)
+- `translate-unique` (uniqueness up to satisfaction equivalence (↔), packaged as `Trans≈`/`≈⇒`)
 - `ported-closure-naturality` (closure/extension commutes with translation, given `Respects≈∂[ B ]` for the closure map)
 - `ported-closure-naturality-ObsEndo` (same, but takes a bundled `ObsEndo∂` endomap witness)
 
@@ -167,7 +173,7 @@ The reusable domain-theoretic engine is:
 Interoperability theorems (adapters between ports over a shared boundary satisfaction):
 - `adapter-respects-ObsEqF` (ObsEqF transported by any adapter)
 - `composeAdapter-respects-ObsEqF` (ObsEqF preserved by adapter composition)
-- `adapter-confluent` (any two adapters between the same ports are ObsEq‑equivalent)
+- `adapter-confluent` (any two adapters between the same ports are `Adapter≈`-equivalent, i.e. pointwise satisfaction equivalence (↔))
 
 These live in `LogOS/Ports/Semantic/Interoperability.agda` (not `LogOS/Ports/Semantic/Interlingua.agda`).
 
@@ -185,8 +191,8 @@ Kernel “box” closure is also port-level structure: `Box` is `BoundaryPort.Ex
 This is not a separate compiler or transpiler: `bootstrap` is the interlingua
 translation, and `unbootstrap` is the export back to code (`encode`). The
 round‑trip facts are instances of `translate-comp` + `translate-id`. The
-packaged equivalence lives in `LogOS/Theorems/Meta/Bootstrapping.agda`
-(`bootstrap-iso`).
+packaged adapter equivalence between these ports (`bootstrap-iso` as an `Adapter≈` witness) lives in
+`LogOS/Theorems/Meta/Bootstrapping.agda`.
 
 ## Layer 5b: interoperability across changing logics
 

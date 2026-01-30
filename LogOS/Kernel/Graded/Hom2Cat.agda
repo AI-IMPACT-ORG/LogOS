@@ -230,7 +230,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ff'
       gg'
 
-  -- Observational equivalence: mutual refinement.
+  -- Mutual refinement (2-cell equivalence).
 
   infix 4 _≈_
   _≈_

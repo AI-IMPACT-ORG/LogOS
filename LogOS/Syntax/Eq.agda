@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Syntax.Eq where
 
--- Decode-level equality / decoded observational equality aliases for a given Kernel.
--- This helps keep meta-level `_≡_` distinct from the intended “same meaning”
+-- Decode-level equality / decoded mutual refinement aliases for a given Kernel.
+-- This helps keep meta-level `_≡_` distinct from the intended “same decoded meaning”
 -- relations induced by `decode` (`_≃K_` and the preorder-safe `_≈K_`).
 
 open import LogOS.Prelude
@@ -30,8 +30,8 @@ module ForKernel {ℓ : Level}
   _≃K_ : Code → Code → Set ℓ
   γ₁ ≃K γ₂ = decode γ₁ ≡ decode γ₂
 
-  -- Decoded observational equality (mutual refinement in the boundary preorder).
-  -- This is the preferred “same meaning” notion when the boundary is only a preorder.
+  -- Decoded mutual refinement (in the boundary preorder).
+  -- This is the preferred “same decoded meaning” notion when the boundary is only a preorder.
   _≈K_ : Code → Code → Set ℓ
   γ₁ ≈K γ₂ = _≈CP_ CP (decode γ₁) (decode γ₂)
 

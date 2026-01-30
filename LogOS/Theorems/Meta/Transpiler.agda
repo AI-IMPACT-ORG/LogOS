@@ -8,7 +8,8 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.Transpiler where
 
 -- General transpiler theorem: any port adapter is the unique translation
--- determined by boundary satisfaction, hence a semantics-preserving pass.
+-- determined by boundary satisfaction, hence a pass correct up to satisfaction
+-- equivalence (↔).
 
 open import LogOS.Prelude
 

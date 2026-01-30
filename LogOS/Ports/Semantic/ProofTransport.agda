@@ -9,7 +9,8 @@ module LogOS.Ports.Semantic.ProofTransport where
 
 -- “Logic system I/O” via proof systems:
 --
--- Given a semantics-preserving translation between presentations, we can
+-- Given a translation between presentations that preserves and reflects
+-- satisfaction (↔), we can
 -- *pull back* existing provers/checkers (their inputs and proof outputs) along
 -- that translation. This makes interoperability usable with real downstream
 -- logic tools: once you have one prover/checker for a presentation, you get one

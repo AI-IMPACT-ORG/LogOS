@@ -27,7 +27,9 @@ Quick conventions
 - **Refinement** = preorder relation `_⊑_`.
 - **Mutual refinement** = `≈` (two refinements).
 - **Satisfaction equivalence** = `P ↔ Q` (paired implications).
-- **Observational equality** = a satisfaction-induced equality/equivalence relation (often called “observational equivalence” in the literature).
+- **Isomorphism** (in prose): reserve for explicit `≡`-level structure; otherwise say “adapter equivalence (`Adapter≈`)” or “quasi-inverse up to `↔`”.
+- **`iff` / `\iff` in prose**: when used for satisfaction statements, read it as a `↔` (paired implications), not as a judgmental equality claim.
+- **Observational equality** = a satisfaction-induced relation used as equality (often called “observational equivalence” in the literature).
 
 Canonical map (selected terms)
 ------------------------------
@@ -38,7 +40,7 @@ Canonical map (selected terms)
 | poset | partial order | `PartialOrder` (`LogOS/Minimal/Con.agda`) | not assumed | supply antisymmetry explicitly |
 | entailment | refinement / entailment | code refinement (`γ ⊢ δ`) / boundary refinement (`c ⊑ d`) | directed (irreversible) | equality-level only under antisymmetry/proof-irrelevance |
 | (observational) equivalence | observational equality | `ObsEq…`, `≈∂`/`≈∂Cosp` (boundary), scheme `Sch.ObsEq` | satisfaction-induced relation | keep distinct from `≈` (mutual refinement) |
-| homotopy / homotopical (HoTT) | “homotypical” (LogOS term) | H-tier truth `Sat_H (w , c)` + invariance `Inv_H` | world-indexed satisfaction + explicit invariance projector | HoTT axioms (univalence/HITs) are never assumed globally; any extensionality is explicit |
+| homotopy / homotopical (HoTT) | “homotypical” (LogOS term) | H-tier truth `Sat_H w c` + invariance `Inv_H` | world-indexed satisfaction + explicit invariance projector | HoTT axioms (univalence/HITs) are never assumed globally; any extensionality is explicit |
 | adjunction | lax adjunction | `LaxAdjunction` (`LogOS/Minimal/Adjunction.agda`) | inequalities (lax unit/counit) | use `GaloisConnection` (↔-law) or add triangle laws as an explicit strengthening |
 | Galois connection | Galois connection (tight form) | `GaloisConnection` (`LogOS/Minimal/Adjunction.agda`) | optional | requires monotonicity; still preorder-based |
 | Beck–Chevalley | lax Beck–Chevalley | `LogOS/Theorems/CategoryTheory/BeckChevalley.agda` | commutes up to refinement | equality-level only under explicit extensionality assumptions |
@@ -64,9 +66,11 @@ For stability objects in the kernel (e.g. `Th*` for `Flow`), the docs use:
 H-tier indexing (canonical phrasing)
 ------------------------------------
 When the docs say **H-tier truth**, they mean *world-indexed* satisfaction:
-- `Sat_H (w , c)` where `w` is a world/context and `c` is a boundary constraint.
+- `Sat_H w c` where `w` is a world/context and `c` is a boundary constraint.
 
 When the docs say **boundary-indexed H-tier truth**, they mean:
-- `Sat_H_bnd (to∂ w , c)` and the coherence law `sat-coh`.
+- `Sat_H_bnd (to∂ w) c` and the coherence law `sat-coh`.
+
+In prose, we may write $Sat_H(w,c)$ / $Sat_H_bnd(to∂ w,c)$ to emphasize the two arguments; the Agda interface is curried.
 
 This distinction matters because `Sat_H` is easy to misread as already boundary-indexed.

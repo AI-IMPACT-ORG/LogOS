@@ -20,11 +20,14 @@ This page presents the core unification claim in its most operational form:
 
 > unification happens by making *communication* explicit as a typed interface.
 
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 LogOS does this with two bridges that compose:
 
 ```text
 Code (internal proofs/programs)
-  --decode-->  Con_bnd (communicable boundary meaning)
+  --decode-->  Con_bnd (communicable boundary constraints)
   --Interp-->  Form (an external reporting language)
 ```
 
@@ -36,14 +39,14 @@ Code (internal proofs/programs)
    Together these yield `decode (FlowCode γ) ≡ Flow (Body∂ (decode γ))`.
 
    Interpretation (analogy): you can read `decode` as a “channel” from internal
-   code to *communicable boundary meaning*. This does not add semantics: the
+   code to *communicable boundary constraints*. This does not add semantics: the
    only literal claim is the commutation law above.
 
 2. **Boundary semantics (formal representation).**
    A `BoundarySemantics` instance chooses an external reporting language `Form`
    and an interpretation `Interp : Con_bnd → Form` together with a satisfaction
-   equivalence `Sat∂≈F`. This is a **representation claim**: boundary
-   satisfaction and external satisfaction agree up to the provided equivalence.
+   equivalence (↔) `Sat∂≈F`. This is a **representation claim**: boundary
+   satisfaction and external satisfaction agree up to the provided satisfaction equivalence (↔).
 
    Interpretation (analogy): you can read `Form` as “what a community can read”,
    but the only literal content is the `Sat∂≈F` interface and theorems phrased
@@ -51,8 +54,8 @@ Code (internal proofs/programs)
 
 If you also want **interop between external boundary logics**, add an import leg:
 
-- `LogOS/Boundary/Port.agda` (`BoundaryPort`: `BoundarySemantics` + `Import` with satisfaction equivalence)
-- `LogOS/Ports/Semantic/Interlingua.agda` (canonical, meaning-preserving translation between two ports over the same boundary semantics)
+- `LogOS/Boundary/Port.agda` (`BoundaryPort`: `BoundarySemantics` + `Import` with satisfaction equivalence (↔))
+- `LogOS/Ports/Semantic/Interlingua.agda` (canonical translation that preserves and reflects satisfaction (↔) between two ports over the same boundary satisfaction relation)
 
 ## The two headline lemmas (paper-friendly)
 
@@ -61,14 +64,14 @@ two named results:
 
 - `Comm.operationalise-strict`:
   strict truth about a formula transports to an external report `Form` via
-  the kernel’s S→H translation and the chosen boundary semantics.
+  the kernel’s S→H translation and the chosen boundary semantics/presentation.
 
 - `Comm.code-channel-commutes`:
-  external meaning of code after one step agrees with external meaning of the
-  induced boundary update (decode commutes with evolution, then interpret).
+  external satisfaction of code after one step agrees with external satisfaction
+  of the induced boundary update (decode commutes with evolution, then interpret).
 
 These lemmas are generic: they are stated for an arbitrary kernel `K` and an
-arbitrary external boundary semantics `S` (i.e. a choice of `Form`, `Interp`,
+arbitrary external boundary semantics/presentation `S` (i.e. a choice of `Form`, `Interp`,
 and `Sat∂≈F`). This is where “semantic polymorphicity” becomes operational:
 you can swap `S` without changing the kernel.
 
@@ -107,3 +110,13 @@ is explicit (`BoundaryIO`), swappable (`BoundarySemantics`), and stable under
 computation (`FlowCode` commutes with `decode` at one step). Limit/stabilisation
 claims (e.g. `μ Flow`, `Th*`) are separate and require explicit ω‑sup/continuity
 assumptions.
+
+Interpretation (analogy): an OO reading (without mutable state)
+--------------------------------------------------------------
+This is explanatory only (not a formal claim): you can read the architecture in
+“OO words” as long as you keep the formal boundaries explicit.
+
+- “Object” = a `Kernel`/`LogicKernel` instance.
+- “Interface/port” = boundary I/O + presentations (`BoundaryIO`, `BoundarySemantics`, `BoundaryPort`).
+- “Adapter” = canonical translation / view transport (interlingua, reindexing).
+- “Composition/wiring” = process/kernels morphisms (scheme categories, kernel homs).

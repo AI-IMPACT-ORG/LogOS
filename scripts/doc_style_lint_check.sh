@@ -23,7 +23,7 @@ if [ ! -d "docs" ] && [ ! -d "LogOS" ]; then
 fi
 
 # NOTE: use grep-compatible regexes (portable; no PCRE features).
-BANNED_REGEX='(truth[[:space:]]+after[[:space:]]+computation|least[[:space:]-]+fixed[[:space:]-]+point|definitional[[:space:]]+equality|decoded[[:space:]]+observational[[:space:]]+equality|post-fixed)'
+BANNED_REGEX='(truth[[:space:]]+after[[:space:]]+computation|least[[:space:]-]+fixed[[:space:]-]+point|definitional[[:space:]]+equality|decoded[[:space:]]+observational[[:space:]]+equality|post-fixed|meaning[[:space:]-]+preserving|semantic(s)?[[:space:]-]+preserving|semantic[[:space:]-]+equality|semantic[[:space:]-]+equivalence|same[[:space:]]+semantics|same[[:space:]]+meaning)'
 OBS_EQUIV_REGEX='observational[[:space:]]+equivalence'
 OBS_EQUALITY_REGEX='observational[[:space:]]+equality'
 
@@ -45,7 +45,7 @@ while IFS= read -r file; do
 done < <(
   for root in "${DOC_ROOTS[@]}"; do
     if [ -d "$root" ]; then
-      find "$root" -type f \( -name '*.md' -o -name '*.lagda.md' -o -name '*.tex' \) \
+      find "$root" -type f \( -name '*.md' -o -name '*.lagda.md' -o -name '*.tex' -o -name '*.agda' \) \
         -not -path '*/_build/*' -print 2>/dev/null
     fi
   done | sort
@@ -53,7 +53,7 @@ done < <(
 
 if [ -n "$matches" ]; then
   echo "doc-style-lint-check: FAIL" >&2
-  echo "Found banned drift phrases in documentation files:" >&2
+  echo "Found banned drift phrases in prose-bearing files (docs and code comments):" >&2
   echo "$matches" >&2
   echo "Rewrite to canonical wording (e.g. \"least pre-fixed point\", \"observational equality\", \"judgmental equality\")." >&2
   exit 1

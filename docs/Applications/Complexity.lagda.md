@@ -33,6 +33,9 @@ Trust level: **experimental**. This pack is under evaluation and should be
 considered less stable than the rest of the repository. It is a conditional,
 model-driven complexity story; do not read it as a ZFC proof claim.
 
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 Interpretation (analogy):
 the “physics” wording in this note is a label for explicit resource/cost assumption records.
 No physical semantics is imported by default; only the cited Agda assumptions and theorems apply.

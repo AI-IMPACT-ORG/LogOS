@@ -22,23 +22,30 @@ content is always the imported/typechecked Agda surfaces.
 
 ## Documentation contract (per view)
 
-Each view note is expected to include, near the top:
+Each view note is expected to include, near the top, enough content for a domain
+expert to read it as an explicit **adapter note** to the literature, while
+keeping LogOS-native boilerplate (tier bookkeeping, μ hypotheses, equality vs
+refinement discipline) centralized in shared anchors.
 
-- **Terminology conventions:** the canonical “literature ↔ LogOS” mapping lives
-  in `docs/Terminology.lagda.md`.
-- **Interpretation (analogy)**: a short guardrail statement clarifying that this
-  is a derived presentation (“view”), and that any interpretive vocabulary is
-  orientation only.
-- **Scope (formal)**: what structure the view is parameterized by (e.g.
-  `Kernel Sig Q`, `LogicKernel Sig Q`, or a minimal boundary structure).
-- **Adapter mapping to literature**: a small “term ↔ identifier” table that lets
-  a domain expert read LogOS as an explicit adapter of the familiar concept.
-- **Assumptions (explicit)**: any extra hypotheses needed to upgrade the view
-  from preorder/lax structure to a textbook-strength statement (e.g.
-  antisymmetry, proof-irrelevance, ωCPO, adequacy/budgeted adequacy).
-- **Residual / what is new here**: a short paragraph stating what LogOS does
-  differently from the standard presentation (usually: preorder-first,
-  laxness/irreversibility, explicit closure/truth-after-computation, explicit
-  ports/adapters calculus).
-- **Theorem spine (authoritative)**: paths/identifiers that are the formal
-  claims this view is presenting (the prose is explanatory).
+- **Purpose:** what object/idea in the literature this view is presenting, and
+  what it intentionally does *not* claim.
+- **Notation (short):** the minimal local notation used in the view
+  (refinement/equality/μ); for the canonical repository-wide conventions see
+  `docs/Terminology.lagda.md` and `docs/Kernel/ClaimRegister.lagda.md`.
+- **Dictionary (literature ↔ LogOS):** a compact mapping table (≈5–15 entries)
+  from standard domain terms/notation to concrete LogOS identifiers.
+- **Core definitions (literature style):** a small set of definitions stated in
+  conventional mathematical language first, then immediately grounded in the
+  exact LogOS definitions/records.
+- **Theorem spine (authoritative):** the exact Agda surfaces this view is
+  presenting (the prose is explanatory).
+- **Residual vs literature:** what matches, what is weaker/lax, what ports/adapters
+  add, and what is explicitly assumption-scoped.
+- **Micro-example/diagram:** one worked mini-pattern (commuting square, inference
+  rule, closure transport, etc.) that makes the view “feel real” without
+  duplicating proofs.
+
+Some views are intentionally ultra-compact (e.g. Meredith sentences): the goal
+is still the same—an expert-facing adapter note with checkable anchors—just
+without reintroducing boilerplate that already lives in the shared terminology
+and claim register.

@@ -54,7 +54,7 @@ module For
   OpFixed∂ : Con∂ → Set ℓ
   OpFixed∂ c = Op (embed c) ≡ embed c
 
-  -- A certificate oracle for Op-fixedness, extensional up to decoded observational equality.
+  -- A certificate oracle for Op-fixedness, decode-extensional up to decoded mutual refinement.
   --
   -- `infer γ` either produces a certificate for the *decoded* boundary constraint,
   -- or explicitly returns `inj₂ tt` (undefined / no certificate).

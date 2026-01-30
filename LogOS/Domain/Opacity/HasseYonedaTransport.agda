@@ -51,8 +51,7 @@ mkTest
 mkTest {IK = IK} K G r =
   KernelHom.mapCode (InitialKernel.foldK IK K) (mkTest₀ G r)
 
--- Semantic equality on codes: decode-level observational equality (mutual refinement)
--- in the target kernel.
+-- Code relation: decoded mutual refinement (in the target kernel).
 
 infix 4 _≈decode_
 
@@ -103,7 +102,7 @@ mkTest-canonical-prop IK K G h P extP r =
 -- Build a HasseObservableClass for the standard Pr-based observability semantics:
 -- - tests are codes,
 -- - observability is `Pr` for a chosen predicate W-pos,
--- - semantic equality is decode-level mutual refinement.
+-- - the chosen test relation is decode-level mutual refinement.
 
 hasseObservableClass-fromPr
   : ∀ {ℓ ℓW ℓC}
@@ -162,7 +161,7 @@ mkTest-observable-viaHom {ℓC = ℓC} IK K W-pos G h obs r =
     (obs r)
 
 -- One-shot GRH_Without_Vacuity_Guards lemma: weak Weil criterion + Pr-based observability + Hasse-generator
--- factorisation (up to decoded observational equality / mutual refinement) yields GRH.
+-- factorisation (up to decoded mutual refinement) yields GRH.
 
 GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator
   : ∀ {ℓ ℓW ℓC}

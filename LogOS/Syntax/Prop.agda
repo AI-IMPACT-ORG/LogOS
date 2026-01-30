@@ -23,8 +23,8 @@ module LogOS.Syntax.Prop where
 -- - Use `_≡_` for meta-level propositional equality in Agda.
 -- - Use `_↔_` for logical equivalence/coherence (pairs of functions).
 -- - For decode-level equality tied to a specific kernel, prefer opening
---   `LogOS.Syntax.Eq.ForKernel K` and use `_≈K_` for decoded observational equality
---   (mutual refinement); use `_≃K_` only for the strict `decode γ₁ ≡ decode γ₂` form.
+--   `LogOS.Syntax.Eq.ForKernel K` and use `_≈K_` for decoded mutual refinement;
+--   use `_≃K_` only for the strict `decode γ₁ ≡ decode γ₂` form.
 
 open import LogOS.Prelude
 open import LogOS.Prelude.Product using (_×_; Σ; _,_)
@@ -57,12 +57,13 @@ open _↔_ public
     (λ r → from pq (from qr r))
 
 -- ============================================================================
--- OBSERVATIONAL EQUIVALENCE (generic)
+-- OBSERVATIONAL EQUALITY (generic)
 -- ============================================================================
 
--- Observational equivalence induced by a satisfaction predicate.
--- This is the common pattern: two things are equivalent iff every observer
--- (parameter `p`) cannot distinguish them.
+-- Observational equality induced by a satisfaction predicate.
+-- This is the common pattern: two things are observationally equal iff every
+-- observer (parameter `p`) cannot distinguish them. (Often called
+-- “observational equivalence” in the literature.)
 
 ObsEqOn
   : ∀ {ℓP ℓX ℓSat}

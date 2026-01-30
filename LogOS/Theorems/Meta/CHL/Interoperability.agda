@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.CHL.Interoperability where
 
 -- Interoperability view: translations between ports are determined by shared
--- boundary semantics, i.e. a CHL-style “meaning-preserving” view at the boundary.
+-- boundary satisfaction; correctness is preservation and reflection of satisfaction (↔).
 
 open import LogOS.Prelude
 
@@ -40,7 +40,7 @@ module For
 
   open I public using (Adapter≈; canonicalAdapter; adapter-unique)
 
-  -- CHL phrasing: any adapter is meaning-preserving by construction.
+  -- CHL phrasing: any adapter preserves and reflects satisfaction (↔) by construction.
   preserves-sat
     : ∀ (A : PortAdapter B P₁ P₂) (p : LogOSSignature.∂Cosp Sig) (φ : BoundaryPort.Form P₁)
     → Prop._↔_

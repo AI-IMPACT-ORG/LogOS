@@ -20,6 +20,11 @@ universality** in the production library. It presents a checked universality
 story: a shared carrier, a total stepper, and explicit observation/translation
 layers.
 
+Trust level: **stable** (lock surface: `LogOS/Packs/Universality/Surface.agda`).
+
+Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
+
 The goal is to present computation *inside LogOS* as a **universal process
 model**: multiple internal languages (Minsky, untyped λ-calculus, quantum
 oracle/circuit models, a small EVM-like language) share a single semantic center
@@ -44,8 +49,8 @@ assumptions; the literal claims are only about the included semantics.
 - Kernel/port view for UniversalIR observation kits:
   `LogOS/Packs/UniversalIR/Kernel.agda` (module `ObservedPorts`)
 
-Boundaries are explicit: the strong “all paradigms are equivalent for all inputs”
-claim is *not* assumed; the library proves agreement for selected fragments and
+Boundaries are explicit: the strong “all paradigms agree for all inputs”
+claim (formal shape: `Sch.RunEq` for all programs) is *not* assumed; the library proves agreement for selected fragments and
 examples, and exposes the machinery needed to extend it.
 
 Two complementary universality surfaces live side by side:
@@ -87,7 +92,7 @@ universality story fails to build.
    share a single stepper on `UCode`, and prove agreement after lowering/decoding.
 
 3. **Paradigm universality (conditional):**
-   full equivalence of paradigms for arbitrary computation would require
+   full `Sch.RunEq` agreement of paradigms for arbitrary computation would require
    uniform source languages and total transpiler correctness; the architecture
    supports this, but the production library proves it only for selected fragments.
 

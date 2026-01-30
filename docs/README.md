@@ -10,6 +10,7 @@ Start here:
 - Library overview (HTML landing page): `docs/Library.lagda.md`
 - Architecture and core definition: `docs/LogOS_Overview.lagda.md`
 - Record/law specification: `docs/LogOS_Core_Spec.lagda.md`
+- Canonical terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`
 - Kernel claim register (what is literal vs conditional): `docs/Kernel/ClaimRegister.lagda.md`
 - Views index (one kernel, many readings): `docs/Views/All.lagda.md`
 

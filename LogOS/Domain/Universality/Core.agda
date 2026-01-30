@@ -48,7 +48,7 @@ stepC c with size c
 -- Quantum: use the explicit basis-state circuit code.
 --
 -- This keeps the universality core minimal while making the quantum branch
--- directly executable (same semantics as UniversalIR).
+-- directly executable (it reuses the `UniversalIR` quantum-circuit core).
 
 CoreQuantumCode : Set
 CoreQuantumCode = QC.QuantumCircuitCode

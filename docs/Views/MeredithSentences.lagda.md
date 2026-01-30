@@ -204,30 +204,46 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
       MF.preserves-Th*-from-Flow M GCsat G₂ FF₁ FF₂ comm
 ```
 
-Fix `K : LogicKernel Sig Q` (`LogOS/Kernel/LogicKernel.agda`).
+Purpose
+-------
+Fix `K : LogicKernel Sig Q` (`LogOS/Kernel/LogicKernel.agda`). This view presents
+the CHL-facing kernel as a compact “axiom poem”: a small list of named equations
+and refinements that pin down the core interface (decode/encode, reflection,
+guard/body, closure, and the distinguished stable witness).
 
 Interpretation (analogy):
 this document is a derived presentation (“view”) over the CHL-facing `LogicKernel`;
 it does not add logical power.
 
 Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
+Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
 
 Scope (formal)
 --------------
 - Parameter: `LogicKernel Sig Q`.
 - Derived from: any `Kernel Sig Q` via `LogOS/Kernel/LogicKernel/FromKernel.agda`.
 
-Adapter mapping to the literature (quick table)
------------------------------------------------
+Dictionary (literature ↔ LogOS)
+-------------------------------
 
 | Literature concept | LogOS identifier(s) | Notes |
 |---|---|---|
 | “Axiom poem” / compact interface axioms | (M₁–M₈) anchors in `LogicKernel` | Not additional axioms: each line is a field/lemma (often `refl` after unfolding canonical bridges). |
 | Closure/modality □ | `Flow` / `BoxAt` / `Box` | In graded form: `BoxAt g γ := encode (Flow g (decode γ))`. `Box` is the ungraded/saturation instance. |
-| Stable truth / fixed point invariant | `Th*`, `γ*` | `Th*` is a distinguished (preorder) (lax) fixed point witness; μ-characterisation is optional. |
+| Stable truth / fixed point invariant | `Th*`, `γ*` | `Th*` is a distinguished lax fixed-point witness; μ-characterisation is optional. |
 | Kleene μ / least pre-fixed point | `μ` (when `OmegaCPO` + `FiniteFirst`) | Limit semantics is explicit and hypothesis-driven. |
 | Resource/quantale indexing | `BudgetedTier` (grades `g`) | Purely an optional view: it does not add logical power to the core. |
 | Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); used via the graded/budgeted tier. |
+
+Concretely, the resource view is anchored by `boxAt-mono-grade` and `boxAt-comp-lax`: grade monotonicity and lax compositionality of `BoxAt`.
+
+Core definitions (literature style)
+-----------------------------------
+
+**Definition (Meredith anchor).** Each “Meredith sentence” in this file is a
+field/lemma of `LogicKernel` (or a definitional consequence of that interface),
+presented with a conventional symbolic spelling (`⟦_⟧`, `η`, `□`, …) and an exact
+Agda anchor name (`Meredith₁`–`Meredith₈` above).
 
 Assumptions (explicit)
 ----------------------
@@ -308,6 +324,11 @@ These hypothesis sets are available as explicit bundles:
 - `MuFusion.For.Th*TransportAssumptions` (adds ω-continuity of `map` and lax flow commutation).
 
 Typechecked anchor surface: this document (`docs/Views/MeredithSentences.lagda.md`).
+
+Pointers (no repetition)
+------------------------
+- Kernel field map and tier glossary: `docs/LogOS_Core_Spec.lagda.md`.
+- μ/limit facts and hypotheses: `docs/Terminology.lagda.md` and `docs/Kernel/ClaimRegister.lagda.md`.
 
 Cross references
 ----------------
