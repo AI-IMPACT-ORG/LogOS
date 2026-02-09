@@ -3,4 +3,4 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 # Pinned Hackage index-state for CI (cabal install Agda). Update periodically for reproducibility.
-2025-02-01
+2026-02-08T00:00:00Z
