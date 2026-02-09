@@ -13,6 +13,7 @@ open import LogOS.Kernel.UngradedKernel
 open import LogOS.Kernel.Shape as Core hiding (FlowCode)
 open import LogOS.Kernel.UngradedKernel.ConAlgOf public using (conAlgOf)
 open import LogOS.Kernel.HomCore as HomCore
+import LogOS.Kernel.HomFlowShared as FlowShared
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
@@ -49,54 +50,33 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ; map-body-decode  to map-body-decode
       )
 
--- Optional strengthening: preservation of Flow on boundary constraints.
+  private
+    map∂Of : ∀ {K₁ K₂ : UngradedKernel Sig Q}
+           → UngradedKernelHom K₁ K₂
+           → ConPreorder.Con (BulkBoundary.bnd (UngradedKernel.BB K₁))
+           → ConPreorder.Con (BulkBoundary.bnd (UngradedKernel.BB K₂))
+    map∂Of h = ConAlgHom≡.map∂ (UngradedKernelHom.con-hom h)
 
-record UngradedKernelHomFlow {ℓ : Level}
-                             {Sig : LogOSSignature ℓ}
-                             {Q : QAdapter ℓ}
-                             (K₁ K₂ : UngradedKernel Sig Q)
-                             (h : UngradedKernelHom K₁ K₂)
-                             : Set (lsuc (lsuc ℓ)) where
-  open UngradedKernel K₁ renaming (BB to BB₁; GTruth to G₁)
-  open UngradedKernel K₂ renaming (BB to BB₂; GTruth to G₂)
-  open UngradedKernelHom h
-  field
-    flow-hom
-      : Truth.GuardedCore.FlowHom
-          (BulkBoundary.bnd BB₁)
-          (BulkBoundary.bnd BB₂)
-          G₁ G₂
-          (ConAlgHom≡.map∂ con-hom)
+    module FlowCore = FlowShared.With
+      (UngradedKernel Sig Q)
+      UngradedKernel.BB
+      UngradedKernel.GTruth
+      UngradedKernelHom
+      map∂Of
 
--- Optional strengthening: Flow preservation + transport of `Th*`.
+  -- Optional strengthening: preservation of Flow on boundary constraints.
+  UngradedKernelHomFlow = FlowCore.HomFlow
+  module UngradedKernelHomFlow = FlowCore.HomFlow
 
-record UngradedKernelHomFlowStable {ℓ : Level}
-                                   {Sig : LogOSSignature ℓ}
-                                   {Q : QAdapter ℓ}
-                                   (K₁ K₂ : UngradedKernel Sig Q)
-                                   (h : UngradedKernelHom K₁ K₂)
-                                   : Set (lsuc (lsuc ℓ)) where
-  open UngradedKernel K₁ renaming (BB to BB₁; GTruth to G₁)
-  open UngradedKernel K₂ renaming (BB to BB₂; GTruth to G₂)
-  open UngradedKernelHom h
-  field
-    stable-hom
-      : Truth.GuardedCore.FlowHomStable
-          (BulkBoundary.bnd BB₁)
-          (BulkBoundary.bnd BB₂)
-          G₁ G₂
-          (ConAlgHom≡.map∂ con-hom)
+  -- Optional strengthening: Flow preservation + transport of `Th*`.
+  UngradedKernelHomFlowStable = FlowCore.HomFlowStable
+  module UngradedKernelHomFlowStable = FlowCore.HomFlowStable
 
-  open Truth.GuardedCore.FlowHomStable stable-hom public
-
-ungradedKernelHomFlowOfStable
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {K₁ K₂ : UngradedKernel Sig Q}
-    {h : UngradedKernelHom K₁ K₂}
-  → UngradedKernelHomFlowStable K₁ K₂ h
-  → UngradedKernelHomFlow K₁ K₂ h
-ungradedKernelHomFlowOfStable hf =
-  record { flow-hom = UngradedKernelHomFlowStable.flow-hom hf }
+  ungradedKernelHomFlowOfStable
+    : ∀ {K₁ K₂ : UngradedKernel Sig Q} {h : UngradedKernelHom K₁ K₂}
+    → UngradedKernelHomFlowStable K₁ K₂ h
+    → UngradedKernelHomFlow K₁ K₂ h
+  ungradedKernelHomFlowOfStable = FlowCore.homFlowOfStable
 
 -- Convenience: build a stable-flow structure from a plain flow-hom + a Th* witness.
 

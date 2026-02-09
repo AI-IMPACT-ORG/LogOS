@@ -12,13 +12,17 @@ module LogOS.Computation.ProcessLimitSub2Cat where
 -- 1-cells are lax process morphisms equipped with ω-continuity of the state map,
 -- so they preserve `run∞` (via μ-fusion).
 --
--- This mirrors `LogOS.Kernel.Hom2Cat.FlowSub2Cat`, but for `run∞`.
+-- We keep the original API (`Obj`, `Hom₁`, `idHom₁`, `composeHom₁`,
+-- `preserves-run∞`) and also instantiate the generic
+-- `LogOS.Kernel.Hom2Cat.FlowSub2Cat.With` checker over this continuity-marked
+-- hom space.
 
 open import LogOS.Prelude
 
 import LogOS.Minimal.Truth as Truth
 open import LogOS.Computation.SchemeCategory using (Process; ProcessHomLax; idProcessHomLax; _∘ProcessHomLax_)
 import LogOS.Computation.ProcessLimit as PL
+import LogOS.Kernel.Hom2Cat.FlowSub2Cat as FlowSub
 
 module For
   {ℓO ℓC ℓQ : Level}
@@ -110,6 +114,42 @@ module For
             Hom₁.cont g (λ n → map₁ (chain n)) (mono-chain-map₁ chain mono-chain)
         in
         trans₃ le₁ le₂
+
+  -- Generic sub-2-category checker instantiated over the continuity-marked homs.
+  -- Here continuity is already internal to `Hom₁`, so the external witness is
+  -- the trivial marker `⊤`.
+  private
+    FlowWitness : ∀ {A B : Obj} → Hom₁ A B → Set (lsuc (ℓO ⊔ ℓC ⊔ ℓQ))
+    FlowWitness _ = ⊤ {ℓ = lsuc (ℓO ⊔ ℓC ⊔ ℓQ)}
+
+    idFlowWitness : ∀ A → FlowWitness (idHom₁ A)
+    idFlowWitness _ = tt {ℓ = lsuc (ℓO ⊔ ℓC ⊔ ℓQ)}
+
+    composeFlowWitness
+      : ∀ {A B C : Obj}
+        {f : Hom₁ A B}
+        {g : Hom₁ B C}
+      → FlowWitness f
+      → FlowWitness g
+      → FlowWitness (composeHom₁ f g)
+    composeFlowWitness {A} {B} {C} {f} {g} _ _ =
+      tt {ℓ = lsuc (ℓO ⊔ ℓC ⊔ ℓQ)}
+
+    module Sub = FlowSub.With
+      {ℓObj = lsuc (ℓO ⊔ ℓC ⊔ ℓQ)}
+      {ℓHom = lsuc (ℓO ⊔ ℓC ⊔ ℓQ)}
+      {ℓFlow = lsuc (ℓO ⊔ ℓC ⊔ ℓQ)}
+      Obj
+      Hom₁
+      FlowWitness
+      idHom₁
+      composeHom₁
+      idFlowWitness
+      (λ {A} {B} {C} {f} {g} _ _ →
+        tt {ℓ = lsuc (ℓO ⊔ ℓC ⊔ ℓQ)})
+
+    sub-id-exists : ∀ A → Sub.Hom₁ᶠ A A
+    sub-id-exists = Sub.idHom₁ᶠ
 
   preserves-run∞
     : ∀ {A B : Obj}

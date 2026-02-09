@@ -120,7 +120,7 @@ fi
 
 # Docs parity: do not allow `postulate` in Agda fenced code blocks.
 
-docs_postulates="$(docs_scan_agda_blocks | grep -E '^[^:]+:[0-9]+:[[:space:]]*postulate([[:space:]]|$)' || true)"
+docs_postulates="$(docs_scan_agda_blocks docs | grep -E '^[^:]+:[0-9]+:[[:space:]]*postulate([[:space:]]|$)' || true)"
 if [[ -n "${docs_postulates}" ]]; then
   die $'found postulate in docs (Agda code blocks):\n'"${docs_postulates}"
 fi

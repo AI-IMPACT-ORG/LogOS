@@ -76,7 +76,7 @@ if [[ -n "${bad_prim}" ]]; then
   die $'found primitive declarations:\n'"${bad_prim}"
 fi
 
-docs_code="$(docs_scan_agda_blocks)"
+docs_code="$(docs_scan_agda_blocks docs)"
 
 docs_bad_opts="$(printf "%s" "${docs_code}" | grep -E '^[^:]+:[0-9]+:.*\{-# OPTIONS[^}]*--(no-termination-check|no-positivity-check|type-in-type|rewriting)' || true)"
 if [[ -n "${docs_bad_opts}" ]]; then

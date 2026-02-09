@@ -16,6 +16,7 @@ open import LogOS.Minimal.ConAlg
 open import LogOS.Kernel
 open import LogOS.Kernel.ConAlgOf public using (conAlgOf)
 open import LogOS.Kernel.HomCore as HomCore
+import LogOS.Kernel.HomFlowShared as FlowShared
 open import LogOS.Minimal.Truth as Truth
 import LogOS.Kernel.GuardedTier as GuardedTier
 
@@ -59,46 +60,30 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     satClosure : (K : Kernel Sig Q) → GT.GuardedClosure (BulkBoundary.bnd (Kernel.BB K))
     satClosure K = GuardedTier.toGuardedClosure (Kernel.G K)
 
-  record KernelHomFlow
-    (K₁ K₂ : Kernel Sig Q)
-    (h : KernelHom K₁ K₂)
-    : Set (lsuc (lsuc ℓ)) where
-    open Kernel K₁ renaming (BB to BB₁)
-    open Kernel K₂ renaming (BB to BB₂)
-    open KernelHom h
-    field
-      flow-hom
-        : GT.FlowHom
-            (BulkBoundary.bnd BB₁)
-            (BulkBoundary.bnd BB₂)
-            (satClosure K₁)
-            (satClosure K₂)
-            (ConAlgHom≡.map∂ con-hom)
+    map∂Of : ∀ {K₁ K₂ : Kernel Sig Q}
+           → KernelHom K₁ K₂
+           → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁))
+           → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₂))
+    map∂Of h = ConAlgHom≡.map∂ (KernelHom.con-hom h)
 
-  record KernelHomFlowStable
-    (K₁ K₂ : Kernel Sig Q)
-    (h : KernelHom K₁ K₂)
-    : Set (lsuc (lsuc ℓ)) where
-    open Kernel K₁ renaming (BB to BB₁)
-    open Kernel K₂ renaming (BB to BB₂)
-    open KernelHom h
-    field
-      stable-hom
-        : GT.FlowHomStable
-            (BulkBoundary.bnd BB₁)
-            (BulkBoundary.bnd BB₂)
-            (satClosure K₁)
-            (satClosure K₂)
-            (ConAlgHom≡.map∂ con-hom)
+    module FlowCore = FlowShared.With
+      (Kernel Sig Q)
+      Kernel.BB
+      satClosure
+      KernelHom
+      map∂Of
 
-    open GT.FlowHomStable stable-hom public
+  KernelHomFlow = FlowCore.HomFlow
+  module KernelHomFlow = FlowCore.HomFlow
+
+  KernelHomFlowStable = FlowCore.HomFlowStable
+  module KernelHomFlowStable = FlowCore.HomFlowStable
 
   kernelHomFlowOfStable
     : ∀ {K₁ K₂ : Kernel Sig Q} {h : KernelHom K₁ K₂}
     → KernelHomFlowStable K₁ K₂ h
     → KernelHomFlow K₁ K₂ h
-  kernelHomFlowOfStable hf =
-    record { flow-hom = KernelHomFlowStable.flow-hom hf }
+  kernelHomFlowOfStable = FlowCore.homFlowOfStable
 
   -- Decode-level transport for the saturation modality on code (`Box`).
 

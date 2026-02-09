@@ -5,13 +5,14 @@
 
 set -euo pipefail
 
-die() {
-  echo "check-all-docs: $*" >&2
-  exit 1
-}
-
+CHECK_NAME="check-all-docs"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# shellcheck source=scripts/lib/check_common.sh
+source "${SCRIPT_DIR}/lib/check_common.sh"
+
+die() { check_die "${CHECK_NAME}" "$*"; }
+
+LIB_ROOT="$(check_repo_root "${BASH_SOURCE[0]}")"
 
 cd "${LIB_ROOT}"
 
@@ -19,7 +20,7 @@ AGDA="${AGDA:-agda}"
 AGDA_FLAGS="${AGDA_FLAGS:---no-libraries -i . --safe}"
 AGDA_WARN_FLAGS="${AGDA_WARN_FLAGS:--W all -W noCoverageNoExactSplit -W error}"
 
-command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+check_require_cmd "${CHECK_NAME}" rg
 
 BUILD_DIR="_build/CheckAll"
 MODULE_FILE="${BUILD_DIR}/AllDocs.agda"

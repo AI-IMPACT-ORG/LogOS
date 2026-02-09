@@ -65,7 +65,7 @@ if [[ -n "${bad_imports}" ]]; then
 fi
 
 # Docs parity: forbid direct Host imports inside docs/*.lagda.md Agda code blocks.
-docs_bad_imports="$(docs_scan_agda_blocks | grep -E '^[^:]+:[0-9]+:[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+LogOS\\.Host\\.' || true)"
+docs_bad_imports="$(docs_scan_agda_blocks docs | grep -E '^[^:]+:[0-9]+:[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+LogOS\\.Host\\.' || true)"
 if [[ -n "${docs_bad_imports}" ]]; then
   die $'found direct `LogOS.Host.*` imports in docs (Agda code blocks):\n'"${docs_bad_imports}"$'\n\nDocs should import `LogOS.Prelude` / API surfaces, not Host shims directly.'
 fi

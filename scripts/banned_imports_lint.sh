@@ -64,7 +64,7 @@ if [[ "$status" -eq 0 ]]; then
   die $'found banned direct imports (use LogOS.Prelude):\n'"${out}"
 fi
 
-docs_code="$(docs_scan_agda_blocks)"
+docs_code="$(docs_scan_agda_blocks docs)"
 docs_bad_imports="$(printf "%s" "${docs_code}" | grep -E "^[^:]+:[0-9]+:[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+(Level|Data\\.Relation\\.Binary\\.PropositionalEquality|Agda\\.Builtin\\.Unit)([[:space:]]|$)" || true)"
 if [[ -n "${docs_bad_imports}" ]]; then
   die $'found banned direct imports in docs (Agda code blocks):\n'"${docs_bad_imports}"$'\n\nDocs should import host primitives via `LogOS.Prelude` as well.'

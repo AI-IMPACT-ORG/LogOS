@@ -69,7 +69,7 @@ if [[ -n "${bad_imports}" ]]; then
 fi
 
 # Docs parity: also forbid direct Agda host imports inside docs/*.lagda.md Agda code blocks.
-docs_bad_imports="$(docs_scan_agda_blocks | grep -E '^[^:]+:[0-9]+:[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+Agda\.(Builtin\.|Primitive)' || true)"
+docs_bad_imports="$(docs_scan_agda_blocks docs | grep -E '^[^:]+:[0-9]+:[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+Agda\.(Builtin\.|Primitive)' || true)"
 if [[ -n "${docs_bad_imports}" ]]; then
   die $'found direct Agda host imports in docs (Agda code blocks):\n'"${docs_bad_imports}"
 fi

@@ -109,5 +109,5 @@ Note: `LogOS/API/*` are core-only navigation/entry surfaces (no `LogOS.Domain.*`
 - Stable surfaces must not reach `LogOS.Domain.*` or `LogOS.Theorems.Meta.Assumptions.*` transitively:
   `scripts/stable_surface_no_banned_transitive_imports_check.sh`
 - Assumption ledger required when importing assumption packs: `scripts/assumptions_ledger_check.sh`
-- “Honesty” gates (`--safe`, no forbidden postulates, no dangerous pragmas): `scripts/honesty_check.sh`, `scripts/postulate_policy_check.sh`, `scripts/safe_options_check.sh`, `scripts/dangerous_pragmas_check.sh`
+- Unsafe/options gates (`--safe`, no forbidden postulates, no dangerous pragmas): `scripts/unsafe_options_check.sh`, `scripts/postulate_policy_check.sh`, `scripts/safe_options_check.sh`, `scripts/dangerous_pragmas_check.sh`
   - Postulate allowlist/config: `scripts/postulate_allowlist.txt`

@@ -5,10 +5,12 @@
 
 set -euo pipefail
 
-die() {
-  echo "doc-style-lint-check: $*" >&2
-  exit 1
-}
+CHECK_NAME="doc-style-lint-check"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/check_common.sh
+source "${SCRIPT_DIR}/lib/check_common.sh"
+
+die() { check_die "${CHECK_NAME}" "$*"; }
 
 # LogOS policy check:
 # Documentation wording must stay mechanically honest by avoiding drift phrases
@@ -17,7 +19,7 @@ die() {
 # This is intentionally conservative: if a banned phrase is actually intended,
 # rewrite it into the repo’s canonical wording and/or make hypotheses explicit.
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(check_repo_root "${BASH_SOURCE[0]}")"
 cd "$ROOT"
 
 DOC_ROOTS=("docs" "LogOS")
@@ -28,21 +30,10 @@ if [ ! -d "docs" ] && [ ! -d "LogOS" ]; then
 fi
 
 # This check relies on ripgrep’s stable regex + glob semantics.
-command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+check_require_cmd "${CHECK_NAME}" rg
 
 rg_capture() {
-  local out status
-  set +e
-  out="$(rg "$@" 2>&1)"
-  status="$?"
-  set -e
-  if [[ "$status" -eq 2 ]]; then
-    die $'rg error:\n'"${out}"
-  fi
-  if [[ "$status" -eq 1 ]]; then
-    out=""
-  fi
-  printf "%s" "${out}"
+  check_rg_capture "${CHECK_NAME}" "$@"
 }
 
 # NOTE: use grep-compatible regexes (portable; no PCRE features).

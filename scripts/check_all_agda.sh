@@ -5,13 +5,14 @@
 
 set -euo pipefail
 
-die() {
-  echo "check-all-agda: $*" >&2
-  exit 1
-}
-
+CHECK_NAME="check-all-agda"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# shellcheck source=scripts/lib/check_common.sh
+source "${SCRIPT_DIR}/lib/check_common.sh"
+
+die() { check_die "${CHECK_NAME}" "$*"; }
+
+LIB_ROOT="$(check_repo_root "${BASH_SOURCE[0]}")"
 
 cd "${LIB_ROOT}"
 
@@ -23,8 +24,8 @@ PIPELINE_SEED_MODULE="${PIPELINE_SEED_MODULE:-}"
 PIPELINE_PROFILE="${PIPELINE_PROFILE:-0}"
 PIPELINE_SKIP="${PIPELINE_SKIP:-0}"
 
-command -v rg >/dev/null 2>&1 || die "rg is required for this check"
-command -v python3 >/dev/null 2>&1 || die "python3 is required for this check"
+check_require_cmd "${CHECK_NAME}" rg
+check_require_cmd "${CHECK_NAME}" python3
 
 BUILD_DIR="_build/CheckAll"
 MODULE_LIST="${BUILD_DIR}/AllAgda.modules"

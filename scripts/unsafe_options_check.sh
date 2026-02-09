@@ -6,7 +6,7 @@
 set -euo pipefail
 
 die() {
-  echo "honesty-check: $*" >&2
+  echo "unsafe-options-check: $*" >&2
   exit 1
 }
 
@@ -58,7 +58,7 @@ fi
 
 # Docs parity: scan Agda fenced code in literate docs too (no unsafe options).
 
-docs_code="$(docs_scan_agda_blocks)"
+docs_code="$(docs_scan_agda_blocks docs)"
 
 docs_unsafe_opts="$(printf "%s" "${docs_code}" | grep -E '^[^:]+:[0-9]+:.*\{-# OPTIONS[^}]*--unsafe' || true)"
 if [[ -n "${docs_unsafe_opts}" ]]; then
@@ -70,4 +70,4 @@ if [[ -n "${docs_unsolved_metas}" ]]; then
   die $'found --allow-unsolved-metas in docs (Agda code blocks):\n'"${docs_unsolved_metas}"
 fi
 
-echo "honesty-check: OK"
+echo "unsafe-options-check: OK"

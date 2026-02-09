@@ -17,6 +17,7 @@ HEADER_SPDX_LINE="SPDX-License-Identifier: GPL-3.0-only"
 # shellcheck disable=SC2034
 HEADER_LEGACY_TITLE_LINES=(
   "LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning"
+  "LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI"
 )
 
 # Explicit allowlist for files expected to carry the per-file license frontmatter.

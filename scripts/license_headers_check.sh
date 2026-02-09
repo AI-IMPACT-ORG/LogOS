@@ -33,7 +33,18 @@ while IFS= read -r f; do
   fi
 
   head="$(sed -n '1,40p' "$f")"
-  grep -Fq "$HEADER_TITLE_LINE" <<<"$head" || bad+="${f}: missing title header"$'\n'
+  has_title=0
+  if grep -Fq "$HEADER_TITLE_LINE" <<<"$head"; then
+    has_title=1
+  else
+    for legacy_title in "${HEADER_LEGACY_TITLE_LINES[@]}"; do
+      if grep -Fq "$legacy_title" <<<"$head"; then
+        has_title=1
+        break
+      fi
+    done
+  fi
+  [[ "$has_title" -eq 1 ]] || bad+="${f}: missing title header"$'\n'
   grep -Fq "$HEADER_COPY_LINE" <<<"$head" || bad+="${f}: missing copyright header"$'\n'
   grep -Fq "$HEADER_SPDX_LINE" <<<"$head" || bad+="${f}: missing SPDX identifier"$'\n'
 done < <(header_list_allowlisted_files)

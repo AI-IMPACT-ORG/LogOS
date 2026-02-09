@@ -5,15 +5,17 @@
 
 set -euo pipefail
 
-die() {
-  echo "claim-stamp-check: $*" >&2
-  exit 1
-}
+CHECK_NAME="claim-stamp-check"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/check_common.sh
+source "${SCRIPT_DIR}/lib/check_common.sh"
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+die() { check_die "${CHECK_NAME}" "$*"; }
+
+ROOT="$(check_repo_root "${BASH_SOURCE[0]}")"
 cd "$ROOT"
 
-command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+check_require_cmd "${CHECK_NAME}" rg
 
 FORMAT_DOC="docs/Kernel/ClaimRegister.lagda.md"
 REQUIRED_FILES=(

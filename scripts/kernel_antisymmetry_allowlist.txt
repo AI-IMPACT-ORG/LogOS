@@ -15,6 +15,7 @@
 # `PartialOrder`, or `antisym`.
 
 LogOS/Kernel/Endo.agda  # JUSTIFICATION: explicit partial-order strengthening for kernel endomorphism constructions
+LogOS/Kernel/EndoFlowShared.agda  # JUSTIFICATION: shared partial-order strengthening lemmas factored out of kernel/ungraded endomorphism modules
 LogOS/Kernel/Graded/Endo.agda  # JUSTIFICATION: explicit partial-order strengthening for graded kernel endomorphisms
 LogOS/Kernel/Graded/Infinite.agda  # JUSTIFICATION: graded infinite-kernel construction uses quarantined partial-order vocabulary
 LogOS/Kernel/Graded/Infinite/Lemmas.agda  # JUSTIFICATION: supporting lemmas for graded infinite-kernel partial-order strengthening

@@ -50,6 +50,7 @@ Where to start:
 - Architecture + entrypoints: `docs/LogOS_Overview.lagda.md`
 - Ports/adapters spine: `docs/DeepDive/Architecture_PortsAdapters.lagda.md`
 - Kernel claim register (epistemic status of “truth” words): `docs/Kernel/ClaimRegister.lagda.md`
+- Kernel bridge concepts (cross-layer connectors): `docs/Kernel/BridgeConcepts.lagda.md`
 - Research-grade record/law listing: `docs/LogOS_Core_Spec.lagda.md`
 - Communication view (boundary/channel framing): `docs/DeepDive/Communication.lagda.md`
 - AI-assisted modelling workflow: `docs/DeepDive/AIAssistedModeling.lagda.md`
