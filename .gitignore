@@ -33,9 +33,6 @@ MAlonzo/
 *.dyn_o
 *.dyn_hi
 
-# Tooling artifacts
-.github/cabal-index-state.txt
-
 # LaTeX build artifacts (paper sources are tracked; outputs are ignored)
 docs/Paper/
 

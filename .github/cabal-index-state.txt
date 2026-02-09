@@ -1,0 +1,6 @@
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Pinned Hackage index-state for CI (cabal install Agda). Update periodically for reproducibility.
+2025-02-01
