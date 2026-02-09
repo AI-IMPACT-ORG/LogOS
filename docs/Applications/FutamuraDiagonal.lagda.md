@@ -154,8 +154,7 @@ are deliberately made to rhyme:
   bridge (`DecodeImp⊑` / `DecodeImp`).
 
 This is also where the categorical connection becomes literal: the diagonal file
-explicitly presents the construction as a Lawvere-style fixed point.
-See `docs/Paper/references.bib` (Lawvere, 1969).
+explicitly presents the construction as a Lawvere-style fixed point (Lawvere, 1969).
 
 ## How this showcases the *general* LogOS approach
 
