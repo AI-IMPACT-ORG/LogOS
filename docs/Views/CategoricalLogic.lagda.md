@@ -176,3 +176,4 @@ Cross references
 - Multi-institution: `docs/Views/MultiInstitution.lagda.md`
 - CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`
 - Topos-shaped reading: `docs/Views/Topos.lagda.md`
+- Formal semantics contract: `docs/Views/FormalSemantics.lagda.md`

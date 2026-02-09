@@ -153,7 +153,7 @@ Science provides formal tooling to distill information in formal models. As AI i
 
 The main advance is an architecture for partially-reflective logic systems, grounded in simple mathematical primitives (preorders/refinement (read as thin categories under proof-irrelevance), lax operators and prequantale-valued parameters), with a [3-tiered truth system](docs/Kernel/ClaimRegister.lagda.md). Novel is a truth notion as "stability under resource-constrained communication" in an [observer semantics](docs/Views/ObserverSemantics.lagda.md). The environment allows current generation AI agents to build, evaluate and refactor axiomatic dependencies of theories and theorems under human guidance. 
 
-The kernel symbols and their relations support multiple, mutually consistent interpretations aligned with different logic traditions and abstractions: `docs/Views/MultiInstitution.lagda.md`, `docs/Views/HoTT_3Level.lagda.md`, `docs/Views/CategoricalLogic.lagda.md`, `docs/Views/Topos.lagda.md`, `docs/Views/ObserverSemantics.lagda.md`, `docs/Views/CurryHowardLambek.lagda.md`, `docs/Views/MeredithSentences.lagda.md`.
+The kernel symbols and their relations support multiple, mutually consistent interpretations aligned with different logic traditions and abstractions: `docs/Views/MultiInstitution.lagda.md`, `docs/Views/HomotopyTypeTheory.lagda.md`, `docs/Views/CategoricalLogic.lagda.md`, `docs/Views/Topos.lagda.md`, `docs/Views/ObserverSemantics.lagda.md`, `docs/Views/CurryHowardLambek.lagda.md`, `docs/Views/MeredithSentences.lagda.md`.
 
 <!-- CLAIM-STAMP: LITERAL | anchor=LogOS/Packs/ZFC/Core.agda#WFGraph -->
 <!-- CLAIM-STAMP: LITERAL | anchor=LogOS/Packs/UniversalIR/Core.agda#surface -->
@@ -299,7 +299,7 @@ Kernel views (polymorphicity):
 - Views index: `docs/Views/All.lagda.md`
 - Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`
 - Multi-institution: `docs/Views/MultiInstitution.lagda.md`
-- 3-level HoTT-style: `docs/Views/HoTT_3Level.lagda.md`
+- 3-level HoTT-style: `docs/Views/HomotopyTypeTheory.lagda.md`
 - Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
 - Topos-shaped reading (nuclei/sheaves): `docs/Views/Topos.lagda.md`
 - Observer semantics: `docs/Views/ObserverSemantics.lagda.md`

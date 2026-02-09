@@ -39,4 +39,4 @@ All semantic strength comes only from the explicit interfaces/assumptions you in
 
 - Architecture and entrypoints: `docs/LogOS_Overview.lagda.md`
 - Formal spec (multi-institution view): `docs/Views/MultiInstitution.lagda.md`
-- 3-level HoTT-style view (host-facing): `docs/Views/HoTT_3Level.lagda.md`
+- 3-level HoTT-style view (host-facing): `docs/Views/HomotopyTypeTheory.lagda.md`

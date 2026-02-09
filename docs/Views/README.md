@@ -8,6 +8,8 @@ SPDX-License-Identifier: GPL-3.0-only
 
 Entry point:
 - Views index (imports/typechecks all view notes): `docs/Views/All.lagda.md`
+- Canonical semantics contract: `docs/Views/FormalSemantics.lagda.md`
+- Model-theory theorem spine (in-place): `LogOS/Theorems/Meta/CHL/ModelTheory.agda`
 
 Each view note is a literate Agda document (`*.lagda.md`) and is itself
 typechecked by `make docs`. The views are mutually consistent readings of the

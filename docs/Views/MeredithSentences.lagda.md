@@ -245,6 +245,8 @@ Core definitions (literature style)
 field/lemma of `Kernel` (or a definitional consequence of that interface),
 presented with a conventional symbolic spelling (`⟦_⟧`, `η`, `□`, …) and an exact
 Agda anchor name (`Meredith₁`–`Meredith₈` above).
+Naming note: for background on the “Meredith sentence” naming in logic
+literature, see [Metamath’s explanation](https://us.metamath.org/mpeuni/meredith.html).
 
 Assumptions (explicit)
 ----------------------
@@ -267,8 +269,8 @@ Theorem spine (authoritative)
 - μ-fusion transport (optional): `LogOS/Theorems/Boundary/MuFusion.agda` (`preserves-Th*-from-Flow`).
 - The prose below is explanatory; the Agda anchors above are the authoritative claims.
 
-Notation (barebones)
---------------------
+Notation (local)
+----------------
 - `γ, δ : Code` and `c, d : Con` (boundary constraints).
 - `γ ⊢ δ` = code refinement; `γ ≈ δ` = mutual refinement.
 - `c ⊑ d` = boundary refinement; `c ≈ d` = mutual refinement on the boundary preorder (`_≈CP_`).
@@ -326,6 +328,19 @@ These hypothesis sets are available as explicit bundles:
 
 Typechecked anchor surface: this document (`docs/Views/MeredithSentences.lagda.md`).
 
+Micro-example (compute-then-stabilise bridge)
+---------------------------------------------
+Take any code `γ`. Sentence (M₈) states:
+
+```text
+FlowCode γ ≈ □₍step₎ (B γ)
+```
+
+This is the compact Meredith-style witness that the operational step and the
+stabilised step-grade box agree up to mutual refinement (`≈`): it is exactly the
+kind of “small sentence, high transport value” fact used repeatedly across other
+views.
+
 Pointers (no repetition)
 ------------------------
 - Kernel field map and tier glossary: `docs/LogOS_Core_Spec.lagda.md`.
@@ -337,3 +352,4 @@ Cross references
 - CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`
 - Observer semantics (physics-of-information interpretation): `docs/Views/ObserverSemantics.lagda.md`
 - Controlled feedback (budgeted stabilisation): `docs/Views/ControlledFeedback.lagda.md`
+- Formal semantics contract: `docs/Views/FormalSemantics.lagda.md`

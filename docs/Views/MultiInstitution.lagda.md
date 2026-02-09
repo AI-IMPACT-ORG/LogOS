@@ -21,6 +21,7 @@ open import LogOS.Base.Signature.Hom using (SigHom)
 open import LogOS.Minimal.Adapter using (QAdapter)
 import LogOS.API.Views as Views
 open Views.Kernels using (Kernel)
+import LogOS.API.Views.ModelTheory as ModelTheory
 
 module ViewTheorems = Views.ViewTheorems
 module StrictReindex = Views.StrictReindex
@@ -31,6 +32,7 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   (K : Kernel Sig Q)
   where
   module V = ViewTheorems.For K
+  module MT = ModelTheory.For K
   open V.MultiInstitution public
   module Reindex = ViewTheorems.Reindex
   module ReindexWithFml = ViewTheorems.ReindexWithFml
@@ -44,6 +46,12 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
     coh-H∂-exists : _
     coh-H∂-exists = coh-H∂
+
+    layer-coh-SH-exists : _
+    layer-coh-SH-exists = MT.LayeredInstitution.coh-SH
+
+    layer-coh-H∂-exists : _
+    layer-coh-H∂-exists = MT.LayeredInstitution.coh-H∂
 
     rename∂-exists : _
     rename∂-exists = SentenceLayer.rename∂
@@ -89,6 +97,32 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
       mapFml-unique-exists : _
       mapFml-unique-exists = SR.mapFml-unique
+
+    module _ {Sig₁ : LogOSSignature ℓ}
+             (σ : SigHom Sig₁ Sig)
+             {Fml₁ : Set ℓ}
+             (mapFml : Fml₁ → Kernel.Fml K)
+             where
+      module RI = MT.RepresentationIndependence.ForStrictReindex σ mapFml
+      module RC = MT.RelativeCompleteness.ForStrictReindex σ mapFml
+
+      mapFml-unique-modelTheory-exists : _
+      mapFml-unique-modelTheory-exists = RI.mapFml-unique
+
+      complete-mapFml-exists : _
+      complete-mapFml-exists = RC.complete-mapFml
+
+    semantics-transport-comp-exists : _
+    semantics-transport-comp-exists =
+      MT.RepresentationIndependence.SemanticsTransport.translate-comp
+
+    separation-diagonal-witness-exists : _
+    separation-diagonal-witness-exists =
+      MT.SeparationBoundary.separation-diagonal-witness
+
+    budgeted-diagonal-witness-exists : _
+    budgeted-diagonal-witness-exists =
+      MT.SeparationBoundary.budgeted-diagonal-witness
 
     heteroCanonicalAdapter-exists : _
     heteroCanonicalAdapter-exists = Interoperability.heteroCanonicalAdapter
@@ -186,6 +220,20 @@ Theorem spine (authoritative)
 -----------------------------
 - `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `MultiInstitution`):
   `coh-SH` (S↔H), `coh-H∂` (H↔∂).
+- In-place model-theory spine:
+  `LogOS/Theorems/Meta/CHL/ModelTheory.agda`
+  (`For …` → `Profiles`/`AdequacyProfiles`, `LayeredInstitution`,
+  `RepresentationIndependence`, `RelativeCompleteness`, `BoundaryLayer`,
+  `StrictLayer`, `SeparationBoundary`).
+- Representation-independence transport core:
+  `LogOS/Theorems/Meta/SemanticsTransport.agda`
+  (`translate-id`, `translate-comp-presentations`, `translate-comp`).
+- Decode-extensionality discipline (residual-boundary form):
+  `LogOS/Theorems/Meta/ConditionalPacks.agda`
+  (`DecodeExtensional≈`, `DecodeExtensionalFn≈`).
+- Separation/counterexample surface:
+  `LogOS/Theorems/Meta/SpectralSeparationOutput.agda`,
+  `LogOS/Theorems/Meta/BudgetedSeparationOutput.agda`.
 - Signature change (reindexing) surface:
   `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`Reindex`).
 - Signature change with strict syntax translation:
@@ -215,6 +263,31 @@ Theorem spine (authoritative)
   `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `Projections`),
   `projection`.
 - The prose below is explanatory; the statements above are the authoritative claims.
+
+Futamura vs Diagonal (anchored split)
+-------------------------------------
+Use two explicit claim IDs to keep the story sharp:
+
+- `claim.futamura.transport` (constructive side):
+  semantic translation is compositional/unique up to observational equality.
+  Anchors:
+  `LogOS/Theorems/Meta/CHL/ModelTheory.agda`
+  (`For …` → `RepresentationIndependence.SemanticsTransport.translate-comp`,
+  `RepresentationIndependence.ForStrictReindex.mapFml-unique`),
+  plus canonical adapter uniqueness in
+  `LogOS/Ports/Semantic/Interoperability.agda` (`heteroAdapter-unique`).
+- `claim.diagonal.limit` (limit side):
+  no total self-certifying separation observer (including budgeted variants).
+  Anchors:
+  `LogOS/Theorems/Meta/CHL/ModelTheory.agda`
+  (`For …` → `SeparationBoundary.separation-not-total`,
+  `SeparationBoundary.separation-no-self-certification`,
+  `SeparationBoundary.separation-diagonal-witness`,
+  `SeparationBoundary.budgeted-diagonal-witness`).
+
+Combined reading:
+transport/compilation-style semantics works constructively, while diagonalization
+forbids universal self-certification. These are complementary, not competing.
 
 Micro-example (the satisfaction condition as a lemma)
 -----------------------------------------------------
@@ -442,6 +515,7 @@ Cross references
 - CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`
 - Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
 - Observer semantics (physics-of-information interpretation): `docs/Views/ObserverSemantics.lagda.md`
+- Formal semantics contract: `docs/Views/FormalSemantics.lagda.md`
 
 ## Reference
 

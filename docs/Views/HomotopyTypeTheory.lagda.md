@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 
 ```agda
 {-# OPTIONS --safe #-}
-module docs.Views.HoTT_3Level where
+module docs.Views.HomotopyTypeTheory where
 
 -- Typechecked “view surface” for the 3-level HoTT-style reading (S/H/G).
 --
@@ -301,3 +301,4 @@ Cross references
 - Preorders/partial orders: `LogOS/Minimal/Con.agda`
 - `_↔_` and negation discipline: `LogOS/Syntax/Prop.agda`
 - CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`
+- Formal semantics contract: `docs/Views/FormalSemantics.lagda.md`

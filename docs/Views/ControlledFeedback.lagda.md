@@ -297,8 +297,24 @@ Notation (local)
 - `x ≡ y`: propositional equality (`_≡_`).
 - “budget/grade” means a `QAdapter` scale element (optionally structured by a `BudgetedTier`).
 
-Dictionary (control theory ↔ LogOS)
------------------------------------
+Scope (formal)
+--------------
+- Parameter: `Kernel Sig Q`.
+- Canonical typed anchors in this note come from kernel fields/laws and the
+  `LogOS/API/Kernel.agda` derived budgeted interface.
+- Transformer-alignment claims are scoped to the explicit experimental bridge
+  modules cited below; no architecture-level identification is assumed globally.
+
+Assumptions (explicit)
+----------------------
+- This note is interpretive: control/transistor language is orientation only.
+- Budget monotonicity/composition claims require an explicit `BudgetedTier K`.
+- Any “transformer alignment” claim is about the typed controlled-feedback
+  interface (closure/budget transport), not a blanket equality with attention
+  architecture semantics.
+
+Dictionary (literature ↔ LogOS)
+-------------------------------
 
 | Control-theory term | LogOS identifier(s) | Reading |
 |---|---|---|
@@ -312,6 +328,79 @@ Dictionary (control theory ↔ LogOS)
 | Saturation (full closure) | `sat` + `Box` | “maximal stabilisation available in this kernel” |
 | Steady-state / invariant | `Th*` (+ `Th*-fixed`) | a distinguished lax fixed-point witness at saturation |
 | Largest reportable invariant fragment | `Comm⋆` / `Pr` | maximal Flow-compatible communicable truth notion |
+
+Core definitions (literature style)
+-----------------------------------
+
+**Definition (Closed-loop tick).** The controlled-feedback step is
+\[
+  c \mapsto \mathrm{Flow}_{step}(\mathrm{Body∂}(c)).
+\]
+At code level this is realized by `FlowCode = Guard ∘ Body`, with decode
+commutation as the correctness witness.
+
+**Definition (Budgeted stabiliser family).** A graded family `BoxAt g` is the
+stabiliser indexed by a budget/grade:
+`BoxAt g γ = encode (Flow g (decode γ))`. With `BudgetedTier`, these maps are
+monotone in budget and laxly compositional.
+
+**Definition (Logic transformer).** A logic transformer is this controlled loop
+packaged as an explicit interface (decode/encode, plant, stabiliser, fixed-point
+witness), so transport and composition are theorem-level rather than narrative.
+
+What is novel here (residual vs the literature)
+-----------------------------------------------
+- Matches literature: explicit plant/controller/closed-loop decomposition and
+  budget-as-control-parameter vocabulary.
+- Weaker/lax by default: invariants are order-theoretic (`⊑`, `≈`) rather than
+  numeric/metric or equality-level dynamical guarantees.
+- Added by LogOS: decode/encode coherence and boundary-first transport make
+  “closed-loop correctness” a typed interface.
+- Assumption-scoped: stronger budget laws and transformer-alignment routes are
+  explicit optional layers (`BudgetedTier`, experimental bridge modules).
+
+Theorem spine (authoritative)
+-----------------------------
+- Core closed-loop coherence:
+  `LogOS/Kernel.agda` (`body-decode`, `guard-decode`, `decode-FlowCode`,
+  `flowCode≈BoxAt-step-body`).
+- Budgeted graded laws:
+  `LogOS/Kernel/BudgetedTier.agda` and `LogOS/API/Kernel.agda` (`Derived`).
+- Communicable truth (maximal and budgeted variants):
+  `LogOS/Theorems/Meta/CommunicableTruth.agda`,
+  `LogOS/Theorems/Meta/BudgetedCommunicableTruth.agda`.
+- Experimental transformer/controlled-feedback alignment anchors:
+  `LogOS/Packs/Agents/Experimental/Arguments/TransformerFormalization.agda`,
+  `LogOS/Packs/Agents/Experimental/Arguments/TransformerBridge.agda`,
+  `LogOS/Packs/Agents/Experimental/Arguments/DocsAnchors.agda`.
+- The prose below is explanatory; these surfaces are the authoritative claims.
+
+Futamura vs Diagonal (anchored split)
+-------------------------------------
+Use the same two claim IDs here, but with control vocabulary:
+
+- `claim.futamura.transport`:
+  compile/rebase translations of control-facing representations are
+  compositional and unique up to boundary semantics.
+  Anchors:
+  `LogOS/Theorems/Meta/SemanticsTransport.agda`,
+  `LogOS/Ports/Semantic/Interoperability.agda`,
+  and the in-place exposure in
+  `LogOS/Theorems/Meta/CHL/ModelTheory.agda`
+  (`RepresentationIndependence`).
+- `claim.diagonal.limit`:
+  no controller/observer interface can self-certify total separation globally;
+  at any fixed budget there are unavoidable no-witness inputs.
+  Anchors:
+  `LogOS/Theorems/Meta/SpectralSeparationOutput.agda`,
+  `LogOS/Theorems/Meta/BudgetedSeparationOutput.agda`,
+  and the in-place exposure in
+  `LogOS/Theorems/Meta/CHL/ModelTheory.agda`
+  (`SeparationBoundary`).
+
+Control interpretation:
+the transport side gives constructive interoperability of feedback designs; the
+diagonal side gives the hard limit on universal self-certification.
 
 Core pattern: compute-then-stabilise as a closed loop
 -----------------------------------------------------
@@ -549,6 +638,14 @@ Pointers (where this view connects in the docs)
 - Controlled feedback / communication boundary: `docs/DeepDive/Communication.lagda.md`
 - Budgeted self-reference (diagonal) storyline: `docs/DeepDive/FutamuraDiagonal_Showcase.lagda.md` (Part E)
 - Observer-semantics / resource reading of stability: `docs/Views/ObserverSemantics.lagda.md`
+- Formal semantics contract (residual-boundary rule): `docs/Views/FormalSemantics.lagda.md`
 - Kernel endomap/closure tooling: `LogOS/Kernel/Endo.agda`
 - Maximal Flow-stable (“communicable”) truth and projection `Pr`: `LogOS/Theorems/Meta/CommunicableTruth.agda`
 - Box/BoxAt-based budgeted communicability: `LogOS/Theorems/Meta/BudgetedCommunicableTruth.agda`
+
+Cross references
+----------------
+- Views index: `docs/Views/All.lagda.md`
+- Formal semantics contract: `docs/Views/FormalSemantics.lagda.md`
+- Universal logic (presentation transport): `docs/Views/UniversalLogic.lagda.md`
+- Meredith sentences (compact kernel anchors): `docs/Views/MeredithSentences.lagda.md`

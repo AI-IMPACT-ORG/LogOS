@@ -41,7 +41,7 @@ import LogOS.Ports.Semantic.Interlingua as Interlingua
 
 -- The documentation view modules should be mutually importable.
 open import docs.Views.CategoricalLogic
-open import docs.Views.HoTT_3Level
+open import docs.Views.HomotopyTypeTheory
 open import docs.Views.MultiInstitution
 open import docs.Views.ObserverSemantics
 open import docs.Views.CurryHowardLambek

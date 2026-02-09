@@ -241,3 +241,10 @@ Pointers (where to connect)
 - If you want the “one kernel, many logics” story in model theory language, see `docs/Views/MultiInstitution.lagda.md`.
 - If you want the 2-category packaging of adapter equivalence, see `docs/Views/CategoricalLogic.lagda.md`.
 - If you want the CHL-facing capstone (proof/program/category bundle), see `docs/Views/CurryHowardLambek.lagda.md` and `docs/Views/MeredithSentences.lagda.md`.
+- If you want the cross-view canonical contract for semantics terminology and transport rules, see `docs/Views/FormalSemantics.lagda.md`.
+
+Cross references
+----------------
+- Views index: `docs/Views/All.lagda.md`
+- Observer semantics (resource/telemetry interpretation): `docs/Views/ObserverSemantics.lagda.md`
+- Topos framing (nuclei/sheaf orientation): `docs/Views/Topos.lagda.md`

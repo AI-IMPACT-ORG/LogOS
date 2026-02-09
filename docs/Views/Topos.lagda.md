@@ -182,3 +182,4 @@ Cross references
 - Categorical logic leg (2-categories, BC/Frobenius references): `docs/Views/CategoricalLogic.lagda.md`
 - CHL capstone (code/proof/program reading): `docs/Views/CurryHowardLambek.lagda.md`
 - Observer semantics (resource/budgeted stability): `docs/Views/ObserverSemantics.lagda.md`
+- Formal semantics contract: `docs/Views/FormalSemantics.lagda.md`

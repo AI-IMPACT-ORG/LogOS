@@ -12,11 +12,12 @@ module docs.Views.All where
 
 import docs.Views.MultiInstitution as MultiInstitution
 import docs.Views.UniversalLogic as UniversalLogic
-import docs.Views.HoTT_3Level as HoTT_3Level
+import docs.Views.HomotopyTypeTheory as HomotopyTypeTheory
 import docs.Views.CategoricalLogic as CategoricalLogic
 import docs.Views.Topos as Topos
 import docs.Views.ObserverSemantics as ObserverSemantics
 import docs.Views.ControlledFeedback as ControlledFeedback
+import docs.Views.FormalSemantics as FormalSemantics
 import docs.Views.CurryHowardLambek as CurryHowardLambek
 import docs.Views.MeredithSentences as MeredithSentences
 ```
@@ -38,11 +39,13 @@ some view titles use interpretive labels for orientation (e.g. “physics-of-inf
 Views (entrypoints)
 ------------------
 - Multi-institution (classic model theory): `docs/Views/MultiInstitution.lagda.md`
+- Model-theory theorem spine (in-place): `LogOS/Theorems/Meta/CHL/ModelTheory.agda`
 - Universal logic (port-first logic systems): `docs/Views/UniversalLogic.lagda.md`
-- 3-level HoTT-style positioning: `docs/Views/HoTT_3Level.lagda.md`
+- 3-level HoTT-style positioning: `docs/Views/HomotopyTypeTheory.lagda.md`
 - Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
 - Topos-shaped reading (nuclei/sheaves; realizability orientation): `docs/Views/Topos.lagda.md`
 - Observer semantics (physics-of-information interpretation): `docs/Views/ObserverSemantics.lagda.md`
 - Controlled feedback (budgeted stabilisation): `docs/Views/ControlledFeedback.lagda.md`
+- Formal semantics (canonical semantics contract): `docs/Views/FormalSemantics.lagda.md`
 - Curry–Howard–Lambek capstone (proof/model/category/observer bundle): `docs/Views/CurryHowardLambek.lagda.md`
 - Meredith sentences (ultra-compact Kernel/CHL core): `docs/Views/MeredithSentences.lagda.md`

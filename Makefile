@@ -301,7 +301,7 @@ html: doc-reference-check
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/DeepDive/Architecture_PortsAdapters.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/LogOS_Core_Spec.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/All.lagda.md
-	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/HoTT_3Level.lagda.md
+	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/HomotopyTypeTheory.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/CategoricalLogic.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/MultiInstitution.lagda.md
 	$(AGDA) $(AGDA_FLAGS) --html --html-dir="$(HTML_DIR)" docs/Views/ObserverSemantics.lagda.md

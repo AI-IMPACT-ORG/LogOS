@@ -173,6 +173,7 @@ Cross references
   - Categorical logic: `docs/Views/CategoricalLogic.lagda.md`
   - Observer semantics: `docs/Views/ObserverSemantics.lagda.md`
   - Controlled feedback (budgeted stabilisation): `docs/Views/ControlledFeedback.lagda.md`
+  - Formal semantics contract: `docs/Views/FormalSemantics.lagda.md`
 
 Historical notes (kept short)
 -----------------------------

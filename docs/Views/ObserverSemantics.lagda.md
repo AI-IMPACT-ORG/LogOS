@@ -162,6 +162,33 @@ Theorem spine (authoritative)
   `projection`.
 - The prose below is explanatory; the statements above are the authoritative claims.
 
+Futamura vs Diagonal (anchored split)
+-------------------------------------
+This observer view uses the same two claim IDs:
+
+- `claim.futamura.transport`:
+  semantic transport across presentations/coarse-grainings is constructive and
+  compositional (reindexing/adapters commute with satisfaction).
+  Anchors:
+  `LogOS/Theorems/Meta/SemanticsTransport.agda`,
+  `LogOS/Ports/Semantic/Interoperability.agda`,
+  and the in-place exposure in
+  `LogOS/Theorems/Meta/CHL/ModelTheory.agda`
+  (`RepresentationIndependence`).
+- `claim.diagonal.limit`:
+  observer-level certification is not globally total; diagonalization forces a
+  boundary case with no witness (and likewise for fixed budgets).
+  Anchors:
+  `LogOS/Theorems/Meta/SpectralSeparationOutput.agda`,
+  `LogOS/Theorems/Meta/BudgetedSeparationOutput.agda`,
+  and the in-place exposure in
+  `LogOS/Theorems/Meta/CHL/ModelTheory.agda`
+  (`SeparationBoundary`).
+
+Observer interpretation:
+transport tells you when descriptions are equivalent; diagonalization tells you
+why no finite observer interface can certify everything.
+
 Micro-example (two steps, same decoded behaviour)
 -------------------------------------------------
 The observer machinery is insensitive to the *presentation* of the code step,
@@ -432,3 +459,4 @@ Cross references
 - Controlled feedback (budgeted stabilisation): `docs/Views/ControlledFeedback.lagda.md`
 - Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
 - Topos-shaped nuclei/sheaves reading: `docs/Views/Topos.lagda.md`
+- Formal semantics contract: `docs/Views/FormalSemantics.lagda.md`
