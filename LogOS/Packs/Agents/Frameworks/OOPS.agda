@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,13 +17,13 @@ open import LogOS.Prelude
 open import LogOS.Computation.SchemeCategory public
   using
     ( Process
-    ; Choice
-    ; schemeFromChoice
+    ; Interface
+    ; schemeFromInterface
     ; ProcessHom
     ; ProcessHomLax
     ; ProcessHomCost
-    ; mapChoice
-    ; mapChoiceLax
+    ; mapInterface
+    ; mapInterfaceLax
     )
 
 -- --------------------------------------------------------------------------
@@ -36,15 +36,15 @@ open import LogOS.Computation.SchemeCategory public
 import LogOS.Packs.Agents.Frameworks.Core as Core
 import LogOS.Packs.Agents.Frameworks.PATask as PATaskF
 import LogOS.Packs.Agents.Frameworks.UniversalIR as U
-import LogOS.Domain.UniversalIR.Schemes as US
+import LogOS.UniversalIR.Schemes as US
 
 open US using (Bounded)
 
 OOPSTask : Set
 OOPSTask = Bounded U.PATask
 
-oopsChoice : Choice OOPSTask U.UProcess
-oopsChoice = PATaskF.boundedLambdaChoice
+oopsInterface : Interface OOPSTask U.UProcess
+oopsInterface = PATaskF.boundedLambdaInterface
 
 oopsFramework : Core.Framework OOPSTask ℕ U.UProcess
-oopsFramework = record { choice = oopsChoice }
+oopsFramework = record { interface = oopsInterface }

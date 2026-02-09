@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module LogOS.Packs.Agents.Socket.Contracts where
 open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature)
-open import LogOS.Free.ConstraintsOverSig using (Con∂)
+open import LogOS.Minimal.ConstraintsOverSig using (Con∂)
 
 -- Functorial contracts: written in the signature-indexed free language `Con∂`.
 --

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,10 +9,10 @@ module LogOS.Theorems.Meta.BudgetedTruthPositivity where
 
 open import LogOS.Prelude
 
-open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude using (ℕ)
 open import LogOS.Prelude.NatOrder using (_≤ℕ_; trans≤ℕ)
-open import LogOS.Prelude.Product using (Σ; _×_; _,_; proj₁; proj₂)
-open import LogOS.Prelude.Sum using (_⊎_; inj₁)
+open import LogOS.Prelude using (Σ; _×_; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (_⊎_; inj₁)
 
 import LogOS.Theorems.Meta.TruthPositivity as TP
 
@@ -43,7 +43,7 @@ record BudgetedTruthPositivity {ℓT ℓW ℓObs : Level}
 -- Generalized form (graded-kernel friendly):
 -- budgets live in an abstract carrier B with an order, rather than in ℕ.
 --
--- This is the interface you want when budgets come from a quantale scale
+-- This is the interface you want when budgets come from a prequantale scale
 -- (`QAdapter.Scale Q`) or other non-ℕ cost models.
 
 record BudgetedTruthPositivityBy {ℓT ℓW ℓB ℓObs : Level}

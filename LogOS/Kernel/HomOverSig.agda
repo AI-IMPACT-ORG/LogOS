@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,12 +8,18 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Kernel.HomOverSig where
 
 -- ============================================================================
--- HETEROGENEOUS KERNEL MORPHISMS (OVER A SIGNATURE MAP)
+-- HETEROGENEOUS LOGIC-KERNEL MORPHISMS (OVER A SIGNATURE MAP)
 --
--- A `KernelHom` only compares kernels over the *same* signature.
--- Using `reindexKernel`, we can define a lightweight notion of morphism
--- between kernels over different signatures: a signature map plus a kernel
--- homomorphism into the pulled-back target kernel.
+-- This is the `Kernel` analogue of `LogOS.Kernel.HomOverSig`.
+--
+-- A `KernelHom` compares kernels over a fixed signature. Using
+-- `reindexKernel`, we can compare kernels over different signatures by
+-- packaging:
+--   - a `SigHom σ`, and
+--   - a hom into the pulled-back target.
+--
+-- Because pullback preserves constraints+code on-the-nose, this is lightweight
+-- and aligns S/H/G/R reindexing without forcing a nontrivial `mapCode σ`.
 -- ============================================================================
 
 open import LogOS.Prelude
@@ -21,22 +27,25 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Base.Signature.Hom
 open import LogOS.Minimal.Adapter
+
+open import LogOS.Minimal.ConAlg
+
 open import LogOS.Kernel
-open import LogOS.Kernel.Reindex
 open import LogOS.Kernel.Hom
-open import LogOS.Algebra.ConAlg
+open import LogOS.Kernel.Reindex
 open import LogOS.Kernel.HomOverSigCore as Core
 
--- Reindex a kernel hom along a signature map.
+-- Reindex a logic-kernel hom along a signature map.
 --
--- This works because `reindexKernel` preserves the constraint algebra and code
+-- This works because `reindexKernel` preserves constraints and code
 -- layers on-the-nose.
 
 reindexKernelHom
   : ∀ {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (σ : SigHom Sig₁ Sig₂)
     {K K' : Kernel Sig₂ Q}
-    → KernelHom K K' → KernelHom (reindexKernel σ K) (reindexKernel σ K')
+    → KernelHom K K'
+    → KernelHom (reindexKernel σ K) (reindexKernel σ K')
 reindexKernelHom σ h = record
   { con-hom    = KernelHom.con-hom h
   ; mapCode    = KernelHom.mapCode h
@@ -46,21 +55,21 @@ reindexKernelHom σ h = record
 
 -- Coherence morphism: reindexing is functorial up to a canonical `KernelHom`.
 --
--- The kernel-hom notion only cares about constraints+code, so this can be the
--- identity on those layers even if the (S/H) satisfaction packaging differs.
+-- The `KernelHom` notion only cares about constraints+code, so this can be
+-- the identity on those layers even if the (S/H) satisfaction packaging differs.
 
 reindexKernel-composeHom
   : ∀ {ℓ : Level} {Sig₁ Sig₂ Sig₃ : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (σ : SigHom Sig₁ Sig₂)
     (τ : SigHom Sig₂ Sig₃)
     (K : Kernel Sig₃ Q)
-    → KernelHom (reindexKernel σ (reindexKernel τ K))
-                (reindexKernel (composeSigHom σ τ) K)
+  → KernelHom (reindexKernel σ (reindexKernel τ K))
+                  (reindexKernel (composeSigHom σ τ) K)
 reindexKernel-composeHom σ τ K = record
   { con-hom    = idHom≡ (conAlgOf K)
   ; mapCode    = λ γ → γ
-  ; map-encode = λ c → refl
-  ; map-decode = λ γ → refl
+  ; map-encode = λ _ → refl
+  ; map-decode = λ _ → refl
   }
 
 module _ {ℓ : Level} {Q : QAdapter ℓ} where

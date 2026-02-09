@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,7 +23,7 @@ open import LogOS.Prelude
 
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Con.Rewrite as ConRewrite
-open import LogOS.Algebra.ConAlg using (ConAlg ; ConAlgHom≡)
+open import LogOS.Minimal.ConAlg using (ConAlg ; ConAlgHom≡)
 
 record Kit {ℓ : Level} (Obj : Set (lsuc (lsuc ℓ))) : Set (lsuc (lsuc (lsuc ℓ))) where
   field
@@ -157,6 +157,29 @@ module Build {ℓ : Level} {Obj : Set (lsuc (lsuc ℓ))} (K : Kit {ℓ} Obj) whe
   -- Named alias to make the quotienting intent explicit in downstream docs.
   RefinesDecode : ∀ {K₁ K₂ : Obj} → Hom₁ K₁ K₂ → Hom₁ K₁ K₂ → Set ℓ
   RefinesDecode = _⇒_
+
+  -- Stronger (non-quotiented) variant: pointwise refinement on all boundary constraints.
+  --
+  -- This implies `RefinesDecode` by restricting to the decoded constraints.
+  Refines∂ : ∀ {K₁ K₂ : Obj} → Hom₁ K₁ K₂ → Hom₁ K₁ K₂ → Set ℓ
+  Refines∂ {K₂ = K₂} f g =
+    ∀ c →
+      ConPreorder._⊑_ (CP K₂)
+        (Hom₁.map∂₁ f c)
+        (Hom₁.map∂₁ g c)
+
+  Refines∂→RefinesDecode
+    : ∀ {K₁ K₂ : Obj} {f g : Hom₁ K₁ K₂}
+    → Refines∂ f g
+    → RefinesDecode f g
+  Refines∂→RefinesDecode {K₁ = K₁} {K₂ = K₂} {f = f} {g = g} le γ =
+    let
+      CP₂ = CP K₂
+      module R = ConRewrite.For CP₂
+      eqL = Hom₁.map-decode₁ f γ
+      eqR = Hom₁.map-decode₁ g γ
+    in
+    R.substLR (sym eqL) (sym eqR) (le (decodeᵏ K₁ γ))
 
   refl⇒ : ∀ {K₁ K₂ : Obj} (f : Hom₁ K₁ K₂) → f ⇒ f
   refl⇒ {K₂ = K₂} _ γ = ConPreorder.refl (CP K₂)

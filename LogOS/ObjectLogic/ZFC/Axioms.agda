@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,13 +12,13 @@ open import LogOS.Syntax.Prop as Prop using (_↔_; intro; ⊥; ⊥-elim)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Kernel
+open import LogOS.API.Kernel
 
 open import LogOS.Prelude.Fin using (Fin; fzero; fsuc)
-open import LogOS.Prelude.Product using (Σ; _,_; _×_; fst; snd)
-open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude using (Σ; _,_; _×_; fst; snd)
+open import LogOS.Prelude using (_⊎_; inj₁; inj₂)
 
-open import LogOS.Domain.ZFC.SetTheory.FormulaPack using (ZFAxiomsᶠ; ZFCAxiomsᶠ)
+open import LogOS.ZFC.SetTheory.FormulaPack using (ZFAxiomsᶠ; ZFCAxiomsᶠ)
 open import LogOS.ObjectLogic.FOL.All as FOL
 open import LogOS.ObjectLogic.ZFC.Signature
 
@@ -340,7 +340,7 @@ module FromZFCAxiomsᶠ {ℓ : Level}
   open ZF public
   open ZF.Sem
 
-  -- Abbreviations matching `LogOS.Domain.ZFC.SetTheory.ChoiceAxiom`.
+  -- Abbreviations matching `LogOS.ZFC.SetTheory.ChoiceAxiom`.
   pairSet : SetU → SetU → SetU
   pairSet x y = proj₁ (pairing x y)
 

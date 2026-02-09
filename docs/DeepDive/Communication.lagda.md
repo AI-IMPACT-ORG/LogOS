@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -12,7 +12,7 @@ module docs.DeepDive.Communication where
 
 open import LogOS.API.Architecture as Architecture
 open Architecture.Downstream
-open Architecture.Kernels
+open Architecture.Kernels using (Kernel)
 open import LogOS.Theorems.Boundary.Communication as Comm
 ```
 
@@ -85,7 +85,7 @@ To apply these lemmas, provide:
 Then you can use:
 
 ```agda
-open import LogOS.Kernel.Boundary using (boundaryIO)
+open import LogOS.Boundary.FromKernel using (boundaryIO)
 open import LogOS.Boundary.Semantics using (BoundarySemantics)
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -111,12 +111,24 @@ computation (`FlowCode` commutes with `decode` at one step). Limit/stabilisation
 claims (e.g. `μ Flow`, `Th*`) are separate and require explicit ω‑sup/continuity
 assumptions.
 
+Related reading:
+
+- For a control/cybernetic reading of the same “compute-then-stabilise” kernel
+  interface (budgeted stabilisation as an explicit feedback discipline), see
+  `docs/Views/ControlledFeedback.lagda.md`.
+- For the meta-theoretic closure/projector view of “what survives communication”
+  (maximal Flow-stable truth `Comm⋆`, projector/interior operator `Pr`), see
+  `LogOS/Theorems/Meta/CommunicableTruth.agda` and
+  `LogOS/Theorems/Meta/BudgetedCommunicableTruth.agda`.
+- For how this plugs into self-reference (diagonal) and staging (Futamura) via
+  presentation transport, see `docs/DeepDive/FutamuraDiagonal_Showcase.lagda.md`.
+
 Interpretation (analogy): an OO reading (without mutable state)
 --------------------------------------------------------------
 This is explanatory only (not a formal claim): you can read the architecture in
 “OO words” as long as you keep the formal boundaries explicit.
 
-- “Object” = a `Kernel`/`LogicKernel` instance.
+- “Object” = a `Kernel` instance.
 - “Interface/port” = boundary I/O + presentations (`BoundaryIO`, `BoundarySemantics`, `BoundaryPort`).
 - “Adapter” = canonical translation / view transport (interlingua, reindexing).
 - “Composition/wiring” = process/kernels morphisms (scheme categories, kernel homs).

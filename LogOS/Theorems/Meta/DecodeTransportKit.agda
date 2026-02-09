@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -101,31 +101,31 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 open import LogOS.Kernel.Hom
-open import LogOS.Algebra.ConAlg using (ConAlgHom≡)
-open import LogOS.Syntax.Eq using (module ForKernel)
+open import LogOS.Minimal.ConAlg using (ConAlgHom≡)
+open import LogOS.Kernel.Eq using (module ForKernel)
 
 -- If two source codes have equal decoded boundary meaning, then mapping them
 -- along a kernel hom yields equal decoded boundary meaning at the target.
-decode-mapCode-cong
+mapCode≃K
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     {K₁ K₂ : Kernel Sig Q}
     (h : KernelHom K₁ K₂)
     {γ₁ γ₂ : Kernel.Code K₁}
-  → Kernel.decode K₁ γ₁ ≡ Kernel.decode K₁ γ₂
-  → Kernel.decode K₂ (KernelHom.mapCode h γ₁) ≡ Kernel.decode K₂ (KernelHom.mapCode h γ₂)
-decode-mapCode-cong {K₁ = K₁} {K₂ = K₂} h {γ₁ = γ₁} {γ₂ = γ₂} eq =
+  → ForKernel._≃K_ K₁ γ₁ γ₂
+  → ForKernel._≃K_ K₂ (KernelHom.mapCode h γ₁) (KernelHom.mapCode h γ₂)
+mapCode≃K {K₁ = K₁} {K₂ = K₂} h {γ₁ = γ₁} {γ₂ = γ₂} eq =
   trans (KernelHom.map-decode h γ₁)
     (trans (cong (ConAlgHom≡.map∂ (KernelHom.con-hom h)) eq)
       (sym (KernelHom.map-decode h γ₂)))
 
--- Convenience: turn a source decode equality into target decoded mutual refinement.
-mapCode≈K-from-decode≡
+-- Convenience: turn a source strict decode equality (`≃K`) into target decoded mutual refinement.
+mapCode≈K-from-≃K
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     {K₁ K₂ : Kernel Sig Q}
     (h : KernelHom K₁ K₂)
     {γ₁ γ₂ : Kernel.Code K₁}
-  → Kernel.decode K₁ γ₁ ≡ Kernel.decode K₁ γ₂
+  → ForKernel._≃K_ K₁ γ₁ γ₂
   → ForKernel._≈K_ K₂ (KernelHom.mapCode h γ₁) (KernelHom.mapCode h γ₂)
-mapCode≈K-from-decode≡ {K₂ = K₂} h eq =
+mapCode≈K-from-≃K {K₂ = K₂} h eq =
   let open ForKernel K₂ in
-  ≃K→≈K (decode-mapCode-cong h eq)
+  ≃K→≈K (mapCode≃K h eq)

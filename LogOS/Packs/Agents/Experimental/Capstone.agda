@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -21,15 +21,16 @@ open import LogOS.Syntax.Prop using (¬_)
 open import LogOS.Kernel using (Kernel)
 open import LogOS.Kernel.Graded using (GradedKernel)
 import LogOS.Kernel.Graded.Endo as GEndo
-import LogOS.Kernel.LogicKernel.FromGradedKernel as LKFrom
-import LogOS.Kernel.LogicKernel.EndoRelative as EndoRel
+import LogOS.Kernel.FromGradedKernel as LKFrom
+import LogOS.Kernel.EndoCore as LKEndo
+import LogOS.Kernel.EndoRelative as EndoRel
 
 import LogOS.Packs.Agents.Experimental.Learning.RGFlow as RGFlow
 import LogOS.Packs.Agents.Experimental.Physics.LearningCost as LearningCost
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 
-import LogOS.Domain.Complexity.MeasurementCapacity as MC
-import LogOS.Domain.Complexity.DataProcessingInequality as DPI
+import LogOS.Complexity.MeasurementCapacity as MC
+import LogOS.Complexity.DataProcessingInequality as DPI
 import LogOS.Theorems.Meta.SpectralSeparationOutput as SSO
 open import LogOS.Theorems.Meta.Assumptions.Diagonal using (TruthDiagonal)
 import LogOS.Theorems.Meta.LandauerIO as LIO
@@ -62,12 +63,20 @@ module For
     where
 
     private
-      LK = LKFrom.asLogicKernel K
+      LK = LKFrom.asKernel K
 
     module JRel = EndoRel.FromClosureOp LK C
 
+    private
+      fromLKEndo : LKEndo.Endo LK → Endo K
+      fromLKEndo e =
+        record
+          { fn   = LKEndo.Endo.fn e
+          ; mono = LKEndo.Endo.mono e
+          }
+
     J : Endo K
-    J = GEndo.fromLKEndo JRel.J
+    J = fromLKEndo JRel.J
 
     JClosureStep : Set (lsuc ℓ)
     JClosureStep = JRel.ClosureStep
@@ -80,8 +89,8 @@ module For
       → JClosureStep → RGStep g
     toRGStep J≤FlowAt s =
       mkClosureStepAt
-        (GEndo.fromLKEndo (JRel.endo s))
-        (JRel.infl s)
+        (fromLKEndo (JRel.endo s))
+        (λ c → JRel.infl s c)
         (λ c → ConPreorder.trans CP (JRel.leJ s c) (J≤FlowAt c))
 
     goal-preserved

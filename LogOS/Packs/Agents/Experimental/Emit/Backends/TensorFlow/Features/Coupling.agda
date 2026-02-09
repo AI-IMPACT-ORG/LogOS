@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,6 +17,10 @@ import LogOS.Packs.Agents.Emit.IR.Intent as Intent
 
 module For (B : Backend) where
   module Py = BackendSyntax.For B
+
+  ifBool : ∀ {A : Set} → Bool → A → A → A
+  ifBool true x _ = x
+  ifBool false _ y = y
 
   hasCouplingStrategies : List Intent.CouplingStrategy → Bool
   hasCouplingStrategies [] = false
@@ -52,10 +56,6 @@ module For (B : Backend) where
         ∷ ( couplingStrategyComments (Intent.CouplingIntent.strategies coup)
             ++ (Py.pyBlank ∷ []) ) )
       []
-    where
-      ifBool : ∀ {A : Set} → Bool → A → A → A
-      ifBool true x _ = x
-      ifBool false _ y = y
 
   couplingDef : Intent.CouplingIntent → List Py.PyStmt
   couplingDef coup =
@@ -66,10 +66,6 @@ module For (B : Backend) where
             ∷ [] )
         ∷ Py.pyBlank ∷ [] )
       []
-    where
-      ifBool : ∀ {A : Set} → Bool → A → A → A
-      ifBool true x _ = x
-      ifBool false _ y = y
 
   couplingApplyStmts : Intent.CouplingIntent → String → Py.PyExpr → List Py.PyStmt
   couplingApplyStmts coup inputName lossTarget =
@@ -82,7 +78,3 @@ module For (B : Backend) where
               [] ))
         ∷ [] )
       []
-    where
-      ifBool : ∀ {A : Set} → Bool → A → A → A
-      ifBool true x _ = x
-      ifBool false _ y = y

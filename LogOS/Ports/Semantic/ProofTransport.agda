@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -20,11 +20,11 @@ open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
 open import LogOS.Syntax.ProofSystem
 
-open import LogOS.Ports.Semantic.InterlinguaCore using (PresentationC)
+open import LogOS.Ports.Semantic.HeteroInterlinguaCore using (PresentationC)
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
+open import LogOS.Ports.Semantic.PresentationCore using (SatSystem)
 
-import LogOS.Ports.Semantic.InterlinguaCore as InterlinguaCore
-import LogOS.Ports.Semantic.HeteroInterlinguaCore as HeteroCore
+import LogOS.Ports.Semantic.HeteroInterlinguaCore as Core
 
 -- ---------------------------------------------------------------------------
 -- Shared-satisfaction case (classic interlingua).
@@ -32,18 +32,17 @@ import LogOS.Ports.Semantic.HeteroInterlinguaCore as HeteroCore
 
 module Shared
   {ℓCtx ℓCon ℓSat : Level}
-  {Ctx : Set ℓCtx}
-  {Con : Set ℓCon}
-  {SatC : Ctx → Con → Set ℓSat}
+  {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
   {ℓForm₁ ℓForm₂ : Level}
-  (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC)
-  (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx Con SatC)
+  (P₁ : PresentationC {ℓForm = ℓForm₁} S)
+  (P₂ : PresentationC {ℓForm = ℓForm₂} S)
   where
 
   private
+    open SatSystem S renaming (Ctx to Ctx; Con to Con; Sat to SatC)
     module P1 = PresentationC P₁
     module P2 = PresentationC P₂
-    module C  = InterlinguaCore.ForPresentations P₁ P₂
+    module C  = Core.ForPresentations P₁ P₂
 
     Form₁ = P1.Form
     Form₂ = P2.Form
@@ -149,24 +148,23 @@ module Shared
 
 module AlongSatMor
   {ℓCtx₁ ℓCon₁ ℓSat₁ : Level}
-  {Ctx₁ : Set ℓCtx₁}
-  {Con₁ : Set ℓCon₁}
-  {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
+  {S₁ : SatSystem {ℓCtx = ℓCtx₁} {ℓCon = ℓCon₁} {ℓSat = ℓSat₁}}
   {ℓCtx₂ ℓCon₂ ℓSat₂ : Level}
-  {Ctx₂ : Set ℓCtx₂}
-  {Con₂ : Set ℓCon₂}
-  {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
-  (m  : SatMor Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
+  {S₂ : SatSystem {ℓCtx = ℓCtx₂} {ℓCon = ℓCon₂} {ℓSat = ℓSat₂}}
+  (m  : SatMor S₁ S₂)
   {ℓForm₁ ℓForm₂ : Level}
-  (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ Con₁ Sat₁)
-  (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ Con₂ Sat₂)
+  (P₁ : PresentationC {ℓForm = ℓForm₁} S₁)
+  (P₂ : PresentationC {ℓForm = ℓForm₂} S₂)
   where
 
   private
     module M  = SatMor m
     module P1 = PresentationC P₁
     module P2 = PresentationC P₂
-    module H  = HeteroCore.For m P₁ P₂
+    module H  = Core.For m P₁ P₂
+
+    open SatSystem S₁ renaming (Ctx to Ctx₁; Con to Con₁; Sat to Sat₁)
+    open SatSystem S₂ renaming (Ctx to Ctx₂; Con to Con₂; Sat to Sat₂)
 
     Form₁ = P1.Form
     Form₂ = P2.Form

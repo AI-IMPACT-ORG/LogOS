@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,9 +16,9 @@ open import LogOS.Prelude
 
 open import LogOS.API.Assumptions.Core
 
-open import LogOS.Domain.Complexity.PvsNPLedger public
+open import LogOS.Complexity.PvsNPLedger public
 
-open import LogOS.Domain.Complexity.SecondLaw using (SecondLawAssumptions; SecondLawGuards)
+open import LogOS.Complexity.SecondLaw using (SecondLawAssumptions; SecondLawGuards)
 open import LogOS.Theorems.Meta.Landauer using (LandauerAssumptions)
 
 record PhysicsOfInformationBundle {ℓ : Level} (C : LogicCore {ℓ}) : Set (lsuc (lsuc ℓ)) where

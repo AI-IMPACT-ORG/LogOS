@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,13 +9,14 @@ module LogOS.Packs.Agents.Examples.HelloNetwork where
 
 open import LogOS.Prelude
 
-open import LogOS.Ports.Semantic.SatMor using (SatMor; idSatMor)
+open import LogOS.Ports.Semantic.SatMor using (SatMor; idSatMorS)
 open import LogOS.Syntax.Prop as Prop
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 open import LogOS.Packs.Agents.Networks.Hetero using (AgentNode; AgentNetwork)
 import LogOS.Packs.Agents.Networks.Interop as Interop
 import LogOS.Packs.Agents.Networks.NetworkAgent as NetworkAgent
+import LogOS.Minimal.View as View
 
 -- Minimal heterogeneous network wiring:
 -- two roles, two (possibly different) sockets, plus a single SatMor edge.
@@ -38,8 +39,7 @@ module For
   module Net = AgentNetwork network
 
   module WithEdge
-    (edgeLRMor : SatMor (Net.Ctx left) (Net.Con left) (Net.Sat left)
-                         (Net.Ctx right) (Net.Con right) (Net.Sat right))
+    (edgeLRMor : SatMor (Net.BoundarySystemAt left) (Net.BoundarySystemAt right))
     where
 
     edgeLR : Net.Edge left right
@@ -50,8 +50,7 @@ module For
     edgeUpdateRight pol = Net.edgeUpdate edgeLR pol
 
   module WithEdgeAndPorts
-    (edgeLRMor : SatMor (Net.Ctx left) (Net.Con left) (Net.Sat left)
-                         (Net.Ctx right) (Net.Con right) (Net.Sat right))
+    (edgeLRMor : SatMor (Net.BoundarySystemAt left) (Net.BoundarySystemAt right))
     where
 
     edgeLR : Net.Edge left right
@@ -75,17 +74,16 @@ module SameNode
   open Base
 
   -- Explicit SatMor instantiation: identity edge on a shared node.
-  edgeId : SatMor (Net.Ctx left) (Net.Con left) (Net.Sat left)
-                  (Net.Ctx right) (Net.Con right) (Net.Sat right)
-  edgeId = idSatMor (Net.Sat left)
+  edgeId : SatMor (Net.BoundarySystemAt left) (Net.BoundarySystemAt right)
+  edgeId = idSatMorS
 
   module Demo = WithEdge edgeId
   module DemoPorts = WithEdgeAndPorts edgeId
 
   module AsAgent where
     edgeToHub : (r : Role) → Net.Edge r left
-    edgeToHub left  = record { satMor = idSatMor (Net.Sat left) }
-    edgeToHub right = record { satMor = idSatMor (Net.Sat right) }
+    edgeToHub left  = record { satMor = idSatMorS }
+    edgeToHub right = record { satMor = idSatMorS }
 
     aggregate : (Role → Net.Con left) → Net.Con left
     aggregate f = f left
@@ -96,13 +94,19 @@ module SameNode
       → Prop.ObsEqOn (Net.Sat left) (aggregate f) (aggregate g)
     aggregate-respects-obsEq eq = eq left
 
+    aggregate-respects-Obs≈
+      : ∀ {f g}
+      → (∀ r → View.Obs≈ (Net.Sat left) (f r) (g r))
+      → View.Obs≈ (Net.Sat left) (aggregate f) (aggregate g)
+    aggregate-respects-Obs≈ eq = eq left
+
     netAgent : NetworkAgent.NetworkAgent Role
     netAgent = record
       { Net       = network
       ; hub       = left
       ; edgeToHub = edgeToHub
       ; aggregate = aggregate
-      ; aggregate-respects-obsEq = aggregate-respects-obsEq
+      ; aggregate-respects-Obs≈ = aggregate-respects-Obs≈
       }
 
     module NA = NetworkAgent.NetworkAgent netAgent

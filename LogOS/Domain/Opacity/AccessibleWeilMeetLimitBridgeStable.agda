@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStable where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
-open import LogOS.Prelude.Product using (fst; snd)
+open import LogOS.Prelude using (fst; snd)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -59,7 +59,8 @@ record AccessibleWeilMeetLimitBridgeStable {ℓ ℓW : Level}
 
     -- Each regulator predicate is stable/extensional (so it is self-observable).
     Wᵢ-ext : ∀ i → Comm.DecodeExtensional′ K (Wᵢ i)
-    Wᵢ-stableBoxBody : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (Box K (Kernel.Body K γ)))
+    Wᵢ-stableBoxBody
+      : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K γ)))
 
     -- Plain finite evidence: at every regulator, the probe test satisfies Wᵢ.
     holdsᵢ : ∀ i s → NontrivialZero s → Wᵢ i (WPI.WeilProbeImplication.probe WProbe s)

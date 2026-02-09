@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,10 +11,11 @@ module LogOS.Packs.Opacity.Experimental.All where
 -- - kernel-level opacity infrastructure
 -- - conditional application ledger (guarded)
 
-open import LogOS.Packs.Trust using (PackTrust; experimental)
+open import LogOS.Packs.Trust using (PackTrust)
+import LogOS.Packs.Opacity.Experimental.Core as PackCore
 
 packTrust : PackTrust
-packTrust = record { level = experimental }
+packTrust = PackCore.packTrust
 
 module AssumptionBundles where
   open import LogOS.Packs.Assumptions.ZFC public

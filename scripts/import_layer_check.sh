@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -15,44 +15,31 @@ LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 cd "${LIB_ROOT}"
 
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+
 scan_in_dir() {
   local dir="$1"
   local pattern="$2"
 
-  if [[ ! -d "$dir" ]]; then
+  if [[ ! -e "$dir" ]]; then
     return 0
   fi
 
-  if command -v rg >/dev/null 2>&1; then
-    local out status
-    set +e
-    out="$(rg -n \
-      --glob '*.agda' \
-      --glob '!_build/**' \
-      -- "${pattern}" "$dir" 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'rg error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
-  else
-    local out status
-    set +e
-    out="$(grep -RIn --include='*.agda' --exclude-dir='_build' -E -- "${pattern}" "$dir" 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'grep error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
+  local out status
+  set +e
+  out="$(rg -n \
+    --glob '*.agda' \
+    --glob '!_build/**' \
+    -- "${pattern}" "$dir" 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
 }
 
 check_no_imports() {
@@ -74,6 +61,7 @@ IMPORT_LINE='^[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+'
 # Object-level logic developments are also treated as non-core.
 CORE_FORBIDDEN="${IMPORT_LINE}(LogOS\\.(Domain|Packs|ObjectLogic)(\\.|$)|docs(\\.|$))"
 CORE_DIRS=(
+  LogOS/Axioms
   LogOS/Base
   LogOS/Syntax
   LogOS/Minimal
@@ -81,15 +69,35 @@ CORE_DIRS=(
   LogOS/Algebra
   LogOS/Free
   LogOS/Kernel
+  LogOS/QAdapters
   LogOS/Computation
+  LogOS/MetaLanguage
   LogOS/Ports
   LogOS/Adapters
+  LogOS/System.agda
   LogOS/Theorems
   LogOS/API
 )
 
 for d in "${CORE_DIRS[@]}"; do
   check_no_imports "core must not import Domain/Packs/ObjectLogic/docs" "$d" "$CORE_FORBIDDEN"
+done
+
+# 1b) Topic libraries (mature) must not depend on Packs/Domain/docs.
+#
+# Rationale: these libraries are intended to be safe transitive dependencies of
+# stable pack surfaces.
+TOPIC_FORBIDDEN="${IMPORT_LINE}(LogOS\\.(Domain|Packs)(\\.|$)|docs(\\.|$))"
+TOPIC_DIRS=(
+  LogOS/ZFC
+  LogOS/UniversalIR
+  LogOS/Universality
+  LogOS/Complexity
+  LogOS/InfoTheory
+  LogOS/ObjectLogic
+)
+for d in "${TOPIC_DIRS[@]}"; do
+  check_no_imports "topics must not import Domain/Packs/docs" "$d" "$TOPIC_FORBIDDEN"
 done
 
 # 2) Domain packs must not depend on curated pack surfaces or docs.

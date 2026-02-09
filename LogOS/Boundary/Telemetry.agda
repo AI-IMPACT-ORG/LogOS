@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,6 +18,8 @@ open import LogOS.Syntax.Prop as Prop
 
 open import LogOS.Boundary.IO
 open import LogOS.Boundary.Port using (_≈∂[_]_)
+import LogOS.Minimal.View as View
+import LogOS.Minimal.RelPreorder as RP
 
 -- Observational preorder on boundary programs (induced by Sat∂).
 
@@ -33,6 +35,22 @@ ObsLe∂Cosp
 ObsLe∂Cosp B p q =
   Prop.ObsLeOn (λ c p' → BoundaryIO.Sat∂ B p' c) p q
 
+-- Same observational target packaged in the two-level preorder interface
+-- (`RelPreorder`), so it can be used uniformly as a view target.
+ObsCospRelPreorder
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → (B : BoundaryIO Sig Q W BB H)
+  → RP.RelPreorder ℓ ℓ
+ObsCospRelPreorder {Sig = Sig} {BB = BB} B =
+  let
+    open LogOSSignature Sig
+    open BulkBoundary BB using (Con_bnd)
+  in
+  View.ObsPreorder (λ (c : Con_bnd) (p' : ∂Cosp) → BoundaryIO.Sat∂ B p' c)
+
 ObsCospPreorder
   : ∀ {ℓ}
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -40,13 +58,12 @@ ObsCospPreorder
     {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
   → (B : BoundaryIO Sig Q W BB H)
   → ConPreorder ℓ
-ObsCospPreorder {Sig = Sig} B =
-  let open LogOSSignature Sig in
+ObsCospPreorder B =
   record
-    { Con = ∂Cosp
-    ; _⊑_ = ObsLe∂Cosp B
-    ; refl = λ {p} c sat → sat
-    ; trans = λ pq qr c sat → qr c (pq c sat)
+    { Con = RP.RelPreorder.Con (ObsCospRelPreorder B)
+    ; _⊑_ = RP.RelPreorder._⊑_ (ObsCospRelPreorder B)
+    ; refl = RP.RelPreorder.refl (ObsCospRelPreorder B)
+    ; trans = RP.RelPreorder.trans (ObsCospRelPreorder B)
     }
 
 -- Boundary program observational equality induced by Sat∂.
@@ -62,7 +79,54 @@ _≈∂Cosp[_]_
   → LogOSSignature.∂Cosp Sig
   → Set ℓ
 _≈∂Cosp[_]_ p B q =
+  View.Obs≈ (λ c p' → BoundaryIO.Sat∂ B p' c) p q
+
+-- Non-glyph alias (keeps notation consistent with `Obs≈obs` in kernel tiers).
+Obs≈∂Cosp
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → BoundaryIO Sig Q W BB H
+  → LogOSSignature.∂Cosp Sig
+  → LogOSSignature.∂Cosp Sig
+  → Set ℓ
+Obs≈∂Cosp B p q = p ≈∂Cosp[ B ] q
+
+-- Presentation alias: pointwise satisfaction equivalence (`↔`) on boundary programs.
+
+ObsEq∂Cosp
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → BoundaryIO Sig Q W BB H
+  → LogOSSignature.∂Cosp Sig
+  → LogOSSignature.∂Cosp Sig
+  → Set ℓ
+ObsEq∂Cosp B p q =
   Prop.ObsEqOn (λ c p' → BoundaryIO.Sat∂ B p' c) p q
+
+ObsEq∂Cosp↔≈∂Cosp
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → (B : BoundaryIO Sig Q W BB H)
+  → {p q : LogOSSignature.∂Cosp Sig}
+  → Prop._↔_ (ObsEq∂Cosp B p q) (p ≈∂Cosp[ B ] q)
+ObsEq∂Cosp↔≈∂Cosp B {p} {q} =
+  View.ObsEqOn↔Obs≈ (λ c p' → BoundaryIO.Sat∂ B p' c) {x = p} {y = q}
+
+ObsEq∂Cosp↔Obs≈∂Cosp
+  : ∀ {ℓ}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+  → (B : BoundaryIO Sig Q W BB H)
+  → {p q : LogOSSignature.∂Cosp Sig}
+  → Prop._↔_ (ObsEq∂Cosp B p q) (Obs≈∂Cosp B p q)
+ObsEq∂Cosp↔Obs≈∂Cosp B = ObsEq∂Cosp↔≈∂Cosp B
 
 ≈∂Cosp-refl
   : ∀ {ℓ}
@@ -72,8 +136,7 @@ _≈∂Cosp[_]_ p B q =
   → (B : BoundaryIO Sig Q W BB H)
   → (p : LogOSSignature.∂Cosp Sig)
   → p ≈∂Cosp[ B ] p
-≈∂Cosp-refl B p =
-  Prop.ObsEqOn-refl (λ c p' → BoundaryIO.Sat∂ B p' c) p
+≈∂Cosp-refl B p = RP.≈RP-refl (ObsCospRelPreorder B) p
 
 ≈∂Cosp-sym
   : ∀ {ℓ}
@@ -84,7 +147,7 @@ _≈∂Cosp[_]_ p B q =
   → {p q : LogOSSignature.∂Cosp Sig}
   → p ≈∂Cosp[ B ] q
   → q ≈∂Cosp[ B ] p
-≈∂Cosp-sym eq c = Prop.↔-sym (eq c)
+≈∂Cosp-sym {B = B} = RP.≈RP-sym {RP = ObsCospRelPreorder B}
 
 ≈∂Cosp-trans
   : ∀ {ℓ}
@@ -96,7 +159,7 @@ _≈∂Cosp[_]_ p B q =
   → p ≈∂Cosp[ B ] q
   → q ≈∂Cosp[ B ] r
   → p ≈∂Cosp[ B ] r
-≈∂Cosp-trans pq qr c = Prop.↔-trans (pq c) (qr c)
+≈∂Cosp-trans {B = B} = RP.≈RP-trans {RP = ObsCospRelPreorder B}
 
 ≈∂Cosp↔ObsLe
   : ∀ {ℓ}
@@ -108,8 +171,7 @@ _≈∂Cosp[_]_ p B q =
   → Prop._↔_
       (p ≈∂Cosp[ B ] q)
       (Prop._∧_ (ObsLe∂Cosp B p q) (ObsLe∂Cosp B q p))
-≈∂Cosp↔ObsLe B {p} {q} =
-  Prop.ObsEqOn↔ObsLeOn {Sat = λ c p' → BoundaryIO.Sat∂ B p' c} {x = p} {y = q}
+≈∂Cosp↔ObsLe B {p} {q} = Prop.↔-refl
 
 Respects≈∂Cosp[_]
   : ∀ {ℓ}
@@ -120,7 +182,7 @@ Respects≈∂Cosp[_]
   → (LogOSSignature.∂Cosp Sig → LogOSSignature.∂Cosp Sig)
   → Set ℓ
 Respects≈∂Cosp[ B ] F =
-  Prop.RespectsObsEqOn (λ c p → BoundaryIO.Sat∂ B p c) F
+  ∀ {p q} → p ≈∂Cosp[ B ] q → F p ≈∂Cosp[ B ] F q
 
 -- Telemetry trace preorder (full ConPreorder).
 
@@ -250,8 +312,27 @@ observe-∂-respects-from-mono
   → p ≈∂Cosp[ B ] q
   → Trace≈ T (obs p) (obs q)
 observe-∂-respects-from-mono {B = B} {T = T} obs mono {p} {q} eq =
-  let (pq , qp) = Prop._↔_.to (≈∂Cosp↔ObsLe B {p} {q}) eq in
-  (mono pq , mono qp)
+  ( mono (View.Obs≈⇒ {Sat = λ c p' → BoundaryIO.Sat∂ B p' c} eq)
+  , mono (View.Obs≈⇐ {Sat = λ c p' → BoundaryIO.Sat∂ B p' c} eq)
+  )
+
+programTelemetryPortFromMono
+  : ∀ {ℓ ℓT}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q} {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    {B : BoundaryIO Sig Q W BB H}
+    (T : TelemetryTrace ℓT)
+  → (obs : LogOSSignature.∂Cosp Sig → TelemetryTrace.Trace T)
+  → MonoMap (ObsCospPreorder B) (TelemetryTrace.trace T) obs
+  → ProgramTelemetryPort Sig Q W BB H B T
+programTelemetryPortFromMono {B = B} T obs mono =
+  record
+    { observe-∂ = obs
+    ; observe-∂-mono = mono
+    ; observe-∂-respects = λ {p} {q} eq →
+        observe-∂-respects-from-mono {B = B} {T = T} obs mono {p = p} {q = q} eq
+    }
 
 -- Combined telemetry port: shared trace carrier for both legs.
 

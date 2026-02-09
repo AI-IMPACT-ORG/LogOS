@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,21 +23,19 @@ open import LogOS.Syntax.Prop as Prop
 
 open import LogOS.Kernel
 open import LogOS.Kernel.Graded
-open import LogOS.Kernel.LogicKernel
 open import LogOS.Boundary.IO using (BoundaryIO)
+import LogOS.Kernel.FromGradedKernel as FromG
 
 import LogOS.Kernel.Hom2Cat as K2
 import LogOS.Kernel.Graded.Hom2Cat as GK2
-import LogOS.Kernel.LogicKernel.FromGradedKernel as LKFromG
-import LogOS.Kernel.LogicKernel.Hom2Cat as LK2
 import LogOS.Kernel.Hom as KH
 import LogOS.Kernel.Graded.Hom as GKH
 import LogOS.Kernel.Reindex as Reindex
 import LogOS.Kernel.HomOverSig as HomOverSig
-import LogOS.Kernel.Boundary as KBoundary
+import LogOS.Boundary.FromKernel as KBoundary
 import LogOS.Theorems.Meta.Views as Views
 import LogOS.Theorems.Meta.TruthLemma as TruthLemma
-import LogOS.Theorems.Meta.ObserverFromLogicKernel as ObsLK
+import LogOS.Theorems.Meta.ObserverFromKernel as ObsFromK
 import LogOS.Boundary.Port as Port
 import LogOS.Ports.Semantic.Interlingua as Interlingua
 
@@ -51,12 +49,12 @@ open import docs.Views.MeredithSentences
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
 
-  -- Kernel ↪ LogicKernel: the unified interface is available for every kernel.
-  open Views.KernelIntoLogicKernel {ℓ} {Sig} {Q}
+  -- Kernel ↪ Kernel: the unified interface is the canonical one.
+  open Views.KernelIntoKernel {ℓ} {Sig} {Q}
     renaming
-      ( asLogicKernel to asLogicKernel-K
-      ; toLKHom₁     to toLKHom₁-K
-      ; fromLKHom₁   to fromLKHom₁-K
+      ( asKernel     to asKernel-K
+      ; toKernelHom₁ to toKernelHom₁-K
+      ; fromKernelHom₁ to fromKernelHom₁-K
       ; to-from      to to-from-K
       ; from-to      to from-to-K
       )
@@ -66,11 +64,11 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     : ∀ {K₁ K₂ : Kernel Sig Q}
     → K2.KernelHom₁ K₁ K₂
     → KH.KernelHom K₁ K₂
-  underlyingKernelHom = K2.homKernel
+  underlyingKernelHom = K2.KernelHom₁.hom
 
   -- Graded kernels also embed into the unified interface.
-  asLogicKernel-G : GradedKernel Sig Q → LogicKernel Sig Q
-  asLogicKernel-G = LKFromG.asLogicKernel
+  asKernel-G : GradedKernel Sig Q → Kernel Sig Q
+  asKernel-G = FromG.asKernel
 
   -- Reindexing + heterogeneous morphism coherence exists at kernel level.
   module _ {Sig₁ Sig₂ Sig₃ : LogOSSignature ℓ}
@@ -97,9 +95,9 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
           (Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) (Kernel.TransH K φ))
     _ = TL.S↔∂
 
-  -- Canonical observer semantics instance from LogicKernel: one-line Obs⋆ construction.
-  module _ (K : LogicKernel Sig Q) where
-    module O = ObsLK.For {Sig = Sig} {Q = Q} K
+  -- Canonical observer semantics instance from Kernel: one-line Obs⋆ construction.
+  module _ (K : Kernel Sig Q) where
+    module O = ObsFromK.For {Sig = Sig} {Q = Q} K
     observable⋆ : ∀ {ℓT ℓO} (TruthK : O.Code → Set ℓT) → O.Code → Set (ℓ ⊔ ℓT ⊔ lsuc ℓO)
     observable⋆ {ℓT} {ℓO} TruthK = O.Observable⋆ {ℓT = ℓT} {ℓO = ℓO} TruthK
 
@@ -148,14 +146,14 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   _ : GradedKernelHom₁ K₂ K₃ → GradedKernelHom₁ K₁ K₂ → GradedKernelHom₁ K₁ K₃
   _ = _∘₁_
 
--- Flow/Guard transport at the LogicKernel level: “step semantics” is respected
+-- Flow/Guard transport at the Kernel level: “step semantics” is respected
 -- by flow-preserving morphisms (lax, preorder-safe).
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-         {K₁ K₂ : LogicKernel Sig Q}
-         {h : LK2.LogicKernelHom₁ K₁ K₂}
-         (hf : LK2.LogicKernelHomFlow₁ h)
-         (γ : LogicKernel.Code K₁)
+         {K₁ K₂ : Kernel Sig Q}
+         {h : K2.KernelHom₁ K₁ K₂}
+         (hf : K2.KernelHomFlow₁ h)
+         (γ : Kernel.Code K₁)
          where
   module FG = Views.FlowGuardTransport {ℓ = ℓ} {Sig = Sig} {Q = Q}
-  _ = FG.map-guard-decode≤-LogicKernel hf γ
+  _ = FG.map-guard-decode≤-Kernel hf γ

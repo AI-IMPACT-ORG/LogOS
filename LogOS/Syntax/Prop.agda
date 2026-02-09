@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,11 +23,13 @@ module LogOS.Syntax.Prop where
 -- - Use `_≡_` for meta-level propositional equality in Agda.
 -- - Use `_↔_` for logical equivalence/coherence (pairs of functions).
 -- - For decode-level equality tied to a specific kernel, prefer opening
---   `LogOS.Syntax.Eq.ForKernel K` and use `_≈K_` for decoded mutual refinement;
+--   `LogOS.Kernel.Eq.ForKernel K` and use `_≈K_` for decoded mutual refinement;
 --   use `_≃K_` only for the strict `decode γ₁ ≡ decode γ₂` form.
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (_×_; Σ; _,_)
+open import LogOS.Prelude.Empty public using (⊥; ⊥-elim)
+open import LogOS.Prelude public using (¬_)
+open import LogOS.Prelude using (_×_; Σ; _,_)
 
 -- Logical equivalence (bi-implication)
 infix 3 _↔_
@@ -159,20 +161,12 @@ infixr 3 _∨_
 _∨_ : ∀ {ℓ} → Set ℓ → Set ℓ → Set ℓ
 _∨_ {ℓ} P Q = P ⊎ Q
   where
-    open import LogOS.Prelude.Sum using (_⊎_)
+    open import LogOS.Prelude using (_⊎_)
 
 -- Truth (unit type): `⊤` is available via `LogOS.Prelude`.
 
--- Falsity (empty type)
-data ⊥ {ℓ : Level} : Set ℓ where
-
-⊥-elim : ∀ {ℓ₁ ℓ₂ : Level} {A : Set ℓ₂} → ⊥ {ℓ₁} → A
-⊥-elim ()
-
--- Negation
-infix 6 ¬_
-¬_ : ∀ {ℓ} → Set ℓ → Set ℓ
-¬_ {ℓ} P = P → ⊥ {lzero}
+-- Falsity (`⊥`) and negation (`¬_`) are provided by `LogOS.Prelude` so lower
+-- layers (Prelude itself) can use them without importing `Syntax`.
 
 -- “Existence as a witness”: a lightweight, proof-relevant inhabitance wrapper.
 -- Used to name the common shape `¬ (Σ X (λ _ → ⊤))` (e.g. “no total decider”).

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Prelude.NatLog2 where
 
 open import LogOS.Prelude
+open import LogOS.Prelude.Empty using (⊥-elim)
 
 open import LogOS.Prelude.NatOrder using
   ( _≤ℕ_
@@ -23,9 +24,8 @@ open import LogOS.Prelude.NatOrder using
   ; antisym≤ℕ
   )
 open import LogOS.Prelude.NatExtra using (+-zeroʳ; +-sucʳ)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
-open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
-open import LogOS.Syntax.Prop using (¬_; ⊥; ⊥-elim)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (_⊎_; inj₁; inj₂)
 
 one : ℕ
 one = suc zero
@@ -273,5 +273,5 @@ log₂-exp₂ k = antisym≤ℕ (log₂-exp₂≤ k) (log₂-exp₂≥ k)
         (notSuc≤-log₂-exp₂ k t eq
           (subst (λ x → suc k ≤ℕ x) (sym L≡sk) ≤ℕ-refl))
 
--- (Product law lemmas live in `LogOS.Domain.Complexity.HartleyEntropy`,
+-- (Product law lemmas live in `LogOS.Complexity.HartleyEntropy`,
 -- where we can choose the intended multiplication notion per application.)

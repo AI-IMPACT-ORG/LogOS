@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,11 +14,95 @@ module LogOS.Ports.Semantic.PresentationCore where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
 
+import LogOS.Minimal.RelPreorder as RP
+import LogOS.Minimal.View as View
+
+-- Satisfaction-based “system” interface.
+--
+-- A `SatSystem` is the common denominator of the ports/adapters spine:
+--   - contexts (`Ctx`) as observers/environments,
+--   - constraints (`Con`) as boundary claims,
+--   - satisfaction (`Sat`) as communicable meaning.
+
+record SatSystem {ℓCtx ℓCon ℓSat : Level}
+  : Set (lsuc (ℓCtx ⊔ ℓCon ⊔ ℓSat)) where
+  field
+    Ctx : Set ℓCtx
+    Con : Set ℓCon
+    Sat : Ctx → Con → Set ℓSat
+
+  -- Observational relations induced by satisfaction (no antisymmetry assumed).
+  ObsEq : Con → Con → Set (ℓCtx ⊔ ℓSat)
+  ObsEq = Prop.ObsEqOn Sat
+
+  ObsLe : Con → Con → Set (ℓCtx ⊔ ℓSat)
+  ObsLe = Prop.ObsLeOn Sat
+
+  -- Observational preorder as a first-class view target.
+  --
+  -- This keeps the universe levels honest: the carrier lives in `ℓCon`, but the
+  -- observational relation lives in `ℓCtx ⊔ ℓSat`.
+  ObsRP : RP.RelPreorder ℓCon (ℓCtx ⊔ ℓSat)
+  ObsRP = View.ObsPreorder Sat
+
+  -- Observational mutual refinement (two-way observation implication).
+  Obs≈ : Con → Con → Set (ℓCtx ⊔ ℓSat)
+  Obs≈ = View.Obs≈ Sat
+
+  ObsEq↔Obs≈ : ∀ {x y} → ObsEq x y ↔ Obs≈ x y
+  ObsEq↔Obs≈ {x} {y} = View.ObsEqOn↔Obs≈ Sat {x = x} {y = y}
+
+  RespectsObsEq : (Con → Con) → Set (ℓCtx ⊔ ℓCon ⊔ ℓSat)
+  RespectsObsEq = Prop.RespectsObsEqOn Sat
+
+  -- Canonical notion: extensionality w.r.t. observational mutual refinement.
+  RespectsObs≈ : (Con → Con) → Set (ℓCtx ⊔ ℓCon ⊔ ℓSat)
+  RespectsObs≈ F = ∀ {x y} → Obs≈ x y → Obs≈ (F x) (F y)
+
+  RespectsObsEq↔RespectsObs≈ : ∀ {F} → RespectsObsEq F ↔ RespectsObs≈ F
+  RespectsObsEq↔RespectsObs≈ {F} =
+    Prop.intro
+      (λ ext {x} {y} xy≈ →
+        Prop._↔_.to (ObsEq↔Obs≈ {x = F x} {y = F y})
+          (ext (Prop._↔_.from (ObsEq↔Obs≈ {x = x} {y = y}) xy≈)))
+      (λ ext {x} {y} xyEq →
+        Prop._↔_.from (ObsEq↔Obs≈ {x = F x} {y = F y})
+          (ext (Prop._↔_.to (ObsEq↔Obs≈ {x = x} {y = y}) xyEq)))
+
+  module ObsEq-Kit where
+    open Prop.ObsEqKit (Prop.obsEqKit Sat) public
+
+private
+  mkSatSystem
+    : ∀ {ℓCtx ℓCon ℓSat : Level}
+    → (Ctxₛ : Set ℓCtx)
+    → (Conₛ : Set ℓCon)
+    → (Satₛ : Ctxₛ → Conₛ → Set ℓSat)
+    → SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}
+  mkSatSystem Ctxₛ Conₛ Satₛ =
+    record
+      { Ctx = Ctxₛ
+      ; Con = Conₛ
+      ; Sat = Satₛ
+      }
+
+-- Preferred constructor surface: use `satSystem` (from this module) rather than
+-- calling `mkSatSystem` directly elsewhere. This keeps SatSystem construction
+-- trivial to audit: search for `satSystem` call sites and inspect only this
+-- wrapper if the representation ever changes.
+
+satSystem
+  : ∀ {ℓCtx ℓCon ℓSat : Level}
+  → (Ctxₛ : Set ℓCtx)
+  → (Conₛ : Set ℓCon)
+  → (Satₛ : Ctxₛ → Conₛ → Set ℓSat)
+  → SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}
+satSystem = mkSatSystem
+
 record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
-                     (Ctx : Set ℓCtx)
-                     (Con : Set ℓCon)
-                     (SatC : Ctx → Con → Set ℓSat)
+                     (S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat})
                      : Set (lsuc (ℓCtx ⊔ ℓCon ⊔ ℓForm ⊔ ℓSat)) where
+  open SatSystem S public renaming (Sat to SatC)
   field
     Form   : Set ℓForm
     SatF   : Ctx → Form → Set ℓSat
@@ -44,6 +128,25 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
   ObsLeF : Form → Form → Set _
   ObsLeF = Prop.ObsLeOn SatF
 
+  -- Observational preorders as first-class view targets.
+  ObsRPC : RP.RelPreorder ℓCon (ℓCtx ⊔ ℓSat)
+  ObsRPC = View.ObsPreorder SatC
+
+  ObsRPF : RP.RelPreorder ℓForm (ℓCtx ⊔ ℓSat)
+  ObsRPF = View.ObsPreorder SatF
+
+  Obs≈C : Con → Con → Set _
+  Obs≈C = View.Obs≈ SatC
+
+  Obs≈F : Form → Form → Set _
+  Obs≈F = View.Obs≈ SatF
+
+  ObsEqC↔Obs≈C : ∀ {x y} → ObsEqC x y ↔ Obs≈C x y
+  ObsEqC↔Obs≈C {x} {y} = View.ObsEqOn↔Obs≈ SatC {x = x} {y = y}
+
+  ObsEqF↔Obs≈F : ∀ {x y} → ObsEqF x y ↔ Obs≈F x y
+  ObsEqF↔Obs≈F {x} {y} = View.ObsEqOn↔Obs≈ SatF {x = x} {y = y}
+
   -- Consistent aliases: use Con/Form naming at call sites.
 
   ObsEqCon : Con → Con → Set _
@@ -63,6 +166,33 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
 
   RespectsObsEqF : (Form → Form) → Set _
   RespectsObsEqF F = ∀ {φ ψ} → ObsEqF φ ψ → ObsEqF (F φ) (F ψ)
+
+  -- Canonical notion: extensionality w.r.t. observational mutual refinement.
+  RespectsObs≈C : (Con → Con) → Set _
+  RespectsObs≈C F = ∀ {c d} → Obs≈C c d → Obs≈C (F c) (F d)
+
+  RespectsObs≈F : (Form → Form) → Set _
+  RespectsObs≈F F = ∀ {φ ψ} → Obs≈F φ ψ → Obs≈F (F φ) (F ψ)
+
+  RespectsObsEqC↔RespectsObs≈C : ∀ {F} → RespectsObsEqC F ↔ RespectsObs≈C F
+  RespectsObsEqC↔RespectsObs≈C {F} =
+    Prop.intro
+      (λ ext {c} {d} cd≈ →
+        Prop._↔_.to (ObsEqC↔Obs≈C {x = F c} {y = F d})
+          (ext (Prop._↔_.from (ObsEqC↔Obs≈C {x = c} {y = d}) cd≈)))
+      (λ ext {c} {d} cdEq →
+        Prop._↔_.from (ObsEqC↔Obs≈C {x = F c} {y = F d})
+          (ext (Prop._↔_.to (ObsEqC↔Obs≈C {x = c} {y = d}) cdEq)))
+
+  RespectsObsEqF↔RespectsObs≈F : ∀ {F} → RespectsObsEqF F ↔ RespectsObs≈F F
+  RespectsObsEqF↔RespectsObs≈F {F} =
+    Prop.intro
+      (λ ext {φ} {ψ} eq≈ →
+        Prop._↔_.to (ObsEqF↔Obs≈F {x = F φ} {y = F ψ})
+          (ext (Prop._↔_.from (ObsEqF↔Obs≈F {x = φ} {y = ψ}) eq≈)))
+      (λ ext {φ} {ψ} eqEq →
+        Prop._↔_.from (ObsEqF↔Obs≈F {x = F φ} {y = F ψ})
+          (ext (Prop._↔_.to (ObsEqF↔Obs≈F {x = φ} {y = ψ}) eqEq)))
 
   RespectsObsEqCon : (Con → Con) → Set _
   RespectsObsEqCon = RespectsObsEqC
@@ -100,6 +230,15 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
       (Prop.↔-sym (SatC≈F p c))
       (Prop.↔-trans (eq p) (SatC≈F p d))
 
+  -- Derived: `Export` also respects mutual refinement (the canonical `≈`-shaped form).
+  Export-respects-Obs≈C
+    : ∀ {c d}
+    → Obs≈C c d
+    → Obs≈F (Export c) (Export d)
+  Export-respects-Obs≈C {c} {d} eq≈ =
+    Prop._↔_.to (ObsEqF↔Obs≈F {x = Export c} {y = Export d})
+      (Export-respects-ObsEqC (Prop._↔_.from (ObsEqC↔Obs≈C {x = c} {y = d}) eq≈))
+
   Import-respects-ObsEqF
     : ∀ {φ ψ}
     → ObsEqF φ ψ
@@ -108,6 +247,15 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
     Prop.↔-trans
       (Prop.↔-sym (SatF≈C p φ))
       (Prop.↔-trans (eq p) (SatF≈C p ψ))
+
+  -- Derived: `Import` also respects mutual refinement (the canonical `≈`-shaped form).
+  Import-respects-Obs≈F
+    : ∀ {φ ψ}
+    → Obs≈F φ ψ
+    → Obs≈C (Import φ) (Import ψ)
+  Import-respects-Obs≈F {φ} {ψ} eq≈ =
+    Prop._↔_.to (ObsEqC↔Obs≈C {x = Import φ} {y = Import ψ})
+      (Import-respects-ObsEqF (Prop._↔_.from (ObsEqF↔Obs≈F {x = φ} {y = ψ}) eq≈))
 
   -- Lifting a constraint endomap through a port.
 
@@ -138,6 +286,19 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
       satC→satF = SatC≈F p (F (Import ψ))
     in
     Prop.↔-trans satF→satC (Prop.↔-trans satC≈ satC→satF)
+
+  -- Derived: lifting also respects mutual refinement (the canonical `≈`-shaped form).
+  Extend-respects-Obs≈F
+    : ∀ (F : Con → Con)
+    → RespectsObs≈C F
+    → ∀ {φ ψ}
+    → Obs≈F φ ψ
+    → Obs≈F (Extend F φ) (Extend F ψ)
+  Extend-respects-Obs≈F F extF≈ {φ} {ψ} eq≈ =
+    Prop._↔_.to (ObsEqF↔Obs≈F {x = Extend F φ} {y = Extend F ψ})
+      (Extend-respects-ObsEqF F
+        (Prop._↔_.from (RespectsObsEqC↔RespectsObs≈C {F = F}) extF≈)
+        (Prop._↔_.from (ObsEqF↔Obs≈F {x = φ} {y = ψ}) eq≈))
 
   Extend-id
     : ∀ p (φ : Form)
@@ -197,12 +358,10 @@ record PresentationC {ℓCtx ℓCon ℓForm ℓSat : Level}
 -- satisfaction equivalence.
 
 record LensKit {ℓCtx ℓCon ℓForm ℓSat : Level}
-               (Ctx : Set ℓCtx)
-               (Con : Set ℓCon)
-               (SatC : Ctx → Con → Set ℓSat)
+               (S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat})
                : Set (lsuc (ℓCtx ⊔ ℓCon ⊔ ℓForm ⊔ ℓSat)) where
   field
-    Pres : PresentationC {ℓForm = ℓForm} Ctx Con SatC
+    Pres : PresentationC {ℓForm = ℓForm} S
   open PresentationC Pres public
 
   roundTripF : ∀ p (φ : Form) → SatF p φ ↔ SatF p (Export (Import φ))
@@ -213,20 +372,16 @@ record LensKit {ℓCtx ℓCon ℓForm ℓSat : Level}
 
 lensFromPresentation
   : ∀ {ℓCtx ℓCon ℓForm ℓSat}
-    {Ctx : Set ℓCtx}
-    {Con : Set ℓCon}
-    {SatC : Ctx → Con → Set ℓSat}
-  → PresentationC {ℓForm = ℓForm} Ctx Con SatC
-  → LensKit {ℓForm = ℓForm} Ctx Con SatC
+    {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
+  → PresentationC {ℓForm = ℓForm} S
+  → LensKit {ℓForm = ℓForm} S
 lensFromPresentation P = record { Pres = P }
 
 lensTranslate
   : ∀ {ℓCtx ℓCon ℓForm₁ ℓForm₂ ℓSat}
-    {Ctx : Set ℓCtx}
-    {Con : Set ℓCon}
-    {SatC : Ctx → Con → Set ℓSat}
-    (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC)
-    (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx Con SatC)
+    {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
+    (P₁ : PresentationC {ℓForm = ℓForm₁} S)
+    (P₂ : PresentationC {ℓForm = ℓForm₂} S)
   → PresentationC.Form P₁ → PresentationC.Form P₂
 lensTranslate P₁ P₂ φ =
   PresentationC.Export P₂ (PresentationC.Import P₁ φ)
@@ -237,11 +392,9 @@ lensTranslate P₁ P₂ φ =
 
 record PresentationHom
   {ℓCtx ℓCon ℓSat ℓForm₁ ℓForm₂ : Level}
-  {Ctx : Set ℓCtx}
-  {Con : Set ℓCon}
-  {SatC : Ctx → Con → Set ℓSat}
-  (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC)
-  (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx Con SatC)
+  {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
+  (P₁ : PresentationC {ℓForm = ℓForm₁} S)
+  (P₂ : PresentationC {ℓForm = ℓForm₂} S)
   : Set (lsuc (ℓCtx ⊔ ℓSat ⊔ ℓForm₁ ⊔ ℓForm₂)) where
   private
     module P1 = PresentationC P₁
@@ -254,10 +407,8 @@ open PresentationHom public
 
 PresentationHom-id
   : ∀ {ℓCtx ℓCon ℓSat ℓForm : Level}
-    {Ctx : Set ℓCtx}
-    {Con : Set ℓCon}
-    {SatC : Ctx → Con → Set ℓSat}
-    (P : PresentationC {ℓForm = ℓForm} Ctx Con SatC)
+    {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
+    (P : PresentationC {ℓForm = ℓForm} S)
   → PresentationHom P P
 PresentationHom-id _ =
   record
@@ -267,12 +418,10 @@ PresentationHom-id _ =
 
 PresentationHom-compose
   : ∀ {ℓCtx ℓCon ℓSat ℓForm₁ ℓForm₂ ℓForm₃ : Level}
-    {Ctx : Set ℓCtx}
-    {Con : Set ℓCon}
-    {SatC : Ctx → Con → Set ℓSat}
-    {P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC}
-    {P₂ : PresentationC {ℓForm = ℓForm₂} Ctx Con SatC}
-    {P₃ : PresentationC {ℓForm = ℓForm₃} Ctx Con SatC}
+    {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
+    {P₁ : PresentationC {ℓForm = ℓForm₁} S}
+    {P₂ : PresentationC {ℓForm = ℓForm₂} S}
+    {P₃ : PresentationC {ℓForm = ℓForm₃} S}
   → PresentationHom P₁ P₂
   → PresentationHom P₂ P₃
   → PresentationHom P₁ P₃
@@ -285,11 +434,9 @@ PresentationHom-compose h₁ h₂ =
 
 PresentationHom-respects-ObsEq
   : ∀ {ℓCtx ℓCon ℓSat ℓForm₁ ℓForm₂ : Level}
-    {Ctx : Set ℓCtx}
-    {Con : Set ℓCon}
-    {SatC : Ctx → Con → Set ℓSat}
-    {P₁ : PresentationC {ℓForm = ℓForm₁} Ctx Con SatC}
-    {P₂ : PresentationC {ℓForm = ℓForm₂} Ctx Con SatC}
+    {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
+    {P₁ : PresentationC {ℓForm = ℓForm₁} S}
+    {P₂ : PresentationC {ℓForm = ℓForm₂} S}
   → (h : PresentationHom P₁ P₂)
   → ∀ {φ ψ}
   → PresentationC.ObsEqF P₁ φ ψ
@@ -302,3 +449,22 @@ PresentationHom-respects-ObsEq {P₁ = P₁} {P₂ = P₂} h {φ} {ψ} eq p =
   Prop.↔-trans
     (Prop.↔-sym (sem h p φ))
     (Prop.↔-trans (eq p) (sem h p ψ))
+
+-- Derived: `PresentationHom` also respects mutual refinement (the canonical `≈`-shaped form).
+PresentationHom-respects-Obs≈F
+  : ∀ {ℓCtx ℓCon ℓSat ℓForm₁ ℓForm₂ : Level}
+    {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
+    {P₁ : PresentationC {ℓForm = ℓForm₁} S}
+    {P₂ : PresentationC {ℓForm = ℓForm₂} S}
+  → (h : PresentationHom P₁ P₂)
+  → ∀ {φ ψ}
+  → PresentationC.Obs≈F P₁ φ ψ
+  → PresentationC.Obs≈F P₂ (map h φ) (map h ψ)
+PresentationHom-respects-Obs≈F {P₁ = P₁} {P₂ = P₂} h {φ} {ψ} eq =
+  let
+    module P1 = PresentationC P₁
+    module P2 = PresentationC P₂
+  in
+  Prop._↔_.to (P2.ObsEqF↔Obs≈F {x = map h φ} {y = map h ψ})
+    (PresentationHom-respects-ObsEq {P₁ = P₁} {P₂ = P₂} h
+      (Prop._↔_.from (P1.ObsEqF↔Obs≈F {x = φ} {y = ψ}) eq))

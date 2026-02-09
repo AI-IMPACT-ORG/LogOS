@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,11 +11,12 @@ open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_; intro; to; from; ↔-refl; ↔-sym; ↔-trans)
 
 open import LogOS.Computation.Core using (iterate; iterate-+; Computation)
+import LogOS.Computation.ExecCore as ExecCore
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPreorder; _≈CP_)
 open import LogOS.Minimal.Closure public renaming (ClosureOp to Closure)
 open import LogOS.Minimal.ScaleOps using (ScaleOps; BudgetOps)
-open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude using (_×_; _,_; fst; snd)
 open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; total≤ℕ)
 
 -- A “computation scheme” packages:
@@ -23,7 +24,7 @@ open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; total≤ℕ)
 -- - a dynamics (Step),
 -- - a closure operator (Close),
 -- - an observation/meaning extractor (decode),
--- - and a quantale-valued step cost profile (QAdapter + stepCost).
+-- - and a prequantale-valued step cost profile (QAdapter + stepCost).
 --
 -- This is designed so that different paradigms (Turing/Minsky, Church/λ, EVM,
 -- quantum, …) become different *scheme choices* that can be compared:
@@ -79,8 +80,7 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
   run≤ᵇ Ops = run≤ (BudgetOps.Ops Ops)
 
   costExec : ℕ → Con → Scale
-  costExec zero    c = e
-  costExec (suc n) c = stepCost c · costExec n (Step c)
+  costExec = ExecCore.costExec Q Step stepCost
 
   costAt : ℕ → Input → Scale
   costAt n x = costExec n (compile x)
@@ -129,25 +129,25 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
   -- Observational (preorder) variant: keep the same reachability witness, but
   -- weaken halting from judgmental equality to mutual refinement.
 
-  NormalizesTo≈ : Con → Con → Set ℓC
-  NormalizesTo≈ c c' = Σ ℕ (λ n → iterate Comp n c ≡ c' × halts c')
+  NormalizesToObs : Con → Con → Set ℓC
+  NormalizesToObs c c' = Σ ℕ (λ n → iterate Comp n c ≡ c' × halts c')
 
-  NormalizesTo→NormalizesTo≈ : ∀ {c c'} → NormalizesTo c c' → NormalizesTo≈ c c'
-  NormalizesTo→NormalizesTo≈ (n , (reach , halt)) =
+  NormalizesTo→NormalizesToObs : ∀ {c c'} → NormalizesTo c c' → NormalizesToObs c c'
+  NormalizesTo→NormalizesToObs (n , (reach , halt)) =
     n , (reach , halts≡→halts halt)
 
-  ComputesTo≈ : Input → Output → Set (ℓC ⊔ ℓO)
-  ComputesTo≈ x y =
-    Σ Con (λ c' → NormalizesTo≈ (compile x) c' × decode (close c') ≡ y)
+  ComputesToObs : Input → Output → Set (ℓC ⊔ ℓO)
+  ComputesToObs x y =
+    Σ Con (λ c' → NormalizesToObs (compile x) c' × decode (close c') ≡ y)
 
-  ComputesTo→ComputesTo≈ : ∀ {x y} → ComputesTo x y → ComputesTo≈ x y
-  ComputesTo→ComputesTo≈ (c' , (norm , out≡)) =
-    c' , (NormalizesTo→NormalizesTo≈ norm , out≡)
+  ComputesTo→ComputesToObs : ∀ {x y} → ComputesTo x y → ComputesToObs x y
+  ComputesTo→ComputesToObs (c' , (norm , out≡)) =
+    c' , (NormalizesTo→NormalizesToObs norm , out≡)
 
   -- Closure-stable semantics: a computation is witnessed by some number of
   -- steps after which the *closed* state is step-stable (up to ≈).
   --
-  -- This is strictly weaker than `ComputesTo`/`ComputesTo≈` because it does not
+  -- This is strictly weaker than `ComputesTo`/`ComputesToObs` because it does not
   -- require the raw execution state to be stable.
 
   StabilizesTo : Input → Output → Set (ℓC ⊔ ℓO)
@@ -184,7 +184,7 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
   runIsStabilizesWithin laws x b cost≤ =
     fuel x , (LogOS.Prelude.refl , (toClosedAt-halts laws (fuel x) x , cost≤))
 
-  -- Cost/budgeted variant: compute within a quantale budget.
+  -- Cost/budgeted variant: compute within a prequantale budget.
   --
   -- For `QNat`, budgets are step/gas counts; for other adapters, budgets live in
   -- the adapter's `Scale`.
@@ -240,7 +240,7 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
       }
 
   -- ==========================================================================
-  -- Budget algebra (quantale-facing)
+  -- Budget algebra (prequantale-facing)
   --
   -- These lemmas make the finite-join structure operational for schemes:
   -- budgets can be weakened along `_≤s_` and combined via join (`_⊔s_`).
@@ -307,7 +307,7 @@ record Scheme {ℓI ℓO ℓC ℓQ : Level}
       (sym (QAdapter.·-assoc Q a b d))
 
   -- ==========================================================================
-  -- Quantale-graded execution (new: uses `·-mono`)
+  -- Prequantale-graded execution (new: uses `·-mono`)
   --
   -- The key new capability after upgrading `QAdapter` with monotone
   -- multiplication: budgeted executions compose.

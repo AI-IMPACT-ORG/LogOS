@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,13 +22,13 @@ open import LogOS.Boundary.IO
 open import LogOS.Boundary.Port
 
 open import LogOS.Kernel
-import LogOS.Kernel.Boundary as KBoundary
-import LogOS.Kernel.Core as KCore
+import LogOS.Boundary.FromKernel as KBoundary
+import LogOS.Kernel.Shape as KCore
 
 import LogOS.Ports.Semantic.InterlinguaKernelLayer as KernelLayer
 import LogOS.Ports.Semantic.Interoperability as Interop
 open import LogOS.Adapters.Views.SatMor using (satMor-code-to-boundary)
-import LogOS.Theorems.Boundary.OmegaCPOMapKit as OmegaKit
+import LogOS.Minimal.MuFusion as MuFusion
 
 module For
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -98,7 +98,7 @@ module For
       module CPC = ConPreorder CPCode renaming (_⊑_ to _⊑c_)
 
       module GT = Truth.GuardedCore {ℓ = ℓ}
-      module OK = OmegaKit.For CPCode CPBnd
+      module MF = MuFusion.For CPCode CPBnd
       module L  = Interop.Limit CPCode CPBnd m P₁ P₂
 
     -- ωCPO structure on code, induced by the boundary ωCPO via `encode`/`decode`.
@@ -135,7 +135,7 @@ module For
         }
 
     -- Decode is an ωCPO-map from code (with the induced ωCPO) to the boundary ωCPO.
-    decodeOmegaCPOMap : OK.OmegaCPOMap ωCode ωBnd (Kernel.decode K)
+    decodeOmegaCPOMap : MF.OmegaCPOMap ωCode ωBnd (Kernel.decode K)
     decodeOmegaCPOMap =
       record
         { mono-map = λ le → le

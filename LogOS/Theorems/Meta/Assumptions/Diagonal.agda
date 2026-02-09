@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,17 +8,18 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.Assumptions.Diagonal where
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (Σ; proj₁; proj₂; fst; snd)
-open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude using (Σ; proj₁; proj₂; fst; snd)
+open import LogOS.Prelude using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 open import LogOS.Kernel.Endo
 open import LogOS.Minimal.Con
-open import LogOS.Theorems.Meta.Assumptions.Core using
+open import LogOS.Theorems.Meta.ConditionalPacks using
   (Provability; ProvabilityOps; ProvabilityOpsC; toOpsC)
 open import LogOS.Theorems.Code.Core as Code
+open import LogOS.Kernel.Eq using (module ForKernel)
 
 -- Diagonalisation and self-reference packs.
 --
@@ -112,6 +113,7 @@ record QuoteSubst {ℓ}
                   (K   : Kernel Sig Q)
                   : Set (lsuc ℓ) where
   open Kernel K
+  open ForKernel K
   private
     _⊑_ = ConPreorder._⊑_ (BulkBoundary.bnd BB)
   field
@@ -132,7 +134,7 @@ record QuoteSubst {ℓ}
   open BulkBoundaryPO po using (po-bnd)
   open PartialOrder po-bnd using (antisym)
 
-  representable : (f : Code → Code) → Σ Code₁ (λ u → ∀ γ → decode (inst u γ) ≡ decode (f γ))
+  representable : (f : Code → Code) → Σ Code₁ (λ u → ∀ γ → inst u γ ≃K f γ)
   representable f =
     let
       rep  = representable⊑ f
@@ -141,7 +143,7 @@ record QuoteSubst {ℓ}
     in
     u , (λ γ → antisym (fst (repr γ)) (snd (repr γ)))
 
-  self : (u : Code₁) → Σ Code (λ s → decode s ≡ decode (inst u s))
+  self : (u : Code₁) → Σ Code (λ s → s ≃K inst u s)
   self u =
     let
       se    = self⊑ u
@@ -204,10 +206,11 @@ lawvereFix≡
   → BulkBoundaryPO (Kernel.BB K)
   → InternalHomWitness K
   → (f : Kernel.Code K → Kernel.Code K)
-  → Σ (Kernel.Code K) (λ s → Kernel.decode K s ≡ Kernel.decode K (f s))
+  → Σ (Kernel.Code K) (λ s → ForKernel._≃K_ K s (f s))
 lawvereFix≡ {K = K} po QS f =
   let
     open Kernel K
+    open ForKernel K
     open BulkBoundaryPO po using (po-bnd)
     open PartialOrder po-bnd using (antisym)
     s , (le₁ , le₂) = lawvereFix {K = K} QS f
@@ -230,7 +233,7 @@ lawvereDiag≡
   → BulkBoundaryPO (Kernel.BB K)
   → (QS : InternalHomWitness K)
   → (f  : Kernel.Code K → Kernel.Code K)
-  → Kernel.decode K (lawvereDiag QS f) ≡ Kernel.decode K (f (lawvereDiag QS f))
+  → ForKernel._≃K_ K (lawvereDiag QS f) (f (lawvereDiag QS f))
 lawvereDiag≡ po QS f = proj₂ (lawvereFix≡ po QS f)
 
 lawvereDiag-⊑
@@ -283,10 +286,11 @@ record DecodeImp {ℓ}
                  (Op : ProvabilityOps K)
                  : Set (lsuc ℓ) where
   open Kernel K
+  open ForKernel K
   open Provability Pr renaming (Prov to ⊢)
   open ProvabilityOps Op
   field
-    from-decode≡→imp : ∀ {φ ψ} → decode φ ≡ decode ψ → ⊢ (Imp φ ψ)
+    from-decode≃→imp : ∀ {φ ψ} → φ ≃K ψ → ⊢ (Imp φ ψ)
 
 -- Provability-level diagonalization as a theorem:
 -- internal-hom witness + local decode⊑→imp bridge ⇒ the classical diagonal schema.
@@ -320,6 +324,7 @@ Diagonalization-from-QuoteSubst K Pr Op QS DI = record
   }
   where
     open Kernel K
+    open ForKernel K
     open Provability Pr renaming (Prov to ⊢)
     open ProvabilityOps Op
     open QuoteSubst QS
@@ -327,41 +332,41 @@ Diagonalization-from-QuoteSubst K Pr Op QS DI = record
 
     diag : (Code → Code) → Code
     diag f = s where
-      rep : Σ Code₁ (λ u₁ → ∀ γ → decode (inst u₁ γ) ≡ decode (f γ))
+      rep : Σ Code₁ (λ u₁ → ∀ γ → inst u₁ γ ≃K f γ)
       rep = representable f
       u : Code₁
       u = proj₁ rep
-      repr : ∀ γ → decode (inst u γ) ≡ decode (f γ)
+      repr : ∀ γ → inst u γ ≃K f γ
       repr = proj₂ rep
-      se : Σ Code (λ s₁ → decode s₁ ≡ decode (inst u s₁))
+      se : Σ Code (λ s₁ → s₁ ≃K inst u s₁)
       se = self u
       s : Code
       s = proj₁ se
-      _ = proj₂ se -- decode s ≡ decode (inst u s)
+      _ = proj₂ se -- s ≃K inst u s
 
-    diag-eq : ∀ f → decode (diag f) ≡ decode (f (diag f))
+    diag-eq : ∀ f → diag f ≃K f (diag f)
     diag-eq f =
       let
-        rep : Σ Code₁ (λ u₁ → ∀ γ → decode (inst u₁ γ) ≡ decode (f γ))
+        rep : Σ Code₁ (λ u₁ → ∀ γ → inst u₁ γ ≃K f γ)
         rep = representable f
         u : Code₁
         u = proj₁ rep
-        repr : ∀ γ → decode (inst u γ) ≡ decode (f γ)
+        repr : ∀ γ → inst u γ ≃K f γ
         repr = proj₂ rep
-        se : Σ Code (λ s₁ → decode s₁ ≡ decode (inst u s₁))
+        se : Σ Code (λ s₁ → s₁ ≃K inst u s₁)
         se = self u
         s : Code
         s = proj₁ se
-        selfeq : decode s ≡ decode (inst u s)
+        selfeq : s ≃K inst u s
         selfeq = proj₂ se
       in
       trans selfeq (repr s)
 
     diag→ : ∀ f → ⊢ (Imp (diag f) (f (diag f)))
-    diag→ f = from-decode≡→imp (diag-eq f)
+    diag→ f = from-decode≃→imp (diag-eq f)
 
     →diag : ∀ f → ⊢ (Imp (f (diag f)) (diag f))
-    →diag f = from-decode≡→imp (sym (diag-eq f))
+    →diag f = from-decode≃→imp (sym (diag-eq f))
 
 -- ----------------------------------------------------------------------------
 -- Code-level diagonalization (Body/Flow form).
@@ -393,17 +398,17 @@ Diagonal-Body∂-eq K D F with Diagonal.diagonal D F
       bodyEq = trans (sym step₁) (trans (cong (Kernel.decode K) eq) step₂)
   in γ , bodyEq
 
-Diagonal-FlowEndo-eq
+Diagonal-FlowStep-eq
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K   : Kernel Sig Q)
     (D   : Diagonal K)
     (F   : Kernel.Code K → Kernel.Code K)
   → Σ (Kernel.Code K) (λ γ →
-       Endo.fn (Flow-Endo K)
+       GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K))
          (Kernel.Body∂ K (Kernel.decode K (F γ)))
-       ≡ Endo.fn (Flow-Endo K)
+       ≡ GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K))
          (Kernel.Body∂ K (Kernel.decode K γ)))
-Diagonal-FlowEndo-eq K D F with Diagonal.diagonal D F
+Diagonal-FlowStep-eq K D F with Diagonal.diagonal D F
 ... | γ , eq =
   let guardEq = cong (Kernel.Guard K) eq
       decEq = cong (Kernel.decode K) guardEq

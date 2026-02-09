@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,9 +12,9 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 
-open import LogOS.Kernel.LogicKernel using (LogicKernel; GTier)
-import LogOS.Kernel.LogicKernel.Endo as LKEndo
-open import LogOS.Kernel.LogicKernel.TensorEndo using (_⊗ᵣ_)
+open import LogOS.Kernel using (Kernel; GTier)
+import LogOS.Kernel.Endo as LKEndo
+open import LogOS.Kernel.TensorEndo using (_⊗ᵣ_)
 
 open import LogOS.Boundary.Port using (Respects≈∂[_])
 
@@ -45,24 +45,24 @@ module For
   RespectsObsEq F = Respects≈∂[ boundaryIO ] (E.apply F)
 
   private
-    FlowAt : GTier.Step (LogicKernel.G LK) → Con_bnd → Con_bnd
-    FlowAt g = GTier.Flow (LogicKernel.G LK) g
+    FlowAt : GTier.Step (Kernel.G LK) → Con_bnd → Con_bnd
+    FlowAt g = GTier.Flow (Kernel.G LK) g
 
-    flowEndoAt : GTier.Step (LogicKernel.G LK) → LKEndo.Endo LK
+    flowEndoAt : GTier.Step (Kernel.G LK) → LKEndo.Endo LK
     flowEndoAt g =
       record
         { fn = FlowAt g
-        ; mono = GTier.mono (LogicKernel.G LK)
+        ; mono = GTier.mono (Kernel.G LK)
         }
 
   -- One canonical monitor: “enforce safety by tensoring it in, then saturating”.
   --
   -- This is a design choice, not a theorem: it makes the intended usage explicit
   -- while remaining order-agnostic (preorder-safe).
-  defaultMonitorAt : GTier.Step (LogicKernel.G LK) → Monitor
+  defaultMonitorAt : GTier.Step (Kernel.G LK) → Monitor
   defaultMonitorAt g =
     LKEndo._∘E_ (flowEndoAt g) (LK ⊗ᵣ SafetySem)
 
   -- Default choice: saturate at the kernel’s `sat` grade.
   defaultMonitor : Monitor
-  defaultMonitor = defaultMonitorAt (GTier.sat (LogicKernel.G LK))
+  defaultMonitor = defaultMonitorAt (GTier.sat (Kernel.G LK))

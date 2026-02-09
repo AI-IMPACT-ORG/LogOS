@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,11 +14,9 @@ open import LogOS.Prelude
 open import LogOS.Computation.SchemeCategory public
   using
     ( Process
-    ; Choice
-    ; schemeFromChoice
+    ; Interface
+    ; schemeFromInterface
     ; ProcessHom
     ; ProcessHomLax
     ; ProcessHomCost
-    ; castScale→
-    ; castScale←
     )

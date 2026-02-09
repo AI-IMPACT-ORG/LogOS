@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -40,6 +40,18 @@ module HPOpacity = HPₒ
 module SpectralSeparationOutput = SpectralSeparationOutputₜ
 module BudgetedSeparationOutput = BudgetedSSO
 module BudgetedTruthPositivity = BudgetedTP
+
+-- Public “headline” aliases referenced in publication-facing docs.
+import LogOS.Theorems.Meta.LimitPublicisation as LimitPublicisationₜ
+module LimitPublicisation = LimitPublicisationₜ
+open LimitPublicisation public using (TruthK→Pr)
+
+import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack as ZerosPackₜ
+module ZerosPack = ZerosPackₜ
+open ZerosPack public using (GRH_Without_Vacuity_Guards)
+
+open SpectralSeparationOutput public using (separation-output-not-total)
+open BudgetedSeparationOutput public using (budgeted-diagonal-witness)
 
 -- Compatibility alias (explicit guards).
 import LogOS.Domain.Opacity.GRH_Vacuity_Guards as GRH_Vacuity_Guardsₜ

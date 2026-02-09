@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module LogOS.Kernel.ReindexCore where
 -- ============================================================================
 -- SHARED SIGNATURE REINDEXING CORE (WORLD + KERNEL SHAPE)
 --
--- Both `Kernel` and `LogicKernel` support pullback along `SigHom` by:
+-- The CHL-facing `Kernel` supports pullback along `SigHom` by:
 -- - reindexing worlds/satisfaction (S/H tiers) contravariantly, and
 -- - preserving constraints and code on-the-nose.
 --
@@ -26,7 +26,7 @@ open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Syntax.Prop as Prop
-open import LogOS.Kernel.Core as Core
+open import LogOS.Kernel.Shape as Core
 
 -- Reindex an H-world along a signature map (precompose on the Cosp carrier).
 

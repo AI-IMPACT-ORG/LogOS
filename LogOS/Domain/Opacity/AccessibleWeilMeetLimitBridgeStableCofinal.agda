@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStableCofinal where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -60,7 +60,8 @@ record AccessibleWeilMeetLimitBridgeStableCofinal {ℓ ℓW : Level}
 
     -- Each regulator predicate is stable/extensional (so it is self-observable).
     Wᵢ-ext : ∀ i → Comm.DecodeExtensional′ K (Wᵢ i)
-    Wᵢ-stableBoxBody : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (Box K (Kernel.Body K γ)))
+    Wᵢ-stableBoxBody
+      : ∀ i γ → (Wᵢ i γ) ↔ (Wᵢ i (BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K γ)))
 
     -- Plain finite evidence only along the cofinal schedule.
     holdsᵇ : ∀ b s → NontrivialZero s → Wᵢ (u b) (WPI.WeilProbeImplication.probe WProbe s)

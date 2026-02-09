@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,8 +13,8 @@ module LogOS.Packs.ZFC.VacuityGuards where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import LogOS.Domain.ZFC.WFGraph.Structure using (WFGraphStructure)
-open import LogOS.Domain.ZFC.SetU.WFGraphCore using (WFGraph)
+open import LogOS.ZFC.WFGraph.Structure using (WFGraphStructure)
+open import LogOS.ZFC.SetU.WFGraphCore using (WFGraph)
 
 record WFGraphVacuityGuards {ℓ : Level} (W : WFGraphStructure ℓ) : Set (lsuc ℓ) where
   open WFGraphStructure W

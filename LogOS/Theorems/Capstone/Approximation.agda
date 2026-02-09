@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,8 +16,8 @@ open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel
 open import LogOS.Kernel.Endo
-open import LogOS.Kernel.Infinite
-import LogOS.Kernel.Infinite.Lemmas as IKL
+open import LogOS.Kernel.UngradedKernel.Infinite
+import LogOS.Kernel.UngradedKernel.Infinite.Lemmas as IKL
 
 -- Capstone: approximation principle at the boundary.
 --
@@ -28,8 +28,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
          (IK : InfiniteKernel Sig Q) where
   private
     module L = IKL.For IK
-    open InfiniteKernel IK using (K; ωCPO)
-    open Kernel K using (BB)
+    open InfiniteKernel IK using (BB; ωCPO)
     CP = BulkBoundary.bnd BB
     module CP = ConPreorder CP
 

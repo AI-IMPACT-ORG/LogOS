@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,10 +13,11 @@ module LogOS.Packs.UniversalIR.All where
 -- - kernel instance + boundary I/O views (graded boundary order is intentionally vacuous;
 --   use observed-kernel ports for meaningful satisfaction)
 
-open import LogOS.Packs.Trust using (PackTrust; stable)
+open import LogOS.Packs.Trust using (PackTrust)
+import LogOS.Packs.UniversalIR.Core as PackCore
 
 packTrust : PackTrust
-packTrust = record { level = stable }
+packTrust = PackCore.packTrust
 
 module AssumptionBundles where
   open import LogOS.Packs.Assumptions.Universality public
@@ -27,6 +28,9 @@ module Core where
 module Agreement where
   open import LogOS.Packs.UniversalIR.Agreement public
 
+module CHL where
+  open import LogOS.Packs.UniversalIR.CHLAdequacyInstances public
+
 module Algorithms where
   open import LogOS.Packs.UniversalIR.Pack public
 
@@ -36,32 +40,16 @@ module Examples where
 -- Optional, stable namespaces (not part of the minimal Core “math object” layer).
 
 module Theorems where
-  import LogOS.Domain.UniversalIR.Theorems as Theoremsₜ
+  import LogOS.UniversalIR.Theorems as Theoremsₜ
   module Bundle = Theoremsₜ
 
-module Guardrails where
-  -- Barrier theorems and representation invariance for “machines as schemes”.
-  import LogOS.Computation.SchemeCategory as SchemeCategoryₜ
-  import LogOS.Computation.Scheme as Schemeₜ
-  import LogOS.Theorems.Meta.SpectralSeparationOutput as SpectralSeparationOutputₜ
-  import LogOS.Theorems.Meta.Tarski as Tarskiₜ
-  import LogOS.Theorems.Meta.Assumptions.Diagonal as Diagonalₜ
-  import LogOS.Theorems.Meta.BudgetedSeparationOutput as BudgetedSeparationOutputₜ
-
-  module SchemeCategory = SchemeCategoryₜ
-  module Scheme = Schemeₜ
-  module SpectralSeparationOutput = SpectralSeparationOutputₜ
-  module Tarski = Tarskiₜ
-  module Diagonal = Diagonalₜ
-  module BudgetedSeparationOutput = BudgetedSeparationOutputₜ
-
 module Languages where
-  import LogOS.Domain.UniversalIR.Languages.Minsky as Minskyₜ
-  import LogOS.Domain.UniversalIR.Languages.Lambda as Lambdaₜ
-  import LogOS.Domain.UniversalIR.Languages.Ethereum as Ethereumₜ
-  import LogOS.Domain.UniversalIR.Languages.QuantumOracle as QuantumOracleₜ
-  import LogOS.Domain.UniversalIR.Languages.QuantumCircuit as QuantumCircuitₜ
-  import LogOS.Domain.UniversalIR.Core.QuantumCircuitAmp as QuantumCircuitAmpₜ
+  import LogOS.UniversalIR.Languages.Minsky as Minskyₜ
+  import LogOS.UniversalIR.Languages.Lambda as Lambdaₜ
+  import LogOS.UniversalIR.Languages.Ethereum as Ethereumₜ
+  import LogOS.UniversalIR.Languages.QuantumOracle as QuantumOracleₜ
+  import LogOS.UniversalIR.Languages.QuantumCircuit as QuantumCircuitₜ
+  import LogOS.UniversalIR.Core.QuantumCircuitAmp as QuantumCircuitAmpₜ
 
   module Minsky = Minskyₜ
   module Lambda = Lambdaₜ
@@ -71,15 +59,15 @@ module Languages where
   module QuantumCircuitAmp = QuantumCircuitAmpₜ
 
 module Physics where
-  import LogOS.Domain.UniversalIR.Physics.Implementable as Implementableₜ
+  import LogOS.UniversalIR.Physics.Implementable as Implementableₜ
   module Implementable = Implementableₜ
 
 module While where
-  import LogOS.Domain.UniversalIR.While.Language as Languageₜ
-  import LogOS.Domain.UniversalIR.While.Semantics as Semanticsₜ
-  import LogOS.Domain.UniversalIR.While.Compile as Compileₜ
-  import LogOS.Domain.UniversalIR.While.Decompile as Decompileₜ
-  import LogOS.Domain.UniversalIR.While.Theorems as Theoremsₜ
+  import LogOS.UniversalIR.While.Language as Languageₜ
+  import LogOS.UniversalIR.While.Semantics as Semanticsₜ
+  import LogOS.UniversalIR.While.Compile as Compileₜ
+  import LogOS.UniversalIR.While.Decompile as Decompileₜ
+  import LogOS.UniversalIR.While.Theorems as Theoremsₜ
 
   module Language = Languageₜ
   module Semantics = Semanticsₜ

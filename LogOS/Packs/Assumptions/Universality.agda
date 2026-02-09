@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,7 +23,7 @@ record UniversalityBundle {ℓ : Level} (C : LogicCore {ℓ}) : Set (lsuc (lsuc 
   field
     stepGrade : QAdapter.Scale (LogicCore.Q C)
 
-  module Process = KUP.ForLogicKernel (LogicCore.K C) stepGrade
+  module Process = KUP.ForKernel (LogicCore.K C) stepGrade
   open Process public using (BoundaryProcess; CodeProcess; decodeHom; decodeHomLax)
 
 open UniversalityBundle public

@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
 set -euo pipefail
+
+die() {
+  echo "doc-style-lint-check: $*" >&2
+  exit 1
+}
 
 # LogOS policy check:
 # Documentation wording must stay mechanically honest by avoiding drift phrases
@@ -22,33 +27,62 @@ if [ ! -d "docs" ] && [ ! -d "LogOS" ]; then
   exit 0
 fi
 
+# This check relies on ripgrep’s stable regex + glob semantics.
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+
+rg_capture() {
+  local out status
+  set +e
+  out="$(rg "$@" 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
+  fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
+}
+
 # NOTE: use grep-compatible regexes (portable; no PCRE features).
 BANNED_REGEX='(truth[[:space:]]+after[[:space:]]+computation|least[[:space:]-]+fixed[[:space:]-]+point|definitional[[:space:]]+equality|decoded[[:space:]]+observational[[:space:]]+equality|post-fixed|meaning[[:space:]-]+preserving|semantic(s)?[[:space:]-]+preserving|semantic[[:space:]-]+equality|semantic[[:space:]-]+equivalence|same[[:space:]]+semantics|same[[:space:]]+meaning)'
 OBS_EQUIV_REGEX='observational[[:space:]]+equivalence'
 OBS_EQUALITY_REGEX='observational[[:space:]]+equality'
 
-matches=""
+matches="$(rg_capture -n \
+  --glob '*.md' \
+  --glob '*.lagda.md' \
+  --glob '*.tex' \
+  --glob '*.agda' \
+  --glob '!**/_build/**' \
+  -- "${BANNED_REGEX}" "${DOC_ROOTS[@]}")"
 
+# If the literature term “observational equivalence” is used, require the
+# repo’s canonical term “observational equality” somewhere in the same file.
+missing_obs=""
 while IFS= read -r file; do
-  hit="$(grep -Ein "$BANNED_REGEX" "$file" 2>/dev/null || true)"
-  if [ -n "$hit" ]; then
-    matches="${matches}${file}"$'\n'"${hit}"$'\n\n'
+  [[ -z "$file" ]] && continue
+  out=""
+  status=0
+  set +e
+  out="$(rg -qi -- "${OBS_EQUALITY_REGEX}" "$file" 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
-
-  # If the literature term “observational equivalence” is used, require the
-  # repo’s canonical term “observational equality” somewhere in the same file.
-  if grep -Eiq "$OBS_EQUIV_REGEX" "$file" 2>/dev/null; then
-    if ! grep -Eiq "$OBS_EQUALITY_REGEX" "$file" 2>/dev/null; then
-      matches="${matches}${file}"$'\n'"observational equivalence: missing canonical \"observational equality\" marker"$'\n\n'
-    fi
+  if [[ "$status" -eq 1 ]]; then
+    missing_obs+="${file}"$'\n'
   fi
 done < <(
-  for root in "${DOC_ROOTS[@]}"; do
-    if [ -d "$root" ]; then
-      find "$root" -type f \( -name '*.md' -o -name '*.lagda.md' -o -name '*.tex' -o -name '*.agda' \) \
-        -not -path '*/_build/*' -print 2>/dev/null
-    fi
-  done | sort
+  rg_capture -l -i \
+    --glob '*.md' \
+    --glob '*.lagda.md' \
+    --glob '*.tex' \
+    --glob '*.agda' \
+    --glob '!**/_build/**' \
+    -- "${OBS_EQUIV_REGEX}" "${DOC_ROOTS[@]}" | sort -u
 )
 
 if [ -n "$matches" ]; then
@@ -56,6 +90,13 @@ if [ -n "$matches" ]; then
   echo "Found banned drift phrases in prose-bearing files (docs and code comments):" >&2
   echo "$matches" >&2
   echo "Rewrite to canonical wording (e.g. \"least pre-fixed point\", \"observational equality\", \"judgmental equality\")." >&2
+  exit 1
+fi
+
+if [ -n "$missing_obs" ]; then
+  echo "doc-style-lint-check: FAIL" >&2
+  echo "Files using \"observational equivalence\" must also include the canonical marker \"observational equality\":" >&2
+  echo "$missing_obs" >&2
   exit 1
 fi
 

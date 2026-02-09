@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,13 +8,14 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Minimal.Truth where
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude using (_×_; _,_; fst; snd)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Closure
 open import LogOS.Minimal.Adapter
 import LogOS.Syntax.Prop as Prop
+import LogOS.Minimal.View as View
 
 -- Minimal S/H/G truth interfaces with explicit laxness
 
@@ -74,21 +75,7 @@ module HomotypicalTruth {ℓ : Level}
     → BulkBoundary.Con_bnd BB
     → BulkBoundary.Con_bnd BB
     → Set ℓ
-  ObsLeH {BB = BB} H c d =
-    ∀ w → HLayer.Sat_H H w c → HLayer.Sat_H H w d
-
-  ObsHPreorder
-    : ∀ {BB : BulkBoundary ℓ}
-    → HLayer BB
-    → ConPreorder ℓ
-  ObsHPreorder {BB = BB} H =
-    let open BulkBoundary BB in
-    record
-      { Con = Con_bnd
-      ; _⊑_ = ObsLeH H
-      ; refl = λ {c} w sat → sat
-      ; trans = λ cd de w sat → de w (cd w sat)
-      }
+  ObsLeH H = Prop.ObsLeOn (HLayer.Sat_H H)
 
   ObsEqH
     : ∀ {BB : BulkBoundary ℓ}
@@ -97,6 +84,18 @@ module HomotypicalTruth {ℓ : Level}
     → BulkBoundary.Con_bnd BB
     → Set ℓ
   ObsEqH H c d = Prop.ObsEqOn (HLayer.Sat_H H) c d
+
+  -- Observational mutual refinement (`≈`-shaped): two-way observational entailment.
+  --
+  -- This is definitionally `View.Obs≈` for `Sat_H`, but we keep it as a named
+  -- alias to align with the global glyph discipline.
+  Obs≈H
+    : ∀ {BB : BulkBoundary ℓ}
+    → HLayer BB
+    → BulkBoundary.Con_bnd BB
+    → BulkBoundary.Con_bnd BB
+    → Set ℓ
+  Obs≈H H = View.Obs≈ (HLayer.Sat_H H)
 
   module ObsEqH-Kit {BB : BulkBoundary ℓ} (H : HLayer BB) where
     open Prop.ObsEqKit (Prop.obsEqKit (HLayer.Sat_H H)) public
@@ -111,6 +110,13 @@ module HomotypicalTruth {ℓ : Level}
   ObsEqH↔ObsLeH H {c} {d} =
     Prop.ObsEqOn↔ObsLeOn {Sat = HLayer.Sat_H H} {x = c} {y = d}
 
+  ObsEqH↔Obs≈H
+    : ∀ {BB : BulkBoundary ℓ}
+    → (H : HLayer BB)
+    → {c d : BulkBoundary.Con_bnd BB}
+    → Prop._↔_ (ObsEqH H c d) (Obs≈H H c d)
+  ObsEqH↔Obs≈H H {c} {d} = ObsEqH↔ObsLeH H {c} {d}
+
   -- Non-vacuity guard: `Sat_H` distinguishes at least two constraints.
   --
   -- Many kernel/model instances intentionally take `Sat_H = ⊤` for scaffolding,
@@ -121,6 +127,34 @@ module HomotypicalTruth {ℓ : Level}
     open BulkBoundary BB
     field
       satAll : ∀ w c → HLayer.Sat_H H w c
+
+  -- Consequences: if satisfaction is trivial (`Sat_H = ⊤`-like), then the induced
+  -- observational preorder/equality are also trivial (top relations).
+
+  vacuous→ObsLeH
+    : ∀ {BB : BulkBoundary ℓ} {H : HLayer BB}
+      {c d : BulkBoundary.Con_bnd BB}
+    → VacuousHLayer H
+    → ObsLeH H c d
+  vacuous→ObsLeH {d = d} V w _ = VacuousHLayer.satAll V w d
+
+  vacuous→ObsEqH
+    : ∀ {BB : BulkBoundary ℓ} {H : HLayer BB}
+      {c d : BulkBoundary.Con_bnd BB}
+    → VacuousHLayer H
+    → ObsEqH H c d
+  vacuous→ObsEqH {c = c} {d = d} V w =
+    Prop.intro
+      (λ _ → VacuousHLayer.satAll V w d)
+      (λ _ → VacuousHLayer.satAll V w c)
+
+  vacuous→Obs≈H
+    : ∀ {BB : BulkBoundary ℓ} {H : HLayer BB}
+      {c d : BulkBoundary.Con_bnd BB}
+    → VacuousHLayer H
+    → Obs≈H H c d
+  vacuous→Obs≈H {c = c} {d = d} V =
+    (vacuous→ObsLeH {c = c} {d = d} V , vacuous→ObsLeH {c = d} {d = c} V)
 
   record NonVacuousHLayer {BB : BulkBoundary ℓ} (H : HLayer BB) : Set (lsuc ℓ) where
     open BulkBoundary BB
@@ -203,8 +237,15 @@ module GuardedCore {ℓ : Level} where
       -- Leastness / induction principles are derived separately once additional
       -- domain structure (e.g. ωCPO + finite-first approximants) is provided.
       Th*         : Con
-      Th*-fixed   : (_⊑_ (Th*) (Flow Th*)) × (_⊑_ (Flow Th*) Th*)
+      Th*-fixed   : _≈CP_ CP Th* (Flow Th*)
       -- Approximants Th₀, Th₁, … and dcpo structure can be provided by models
+
+    -- Directional projections of the fixed-point witness.
+    Th*-fixed⇒ : _⊑_ Th* (Flow Th*)
+    Th*-fixed⇒ = ≈CP⇒ {CP = CP} {x = Th*} {y = Flow Th*} Th*-fixed
+
+    Th*-fixed⇐ : _⊑_ (Flow Th*) Th*
+    Th*-fixed⇐ = ≈CP⇐ {CP = CP} {x = Th*} {y = Flow Th*} Th*-fixed
 
   -- Forget the distinguished fixed-point witness: a guarded closure always yields a
   -- plain closure operator.
@@ -371,7 +412,14 @@ module GuardedCore {ℓ : Level} where
       infl-sat   : ∀ c → _⊑_ c (Flow sat c)
       idemp-sat  : ∀ c → _⊑_ (Flow sat (Flow sat c)) (Flow sat c)
       Th*        : Con
-      Th*-fixed  : (_⊑_ Th* (Flow sat Th*)) × (_⊑_ (Flow sat Th*) Th*)
+      Th*-fixed  : _≈CP_ CP Th* (Flow sat Th*)
+
+    -- Directional projections of the fixed-point witness.
+    Th*-fixed⇒ : _⊑_ Th* (Flow sat Th*)
+    Th*-fixed⇒ = ≈CP⇒ {CP = CP} {x = Th*} {y = Flow sat Th*} Th*-fixed
+
+    Th*-fixed⇐ : _⊑_ (Flow sat Th*) Th*
+    Th*-fixed⇐ = ≈CP⇐ {CP = CP} {x = Th*} {y = Flow sat Th*} Th*-fixed
 
   -- Saturation grade induces a (plain) closure operator.
   closureOfGradedClosure-sat
@@ -394,7 +442,7 @@ module GuardedCore {ℓ : Level} where
       mono     : ∀ {g g'} → Q1._≤s_ g g' → Q2._≤s_ (map g) (map g')
       unit-lax : Q2._≤s_ Q2.e (map Q1.e)
       mul-lax  : ∀ g g' → Q2._≤s_ (Q2._·_ (map g) (map g')) (map (Q1._·_ g g'))
-      -- Lax finite-join preservation (quantale “additive” structure).
+      -- Lax finite-join preservation (prequantale “additive” structure).
       --
       -- The inequality direction is chosen to match the library’s “upper envelope”
       -- reading of joins: mapping a combined budget should be at least as large
@@ -402,7 +450,7 @@ module GuardedCore {ℓ : Level} where
       join-lax : ∀ g g' → Q2._≤s_ (Q2._⊔s_ (map g) (map g')) (map (Q1._⊔s_ g g'))
       bot-lax  : Q2._≤s_ Q2.⊥s (map Q1.⊥s)
 
-  -- Small builder: extend a monoid-lax grade map to a lax quantale hom by
+  -- Small builder: extend a monoid-lax grade map to a lax prequantale hom by
   -- deriving the join/bottom laws from monotonicity + finite joins.
   mkGradeHom
     : ∀ {Q₁ Q₂ : QAdapter ℓ}
@@ -437,7 +485,7 @@ module GuardedCore {ℓ : Level} where
   -- Identity and composition for grade morphisms.
   --
   -- These live in the minimal core so higher layers (kernel morphisms, bridges)
-  -- can compose grade maps without re-proving quantale/monoid coherence.
+  -- can compose grade maps without re-proving prequantale/monoid coherence.
 
   idGradeHom : ∀ {Q : QAdapter ℓ} → GradeHom Q Q
   idGradeHom {Q} =
@@ -781,15 +829,18 @@ module GuardedCore {ℓ : Level} where
     open GuardedClosure GC renaming (Flow to F; Th* to Th⋆)
     open OmegaCPO ωCPO
     field
-      approx0  : Con
       approxS  : (ℕ → Con)
       base     : approxS zero ≡ ⊥
       step     : ∀ n → approxS (suc n) ≡ F (approxS n)
-      Th⋆-as-sup : (_⊑_ Th⋆ (supω approxS)) × (_⊑_ (supω approxS) Th⋆)
+      Th⋆-as-sup : _≈CP_ CP Th⋆ (supω approxS)
       -- Scott continuity (lax) w.r.t. ω-chains
       cont-ω : ∀ (f : ℕ → Con)
                 (mono-chain : ∀ n → _⊑_ (f n) (f (suc n))) →
                 _⊑_ (F (supω f)) (supω (λ n → F (f n)))
+
+    -- Convenience: the Scott-continuity record form expected by Kleene μ.
+    SCFlow : (let module Kμ = Kleene {CP = CP} ωCPO in Kμ.ScottContinuous F)
+    SCFlow = record { cont-ω = λ f mono-chain → cont-ω f mono-chain }
 
   -- Induction principle (lax μ-induction) under FiniteFirst
   μ-induction

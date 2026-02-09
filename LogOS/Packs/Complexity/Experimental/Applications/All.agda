@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,16 +13,11 @@ module LogOS.Packs.Complexity.Experimental.Applications.All where
 -- packs” structure explicit and uniform across domains.
 
 module Models where
-  import LogOS.Domain.Complexity.Model as Model
-
-module Examples where
-  -- NOTE: Kept lightweight for fast typechecking. Import examples directly:
-  -- - `LogOS.Domain.Complexity.Examples.GoldenPath`
-  -- - `LogOS.Domain.Complexity.Examples.InfoRouteChain`
+  import LogOS.Complexity.Model as Model
 
 module PvsNP where
   open import LogOS.Packs.Complexity.Experimental.PvsNP.Public public
-  open import LogOS.Domain.Complexity.PvsNPLedger public
+  open import LogOS.Complexity.PvsNPLedger public
 
 module ProofSearchOpacitySpine where
   open import LogOS.Packs.Complexity.Experimental.ProofSearchOpacitySpine public

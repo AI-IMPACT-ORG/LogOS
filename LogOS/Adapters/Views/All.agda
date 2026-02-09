@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,7 +23,7 @@ open import LogOS.Kernel.HomOverSig public
 
 open import LogOS.Ports.Semantic.Interlingua public
 open import LogOS.Adapters.Views.SatMor public
-open import LogOS.Adapters.Views.SystemIO public
+open import LogOS.Adapters.Views.SatSystemIO public
 
 -- Avoid a name clash with `LogOS.Computation.Scheme.run≤` when combining
 -- “schemes” and “processes” in a single import surface.

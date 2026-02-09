@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -38,12 +38,16 @@ make check-all
 ## Invariants (what CI enforces)
 
 - No direct `Agda.Builtin.*` / `Agda.Primitive` imports outside the host-surface shims (see `README.md` “Host surface”).
-- No `postulate` in the production library (`LogOS/*`, `Tests/*`); any assumptions must be explicit record fields.
+- No `postulate` in the production library (`LogOS/*`, `Tests/*`) by default; any unavoidable postulates must be explicitly allowlisted and justified (see `scripts/postulate_allowlist.txt`).
 - No `postulate` (and no unsafe OPTIONS) inside Agda code blocks in `docs/*.lagda.md`.
 - All Agda modules opt into `{-# OPTIONS --safe #-}` (enforced by `scripts/safe_options_check.sh`).
 - Pack entrypoints expose `packTrust : PackTrust` (enforced by `scripts/pack_trust_check.sh`).
+- CI workflows pin third-party GitHub Actions by full commit SHA and avoid `*-latest` runners; Cabal installs in CI use a pinned Hackage index-state from `.github/cabal-index-state.txt` (enforced by `scripts/ci_workflow_policy_check.sh`).
 - Architectural layering: core layers must not import `LogOS.Domain.*` / `LogOS.Packs.*` / `LogOS.ObjectLogic.*` / `docs.*` (enforced by `scripts/import_layer_check.sh`).
 - Prefer importing `LogOS.Prelude` / `LogOS.API.Minimal` (and `LogOS.Prelude.*`) instead of raw `LogOS.Host.*` or stdlib `Data.*`.
+- Relation/equality discipline: `≈` is mutual refinement only; strict meaning equality must be `≃` (view pullback of `≡`). This is treated as part of the core ontology (preorder-first interfaces, view/pullback discipline); see `docs/Kernel/RelationDiscipline.lagda.md`.
+- Kernel antisymmetry discipline: partial-order/antisymmetry reasoning is an explicit strengthening and must stay quarantined to an audited set of kernel modules (enforced by `scripts/kernel_antisymmetry_check.sh`, allowlist: `scripts/kernel_antisymmetry_allowlist.txt`).
+- Publication-facing docs (`docs/Applications/*`, `docs/Views/*`) must demonstrate stable import surfaces (`LogOS.API.*` / `LogOS.Packs.*`) and must not import deep internal modules in Agda code blocks (enforced by `scripts/doc_internal_imports_check.sh`).
 - Documentation path references inside backticks must resolve (see `scripts/doc_reference_check.sh`).
 
 ## Style (lemma names and shapes)

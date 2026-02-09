@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,8 +11,8 @@ open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
 
 open import LogOS.Boundary.Port using (BoundaryPort)
-open import LogOS.Kernel.LogicKernel using (LogicKernel; GTier)
-open import LogOS.Kernel.LogicKernel.Endo as LKEndo
+open import LogOS.Kernel using (Kernel; GTier)
+open import LogOS.Kernel.Endo as LKEndo
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
 
@@ -52,17 +52,17 @@ module For
   module M = SatMor satMor
 
   private
-    LK_R : LogicKernel _ _
+    LK_R : Kernel _ _
     LK_R = AgentSocket.LK (Sock r)
 
-    LK_S : LogicKernel _ _
+    LK_S : Kernel _ _
     LK_S = AgentSocket.LK (Sock s)
 
     flowR : Con r → Con r
-    flowR c = GTier.Flow (LogicKernel.G LK_R) (GTier.sat (LogicKernel.G LK_R)) c
+    flowR c = GTier.Flow (Kernel.G LK_R) (GTier.sat (Kernel.G LK_R)) c
 
     flowS : Con s → Con s
-    flowS c = GTier.Flow (LogicKernel.G LK_S) (GTier.sat (LogicKernel.G LK_S)) c
+    flowS c = GTier.Flow (Kernel.G LK_S) (GTier.sat (Kernel.G LK_S)) c
 
     tensorR : Con r → Con r → Con r
     tensorR = tensorAt r
@@ -84,13 +84,13 @@ module For
 
   monitor-translate-commutes
     : ∀ (MR : MonR.Monitor) (MS : MonS.Monitor)
-    → RespectsObsEq₂↑ (applyS MS)
-    → Compatible (applyR MR) (applyS MS)
+    → RespectsObs≈₂↑ (applyS MS)
+    → Compatible≈ (applyR MR) (applyS MS)
     → ∀ p (φ : BoundaryPort.Form PortR)
     → Prop._↔_ (SatF₂↑ p (translate (Extend₁ (applyR MR) φ)))
                (SatF₂↑ p (Extend₂ (applyS MS) (translate φ)))
   monitor-translate-commutes MR MS ext compat p φ =
-    ported-closure-naturality (applyR MR) (applyS MS) ext compat p φ
+    ported-closure-naturality≈ (applyR MR) (applyS MS) ext compat p φ
 
   -- μ-level strengthening: exported Kleene μ fixed points transport across the edge.
   --
@@ -125,20 +125,20 @@ module For
 
   -- Default monitor compatibility for edges that commute with flow and tensor.
   defaultMonitor-compatible
-    : RespectsObsEq₂↑ flowS
-    → (flowCompat : ∀ c → Prop.ObsEqOn M.Sat₂↑ (translateCon (flowR c))
-                                       (flowS (translateCon c)))
+    : RespectsObs≈₂↑ flowS
+    → (flowCompat : ∀ c → M.Obs≈₂↑ (translateCon (flowR c))
+                                   (flowS (translateCon c)))
     → (tensorCompatSafety
-        : ∀ c → Prop.ObsEqOn M.Sat₂↑
+        : ∀ c → M.Obs≈₂↑
                  (translateCon (tensorR c safetyR))
                  (tensorS (translateCon c) safetyS))
-    → Compatible (applyR MonR.defaultMonitor) (applyS MonS.defaultMonitor)
+    → Compatible≈ (applyR MonR.defaultMonitor) (applyS MonS.defaultMonitor)
   defaultMonitor-compatible flowRespects flowCompat tensorCompatSafety =
-    compatible-comp
+    compatible-comp≈
       {F₁ = flowR}
       {G₁ = λ c → tensorR c safetyR}
       {F₂ = flowS}
       {G₂ = λ c → tensorS c safetyS}
       flowRespects
-      (record { commute = flowCompat })
-      (record { commute = tensorCompatSafety })
+      flowCompat
+      tensorCompatSafety

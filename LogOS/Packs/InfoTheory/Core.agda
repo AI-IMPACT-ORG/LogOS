@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,17 +16,17 @@ packTrust = record { level = stable }
 
 -- Core facts/bridges (Domain). Keep them namespaced to avoid collisions and to
 -- make provenance obvious at call sites.
-import LogOS.Domain.InfoTheory.Shannon.Facts as ShannonFactsₜ
-import LogOS.Domain.InfoTheory.ObserverDPI as ObserverDPIₜ
+import LogOS.InfoTheory.Shannon.Facts as ShannonFactsₜ
+import LogOS.InfoTheory.ObserverDPI as ObserverDPIₜ
 
 module ShannonFacts = ShannonFactsₜ
 module ObserverDPI  = ObserverDPIₜ
 
 -- Expose each strand as its own namespace to avoid the `For`-module name clash.
-import LogOS.Domain.InfoTheory.Shannon.Core     as ShannonCoreₜ
-import LogOS.Domain.InfoTheory.Shannon.DPI      as ShannonDPIₜ
-import LogOS.Domain.InfoTheory.Shannon.Capacity as ShannonCapacityₜ
-import LogOS.Domain.InfoTheory.Shannon.ThermoRG as ShannonThermoRGₜ
+import LogOS.InfoTheory.Shannon.Core     as ShannonCoreₜ
+import LogOS.InfoTheory.Shannon.DPI      as ShannonDPIₜ
+import LogOS.InfoTheory.Shannon.Capacity as ShannonCapacityₜ
+import LogOS.InfoTheory.Shannon.ThermoRG as ShannonThermoRGₜ
 
 module ShannonCore     = ShannonCoreₜ
 module ShannonDPI      = ShannonDPIₜ

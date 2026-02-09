@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -42,7 +42,7 @@ module For
   -- `Th⋆` really is a fixed point (as an equality) thanks to boundary antisymmetry.
 
   FlowTh⋆≡Th⋆∞ : Endo.fn (Flow-Endo K) Th⋆ ≡ Th⋆
-  FlowTh⋆≡Th⋆∞ = I.FlowTh⋆≡Th⋆ (BulkBoundaryPO.po-bnd po) -- ANTISYM-OK
+  FlowTh⋆≡Th⋆∞ = I.FlowTh⋆≡Th⋆ (BulkBoundaryPO.po-bnd po)
 
   open I public
     using
@@ -85,10 +85,10 @@ module For
     → _≤₂_ K f (Flow-Endo K)
     → Endo.fn f Th⋆ ≡ Th⋆
   sandwich-fixed-at-Th⋆ f infl f≤tf =
-    let open BulkBoundaryPO po using (po-bnd) -- ANTISYM-OK
-        open PartialOrder po-bnd using (antisym) -- ANTISYM-OK
+    let open BulkBoundaryPO po using (po-bnd)
+        open PartialOrder po-bnd using (antisym)
         p = sandwich-bounds-at-Th⋆ f infl f≤tf
-    in antisym (snd p) (fst p) -- ANTISYM-OK
+    in antisym (≈CP⇐ {CP = CP} p) (≈CP⇒ {CP = CP} p)
 
   -- Handy corollaries for endomaps (mostly re-exports in a convenient shape).
 
@@ -109,8 +109,13 @@ module For
     → Endo.fn (Flow-closeEndo K f) Th⋆ ≡ Th⋆
   Flow-close-fixed-at-Th⋆ f infl f≤tf =
     sandwich-fixed-at-Th⋆ (Flow-closeEndo K f)
-      (id≤Flow-close K f infl)
-      (Flow-close≤Flow K f f≤tf)
+      (id≤Flow-closeAt K (GradedClosure.sat GTruth) (id≤Flow K) f infl)
+      (λ c →
+        let
+          monoFlow = GradedClosure.mono GTruth {g = GradedClosure.sat GTruth}
+          step₁ = monoFlow (f≤tf c)                 -- Flow sat (f c) ≤ Flow sat (Flow sat c)
+          step₂ = GradedClosure.idemp-sat GTruth c  -- Flow sat (Flow sat c) ≤ Flow sat c
+        in CP.trans step₁ step₂)
 
   -- Closure-step fixed point at Th⋆ (for the generic `ClosureStep` API in Endo).
 

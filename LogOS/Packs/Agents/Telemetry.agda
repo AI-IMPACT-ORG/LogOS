@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,8 +15,8 @@ open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Boundary.Telemetry
 open import LogOS.Boundary.Port using (_≈∂[_]_)
-open import LogOS.Kernel.LogicKernel using (LogicKernel)
-import LogOS.Kernel.LogicKernel.Endo as LKEndo
+open import LogOS.Kernel using (Kernel)
+import LogOS.Kernel.Endo as LKEndo
 import LogOS.Ports.Semantic.Interoperability as Interop
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
@@ -40,7 +40,7 @@ module For
     field
       port
         : BoundaryTelemetryPort
-            Sig Q (LogicKernel.HWorld LK) (LogicKernel.BB LK) (LogicKernel.HTruth LK)
+            Sig Q (Kernel.HWorld LK) (Kernel.BB LK) (Kernel.HTruth LK)
             boundaryIO T
 
     open BoundaryTelemetryPort port public

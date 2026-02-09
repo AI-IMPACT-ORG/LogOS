@@ -1,0 +1,8 @@
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Allowlisted layering violations for `scripts/layer_order_check.sh`.
+#
+# This file is intentionally a migration scaffold: keep it shrinking.
+# Every line must match a violation string exactly.

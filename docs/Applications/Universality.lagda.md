@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -31,9 +31,40 @@ oracle/circuit models, a small EVM-like language) share a single semantic center
 and explicit translations.
 
 Naming note (guardrail): “Minsky”, “λ”, “quantum”, “EVM-like” refer to internal
-formal languages in `LogOS/Domain/UniversalIR/Languages/*`. Any alignment to
+formal languages in `LogOS/UniversalIR/Languages/*`. Any alignment to
 external systems is interpretive and must be justified by explicit adapters and
 assumptions; the literal claims are only about the included semantics.
+
+## Church–Turing / ECT / Deutsch (what is and isn’t claimed)
+
+This repository intentionally separates:
+
+- **CT (Church–Turing thesis)** as a literature thesis about the informal notion
+  of “effective procedure” (not a theorem).
+- **ECT (extended Church–Turing thesis)** as an efficiency-strengthening (also
+  not a theorem, and known to be delicate once quantum models are admitted).
+- **Deutsch’s Church–Turing principle** (often paraphrased as “every finitely
+  realizable physical system can be simulated by a universal computing device”)
+  as a *physical* principle (not a theorem of mathematics).
+
+Interpretation (analogy): this is a literature crosswalk; any use of “physical”
+language here is explanatory and does not constitute a proved claim about the
+world.
+
+What LogOS claims in this application is an **internal, interface-level**
+statement that matches the “mechanisable ⇒ simulable” direction:
+
+- A notion of **mechanisable observation** is packaged as an `ObsKit` in
+  `LogOS/UniversalIR/ObservedKernel.agda`: an observation `observeU : UCode → Obs`
+  equipped with a step-homomorphism law `observeU (stepU γ) ≡ obsStep (observeU γ)`.
+- From any `ObsKit`, LogOS constructs an “observed kernel” (`ForObsKit.ObsKernel`)
+  and a canonical simulation/transport map `decodeHom` via the general
+  kernel-as-process bridge `LogOS/Computation/KernelUniversalProcess.agda`.
+
+In other words: the library can prove simulation theorems **conditional on a
+precise mechanisability interface**; any claim that “physics supplies such an
+interface” must be made explicitly as an assumption or as a separately
+mechanised physics model.
 
 ## Curated surfaces (stable)
 
@@ -43,7 +74,7 @@ assumptions; the literal claims are only about the included semantics.
 - Meta-language refinement (schemes/processes): `LogOS/MetaLanguage/All.agda`
 - Core universality surface (lightweight, minimal exports): `LogOS/Packs/Universality/Core.agda`
 - Compiler-correctness packaging (compile + explicit fuel budgets):
-  `LogOS/Domain/UniversalIR/CompilerCorrectness.agda`
+  `LogOS/UniversalIR/CompilerCorrectness.agda`
 - Kernel/port view for the core (boundary port + code port):
   `LogOS/Packs/Universality/Core.agda` (module `Ports`)
 - Kernel/port view for UniversalIR observation kits:
@@ -57,7 +88,7 @@ Two complementary universality surfaces live side by side:
 - **UniversalIR** is the heavy, multi-paradigm IR with translations and agreement.
 - **Universality (core)** is a small, total, executable universality sketch
   (`LogOS.Packs.Universality.Core`) intended for lightweight reasoning. It now
-  re‑exports only `LogOS.Domain.Universality.Core`, with the scheme wrapper under
+  re‑exports only `LogOS.Universality.Core`, with the scheme wrapper under
   `CoreScheme` to keep the surface tight. The kernel view refines the **boundary
   preorder** to observational equality (`observeCore`) and supplies a canonical
   representative map (`Flow = canonCore`). Its H-tier truth is intentionally
@@ -69,7 +100,7 @@ as a fuel-free computation relation (`Sch.Scheme.ComputesTo`, i.e. “there exis
 and its induced observational equality (`Sch.ObsEq`), plus an explicit operational budget
 layer (`Sch.ExecWithin` / `Sch.ReachesWithin`), rather than as a particular machine.
 For quotient-friendly “stability up to observation”, use the preorder/closure-stable variants
-(`halts`, `ComputesTo≈`, `StabilizesTo`) in `LogOS/Computation/Scheme.agda`.
+(`halts`, `ComputesToObs`, `StabilizesTo`) in `LogOS/Computation/Scheme.agda`.
 
 It also cleanly separates **algorithms** from **implementations**:
 - an algorithm is a specification (`Sch.Algorithm`),
@@ -109,7 +140,7 @@ making translations and budgets explicit:
   correctness literature but with a universal IR as the semantic center.
 - **Categorical/process semantics:** the `Process`/`ProcessHom` interface is a
   categorical packaging of computation and translation. When you also want to
-  transport cost/budget claims, use `ProcessHomCost` (or `ProcessHomCostWithGrade`)
+  transport cost/budget claims, use `ProcessHomCost`
   from `LogOS/Computation/SchemeCategory.agda`.
 
 ## The core idea
@@ -118,15 +149,15 @@ making translations and budgets explicit:
 - A single unified carrier (`UCode`) packages those codes.
 - “Same computation” means: transpile/decompile/translate between paradigms and
   prove agreement via the common observation function `observe : UCode → ℕ`
-  (defined as `decode ∘ lowerToIR` in `LogOS/Domain/UniversalIR/IR.agda`).
+  (defined as `decode ∘ lowerToIR` in `LogOS/UniversalIR/IR.agda`).
   For a kernel-aligned observation space, use `ObsKit` in
-  `LogOS/Domain/UniversalIR/ObservedKernel.agda`: it packages any observation
+  `LogOS/UniversalIR/ObservedKernel.agda`: it packages any observation
   `observeU : UCode → Obs` that commutes with `stepU` (a true step homomorphism).
   If you want a different output space in the scheme view, use `UProcessAt` or
-  `UProcessObs` from `LogOS/Domain/UniversalIR/Schemes.agda`, plus the `*ProcessAt`
+  `UProcessObs` from `LogOS/UniversalIR/Schemes.agda`, plus the `*ProcessAt`
   constructors (e.g., `MinskyProcessAt`) for machine-level schemes.
 
-The diagram the code enforces (via `Process`/`Choice` and `ProcessHom`) is:
+The diagram the code enforces (via `Process`/`Interface` and `ProcessHom`) is:
 
 The `compileBrand*` functions below are the concrete transpilers (the names
 remain “compile” to reflect their conventional API surface).
@@ -141,47 +172,47 @@ Input (e.g. PATask; see also `UCodeTask` for “arbitrary tasks”)
 
 Each of these “machine schemes” factors through the same semantic center:
 
-Input ──Choice.compile──▶ state ──Step^(steps(budget g))──▶ state ──lowerToIR──▶ state ──decode──▶ ℕ
+Input ──Interface.compile──▶ state ──Step^(steps(budget g))──▶ state ──lowerToIR──▶ state ──decode──▶ ℕ
            │                         (scheme index g)             │
            └────────────────── ProcessHom ────────────┘
 ```
 
 `ProcessHom` is the explicit semantic transport. If you also want cost/budget
-claims to be preserved by translation, use `ProcessHomCost` / `ProcessHomCostWithGrade`.
+claims to be preserved by translation, use `ProcessHomCost`.
 
 ## Where the code lives
 
 - Universal IR + languages + semantics:
-  - `LogOS/Domain/UniversalIR/*`
+  - `LogOS/UniversalIR/*`
   - The curated, stable surface: `LogOS/Packs/UniversalIR/Core.agda`
 - “Arbitrary tasks” (treat UniversalIR code as the task language):
-  - `LogOS/Domain/UniversalIR/ArbitraryTasks.agda`
+  - `LogOS/UniversalIR/ArbitraryTasks.agda`
 - Observed-kernel view (step-homomorphic observation kits):
-  - `LogOS/Domain/UniversalIR/ObservedKernel.agda`
+  - `LogOS/UniversalIR/ObservedKernel.agda`
   - Canonical port view for any observation kit:
-    `LogOS/Domain/UniversalIR/ObservedKernel.agda` (module `Ports`)
+    `LogOS/UniversalIR/ObservedKernel.agda` (module `Ports`)
   - Pack-level defaults for common kits:
     `LogOS/Packs/UniversalIR/Kernel.agda` (module `ObservedPorts`)
 - Pack skeleton (Assumptions/Claim/Pack/mkPack) for the “same computation, many
   representations” claim:
-  - `LogOS/Domain/UniversalIR/Pack.agda`
+  - `LogOS/UniversalIR/Pack.agda`
   - Curated re-export: `LogOS/Packs/UniversalIR/Pack.agda`
 - Agreement theorem (paper surface):
   - `LogOS/Packs/UniversalIR/Agreement.agda`
 - Compiler correctness pack (end-to-end with explicit fuel):
-  - `LogOS/Domain/UniversalIR/CompilerCorrectness.agda`
+  - `LogOS/UniversalIR/CompilerCorrectness.agda`
 - Paradigms (examples):
-  - Minsky machine: `LogOS/Domain/UniversalIR/Languages/Minsky.agda`
-  - Untyped λ-calculus: `LogOS/Domain/UniversalIR/Languages/Lambda.agda`
-  - EVM-like machine: `LogOS/Domain/UniversalIR/Languages/Ethereum.agda`
+  - Minsky machine: `LogOS/UniversalIR/Languages/Minsky.agda`
+  - Untyped λ-calculus: `LogOS/UniversalIR/Languages/Lambda.agda`
+  - EVM-like machine: `LogOS/UniversalIR/Languages/Ethereum.agda`
   - Quantum (two presentations):
-    - oracle-with-classical-control: `LogOS/Domain/UniversalIR/Languages/QuantumOracle.agda`
-    - explicit circuits: `LogOS/Domain/UniversalIR/Languages/QuantumCircuit.agda`
+    - oracle-with-classical-control: `LogOS/UniversalIR/Languages/QuantumOracle.agda`
+    - explicit circuits: `LogOS/UniversalIR/Languages/QuantumCircuit.agda`
   - Tiny executable circuit sanity checks:
-    - `LogOS/Domain/UniversalIR/Examples/QuantumCircuit.agda`
+    - `LogOS/UniversalIR/Examples/QuantumCircuit.agda`
 - “Universal computation as a process” (choices + morphisms):
   - `LogOS/Computation/SchemeCategory.agda`
-  - `LogOS/Domain/UniversalIR/Schemes.agda`
+  - `LogOS/UniversalIR/Schemes.agda`
 - Kernel ↔ process bridge (code process observed via `decode`):
   - `LogOS/Computation/KernelUniversalProcess.agda`
 
@@ -206,37 +237,38 @@ open import LogOS.Packs.UniversalIR.Examples as UEx
 ```
 
 Notable example:
-- `LogOS/Domain/UniversalIR/Examples/LambdaShowcase.agda` — raw vs certified λ transpilation metrics plus a five-paradigm output snapshot.
+- `LogOS/UniversalIR/Examples/LambdaShowcase.agda` — raw vs certified λ transpilation metrics plus a five-paradigm output snapshot.
 
 ## A good first stop
 
-- `LogOS/Domain/UniversalIR/README.md` (map of submodules)
-- `LogOS/Domain/UniversalIR/Walkthrough.lagda.md` (worked narrative with examples)
+- `LogOS/UniversalIR/README.md` (map of submodules)
+- `LogOS/UniversalIR/Walkthrough.lagda.md` (worked narrative with examples)
 
 ## Proof status (honest summary)
 
 - **Universal substrate present:** Minsky is included in `UCode` with a total stepper.
 - **Agreement theorem (PA fragment):** `PATask` is transpiled to five paradigms and
-  proved to agree (`LogOS/Domain/UniversalIR/Theorems.agda`, re-exported by
+  proved to agree (`LogOS/UniversalIR/Theorems.agda`, re-exported by
   `LogOS/Packs/UniversalIR/Agreement.agda`).
 - **Quantum circuits are explicit:** syntax + stepper + checked gate-level examples
-  (`Core/QuantumCircuit` and `Examples/QuantumCircuit`).
+  (`LogOS/UniversalIR/Core/QuantumCircuit.agda` and `LogOS/UniversalIR/Examples/QuantumCircuit.agda`).
 - **Quantum processes are kernel-aligned:** oracle/circuit observations are now
   derived from the kernel observation kits, so the code/boundary linkage is
   provided by `KernelUniversalProcess` rather than bespoke wrappers.
 - **Costs are two-axis:** work vs measurement are tracked separately via `QNat2`
-  and propagated through the scheme layer (`LogOS/Domain/UniversalIR/Schemes.agda`).
-- **Budget transport is first-class:** `ProcessHomCost` / `ProcessHomCostWithGrade`
+  and propagated through the scheme layer (`LogOS/UniversalIR/Schemes.agda`).
+- **Budget transport is first-class:** `ProcessHomCost`
   transport cost/exec preservation statements across representations (`LogOS/Computation/SchemeCategory.agda`).
-- **Compiler correctness (explicit fuel):** `CompilerCorrectness` packages the
-  per-paradigm “compile + run with budget” correctness statements.
+- **Compiler correctness (canonical surface):** `CompilerCorrectness` packages
+  both the fuel-indexed `PATask` compiler theorems and the expression-language
+  `PAExprTask` compiler theorems.
 - **Semantic center alignment:** `compiler-correct-observe` (in
-  `LogOS/Domain/UniversalIR/CompilerCorrectness.agda`) gives a one‑line bridge
+  `LogOS/UniversalIR/CompilerCorrectness.agda`) gives a one‑line bridge
   from operational correctness (`runU`) to the IR observation center
   (`observe ∘ simulate`).
 - **Bounded transpilation to circuits:** circuit transpilation is indexed by step bounds.
 - **Non‑PA example:** factorial is implemented via the While route
-  (`LogOS/Domain/UniversalIR/While/Theorems.agda`).
+  (`LogOS/UniversalIR/While/Theorems.agda`).
 
 ## Bibliography pointers (not exhaustive)
 
@@ -252,7 +284,7 @@ Notable example:
 The production library includes a single aggregation lemma stating agreement
 between all five `PATask` paradigms (Minsky/λ/EVM/Oracle/Circuit):
 
-- `LogOS/Domain/UniversalIR/Theorems.agda` exposes `patask-paradigms-correct`
+- `LogOS/UniversalIR/Theorems.agda` exposes `patask-paradigms-correct`
   (now a named record) and `patask-paradigms-runEq`.
 - `patask-paradigms-runEq` phrases the same statement via the generic scheme
   equivalence alias `Sch.RunEq` (standard “same function” packaging).
@@ -263,7 +295,7 @@ The natural “make this work for all schemes” step is: stop choosing a small
 input language (like `PATask`) and instead treat the **UniversalIR code itself**
 as the task language.
 
-This is implemented in `LogOS/Domain/UniversalIR/ArbitraryTasks.agda`:
+This is implemented in `LogOS/UniversalIR/ArbitraryTasks.agda`:
 
 - `UCodeTask = Fuelled UCode` and `runUCodeTask : UCodeTask → ℕ`
 - `MinskyTask = Fuelled MinskyCode` maps into `UCodeTask` via `UM`
@@ -275,8 +307,8 @@ This is implemented in `LogOS/Domain/UniversalIR/ArbitraryTasks.agda`:
 These are small executable examples (not universality theorems) showing the
 second cost component is charged by measurement primitives:
 
-- `LogOS/Domain/UniversalIR/Examples/QuantumCircuit.agda`: `qMeasure-cost`
-- `LogOS/Domain/UniversalIR/Examples/QuantumOracle.agda`: `qMeasure-cost`
+- `LogOS/UniversalIR/Examples/QuantumCircuit.agda`: `qMeasure-cost`
+- `LogOS/UniversalIR/Examples/QuantumOracle.agda`: `qMeasure-cost`
 
 ## Guardrails (CS-style theorems)
 
@@ -287,7 +319,7 @@ on any particular paradigm:
   (`run≤-map`, `run≤-meaning-comm`).
 - **Axis-independence (ScaleOps):** `LogOS/Computation/SchemeCategory.agda`
   (`Semantics.Exec≤-stepsEq`), with a concrete `QNat2` specialization
-  `run≤ᵁ-budget₂≡work` in `LogOS/Domain/UniversalIR/Schemes.agda`.
+  `run≤ᵁ-budget₂≡work` in `LogOS/UniversalIR/Schemes.agda`.
 - **Semantics is functorial (category façade):** `LogOS/Computation/SchemeCategory.agda`
   (`ProcessCategory`, `Semantics`).
 - **Relational ↔ schedule semantics bridge:** `LogOS/Computation/Scheme.agda`
@@ -298,8 +330,11 @@ on any particular paradigm:
 - **No total oracles within a budget:** `LogOS/Theorems/Meta/BudgetedSeparationOutput.agda`
   (both ℕ-budgets and abstract budget predicates for graded kernels).
 
-For convenience, the curated UniversalIR surface re-exports these under
-`LogOS.Packs.UniversalIR.All.Guardrails`.
+Optional convenience surface:
+
+```agda
+open import LogOS.Packs.UniversalIR.Guardrails
+```
 
 ## Refinement: a polymorphic meta-language
 
@@ -316,7 +351,7 @@ It exposes, in one place:
 - **Kernel-as-process bridge (canonical, no extra axioms):**
   `LogOS/Computation/KernelUniversalProcess.agda` (`ForKernel.decodeHom` and the graded variant)
 - **Functorial “contract language” over signatures:**
-  `LogOS/Free/ConstraintsOverSig.agda` (renaming + naturality:
+  `LogOS/Minimal/ConstraintsOverSig.agda` (renaming + naturality:
   `rename∂`/`renameb`, `interp∂-rename`, `interpb-rename`)
 - **Open-system wiring primitives at the signature level:**
   `LogOS/Base/Ops/Boundary.agda` and `LogOS/Base/Ops/Cospan.agda` (bundled by `LogOS/Base/Signature.agda`)

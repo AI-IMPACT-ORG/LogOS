@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -26,13 +26,15 @@ open import LogOS.Minimal.Con
     ; MonoOn
     ; monoOn-respects≈
     ; _≈CP_
+    ; ≈CP⇒
+    ; ≈CP⇐
     ; ≡→≈CP
     ; ≈CP-refl
     ; ≈CP-sym
     ; ≈CP-trans
     )
 
-open import LogOS.Kernel.Core as KCore hiding (FlowCode)
+open import LogOS.Kernel.Shape as KCore hiding (FlowCode)
 open import LogOS.Kernel.Graded
   renaming
     ( Box       to KBox
@@ -141,7 +143,7 @@ module For
           | GradedKernel.body-decode K gamma
     = refl
 
-  -- Legacy/raw operational step: `FlowCode = Guard ∘ Body`.
+  -- Raw operational step: `FlowCode = Guard ∘ Body`.
   RawStep : Ty → Ty
   RawStep = FlowCode K
 
@@ -201,10 +203,10 @@ module For
     = GradedClosure.Th*-fixed (GradedKernel.GTruth K)
 
   truth≤Box : Refines truth (Box truth)
-  truth≤Box = fst truth-fixed
+  truth≤Box = ≈CP⇒ {CP = KCore.CodePreorder S} truth-fixed
 
   box≤truth : Refines (Box truth) truth
-  box≤truth = snd truth-fixed
+  box≤truth = ≈CP⇐ {CP = KCore.CodePreorder S} truth-fixed
 
   truth-step-fixed
     : Refines truth (Step truth)
@@ -212,10 +214,10 @@ module For
   truth-step-fixed =
     let
       CPCode = KCore.CodePreorder S
-      γ≤raw = fst (GradedKernel.γ*-guard K)
-      raw≤γ = snd (GradedKernel.γ*-guard K)
-      raw≤step = fst (flowCode≈BoxAt-step-body K truth)
-      step≤raw = snd (flowCode≈BoxAt-step-body K truth)
+      γ≤raw = GradedKernel.γ*-guard⇒ K
+      raw≤γ = GradedKernel.γ*-guard⇐ K
+      raw≤step = ≈CP⇒ {CP = CPCode} (flowCode≈BoxAt-step-body K truth)
+      step≤raw = ≈CP⇐ {CP = CPCode} (flowCode≈BoxAt-step-body K truth)
     in
     ( ConPreorder.trans CPCode γ≤raw raw≤step
     , ConPreorder.trans CPCode step≤raw raw≤γ

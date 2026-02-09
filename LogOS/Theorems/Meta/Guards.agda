@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -21,6 +21,27 @@ record NontrivialPred {ℓA ℓP : Level} (A : Set ℓA) (P : A → Set ℓP) : 
     falseWitness : Σ A (λ a → ¬ P a)
 
 open NontrivialPred public
+
+-- Minimal building blocks: sometimes you only need “nonempty” (to prevent
+-- vacuous ∀-implications) or “not-top” (to prevent tautological predicates).
+
+record NonEmptyPred {ℓA ℓP : Level} (A : Set ℓA) (P : A → Set ℓP) : Set (ℓA ⊔ ℓP) where
+  field
+    witness : Σ A P
+
+open NonEmptyPred public
+
+record NotTopPred {ℓA ℓP : Level} (A : Set ℓA) (P : A → Set ℓP) : Set (ℓA ⊔ ℓP) where
+  field
+    counterexample : Σ A (λ a → ¬ P a)
+
+open NotTopPred public
+
+nonEmptyPred : ∀ {ℓA ℓP} {A : Set ℓA} {P : A → Set ℓP} → NontrivialPred A P → NonEmptyPred A P
+nonEmptyPred nt = record { witness = NontrivialPred.trueWitness nt }
+
+notTopPred : ∀ {ℓA ℓP} {A : Set ℓA} {P : A → Set ℓP} → NontrivialPred A P → NotTopPred A P
+notTopPred nt = record { counterexample = NontrivialPred.falseWitness nt }
 
 -- A set is nontrivial if it has at least two provably distinct inhabitants.
 --
@@ -48,6 +69,13 @@ record NonVacuousSat
     c₀ c₁ : Con
     sat₀  : Sat w c₀
     unsat₁ : ¬ (Sat w c₁)
+
+  at : NontrivialPred Con (Sat w)
+  at =
+    record
+      { trueWitness  = c₀ , sat₀
+      ; falseWitness = c₁ , unsat₁
+      }
 
 open NonVacuousSat public
 

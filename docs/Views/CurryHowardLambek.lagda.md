@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -18,13 +18,13 @@ module docs.Views.CurryHowardLambek where
 open import LogOS.Prelude public
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Kernel using (Kernel)
-import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheorems
+import LogOS.API.Views as Views
+open Views.Kernels using (Kernel)
 
 module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   (K : Kernel Sig Q)
   where
-  module V = ViewTheorems.For K
+  module V = Views.ViewTheorems.For K
   open V.CHL public
 
   private
@@ -62,8 +62,7 @@ the native notion of consequence is refinement (`⊑`) and mutual refinement
 (`≈`), not equality of proofs/terms.
 
 See also: `docs/Views/MeredithSentences.lagda.md` (ultra-compact “axiom poem”
-presentation of the CHL-facing `LogicKernel`, derived from any `Kernel` via
-`LogOS/Kernel/LogicKernel/FromKernel.agda`).
+presentation of the CHL-facing `Kernel` (`LogOS/Kernel.agda`)).
 
 Interpretation (analogy):
 this document is a derived presentation (“view”) over the same kernel interfaces;
@@ -92,8 +91,8 @@ Dictionary (literature ↔ LogOS)
 | Propositions / types | boundary constraints `Con_bnd`, strict formulas `Fml` | LogOS keeps S (strict) and H/∂ (boundary) layers explicit. |
 | Proofs / programs | `Code` (kernel code) | “Programs as proofs” is internalised as code + refinement. |
 | Entailment / derivability | code refinement `γ ⊢ δ`, boundary entailment (`Entails∂`) | Primary notion is directed refinement, not equality. |
-| Modality □ / closure | `Box` (ungraded), `BoxAt` (graded/LogicKernel) | `Box γ = encode (Flow (decode γ))` (`LogOS/Kernel.agda`). In the CHL-facing `LogicKernel`/graded setting: `BoxAt g γ = encode (Flow g (decode γ))` (`LogOS/Kernel/LogicKernel.agda`). |
-| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); used by graded/budgeted variants. |
+| Modality □ / closure | `Box` (kernel), `BoxAt` (graded kernel) | `Box γ = encode (Flow (decode γ))` (`LogOS/Kernel.agda`). In the graded setting: `BoxAt g γ = encode (Flow g (decode γ))` (`LogOS/Kernel/Graded.agda`). |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital prequantale in the finite-join sense (not complete); used by graded/budgeted variants. |
 | Soundness / completeness | `capstone`, `completeF`, budgeted variants | Completeness requires explicit (budgeted) adequacy assumptions. |
 | Presentation-independence | ports/adapters + interlingua | Boundary truth (`Sat_H w c` and boundary-indexed `Sat_H_bnd (to∂ w) c`) is transported across ports via satisfaction equivalence (↔). |
 
@@ -163,6 +162,7 @@ Pointers (no repetition)
 - Kernel/tier bookkeeping: `docs/LogOS_Core_Spec.lagda.md`.
 - μ/limit facts and hypotheses: `docs/Terminology.lagda.md` and `docs/Kernel/ClaimRegister.lagda.md`.
 - Completeness surfaces (assumption-scoped): `LogOS/Theorems/Meta/CHL/Completeness.agda`, `LogOS/Theorems/Meta/CHL/SyntaxCompleteness.agda`.
+- Concrete adequacy instances (observed-kernel route): `LogOS/Packs/UniversalIR/CHLAdequacyInstances.agda` (`CodeObsKit.capstone-complete`).
 - Bootstrapping/interoperability: `LogOS/Theorems/Meta/CHL/Interoperability.agda`, `LogOS/Theorems/Meta/Bootstrapping.agda`.
 
 Cross references
@@ -172,9 +172,10 @@ Cross references
   - Multi-institution: `docs/Views/MultiInstitution.lagda.md`
   - Categorical logic: `docs/Views/CategoricalLogic.lagda.md`
   - Observer semantics: `docs/Views/ObserverSemantics.lagda.md`
+  - Controlled feedback (budgeted stabilisation): `docs/Views/ControlledFeedback.lagda.md`
 
-Legacy notes (kept short)
--------------------------
+Historical notes (kept short)
+-----------------------------
 The longer “concept flow” narrative for budgeted adequacy is unchanged in the
 code; this view now treats it as a pointer rather than duplicating it. If you
 want the single packaged theorem, see `LogOS/Theorems/Meta/CHL/Capstone.agda`.

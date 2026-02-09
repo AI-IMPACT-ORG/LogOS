@@ -1,0 +1,24 @@
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+# kernel-antisymmetry-check allowlist
+#
+# Policy: the kernel is preorder-first; antisymmetry/partial-order reasoning is an
+# *explicit strengthening* and must remain quarantined to a small, auditable set
+# of modules.
+#
+# Each non-empty, non-comment line is:
+#   path  # JUSTIFICATION: ...
+#
+# Only these kernel modules may mention tokens such as `BulkBoundaryPO`,
+# `PartialOrder`, or `antisym`.
+
+LogOS/Kernel/Endo.agda  # JUSTIFICATION: explicit partial-order strengthening for kernel endomorphism constructions
+LogOS/Kernel/Graded/Endo.agda  # JUSTIFICATION: explicit partial-order strengthening for graded kernel endomorphisms
+LogOS/Kernel/Graded/Infinite.agda  # JUSTIFICATION: graded infinite-kernel construction uses quarantined partial-order vocabulary
+LogOS/Kernel/Graded/Infinite/Lemmas.agda  # JUSTIFICATION: supporting lemmas for graded infinite-kernel partial-order strengthening
+LogOS/Kernel/UngradedKernel/Endo.agda  # JUSTIFICATION: explicit partial-order strengthening for ungraded kernel endomorphisms
+LogOS/Kernel/UngradedKernel/Infinite.agda  # JUSTIFICATION: ungraded infinite-kernel construction uses quarantined partial-order vocabulary
+LogOS/Kernel/UngradedKernel/Infinite/Initial.agda  # JUSTIFICATION: initial-object lemmas for ungraded infinite-kernel partial-order strengthening
+LogOS/Kernel/UngradedKernel/Infinite/Lemmas.agda  # JUSTIFICATION: supporting lemmas for ungraded infinite-kernel partial-order strengthening

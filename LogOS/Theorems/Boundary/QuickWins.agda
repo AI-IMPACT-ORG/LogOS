@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -31,7 +31,7 @@ prefixed→Th⋆≤
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : Kernel Sig Q)
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (Kernel.BB K)))
-    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
     (c    : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
   → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
                  (Endo.fn (Flow-Endo K) c)
@@ -169,8 +169,10 @@ guard-naturality
     {K₁ K₂ : Kernel Sig Q}
     (h : KernelHom K₁ K₂)
     (presFlow : KernelHomFlow K₁ K₂ h)
+    (step≡sat₁ : GTier.step (Kernel.G K₁) ≡ GTier.sat (Kernel.G K₁))
     (γ : Kernel.Code K₁)
   → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
                  (Kernel.decode K₂ (KernelHom.mapCode h (Kernel.Guard K₁ γ)))
                  (Endo.fn (Flow-Endo K₂) (Kernel.decode K₂ (KernelHom.mapCode h γ)))
-guard-naturality h presFlow γ = Code.guard-naturality-decode _ _ h presFlow γ
+guard-naturality h presFlow step≡sat₁ γ =
+  Code.guard-naturality-decode _ _ h presFlow step≡sat₁ γ

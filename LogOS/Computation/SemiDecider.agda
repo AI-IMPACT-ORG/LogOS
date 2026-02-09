@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,9 +10,9 @@ module LogOS.Computation.SemiDecider where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_; _↔_; to; from)
 
-open import LogOS.Prelude.Nat using (ℕ)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
-open import LogOS.Prelude.Sum using (_⊎_)
+open import LogOS.Prelude using (ℕ)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (_⊎_)
 
 -- A lightweight notion of semi-decidability:
 -- a predicate P holds iff some bounded approximant Approx n holds, where each

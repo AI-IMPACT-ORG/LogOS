@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -121,4 +121,4 @@ FlowProjector
   → Proj.Projector (BulkBoundary.bnd (Kernel.BB K))
 FlowProjector {Sig = Sig} {Q = Q} K =
   let module FG0 = Proj.ForG {Sig = Sig} {Q = Q} in
-  FG0.fromGuarded {CP = BulkBoundary.bnd (Kernel.BB K)} (Kernel.GTruth K)
+  FG0.fromGuarded {CP = BulkBoundary.bnd (Kernel.BB K)} (GTruth K)

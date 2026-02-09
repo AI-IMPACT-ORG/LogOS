@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Boundary.SpectralSeparation where
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -18,7 +18,7 @@ open import LogOS.Kernel
 open import LogOS.Kernel.Endo
 
 -- Local addition on ℕ (for indexing tails of approximants)
-open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude using (ℕ; zero; suc; _+_)
 
 -- Spectrally separated Flow assumptions at the boundary: a predicate Pred
 -- describing a “separation region” that is closed under Flow and contractive
@@ -29,12 +29,12 @@ record SpectralSeparationSpec {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ
                               (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO)
                                         (BulkBoundary.bnd (Kernel.BB K)))
                               (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst)
-                                        (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+                                        (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
                               : Set (lsuc ℓ) where
   private
     module GT = Truth.GuardedTruth Sig Q
     open ConPreorder (BulkBoundary.bnd (Kernel.BB K)) using (Con; _⊑_)
-    open GT.GuardedClosure (Kernel.GTruth K) renaming (Th* to Th⋆)
+    open GT.GuardedClosure (GTruth K) renaming (Th* to Th⋆)
     open GT.FiniteFirst FF renaming (approxS to A)
     F = Endo.fn (Flow-Endo K)
   field
@@ -52,13 +52,13 @@ record SpectralSeparationResults {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter 
                                 (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO)
                                           (BulkBoundary.bnd (Kernel.BB K)))
                                 (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst)
-                                          (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+                                          (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
                                 (SS   : SpectralSeparationSpec K ωCPO FF)
                                 : Set (lsuc ℓ) where
   private
     module GT = Truth.GuardedTruth Sig Q
     open ConPreorder (BulkBoundary.bnd (Kernel.BB K)) using (Con; _⊑_)
-    open GT.GuardedClosure (Kernel.GTruth K) renaming (Th* to Th⋆)
+    open GT.GuardedClosure (GTruth K) renaming (Th* to Th⋆)
     open GT.OmegaCPO ωCPO
     open GT.FiniteFirst FF renaming (approxS to A; Th⋆-as-sup to supineq)
     open SpectralSeparationSpec SS
@@ -78,7 +78,7 @@ spectral-separation-inequalities
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO)
               (BulkBoundary.bnd (Kernel.BB K)))
     (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst)
-              (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+              (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
     (SS   : SpectralSeparationSpec K ωCPO FF)
   → SpectralSeparationResults K ωCPO FF SS
 spectral-separation-inequalities {Sig = Sig}{Q = Q}{K = K} ωCPO FF SS =
@@ -87,7 +87,7 @@ spectral-separation-inequalities {Sig = Sig}{Q = Q}{K = K} ωCPO FF SS =
     module GT = Truth.GuardedTruth Sig Q
     infix 4 _⊑b_
     _⊑b_ = ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
-    open GT.GuardedClosure (Kernel.GTruth K) renaming (Th* to Th⋆)
+    open GT.GuardedClosure (GTruth K) renaming (Th* to Th⋆)
     open GT.OmegaCPO ωCPO
     open GT.FiniteFirst FF renaming (approxS to A; Th⋆-as-sup to supineq)
     open SpectralSeparationSpec SS
@@ -108,7 +108,7 @@ spectral-separation-inequalities {Sig = Sig}{Q = Q}{K = K} ωCPO FF SS =
 
     -- μ-induction gives Th⋆ ≤ A n from F(A n) ⊑ A n
     Th⋆≤A : _⊑b_ Th⋆ (A n)
-    Th⋆≤A = GT.μ-induction (Kernel.GTruth K) ωCPO FF (A n) F≤A
+    Th⋆≤A = GT.μ-induction (GTruth K) ωCPO FF (A n) F≤A
 
     -- A n ≤ Th⋆ via Th⋆-as-sup and the fact A n is an approximant
     sup≤ : _⊑b_ (supω A) Th⋆
@@ -135,7 +135,7 @@ spectral-separation-equalities
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO)
               (BulkBoundary.bnd (Kernel.BB K)))
     (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst)
-              (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+              (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
     (SS   : SpectralSeparationSpec K ωCPO FF)
   → Σ ℕ (λ n →
         (Endo.fn (Flow-Endo K)
@@ -155,7 +155,7 @@ spectral-separation-equalities {Sig = Sig}{Q = Q}{K = K} po ωCPO FF SS =
     open ConPreorder (BulkBoundary.bnd (Kernel.BB K)) using (Con; _⊑_)
     open BulkBoundaryPO po using (po-bnd)
     open PartialOrder (po-bnd) using (antisym)
-    open GT.GuardedClosure (Kernel.GTruth K) renaming (Th* to Th⋆)
+    open GT.GuardedClosure (GTruth K) renaming (Th* to Th⋆)
     open GT.FiniteFirst FF renaming (approxS to A)
     F = Endo.fn (Flow-Endo K)
 

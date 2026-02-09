@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,12 +9,13 @@ module LogOS.Theorems.Meta.CommunicableTruth where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂; _×_; fst; snd)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
+open import LogOS.Kernel.Eq using (module ForKernel)
 import LogOS.Theorems.Meta.ObserverCore as ObsCore
 
 -- Decode-extensionality, but phrased w.r.t. decoded mutual refinement (`≈` on decoded constraints).
@@ -31,7 +32,8 @@ DecodeExtensional′
     (P : Kernel.Code K → Set ℓP)
   → Set (ℓ ⊔ ℓP)
 DecodeExtensional′ K P =
-  ObsCore.DecodeExtensional≈ (CodeCP K) (Kernel.decode K) P
+  let open ForKernel K in
+  ∀ γ₁ γ₂ → γ₁ ≈K γ₂ → P γ₁ → P γ₂
 
 -- A “communicable truth” predicate Comm is admissible w.r.t. a chosen TruthK when:
 -- - it only depends on decode,
@@ -183,7 +185,7 @@ Pr
 Pr {ℓC = ℓC} K TruthK γ = Comm⋆ {ℓC = ℓC} K TruthK γ
 
 -- Alternative view: `Pr` depends on the step function only up to decoded meaning.
--- Since `FlowCode γ` and `Box (Body γ)` decode to the same boundary constraint,
+-- Since `FlowCode γ` and `BoxAt step (Body γ)` decode to the same boundary constraint,
 -- `Pr` can equivalently be read as the largest admissible predicate for the
 -- “stabilise-after-body” step.
 
@@ -193,7 +195,11 @@ Pr-BoxBody
     (TruthK : Kernel.Code K → Set ℓT)
   → Kernel.Code K → Set (ℓ ⊔ ℓT ⊔ lsuc ℓC)
 Pr-BoxBody {ℓC = ℓC} K TruthK =
-  ObsCore.Pred⋆≈ {ℓP = ℓC} (CodeCP K) (Kernel.decode K) (λ γ → Box K (Kernel.Body K γ)) TruthK
+  ObsCore.Pred⋆≈ {ℓP = ℓC}
+    (CodeCP K)
+    (Kernel.decode K)
+    (λ γ → BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K γ))
+    TruthK
 
 Pr↔Pr-BoxBody
   : ∀ {ℓ ℓT ℓC} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -207,9 +213,9 @@ Pr↔Pr-BoxBody {ℓC = ℓC} K TruthK {γ} =
 
     eqStep : ∀ γ′ →
       _≈CP_ CP (Kernel.decode K (FlowCode K γ′))
-               (Kernel.decode K (Box K (Kernel.Body K γ′)))
+               (Kernel.decode K (BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K γ′)))
     eqStep γ′
-      rewrite decode-FlowCode≡decode-BoxBody K γ′
+      rewrite decode-FlowCode≡decode-BoxAt-step-body K γ′
       = (ConPreorder.refl CP , ConPreorder.refl CP)
 
     module ST =
@@ -217,7 +223,7 @@ Pr↔Pr-BoxBody {ℓC = ℓC} K TruthK {γ} =
         CP
         (Kernel.decode K)
         (FlowCode K)
-        (λ γ′ → Box K (Kernel.Body K γ′))
+        (λ γ′ → BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K γ′))
         eqStep
 
 -- `Pr` respects pointwise logical equivalence of truth predicates.

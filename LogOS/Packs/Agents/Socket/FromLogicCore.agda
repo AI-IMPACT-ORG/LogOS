@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ open import LogOS.Prelude
 open import LogOS.Minimal.Adapter using (QAdapter)
 
 open import LogOS.API.Assumptions.Core using (LogicCore)
-import LogOS.Packs.Agents.Socket.FromLogicKernel as FromLK
+import LogOS.Packs.Agents.Socket.FromKernel as FromK
 
 -- Bridge: build an agent socket directly from a shared `LogicCore`.
 --
@@ -28,7 +28,7 @@ module For
   (Task : Set ℓTask)
   where
 
-  module Base = FromLK.For (LogicCore.K C) (QAdapter.e (LogicCore.Q C)) Task
+  module Base = FromK.For (LogicCore.K C) (QAdapter.e (LogicCore.Q C)) Task
 
   open Base public using (mkCodeSocket; mkBoundarySocket)
 
@@ -39,6 +39,6 @@ module ForStepGrade
   (Task : Set ℓTask)
   where
 
-  module Base = FromLK.For (LogicCore.K C) stepGrade Task
+  module Base = FromK.For (LogicCore.K C) stepGrade Task
 
   open Base public using (mkCodeSocket; mkBoundarySocket)

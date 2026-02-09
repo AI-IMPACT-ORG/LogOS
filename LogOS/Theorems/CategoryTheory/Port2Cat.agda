@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -20,6 +20,7 @@ open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Boundary.IO
 open import LogOS.Boundary.Port
+open import LogOS.System using (System)
 
 import LogOS.Ports.Semantic.Interoperability as Interop
 import LogOS.Theorems.CategoryTheory.WrapperCore as Wrap
@@ -55,10 +56,10 @@ module For
     Hom : Obj → Obj → Set (lsuc (ℓ ⊔ ℓForm))
     Hom P₁ P₂ = Interop.PortAdapter B P₁ P₂
 
-    Adapter≈
+    Adapter⇒
       : ∀ {P₁ P₂}
       → Hom P₁ P₂ → Hom P₁ P₂ → Set (ℓ ⊔ ℓForm)
-    Adapter≈ {P₁} {P₂} = Interop.For.Adapter≈ B P₁ P₂
+    Adapter⇒ {P₁} {P₂} = Interop.For._⊑Adapter_ B P₁ P₂
 
   Port2Cat-instance : Port2Cat {ℓ = ℓ} {ℓForm = ℓForm} B
   Port2Cat-instance =
@@ -69,27 +70,50 @@ module For
             ; Hom = Hom
             ; _∘_ = λ {P₁} {P₂} {P₃} g f → Interop.composeAdapter B P₁ P₂ P₃ f g
             ; id  = λ {A} → Interop.idAdapter B A
-            ; _⇒_ = Adapter≈
+            ; _⇒_ = Adapter⇒
             ; id⇒ = λ {P₁} {P₂} f →
-                let module I = Interop.For B P₁ P₂ in I.adapter≈-refl f
-            ; _∙_ = λ {P₁} {P₂} {f} {g} {h} fg gh p φ →
-                Prop.↔-trans (fg p φ) (gh p φ)
-            ; whiskerL = λ {P₁} {P₂} {P₃} g {f} {f'} ff' p φ →
+                (λ _ _ sat → sat)
+            ; _∙_ = λ {P₁} {P₂} {f} {g} {h} fg gh →
+                (λ p φ sat → gh p φ (fg p φ sat))
+            ; whiskerL = λ {P₁} {P₂} {P₃} g {f} {f'} ff' p φ sat →
                 let
-                  left  = Prop.↔-sym (Interop.PortAdapter.preserves-Sat g p (Interop.PortAdapter.map f φ))
-                  mid   = ff' p φ
-                  right = Interop.PortAdapter.preserves-Sat g p (Interop.PortAdapter.map f' φ)
+                  left : BoundaryPort.SatF P₂ p (Interop.PortAdapter.map f φ)
+                  left =
+                    Prop._↔_.from (Interop.PortAdapter.preserves-Sat g p (Interop.PortAdapter.map f φ))
+                      sat
+
+                  mid : BoundaryPort.SatF P₂ p (Interop.PortAdapter.map f' φ)
+                  mid = ff' p φ left
                 in
-                Prop.↔-trans left (Prop.↔-trans mid right)
-            ; whiskerR = λ {P₁} {P₂} {P₃} {g} {g'} f gg' p φ →
-                gg' p (Interop.PortAdapter.map f φ)
-            ; _⊙_ = λ {P₁} {P₂} {P₃} {f} {f'} {g} {g'} ff' gg' p φ →
+                Prop._↔_.to (Interop.PortAdapter.preserves-Sat g p (Interop.PortAdapter.map f' φ)) mid
+            ; whiskerR = λ {P₁} {P₂} {P₃} {g} {g'} f gg' p φ sat →
+                gg' p (Interop.PortAdapter.map f φ) sat
+            ; _⊙_ = λ {P₁} {P₂} {P₃} {f} {f'} {g} {g'} ff' gg' p φ sat →
                 let
-                  left  = Prop.↔-sym (Interop.PortAdapter.preserves-Sat g p (Interop.PortAdapter.map f φ))
-                  mid₁  = ff' p φ
-                  mid₂  = Interop.PortAdapter.preserves-Sat g p (Interop.PortAdapter.map f' φ)
-                  right = gg' p (Interop.PortAdapter.map f' φ)
+                  step₁ : BoundaryPort.SatF P₃ p (Interop.PortAdapter.map g' (Interop.PortAdapter.map f φ))
+                  step₁ = gg' p (Interop.PortAdapter.map f φ) sat
+
+                  back : BoundaryPort.SatF P₂ p (Interop.PortAdapter.map f φ)
+                  back =
+                    Prop._↔_.from
+                      (Interop.PortAdapter.preserves-Sat g' p (Interop.PortAdapter.map f φ))
+                      step₁
+
+                  step₂ : BoundaryPort.SatF P₂ p (Interop.PortAdapter.map f' φ)
+                  step₂ = ff' p φ back
                 in
-                Prop.↔-trans left (Prop.↔-trans mid₁ (Prop.↔-trans mid₂ right))
+                Prop._↔_.to
+                  (Interop.PortAdapter.preserves-Sat g' p (Interop.PortAdapter.map f' φ))
+                  step₂
             }
       }
+
+module ForSystem
+  {ℓ : Level}
+  {ℓForm : Level}
+  (S : System {ℓ = ℓ})
+  where
+
+  open System S
+  open For {ℓ = ℓ} {ℓForm = ℓForm} {Sig = Sig} {Q = Q} {W = W} {BB = BB} {H = H} B public
+    using (Port2Cat-instance)

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,8 +10,8 @@ module LogOS.Domain.Opacity.NumberTheory.HP.Opacity where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_; ⊥)
 
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
-open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -74,7 +74,7 @@ module For
   -- Budgeted/graded strengthening: rule out any oracle that is both
   -- (i) extensional and (ii) total *within a given budget predicate*.
   --
-  -- This is the quantale/grade-friendly form of opacity: you can allow witnesses
+  -- This is the prequantale/grade-friendly form of opacity: you can allow witnesses
   -- to exist in principle, but no single budget function can make them uniformly
   -- available everywhere under diagonalisation.
 

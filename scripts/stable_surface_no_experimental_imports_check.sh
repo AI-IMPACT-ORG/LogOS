@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -15,37 +15,49 @@ LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 cd "${LIB_ROOT}"
 
-shopt -s nullglob
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
 
-FILES=(
-  LogOS/Packs/*/All.agda
-  LogOS/Packs/*/Core.agda
-  LogOS/Packs/*/Kernel.agda
-  LogOS/Packs/*/Surface.agda
-)
+# shellcheck source=lib/stable_packs.sh
+source "${SCRIPT_DIR}/lib/stable_packs.sh"
+
+stable_roots=()
+stable_roots_text=""
+if ! stable_roots_text="$(stable_pack_roots)"; then
+  rc="$?"
+  if [[ "$rc" -eq 1 ]]; then
+    die "no stable packs found (expected `packTrust = record { level = stable }` in LogOS/Packs/**/All.agda)"
+  fi
+  die "failed to discover stable pack roots"
+fi
+while IFS= read -r root; do
+  [[ -z "${root}" ]] && continue
+  stable_roots+=("${root}")
+done <<< "${stable_roots_text}"
+if [ "${#stable_roots[@]}" -eq 0 ]; then
+  die "no stable packs found (expected `packTrust = record { level = stable }` in LogOS/Packs/**/All.agda)"
+fi
 
 IMPORT_EXPERIMENTAL_PATTERN='^[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+.*\.Experimental(\.|$)'
 
 bad=""
 
-for f in "${FILES[@]}"; do
-  [[ -f "$f" ]] || continue
-  # Only enforce on stable surfaces (non-Experimental paths).
-  if [[ "$f" == *"/Experimental/"* ]]; then
-    continue
+for root in "${stable_roots[@]}"; do
+  [[ -d "${root}" ]] || continue
+  out=""
+  status=0
+  set +e
+  out="$(rg -n \
+    --glob '*.agda' \
+    --glob '!**/_build/**' \
+    --glob '!**/Experimental/**' \
+    -- "${IMPORT_EXPERIMENTAL_PATTERN}" "${root}" 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
-
-  if command -v rg >/dev/null 2>&1; then
-    hit="$(rg -n -- "${IMPORT_EXPERIMENTAL_PATTERN}" "$f" || true)"
-  else
-    hit="$(grep -nE -- "${IMPORT_EXPERIMENTAL_PATTERN}" "$f" || true)"
-    if [[ -n "${hit}" ]]; then
-      hit="$(printf '%s\n' "${hit}" | sed "s|^|${f}:|")"
-    fi
-  fi
-
-  if [[ -n "${hit}" ]]; then
-    bad+="${hit}"$'\n'
+  if [[ "$status" -eq 0 ]]; then
+    bad+="${out}"$'\n'
   fi
 done
 

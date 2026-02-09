@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,18 +12,24 @@ module LogOS.Theorems.CategoryTheory.PortCat where
 -- This packages the interoperability story in category-shaped form:
 -- - objects: presentations of a satisfaction relation (`PresentationC`)
 -- - morphisms: satisfaction-preserving translations (sound+complete)
--- - morphism equality: indistinguishable by target satisfaction (`≈⇒`)
+-- - morphism equality: mutual refinement by target satisfaction (`≈⇒`)
 --
 -- Notes:
 -- - To keep the core universe-polymorphic but lightweight, we package a category
 --   at a *fixed* formula universe level `ℓForm`. (Different levels can be handled
 --   by choosing a larger `ℓForm` and `Lift`ing external syntax if needed.)
--- - No new axioms are introduced: all equalities are observational (`↔`), not `≡`.
+-- - No new axioms are introduced: equality is mutual refinement in an
+--   observational preorder (pointwise `↔` remains available as a presentation layer).
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
 
-open import LogOS.Ports.Semantic.PresentationCore using (PresentationC; PresentationHom; PresentationHom-respects-ObsEq)
+open import LogOS.Ports.Semantic.PresentationCore using
+  ( PresentationC
+  ; PresentationHom
+  ; PresentationHom-respects-Obs≈F
+  )
+open import LogOS.Ports.Semantic.PresentationCore using (SatSystem)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.World
@@ -31,21 +37,20 @@ open import LogOS.Minimal.Con using (BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Boundary.IO
 open import LogOS.Boundary.Port
+open import LogOS.System using (System)
 import LogOS.Ports.Semantic.Interoperability as Interop
 
 module For
   {ℓCtx ℓCon ℓSat ℓForm : Level}
-  {Ctx : Set ℓCtx}
-  {Con : Set ℓCon}
-  (SatC : Ctx → Con → Set ℓSat)
+  (S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat})
   where
 
   -- Objects: presentations of `SatC` in a fixed formula universe.
   Port : Set (lsuc (ℓCtx ⊔ ℓCon ⊔ ℓSat ⊔ ℓForm))
-  Port = PresentationC {ℓForm = ℓForm} Ctx Con SatC
+  Port = PresentationC {ℓForm = ℓForm} S
 
   -- Bring the presentation projections into scope (as functions of a presentation).
-  open PresentationC using (Form; SatF; ObsEqF)
+  open PresentationC using (Form; SatF; Obs≈F)
 
   -- Morphisms: satisfaction-preserving translations.
   PortHom : Port → Port → Set (lsuc (ℓCtx ⊔ ℓSat ⊔ ℓForm))
@@ -53,20 +58,45 @@ module For
 
   open PresentationHom public
 
-  -- Equality on morphisms: indistinguishable by *target* satisfaction.
-  infix 4 _≈⇒_
-  _≈⇒_ : ∀ {A B} → PortHom A B → PortHom A B → Set (ℓCtx ⊔ ℓSat ⊔ ℓForm)
-  _≈⇒_ {B = B} f g =
-    ∀ p φ → SatF B p (map f φ) ↔ SatF B p (map g φ)
+  -- Equality on morphisms: mutual refinement in the observational preorder
+  -- induced by target satisfaction.
+  infix 4 _⊑⇒_ _≈⇒_
 
-  -- (Helper) A satisfaction-preserving map respects observational equality.
-  respects-ObsEq
+  _⊑⇒_ : ∀ {A B} → PortHom A B → PortHom A B → Set (ℓCtx ⊔ ℓSat ⊔ ℓForm)
+  _⊑⇒_ {B = B} f g = ∀ p φ → SatF B p (map f φ) → SatF B p (map g φ)
+
+  _≈⇒_ : ∀ {A B} → PortHom A B → PortHom A B → Set (ℓCtx ⊔ ℓSat ⊔ ℓForm)
+  f ≈⇒ g = (f ⊑⇒ g) × (g ⊑⇒ f)
+
+  -- Directional projections (canonical names): mutual refinement splits into the
+  -- two entailment directions.
+  ≈⇒⇒ : ∀ {A B} {f g : PortHom A B} → f ≈⇒ g → f ⊑⇒ g
+  ≈⇒⇒ = fst
+
+  ≈⇒⇐ : ∀ {A B} {f g : PortHom A B} → f ≈⇒ g → g ⊑⇒ f
+  ≈⇒⇐ = snd
+
+  -- Presentation alias: pointwise satisfaction equivalence (`↔`).
+  ObsEq⇒ : ∀ {A B} → PortHom A B → PortHom A B → Set (ℓCtx ⊔ ℓSat ⊔ ℓForm)
+  ObsEq⇒ {B = B} f g = ∀ p φ → SatF B p (map f φ) ↔ SatF B p (map g φ)
+
+  ObsEq⇒↔≈⇒ : ∀ {A B} {f g : PortHom A B} → ObsEq⇒ f g ↔ (f ≈⇒ g)
+  ObsEq⇒↔≈⇒ {f} {g} =
+    Prop.intro
+      (λ eq →
+        ( (λ p φ sat → Prop._↔_.to (eq p φ) sat)
+        , (λ p φ sat → Prop._↔_.from (eq p φ) sat)
+        ))
+      (λ (fg , gf) p φ → Prop.intro (fg p φ) (gf p φ))
+
+  -- (Helper) A satisfaction-preserving map respects mutual refinement.
+  respects-Obs≈
     : ∀ {A B}
     → (h : PortHom A B)
     → ∀ {φ ψ}
-    → ObsEqF A φ ψ
-    → ObsEqF B (map h φ) (map h ψ)
-  respects-ObsEq h = PresentationHom-respects-ObsEq h
+    → Obs≈F A φ ψ
+    → Obs≈F B (map h φ) (map h ψ)
+  respects-Obs≈ h = PresentationHom-respects-Obs≈F h
 
   idPH : ∀ {A} → PortHom A A
   idPH =
@@ -85,13 +115,16 @@ module For
 
   -- Equality laws.
   refl≈⇒ : ∀ {A B} (f : PortHom A B) → f ≈⇒ f
-  refl≈⇒ f _ _ = Prop.↔-refl
+  refl≈⇒ f = ((λ _ _ sat → sat) , (λ _ _ sat → sat))
 
   sym≈⇒ : ∀ {A B} {f g : PortHom A B} → f ≈⇒ g → g ≈⇒ f
-  sym≈⇒ e p φ = Prop.↔-sym (e p φ)
+  sym≈⇒ (fg , gf) = (gf , fg)
 
   trans≈⇒ : ∀ {A B} {f g h : PortHom A B} → f ≈⇒ g → g ≈⇒ h → f ≈⇒ h
-  trans≈⇒ e₁ e₂ p φ = Prop.↔-trans (e₁ p φ) (e₂ p φ)
+  trans≈⇒ (fg , gf) (gh , hg) =
+    ( (λ p φ sat → gh p φ (fg p φ sat))
+    , (λ p φ sat → gf p φ (hg p φ sat))
+    )
 
   cong-∘≈⇒
     : ∀ {A B C}
@@ -100,26 +133,50 @@ module For
     → f ≈⇒ f'
     → g ≈⇒ g'
     → (g ∘PH f) ≈⇒ (g' ∘PH f')
-  cong-∘≈⇒ {A} {B} {C} {f} {f'} {g} {g'} eqf eqg p φ =
-    let
-      -- First change `g` to `g'` at the same intermediate formula.
-      step₁
-        : SatF C p (map g (map f φ))
-            ↔
-          SatF C p (map g' (map f φ))
-      step₁ = eqg p (map f φ)
+  cong-∘≈⇒ {A} {B} {C} {f} {f'} {g} {g'} eqf eqg =
+    ( (λ p φ sat →
+        let
+          -- First change `g` to `g'` at the same intermediate formula.
+          step₁ : SatF C p (map g' (map f φ))
+          step₁ = ≈⇒⇒ {A = B} {B = C} {f = g} {g = g'} eqg p (map f φ) sat
 
-      -- Then change the intermediate formula using that `g'` respects ObsEq on `B`.
-      eqf' : ObsEqF B (map f φ) (map f' φ)
-      eqf' q = eqf q φ
+          -- Then change the intermediate formula using that `g'` respects mutual refinement on `B`.
+          eqf≈ : Obs≈F B (map f φ) (map f' φ)
+          eqf≈ =
+            ( (λ q s → ≈⇒⇒ {A = A} {B = B} {f = f} {g = f'} eqf q φ s)
+            , (λ q s → ≈⇒⇐ {A = A} {B = B} {f = f} {g = f'} eqf q φ s)
+            )
 
-      step₂
-        : SatF C p (map g' (map f φ))
-            ↔
-          SatF C p (map g' (map f' φ))
-      step₂ = respects-ObsEq g' eqf' p
-    in
-    Prop.↔-trans step₁ step₂
+          step₂≈ : Obs≈F C (map g' (map f φ)) (map g' (map f' φ))
+          step₂≈ = respects-Obs≈ g' eqf≈
+
+          step₂ : SatF C p (map g' (map f' φ))
+          step₂ =
+            let (step₂⇒ , _) = step₂≈
+            in step₂⇒ p step₁
+        in
+        step₂)
+    , (λ p φ sat →
+        let
+          step₁ : SatF C p (map g (map f' φ))
+          step₁ = ≈⇒⇐ {A = B} {B = C} {f = g} {g = g'} eqg p (map f' φ) sat
+
+          eqf≈ : Obs≈F B (map f φ) (map f' φ)
+          eqf≈ =
+            ( (λ q s → ≈⇒⇒ {A = A} {B = B} {f = f} {g = f'} eqf q φ s)
+            , (λ q s → ≈⇒⇐ {A = A} {B = B} {f = f} {g = f'} eqf q φ s)
+            )
+
+          step₂≈ : Obs≈F C (map g (map f φ)) (map g (map f' φ))
+          step₂≈ = respects-Obs≈ g eqf≈
+
+          step₂ : SatF C p (map g (map f φ))
+          step₂ =
+            let (_ , step₂⇐) = step₂≈
+            in step₂⇐ p step₁
+        in
+        step₂)
+    )
 
   -- Package as a small “Ho-category”: equality is `≈⇒`.
   --
@@ -147,8 +204,10 @@ module For
       ; id     = idPH
       ; eqHom  = _≈⇒_
       ; reflH  = refl≈⇒
-      ; symH   = λ {A} {B} {f} {g} e p φ → Prop.↔-sym (e p φ)
-      ; transH = λ {A} {B} {f} {g} {h} e₁ e₂ p φ → Prop.↔-trans (e₁ p φ) (e₂ p φ)
+      ; symH   = λ {A} {B} {f} {g} e → sym≈⇒ {A = A} {B = B} {f = f} {g = g} e
+      ; transH =
+          λ {A} {B} {f} {g} {h} e₁ e₂ →
+            trans≈⇒ {A = A} {B = B} {f = f} {g = g} {h = h} e₁ e₂
       ; cong-∘ = λ {A} {B} {C} {f} {f'} {g} {g'} eqf eqg →
           cong-∘≈⇒ {A = A} {B = B} {C = C} {f = f} {f' = f'} {g = g} {g' = g'} eqf eqg
       }
@@ -213,3 +272,14 @@ module Boundary
           in
           Prop.↔-trans stepB stepA
       }
+
+module BoundarySystem
+  {ℓ : Level}
+  {ℓForm : Level}
+  (S : System {ℓ = ℓ})
+  where
+
+  open System S
+
+  -- System-first wrapper: instantiate the boundary port category at `S.B`.
+  open Boundary {ℓ = ℓ} {ℓForm = ℓForm} {Sig = Sig} {Q = Q} {W = W} {BB = BB} {H = H} B public

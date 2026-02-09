@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,10 +10,10 @@ module LogOS.Theorems.Meta.BudgetedSeparationOutput where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_; ⊥; ⊥-elim; _↔_; to)
 
-open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude using (ℕ)
 open import LogOS.Prelude.NatOrder using (_≤ℕ_; dec≤ℕ)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
-open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -173,7 +173,7 @@ module For
   -- filtered observer (`infer≤`) using `dec≤ℕ`.
   --
   -- For many LogOS uses (especially with `GradedKernel`), budgets naturally live
-  -- in a quantale scale (e.g. `QAdapter.Scale Q`, such as `QNat2`), whose order is
+  -- in a prequantale scale (e.g. `QAdapter.Scale Q`, such as `QNat2`), whose order is
   -- not necessarily decidable. In that setting, we still get a clean
   -- *anti-totality* theorem: no extensional oracle can be total while also
   -- satisfying an abstract “within budget” predicate.

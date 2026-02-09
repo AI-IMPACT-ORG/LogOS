@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.CategoryTheory.Kernel2CatInitial where
 
 -- Initiality in the refinement 2-category: the fold map is unique up to
--- pointwise refinement (not just decode-level equality).
+-- pointwise refinement (not just strict decoded meaning `≃K`).
 
 open import LogOS.Prelude
 
@@ -17,22 +17,35 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Con.Rewrite as ConRewrite
 open import LogOS.Minimal.World
-open import LogOS.Free.Constraints as Free
+open import LogOS.Minimal.Constraints as Free
 
 open import LogOS.Kernel
 open import LogOS.Kernel.ConAlgOf using (conAlgOf)
-open import LogOS.Kernel.Initial
+open import LogOS.Kernel.Hom using (KernelHom)
+open import LogOS.Kernel.Eq using (module ForKernel)
 import LogOS.Kernel.Hom2Cat as KH₂
+import LogOS.Theorems.CategoryTheory.KernelCat as KernelCatₜ
 
 module InitialRefinement {ℓ : Level}
                          (Sig : LogOSSignature ℓ)
                          (Q   : QAdapter ℓ)
                          (HWorld : Worlds.WorldH Sig Q) where
   private
-    IK : InitialKernel Sig Q
-    IK = build Sig Q HWorld
+    IU : KernelCatₜ.InitialUpToDecode Sig Q
+    IU = KernelCatₜ.initial-from-build Sig Q HWorld
 
-  open InitialKernel IK
+    FreeK : Kernel Sig Q
+    FreeK = KernelCatₜ.InitialUpToDecode.I IU
+
+    foldK : ∀ (K : Kernel Sig Q) → KernelHom FreeK K
+    foldK = KernelCatₜ.InitialUpToDecode.fold IU
+
+    unique≃
+      : ∀ (K : Kernel Sig Q) (h : KernelHom FreeK K)
+      → ∀ γ →
+          let open ForKernel K in
+          KernelHom.mapCode (foldK K) γ ≃K KernelHom.mapCode h γ
+    unique≃ K h = KernelCatₜ.InitialUpToDecode.init IU K h
 
   KernelHom₁ : Kernel Sig Q → Kernel Sig Q → Set (lsuc (lsuc ℓ))
   KernelHom₁ = KH₂.KernelHom₁ {Sig = Sig} {Q = Q}
@@ -54,8 +67,8 @@ module InitialRefinement {ℓ : Level}
   foldK⇒ : ∀ (K : Kernel Sig Q) (h : KernelHom₁ (FreeK) K) → foldK₁ K ⇒ h
   foldK⇒ K h γ =
     let
-      hK = KH₂.homKernel {Sig = Sig} {Q = Q} {K₁ = FreeK} {K₂ = K} h
-      _ , _ , eqγ = InitialKernel.unique≃ IK K hK
+      hK = KH₂.KernelHom₁.hom h
+      eqγ = unique≃ K hK
       CP = BulkBoundary.bnd (Kernel.BB K)
       module R = ConRewrite.For CP
     in
@@ -64,8 +77,8 @@ module InitialRefinement {ℓ : Level}
   foldK⇐ : ∀ (K : Kernel Sig Q) (h : KernelHom₁ (FreeK) K) → h ⇒ foldK₁ K
   foldK⇐ K h γ =
     let
-      hK = KH₂.homKernel {Sig = Sig} {Q = Q} {K₁ = FreeK} {K₂ = K} h
-      _ , _ , eqγ = InitialKernel.unique≃ IK K hK
+      hK = KH₂.KernelHom₁.hom h
+      eqγ = unique≃ K hK
       CP = BulkBoundary.bnd (Kernel.BB K)
       module R = ConRewrite.For CP
     in

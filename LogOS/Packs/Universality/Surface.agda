@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,9 +18,6 @@ open import LogOS.Packs.Universality.All public
 
 -- The umbrella `All` pack keeps `UniversalIR` and `Core` namespaced already.
 -- This surface adds a small amount of extra, paper-facing convenience.
-
-module Examples where
-  open import LogOS.Packs.UniversalIR.Examples public
 
 module ComputationTools where
   open import LogOS.Computation.SchemeCategory public

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,9 +13,9 @@ open import LogOS.Syntax.Prop using (¬_; to)
 -- Reuse the existing opacity/diagonal machinery wholesale:
 -- “no total auditor within budget” is a repackaging of `BudgetedSeparationOutput`.
 
-open import LogOS.Prelude.Nat using (ℕ)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂; _×_)
-open import LogOS.Prelude.Sum using (inj₁)
+open import LogOS.Prelude using (ℕ)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂; _×_)
+open import LogOS.Prelude using (inj₁)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)

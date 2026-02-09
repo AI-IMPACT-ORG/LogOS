@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -90,10 +90,10 @@ role-indexed sockets plus explicit edge adapters. Heterogeneous agents are
 first-class: each role can have its own signature/kernel, and edges are
 **satisfaction morphisms** (`SatMor`) between boundary interfaces.
 
-`SatMor` is conservative by construction: it preserves *and reflects*
-satisfaction. This is stronger than mere soundness; if a use case only admits
-one-way translation, it must be modeled with a different, explicitly weaker
-adapter (not provided by the Agents pack).
+In LogOS, `SatMor` is defined as a two-way satisfaction equivalence: it
+preserves *and reflects* satisfaction. This is stronger than mere soundness; if
+a use case only admits one-way translation, it must be modeled with a different,
+explicitly weaker adapter (not provided by the Agents pack).
 
 This heterogeneity lets you keep mixed formalisms intact (e.g., symbolic and
 statistical roles) while still composing them. When edges are `SatMor`, the
@@ -162,14 +162,14 @@ The agent pack reuses kernel theorems directly; these are the main hooks for
 monitoring/auditing and policy composition:
 
 - `LogOS/Theorems/Reflection/QuanticNucleus.agda` — nucleus laws at the kernel boundary;
-  nucleus-stable elements (pre-fixed points, hence fixed up to `≈`) form a quantale and the quotient map has the expected factorisation
+  nucleus-stable elements (pre-fixed points, hence fixed up to `≈`) form a prequantale and the quotient map has the expected factorisation
   for `j`-invariant functions (`f (j x) ≡ f x`) for any
-  quantale equipped with a nucleus (monotone/inflationary/idempotent‑lax, plus
-  join/multiplication preservation up to `≈`). A canonical instance is the budget quantale
-  `QAdapter.Scale` (via `quantaleFromQAdapter`). This does *not* require boundary
-  constraints to be a quantale by default; when a model equips the boundary with
+  prequantale equipped with a nucleus (monotone/inflationary/idempotent‑lax, plus
+  join/multiplication preservation up to `≈`). A canonical instance is the budget prequantale
+  `QAdapter.Scale` (via `prequantaleFromQAdapter`). This does *not* require boundary
+  constraints to be a prequantale by default; when a model equips the boundary with
   compatible join/multiplication structure, the same theorem applies there too.
-- `LogOS/Theorems/Boundary/LogicKernel/Mu.agda` — Kleene/μ support for closure steps,
+- `LogOS/Theorems/Boundary/Kernel/Mu.agda` — Kleene/μ support for closure steps,
   used for iterative monitors and convergence-to-safety arguments.
 - `LogOS/Theorems/Meta/LimitPublicisation.agda` — stable/extensional predicates become
   observable (`Pr`), allowing audits to be justified from stability rather than
@@ -211,7 +211,7 @@ used as a soft layer:
 
 - **Soft updates:** `LogOS/Packs/Agents/Learning/SoftPolicy.agda` models a
   grade-indexed update (strength/temperature) using `ClosureStepAt` and the
-  kernel's quantale scale.
+  kernel's prequantale scale.
 - **Hard constraints:** symbolic rules are just `Con_bnd`; they blend with a
   soft policy using the boundary tensor (`_⊗∂_`).
 - **Blend example:** `LogOS/Packs/Agents/Examples/NeuralSymbolicBlend.agda` shows
@@ -242,14 +242,14 @@ Experimental extensions (physics/RG/transformer scaling) are documented in
 
 ## UniversalIR reuse (framework instances)
 
-Frameworks are defined minimally as a `Choice` into a shared `Process`
+Frameworks are defined minimally as an `Interface` into a shared `Process`
 (`LogOS/Packs/Agents/Frameworks/Core.agda`). The concrete embeddings currently
 supplied are the UniversalIR paradigms (closed on the `PATask` input):
 
 - `LogOS/Packs/Agents/Frameworks/UniversalIR.agda` (curated surface via
   `LogOS/Packs/UniversalIR/Core.agda`), which exports `UProcess` plus
-  `minskyChoice`, `lambdaChoice`, `ethereumChoice`, `oracleChoice`,
-  and `quantumCircuitChoice`.
+  `minskyInterface`, `lambdaInterface`, `ethereumInterface`, `oracleInterface`,
+  and `quantumCircuitInterface`.
 - `LogOS/Packs/Agents/Frameworks/PATask.agda` packages these as
   `Framework` instances (`minskyFramework`, `lambdaFramework`, ...) so they can be
   plugged into an `AgentSocket` without extra boilerplate.
@@ -260,8 +260,8 @@ Agreement between the UniversalIR frameworks is available in two flavours:
 
 - Machine-scheme agreement: `LogOS/Packs/Agents/Frameworks/PATaskAgreement.agda`
   re-exports the paper-facing `ParadigmsRunEq` statement.
-- Choice-scheme agreement: the same module provides `ChoiceSchemesRunEq` for
-  the UniversalIR `Choice`-based schemes (the ones used by `Framework`).
+- Interface-scheme agreement: the same module provides `InterfaceSchemesRunEq` for
+  the UniversalIR `Interface`-based schemes (the ones used by `Framework`).
 
 Other “known framework” modules are **mostly interfaces or meta-theory surfaces**;
 when they include translations into UniversalIR, they are intentionally minimal:
@@ -269,7 +269,7 @@ when they include translations into UniversalIR, they are intentionally minimal:
 - `LogOS/Packs/Agents/Frameworks/AIXI_Bounded.agda` and
   `LogOS/Packs/Agents/Frameworks/OOPS.agda` expose the generic `SchemeCategory`
   machinery, and now include minimal **bounded PATask** translations into
-  `UProcess` (`aixiChoice`/`oopsChoice`, with `aixiFramework`/`oopsFramework`).
+  `UProcess` (`aixiInterface`/`oopsInterface`, with `aixiFramework`/`oopsFramework`).
   These are checked instantiations, not full RL or optimal‑search models.
 - `LogOS/Packs/Agents/Frameworks/GodelMachine.agda` and
   `LogOS/Packs/Agents/Frameworks/MetaReasoning.agda` re-export meta-theory
@@ -278,9 +278,9 @@ when they include translations into UniversalIR, they are intentionally minimal:
 So, at present: **UniversalIR is the main provided, checked integration** of
 agent-like task languages into a shared process (`UProcess`), with reusable
 transport/agreement tooling. To integrate another framework into UniversalIR, supply
-a `Choice` into `UProcess` (and, if needed, a `ProcessHom`
-or a cost/budget-carrying `ProcessHomCost` / `ProcessHomCostWithGrade`, or the
-corresponding `mapChoice`/`mapChoiceLax` transport), then plug it into an
+a `Interface` into `UProcess` (and, if needed, a `ProcessHom`
+or a cost/budget-carrying `ProcessHomCost`, or the
+corresponding `mapInterface`/`mapInterfaceLax` transport), then plug it into an
 `AgentSocket`.
 
 ## Kernel-native frameworks (tasks = code or boundary constraints)
@@ -289,7 +289,7 @@ If you want the agent story to be “as LogOS-native as possible”, the kernel 
 be treated as the shared process directly:
 
 - `LogOS/Packs/Agents/Frameworks/KernelNative.agda` provides `codeFramework` and
-  `boundaryFramework` constructors for `LogicKernel`, `Kernel`, and `GradedKernel`.
+  `boundaryFramework` constructors for `Kernel`, `LogicCore`, and `GradedKernel`.
 - The task type becomes either `Code` (execute a code fragment for a chosen fuel)
   or `Con_bnd` (evolve a boundary constraint for a chosen fuel).
 

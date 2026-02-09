@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,7 +19,7 @@ open import LogOS.Kernel.Graded
 -- “Infinite graded kernel”: a graded kernel whose boundary constraints carry ω-chain
 -- structure and a finite-first/continuity story for the *saturation* Flow.
 --
--- This mirrors `LogOS.Kernel.Infinite` for ungraded kernels, but uses
+-- This mirrors `LogOS.Kernel.UngradedKernel.Infinite` for ungraded kernels, but uses
 -- `forgetGradedClosure` at the saturation grade (cost → ∞).
 
 record InfiniteGradedKernel {ℓ : Level}
@@ -35,7 +35,7 @@ record InfiniteGradedKernel {ℓ : Level}
   open GradedKernel K public
 
   field
-    po   : BulkBoundaryPO BB -- ANTISYM-OK
+    po   : BulkBoundaryPO BB
 
     ωCPO : GT∞.OmegaCPO (BulkBoundary.bnd BB)
     FF   : GT∞.FiniteFirst
@@ -56,7 +56,7 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
 
   KernelPO
     : (IK : InfiniteGradedKernel Sig Q)
-    → BulkBoundaryPO (GradedKernel.BB (InfiniteGradedKernel.K IK)) -- ANTISYM-OK
+    → BulkBoundaryPO (GradedKernel.BB (InfiniteGradedKernel.K IK))
   KernelPO IK = InfiniteGradedKernel.po IK
 
   OmegaCPO∂
@@ -71,4 +71,3 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
         (GT∞.forgetGradedClosure (GradedKernel.GTruth (InfiniteGradedKernel.K IK)))
         (InfiniteGradedKernel.ωCPO IK)
   FiniteFirst∂ IK = InfiniteGradedKernel.FF IK
-

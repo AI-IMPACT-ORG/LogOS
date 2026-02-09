@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,16 +10,29 @@ module Tests.SmokeSurfaces where
 -- Smoke-test a small set of public-facing entrypoints that are otherwise only
 -- referenced from prose docs. This keeps those modules typechecked in CI.
 
-open import LogOS.Algebra.Braiding
+-- Core/All/Surface conventions (navigation + stable entrypoints).
+import LogOS.Kernel.Surface
+import LogOS.Kernel.All
+import LogOS.Ports.Core
+import LogOS.Ports.Surface
+import LogOS.Ports.All
+import LogOS.Adapters.Core
+import LogOS.Adapters.Surface
+import LogOS.Adapters.All
+import LogOS.Theorems.Surface
+import LogOS.Theorems.All
+import LogOS.Domain.Surface
+
+open import LogOS.Theorems.Boundary.Kernel.Braiding
 open import LogOS.Algebra.GraphSurface
 open import LogOS.Algebra.PolyOps
 
-open import LogOS.Domain.Complexity.Targets.SATProofSearch
+open import LogOS.Complexity.Targets.SATProofSearch
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Selberg
 open import LogOS.Domain.Opacity.SpectralFromFacts
-open import LogOS.Domain.ZFC.SetTheory.Derived
-open import LogOS.Domain.UniversalIR.Walkthrough
-open import LogOS.Domain.ZFC.Supplementary.HF.HFGraph
+open import LogOS.ZFC.SetTheory.Derived
+open import LogOS.UniversalIR.Walkthrough
+open import LogOS.ZFC.Supplementary.HF.HFGraph
 open import Tests.ContinuityOne
 
 open import LogOS.Packs.InfoTheory.Core

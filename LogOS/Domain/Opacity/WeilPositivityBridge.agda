@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ open import LogOS.Prelude
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
 open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
-open import LogOS.Prelude.Product using (_×_; _,_)
+open import LogOS.Prelude using (_×_; _,_)
 import LogOS.Domain.Opacity.GRH_Vacuity_Guards as GRH
 import LogOS.Domain.Opacity.Meaningfulness as Meaning
 import LogOS.Theorems.Meta.ApplicationKit as AppKit

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,7 +17,7 @@ open import LogOS.Minimal.Adjunction using (LaxAdjunction; LaxMonoidalAdjunction
 open import LogOS.Kernel using (Kernel)
 open import LogOS.Kernel.Hom using (idKernelHom)
 
-import LogOS.Domain.UniversalIR.Examples.KernelSaturationLaxTasksNontrivial as Ex
+import LogOS.UniversalIR.Examples.KernelSaturationLaxTasksNontrivial as Ex
 
 import LogOS.Theorems.CategoryTheory.AdjunctionMonads as AdjunctionMonads
 import LogOS.Theorems.CategoryTheory.BeckChevalley as BeckChevalley

@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -10,9 +10,27 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module docs.Applications.Agents_Experimental where
 
--- Sync guard: these imports anchor the module paths this document references.
--- If they drift, the docs build fails.
-import LogOS.Packs.Agents.Experimental.Surface
+-- Note: we avoid importing the full experimental surface lock here, because it
+-- forces typechecking of the entire experimental pack (slow for docs builds).
+-- Path references in prose are checked by `doc-reference-check`, and the
+-- typechecked anchors below import only the modules this document depends on.
+
+open import LogOS.Prelude
+open import LogOS.Base.Signature using (LogOSSignature)
+open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Minimal.Con using (BulkBoundary ; ConPreorder)
+open import LogOS.Minimal.Truth as Truth
+open import LogOS.API.Kernel using (GradedKernel)
+
+import LogOS.Packs.Agents.Experimental.Learning.RGFlow as RGFlow
+import LogOS.Packs.Agents.Experimental.Arguments.TransformerFormalization as TransformerFormalization
+import LogOS.Packs.Agents.Experimental.Arguments.DiscoveryScaling as DiscoveryScaling
+import LogOS.Packs.Agents.Experimental.Arguments.DocsAnchors as DocsAnchors
+import LogOS.API.Kernel.Graded.Endo as GEndo
+
+-- Docs anchor aliases (typechecked).
+module ControlledFeedbackAlignment = DocsAnchors.ControlledFeedbackAlignment
+module LogOSTriggerAlignment = DocsAnchors.LogOSTriggerAlignment
 
 ```
 
@@ -29,12 +47,12 @@ Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
 
 Interpretation (analogy)
 ------------------------
-Interpretation (analogy): this note uses vocabulary such as “RG”, “Maxwell
-agent”, and “transformer scaling” as interpretation. The literal content is
+Interpretation (analogy): this note uses vocabulary such as “RG”,
+“Maxwell-agent-style”, and “transformer scaling” as interpretation. The literal content is
 always the referenced Agda definitions/theorems and their explicit hypothesis
 records; no empirical claim follows without an explicit model/instantiation.
 
-## Physics of information (Maxwell agent view) — experimental
+## Physics of information (Maxwell-agent-style view) — experimental
 
 This section depends on the complexity/physics pack and is available only via
 `LogOS.Packs.Agents.Experimental.All` (`Experimental.Physics.*`).
@@ -48,9 +66,10 @@ by physics-of-information primitives rather than pure CS cost models:
 - `LogOS/Packs/Agents/Experimental/Physics/MaxwellAgent.agda` packages a socket together with
   a Landauer-style cost lower bound and a measurement-capacity bound.
 
-Under these assumption packs, one can read a "Maxwell agent" story: learning and
+Under these assumption packs, one can read a "Maxwell-agent-style" story
+(formal analogy inside the supplied cost/capacity interface): learning and
 policy updates are allowed, and irreversibility/classicalization are bounded by
-the supplied Landauer and capacity parameters (a formal, model-level reading).
+the supplied Landauer and capacity parameters.
 
 ### Scope and assumptions
 
@@ -86,43 +105,46 @@ See `LogOS/Packs/Agents/Experimental/Physics/LearningCost.agda`.
 ### RG flow stability for learning optimization — experimental
 
 LogOS can treat **RG coarse-graining** as a *graded closure step* in the learning
-DSL. This is the most kernel-native encoding: grades live in the quantale scale,
-and RG composition multiplies grades (the explicit monoid/quantale structure of `Scale` in `QAdapter`).
+DSL. This is the most kernel-native encoding: grades live in the prequantale scale,
+and RG composition multiplies grades (the explicit monoid/prequantale structure of `Scale` in `QAdapter`).
 
 The new RG surface lives in `LogOS/Packs/Agents/Experimental/Learning/RGFlow.agda` and gives:
 
 - `RGStep g = ClosureStepAt K g`: RG updates are closure steps at grade `g`.
 - `rg-compose` + `rg-promote`: RG morphisms compose by grade multiplication and
-  can be promoted along the quantale order (lax enrichment).
+  can be promoted along the prequantale order (lax enrichment).
 - `rg-μ`, `rg-unfold-left`: Kleene μ RG policy + unfold-left inequality (`rg-μ s ⊑ applyRG s (rg-μ s)`).
 - `rg-unfold-right`: unfold-right inequality (`applyRG s (rg-μ s) ⊑ rg-μ s`), additionally assumes
   `ScottContinuous` for the update endomap (`RGFlow.rg-unfold-right`).
 - `rg-least-stable`: **classification result** — the Kleene μ policy `rg-μ` is the least
   RG-stable (pre-fixed) policy.
-- `RGLyapunov` + `rg-lyapunov-iter`: quantale-valued Lyapunov potentials give a
+- `RGLyapunov` + `rg-lyapunov-iter`: prequantale-valued Lyapunov potentials give a
   monotone “energy/complexity” descent for RG iterations.
 - `CFunction` / `AFunction`: CFT-aligned analogs; values live in `Time` and are
   compared via `τ : Time → Scale`, so additivity under `_+_` corresponds to
-  multiplicative budgets in the quantale. `AFunction` is additionally
+  multiplicative budgets in the prequantale. `AFunction` is additionally
   lax-monoidal under the boundary tensor.
-- `InfoCFunction` / `InfoAFunction`: information-theoretic refinements using
-  measurement-capacity + DPI; `InfoToTime` lifts ℕ-valued information to `Time`
-  so the c/a analogs inherit the same monotonicity statements.
+- `LogOS/Packs/Agents/Experimental/Learning/RGFlow/Info.agda` (optional import):
+  information-theoretic refinements (`InfoCFunction`, `InfoAFunction`,
+  `InfoToTime`) using measurement-capacity + DPI; `InfoToTime` lifts ℕ-valued
+  information to `Time` so the c/a analogs inherit the same monotonicity
+  statements.
 - `RGTimeFlow`: a time-indexed RG flow (via `Time` and `τ-+`), with
   `CFunctionTime` / `AFunctionTime` giving time-indexed monotonicity, and
   `CFixedPointNormalization` / `AFixedPointNormalization` encoding central-charge
   normalization at RG fixed points.
 - `RGTimeFlowLike` / `RGTimeFlowLax`: weaker time-indexed step interfaces when
   only the step (or one-sided composition) is available.
-- `c-theorem-iter`, `c-theorem-fixed`, `a-theorem-iter`, `a-theorem-fixed`:
-  formal monotonicity, plus μ‑minimality results: the μ policy `rg-μ` is least among
+- `c-theorem-iter`, `c-theorem-fixed`, `a-theorem-iter`, `a-theorem-fixed`
+  (c/a-theorem analogs): formal monotonicity, plus μ‑minimality results: the
+  μ policy `rg-μ` is least among
   RG‑stable policies, hence minimises these observables among pre‑fixed points.
 - `rg-learning-cost`: RG steps are soft updates, so Landauer bounds apply
   directly (physics-aware optimization).
 
 This frames “RG stability” as a **learning-style optimization principle** inside
 LogOS: stability is expressed as closure, composition is quantified by the
-quantale, and fixed points are computed via μ.
+prequantale, and fixed points are computed via μ.
 
 ### Scaling-law argument (reflection closed) — experimental
 
@@ -133,8 +155,8 @@ modules are *not* part of the stable Agents surface; import them via
 The formal scaling-law spine is packaged in
 `LogOS/Packs/Agents/Experimental/Arguments/ScalingLaws.agda`:
 
-- `obs-μ≤stable`: least RG-stable policies minimise observables (phase-transition
-  anchor).
+- `obs-μ≤stable`: least RG-stable policies minimise observables
+  (phase-transition interpretation anchor).
 - `ScalingBound` + `scalingBound-from-stable`: code-level policies above the
   μ-policy `rg-μ` inherit the bound.
 - `scalingBound-reify`: reflection closure (reify is observationally inert).
@@ -149,8 +171,10 @@ self-description (no extra meta-axioms).
 
 ### Transformer training (formalized assumptions) — experimental
 
-For a single experimental entrypoint, see `LogOS/Packs/Agents/Experimental/Arguments/Transformer.agda`
-(it re-exports the transformer-related modules listed below).
+`LogOS/Packs/Agents/Experimental/Arguments/Transformer.agda` is now a
+lightweight marker module (kept for path stability). For theorem imports, use
+the explicit modules listed below (`TransformerBridge`,
+`TransformerFormalization`, `TransformerScalingPipeline`, etc.).
 
 `LogOS/Packs/Agents/Experimental/Arguments/TransformerScaling.agda` turns the abstract RG
 argument into a **transformer-specific** interface. Everything here is
@@ -160,13 +184,17 @@ consequences are theorems conditional on those fields (not empirical claims).
 - `TransformerTraining` (hypotheses): a predicate on codes (`IsTransformer`),
   plus an RG step and scaling dimension for the training update.
 - `transformer-scalingBound`: any RG-stable transformer policy obeys the scaling
-  bound (theorem).
+  bound (theorem in the LogOS formal system, conditional on the
+  `TransformerTraining` hypothesis record).
 - `transformer-scaling-iter`: the iterate scaling law holds for the training RG
-  step (theorem).
+  step (theorem in the LogOS formal system, conditional on the
+  `TransformerTraining` hypothesis record).
 - `transformer-scalingBound-reify`: the bound is invariant under `reify`
-  (reflection closure; theorem).
+  (reflection closure; theorem in the LogOS formal system, conditional on the
+  `TransformerTraining` hypothesis record).
 - `Public`: when `step-grade = sat`, the bound can be publicised via `Pr` using
-  an explicit FlowCode-stability witness (theorem, conditional on the witness).
+  an explicit FlowCode-stability witness (theorem in the LogOS formal system,
+  conditional on the `TransformerTraining` hypothesis record and that witness).
 
 This is as tight as the stated assumptions allow without adding
 transformer-specific axioms: the remaining work is to **instantiate** the RG
@@ -176,22 +204,71 @@ See “Pipeline proof ledger” and “Scaling literature alignment” below for
 line-by-line separation of definitions/theorems/assumptions and informal
 interpretations.
 
-### Transformer formalization (kernel-native core) — experimental
+Control-theory vocabulary for the kernel-side feedback discipline (`Flow`,
+budgeted stabilisation, `BoxAt`/`Box`): `docs/Views/ControlledFeedback.lagda.md`.
 
-`LogOS/Packs/Agents/Experimental/Arguments/TransformerFormalization.agda` provides a minimal,
-structure-level transformer interface that is still **LogOS-native**:
+“Naturalness” note (scope discipline):
+- The controlled-feedback alignment is **literal** for training dynamics here:
+  RG/training steps are defined as budgeted closure steps, and they ship with a
+  proof they stay within `Flow` at that budget.
+- It is *not* an identification of the attention forward architecture with the
+  kernel’s `Flow`. A forward block is an endomap on representations; turning it
+  into a `Flow`-style stabiliser would require choosing an information preorder
+  on representations and proving the closure laws in that order.
 
-- `TransformerCore`: tokens, sequences, parameters, and a forward pass.
-- `TrainingDynamics`: an RG step + scaling dimension, plus a parameter update
+Status note (incompleteness, explicit):
+the transformer scaling story in this repository is a **conditional theorem
+pipeline**, not a finished end-to-end derivation from “standard transformers +
+SGD + cross-entropy” as deployed in practice.
+
+Concretely, the pipeline is complete *as a template* (once you supply the
+explicit `PipelineAssumptions` fields), but incomplete as an instantiation:
+the library does not currently ship a concrete semantics that proves, for a
+real training procedure, the key assumptions such as:
+
+- `lossMonotone` and `lossOrder` (loss decreases and loss order reflects policy order),
+- `trainingDiscover` / `discoveryCover` (discovery predicate covers trained parameter codes),
+- the choice of `ResourceBudgets` and its connection to the intended “compute/data” regime split.
+
+Completion checklist (what would make it “end-to-end” for a concrete model):
+- Pick a concrete instantiation of `ControlledFeedbackCore` and `LossData`
+  (a specific parameterization, observer, dataset, and loss). A transformer
+  `forward`/`TransformerOps` package is one optional instance.
+- Provide a `TrainingSpec g` (or equivalent) that pins down the RG training step
+  and connects `trainParam` to the boundary update (`train-correct`).
+- Discharge the stability gap either by:
+  - proving the `lossMonotone`/`lossOrder` fields for your model, or
+  - supplying RG stability directly (bypassing loss-order reflection),
+    if you have an independent convergence/stability argument.
+- Connect params/tokens/compute to a `ResourceBudgets` choice and justify the
+  regime split you want to interpret (two-regime, Chinchilla-style, etc.).
+- Make the discovery predicate operational (what is being “discovered”) and
+  prove coverage (`trainingDiscover`/`discoveryCover`) for your instantiation.
+
+### Controlled feedback core (kernel-native) — experimental
+
+`LogOS/Packs/Agents/Experimental/Arguments/ControlledFeedback.agda` provides the
+minimal LogOS-native training/scaling core:
+
+- `ControlledFeedbackCore`: parameter space + policy encoding +
+  controlled-policy predicate.
+- `ControlledDynamics`: an RG step + scaling dimension, plus a parameter update
   consistent with the boundary update (`train-correct`).
-- `IsTrainedStable`: trained transformers as RG-stable policies.
-- `ConvergesToMu`: a Scott-continuity route to the canonical Kleene μ object (and hence the unfold-right inequality).
+- `IsTrainedStable`: trained controlled systems as RG-stable policies.
+- `ConvergesToMu`: a Scott-continuity route to the canonical Kleene μ object
+  (and hence the unfold-right inequality).
 - `trained-scalingBound` and `trainedMu-scalingBound`: scaling-law consequences
   derived directly from the kernel (via RGFlow + ScalingLaws).
 
-This makes the transformer story explicit without hard-coding a particular
-numerical semantics; the only assumptions are explicit record fields, and any
-claim about a specific training procedure requires instantiating those fields.
+`LogOS/Packs/Agents/Experimental/Arguments/TransformerFormalization.agda`
+remains as a compatibility layer: it keeps transformer-facing names
+(`TransformerCore`, `TrainingDynamics`) but delegates semantics to the
+controlled-feedback core.
+
+This keeps architecture-specific detail explicit without hard-coding a
+particular numerical semantics; the only assumptions are explicit record
+fields, and any claim about a specific training procedure requires
+instantiating those fields.
 
 ### Transformer bridge (structure-level semantics) — experimental
 
@@ -227,9 +304,9 @@ and the bridge theorems only use their stated coherence assumptions.
 - `TrainingSpec` + `trainingBridgeFromSpec` assemble the bridge:
   encode/code + RG training step + scaling dimension.
 
-This is the more structure-rich end of the bridge: numerical implementation
-details remain abstracted, while the structural semantics are explicit in
-record fields.
+This is now explicitly the architecture-instance layer: theorem-critical
+semantics live in `ControlledFeedback`, while transformer internals remain an
+optional structure layer.
 
 ### Transformer scaling pipeline (end-to-end) — experimental
 
@@ -238,27 +315,50 @@ proof flow into a **single LogOS-native pipeline**. It is intentionally
 explicit about which parts are definitions, theorems, and assumptions (see the
 ledger below).
 
+CI/runtime note (2026-02-09 profile):
+- `make check-all` is the CI gate and always runs as a cold full check.
+- `make check-quick` is the development loop: policy + full `*.agda` +
+  library smoke (skips docs).
+- `make check-quick-no-transformer` is the warm non-transformer loop: it skips
+  the dedicated transformer pipeline pass (`PIPELINE_SKIP=1`).
+- `scripts/check_all_agda.sh` now reports pass/module timings so the critical
+  path is visible in logs.
+- Measured runtime split:
+  - warm `make check-quick`: main `~18s`, pipeline `~35-49s`
+  - cold `make check-all`: main `314s`, pipeline `2765s`
+- Dominant cold hotspots: `TransformerKolmogorovScaling` (`867s`),
+  `TransformerScalingPipeline.Calibration` (`336s`),
+  `TransformerScalingPipeline.ExperimentalCompute` (`277s`),
+  `TransformerScalingPipeline.Examples` (`266s`),
+  `TransformerScalingPipeline.Core` (`206s`), `EmitBridge` (`196s`).
+- Interpretation: the short warm main-pass timing is expected cache behavior;
+  the pipeline pass remains mandatory and carries most cost.
+
 - `LossDynamics`: a loss‑as‑Lyapunov assumption yields RG stability and a
   scaling bound (purely kernel‑level, no transformer specifics).
 - `nextTokenLossDynamics` specializes the loss dynamics to next‑token
   cross‑entropy observables.
 - `PipelineAssumptions`: the minimal named inputs (`lossMonotone`, `lossOrder`
-  (order‑reflecting),
-  `resources`, `trainingDiscover`, `discoveryCover`) that must be supplied
+  (order‑reflecting), `resources`, `discover`, `trainingDiscover`,
+  `discoveryCover`) that must be supplied
   to run the end‑to‑end theorem; `ComputeBudget` is derived from `resources`.
-- `Pipeline`: connects transformer training (`OptimizerTraining`) to discovery
-  (`Obs.DiscoverCode`) and produces scaling bounds for discovered codes.
+- `Pipeline`: connects transformer training (`OptimizerTraining`) to an
+  explicit discovery predicate (`Discover`) and produces scaling bounds for
+  discovered codes.
 - `scalingRegimes-summary` + `scalingRegimes-theorem` package the summary in a
   single statement for the AI‑focused reader.
-- `ResourceBudgets` + `codeBudget-from-resources`/`computeDataBudget-from-resources`
-  lift **params/tokens/compute** into the regime splits (`TwoRegimeBridge`,
-  `ChinchillaBridge`).
+- `ResourceBudgets` + local `ComputeDataBudget` splitting lift
+  **params/tokens/compute** into explicit compute/data regime comparisons.
 - `policyCover` + `ChinchillaCorollary` restate the core claims in ML terms:
   discovered codes correspond to trained parameters, and compute/data regimes
   yield distinct scaling bounds.
 - `training-causes-scaling` formalizes the conditional: if the discovery
   predicate holds for trained parameters, then the corresponding scaling bound
   follows.
+- Implementation note: stability transport inside
+  `LogOS/Packs/Agents/Experimental/Arguments/TransformerScalingPipeline/Core.agda`
+  is taken from `ControlledFeedback`; transformer specifics stay behind bridge
+  records.
 - `PatternParam` + `ParametricPipeline` allow a **parameterized discovery family**
   (e.g., different budgets, observers, or pattern levels), and
   `bootstrap-discover`/`bootstrap-scaling` express the bootstrapping chain.
@@ -387,7 +487,7 @@ the proofs above.
 
 ### Hypothesis: discovery → scaling → phase transition — experimental
 
-`LogOS/Packs/Agents/Experimental/Arguments/LogOSDiscoveryScaling.agda` formalizes the claim
+`LogOS/Packs/Agents/Experimental/Arguments/DiscoveryScaling.agda` formalizes the claim
 that a *discovery predicate* can force phase-transition and scaling structure.
 Interpreting this predicate as “LogOS structure discovered during training” is a
 separate hypothesis about concrete training dynamics (not a theorem of the
@@ -397,7 +497,7 @@ library).
   structure discovered”), RG‑stability, and a scaling dimension (order
   parameter).
 - `discovery-root`: any discovered stable policy forces discovery at the least
-  RG fixed point `rg-μ` (phase transition anchor).
+  RG fixed point `rg-μ` (phase-transition interpretation anchor).
 - `PhaseTransition` + `transition-root`: if discovery ever becomes true, it is
   already true at `rg-μ`.
 - `discovery-scalingBound`: discovered codes obey the scaling bound.
@@ -406,6 +506,17 @@ Formally: under `DiscoveryAssumptions`, discovery has a canonical “root” at 
 least RG‑stable fixed point `rg-μ`, and discovered codes inherit scaling bounds.
 Externally: whether empirical transformer training satisfies the assumptions is
 an empirical/modeling question.
+
+Typechecked anchor:
+this document restates the trigger as `LogOSTriggerAlignment.trigger-at-μ` and
+`LogOSTriggerAlignment.trigger-scalingBound` (see the top Agda block), so the
+“LogOS-as-trigger” claim is pinned to concrete exported lemma names.
+
+Historical note:
+earlier revisions used the module name
+`LogOS.Packs.Agents.Experimental.Arguments.LogOSDiscoveryScaling`.
+The canonical source file is now
+`LogOS/Packs/Agents/Experimental/Arguments/DiscoveryScaling.agda`.
 
 Supporting evidence (informal, not used in proofs):
 
@@ -447,12 +558,19 @@ publicised predicates land in `Set (lsuc (lsuc ℓ))`.
 ### Transformer‑aligned Kolmogorov discovery — experimental
 
 `LogOS/Packs/Agents/Experimental/Arguments/TransformerKolmogorovScaling.agda` ties the
-Kolmogorov/Kt discovery predicate directly to the transformer training bridge:
+Kolmogorov/Kt scaling structure to the transformer training bridge:
 
-- `UniversalIRCompile` + `CodeBudget` define size + budget for codes via the
-  UniversalIR backend (so complexity is comparable across implementations).
+- `UniversalIRCompile` + `CodeBudget` define decode‑extensional size + budget
+  for codes (implementation-agnostic, so complexity remains representation-safe).
 - `KtOptimalLoss` expresses optimality **relative to the training observable**
   (loss), matching actual transformer training semantics.
+- `Obs.ResidualBoundary` introduces a residual map `ρ : Dec → Resid`.
+- `Obs.DiscoverCode` is now a lift of a residual predicate:
+  discovery depends on `ρ (decode γ)`, not on full representation internals.
+- `Obs.discover-residual` gives **partial representation independence**:
+  equal residual boundary implies equal discovery status.
+- `KolmogorovBridge` now carries a `discovery : Obs.ResidualDiscovery ...`
+  witness (residual map + residual predicate + reify invariance).
 - `KolmogorovBridge` packages a transformer `TrainingSpec` with the loss
   observable and a stability assumption, yielding the same scaling bound as in
   the abstract discovery theory.
@@ -467,7 +585,7 @@ Kolmogorov/Kt discovery predicate directly to the transformer training bridge:
 
 `LogOS/QAdapters/QNatMul.agda` supplies a specific multiplicative scale
 (`QNatMul`): scale composition is `mul`, time is mapped by exponentiation (`exp₂`),
-and `pow` makes the scaling exponent explicit at the quantale level.
+and `pow` makes the scaling exponent explicit at the prequantale level.
 
 This is a direct “theory → instantiation” link: the discovery predicate is
 still self‑referentially publicisable, but its observable is the chosen loss
@@ -561,7 +679,7 @@ admit instantiations:
 
 - **Grade-bounded updates:** in graded kernels, the step-grade or a chosen scale
   element can be read as a stability budget; `ClosureStepAt` composes by
-  quantale multiplication, so the budget is tracked explicitly.
+  prequantale multiplication, so the budget is tracked explicitly.
 - **Flow-clipping analogy:** `id ≤ update ≤ Flow` gives a monotone envelope for
   updates; this can be read as analogous to clipping or proximal updates.
 - **Information bottleneck:** use `MeasurementCapacity` and DPI to cap the

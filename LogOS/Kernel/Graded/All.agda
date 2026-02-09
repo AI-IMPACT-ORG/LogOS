@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,10 +15,12 @@ module LogOS.Kernel.Graded.All where
 -- explicitly (or via a pack/model entrypoint).
 
 open import LogOS.Kernel.Graded public
-open import LogOS.Kernel.Graded.Boundary public
-open import LogOS.Kernel.Graded.ToKernel public
+open import LogOS.Kernel.FromGradedKernel public
 open import LogOS.Kernel.Graded.Endo public
 open import LogOS.Kernel.Graded.Infinite public
 open import LogOS.Kernel.Graded.Hom public
 open import LogOS.Kernel.Graded.Hom2Cat public
 open import LogOS.Kernel.Graded.Reachability public
+
+import LogOS.Kernel.Graded.Tiers as Tiersₜ
+module Tiers = Tiersₜ

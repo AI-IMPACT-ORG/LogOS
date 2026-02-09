@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -18,13 +18,13 @@ module docs.Views.CategoricalLogic where
 open import LogOS.Prelude public
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Kernel using (Kernel)
-import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheorems
+import LogOS.API.Views as Views
+open Views.Kernels using (Kernel)
 
 module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   (K : Kernel Sig Q)
   where
-  module V = ViewTheorems.For K
+  module V = Views.ViewTheorems.For K
   open V.CategoricalLogic public
 
   private
@@ -43,8 +43,8 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     KernelCategory-exists : _
     KernelCategory-exists = KernelCategory
 
-    quantale-exists : _
-    quantale-exists = quantale
+    prequantale-exists : _
+    prequantale-exists = prequantale
 
     conAlg-exists : _
     conAlg-exists = conAlg
@@ -90,13 +90,17 @@ Dictionary (literature ↔ LogOS)
 | Literature concept | LogOS identifier(s) | Notes |
 |---|---|---|
 | Preorder as a thin category | `ConPreorder` (`LogOS/Minimal/Con.agda`) | “Category laws” are ops-level unless you assume proof-irrelevance. |
+| Two-level preorder (carrier + relation universes) | `RelPreorder` (`LogOS/Minimal/RelPreorder.agda`) | Used when observational relations live in a larger universe than their carriers. |
 | Monoidal structure on a preorder (ops vs laws) | `MonoidalOps` / `MonoidalLaws` (`LogOS/Minimal/Adjunction.agda`) | Ops are always available; laws are opt-in. |
 | (Lax) adjunction / Galois connection | `LaxAdjunction`, `GaloisConnection` (`LogOS/Minimal/Adjunction.agda`) | Kernel uses the lax (inequality) form by default. |
 | Frobenius reciprocity (lax) | `Frobenius.frobenius-ext≤` (`LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda`) | One-way inequality; avoids collapsing irreversible structure. |
 | Beck–Chevalley (lax) | `LogOS/Theorems/CategoryTheory/BeckChevalley.agda` | Presented as commutation squares up to refinement. |
-| Kernel morphisms as 1-cells, refinement as 2-cells | `LogOS/Kernel/Hom2Cat.agda`, `LogOS/Kernel/Graded/Hom2Cat.agda`, `LogOS/Kernel/LogicKernel/Hom2Cat.agda`, `LogOS/Theorems/CategoryTheory/Kernel2Cat.agda` | Locally preordered 2-category interface. |
+| Kernel morphisms as 1-cells, refinement as 2-cells | `LogOS/Kernel/Hom2Cat.agda`, `LogOS/Kernel/Graded/Hom2Cat.agda` (`KernelRelThin2Cat` / `GradedKernelRelThin2Cat`), `LogOS/Theorems/CategoryTheory/Kernel2Cat.agda` | Locally preordered 2-category interface (canonical instance does not rely on carrier-level lifting). |
 | Ports/adapters as a 2-category | `LogOS/Theorems/CategoryTheory/Port2Cat.agda` | “Presentation independence” is expressed as 2-cells (satisfaction equivalences `↔`). |
-| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete) + time map. |
+| Presentations as a thin 2-category | `LogOS/Ports/Semantic/Presentation2Cat.agda`, `LogOS/Theorems/CategoryTheory/Presentation2Ref2Cat.agda` | Kernel-independent: fixed satisfaction system, translations as 1-cells, refinement on meaning as 2-cells. |
+| Processes as a thin 2-category | `LogOS/Computation/Process2Cat.agda`, `LogOS/Theorems/CategoryTheory/Process2Ref2Cat.agda` | Lax process morphisms as 1-cells, pointwise refinement of maps as 2-cells. |
+| ωCPO maps as a thin 2-category | `LogOS/Theorems/Boundary/OmegaCPOMap2Cat.agda`, `LogOS/Theorems/CategoryTheory/OmegaCPO2Cat.agda` | “Domain-theory glue” packaged as 2-categorical bookkeeping (no new axioms). |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital prequantale in the finite-join sense (not complete) + time map. |
 
 Core definitions (literature style)
 -----------------------------------
@@ -139,10 +143,14 @@ What is novel here (residual vs the literature)
 Theorem spine (authoritative)
 -----------------------------
 - `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `CategoricalLogic`):
-  `CodeThinCat`, `BoxFunctor`, `Kernel2Cat`, `Port2Cat`, `KernelCategory`, `quantale`, `conAlg`.
+  `CodeThinCat`, `BoxFunctor`, `Kernel2Cat`, `Port2Cat`, `KernelCategory`, `prequantale`, `conAlg`.
 - Projection certificate:
   `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `Projections`),
   `projection`.
+- Additional 2-categorical packaging (kernel-independent bookkeeping, not specific to the CHL view):
+  - thin 2-categories: `LogOS/Minimal/RelThin2Cat.agda` (general) and `LogOS/Minimal/Thin2Cat.agda` (same-universe specialization)
+  - refinement-2-category wrapper core: `LogOS/Theorems/CategoryTheory/WrapperCore.agda` (`RelThin2Cat→Ref2CatCore` and `Thin2Cat→Ref2CatCore`)
+  - presentations, processes, ωCPO maps: the modules listed in the dictionary above.
 
 The prose below is explanatory; the statements above are the authoritative claims.
 

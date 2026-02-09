@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,15 +12,16 @@ module LogOS.Theorems.Meta.Safety.AvoidanceList where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop using (_↔_; ¬_; ⊥; ⊥-elim)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
-open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 
 open import LogOS.Theorems.Meta.Base using (DeciderC; NonTrivialC)
-open import LogOS.Theorems.Meta.Assumptions.Core as Core
+open import LogOS.Theorems.Meta.ConditionalPacks as Core
+import LogOS.Theorems.Meta.Assumptions.Core as Assump
 open import LogOS.Theorems.Meta.Assumptions.Diagonal as Diag
 import LogOS.Theorems.Meta.Lob as Lob
 import LogOS.Theorems.Meta.Godel as Godel
@@ -198,7 +199,7 @@ record UnrestrictedFixpoint {ℓ : Level}
                             (K  : Kernel Sig Q)
                             : Set (lsuc ℓ) where
   field
-    Fix : Core.BoundaryFix K
+    Fix : Assump.BoundaryFix K
 
 -- ---------------------------------------------------------------------------
 -- Explosion gate (ex-falso).

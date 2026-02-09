@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -13,15 +13,18 @@ module docs.Applications.Opacity where
 -- Sync guard: these imports anchor the module paths this document references.
 -- If they drift, the docs build fails.
 import LogOS.Packs.Opacity.Experimental.Surface
+import LogOS.Packs.Opacity.Experimental.Core as OpCore
 
 -- Identifier sync guards (claim-heavy): these names are referenced in the prose.
 import LogOS.Packs.Opacity.Experimental.Applications.GRH as GRHApp
 open GRHApp.Guarded using (GRH; mkPack)
-open import LogOS.Packs.Opacity.Experimental.Core using (VacuityGuards)
-open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
-open import LogOS.Theorems.Meta.LimitPublicisation using (TruthK→Pr)
-open import LogOS.Theorems.Meta.SpectralSeparationOutput using (separation-output-not-total)
-open import LogOS.Theorems.Meta.BudgetedSeparationOutput using (budgeted-diagonal-witness)
+open import LogOS.Packs.Opacity.Experimental.Core using
+  ( VacuityGuards
+  ; GRH_Without_Vacuity_Guards
+  ; TruthK→Pr
+  ; separation-output-not-total
+  ; budgeted-diagonal-witness
+  )
 ```
 
 This note is the single, publication-facing entrypoint for the **opacity / observability**
@@ -205,23 +208,20 @@ Graded-kernel note: the same story can be instantiated with *non-ℕ* budgets.
 Both meta modules now include generalized forms where budgets live in an abstract
 carrier `B` with an order. In particular, when working with `GradedKernel`, you
 can take `B` to be `QAdapter.Scale Q` and the budget order to be `_≤s_`, so
-“observable within budget” aligns with the kernel’s quantale-grade resource model.
-Because `Scale` is a (finite‑join) quantale, you can also combine budget policies
+“observable within budget” aligns with the kernel’s prequantale-grade resource model.
+Because `Scale` is a (finite‑join) prequantale, you can also combine budget policies
 via `_⊔s_` (more allowance) and model sequential composition via `_·_`.
 
 ### Recommended Scale instantiation (typechecked snippet)
 
-For any kernel `K : Kernel Sig Q`, the canonical budget carrier is the quantale
+For any kernel `K : Kernel Sig Q`, the canonical budget carrier is the prequantale
 scale `QAdapter.Scale Q` with its order `_≤s_` (and in graded settings this is
 the same carrier used for grades):
 
 ```agda
 module Budgeted-Scale-Snippet where
-  open import LogOS.Prelude
-  open import LogOS.Base.Signature using (LogOSSignature)
-  open import LogOS.Minimal.Adapter using (QAdapter)
-  open import LogOS.Kernel using (Kernel)
-  import LogOS.Theorems.Meta.SpectralSeparationOutput as SSO
+  open import LogOS.API.Minimal using (Level; LogOSSignature; QAdapter; Kernel)
+  module SSO = OpCore.SpectralSeparationOutput
 
   module _
     {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -231,7 +231,7 @@ module Budgeted-Scale-Snippet where
     open QAdapter Q
     module GB = SSO.GeneralB O
 
-    -- Budgets/witness costs in the quantale scale (no decidability required):
+    -- Budgets/witness costs in the prequantale scale (no decidability required):
     module _ (CB : GB.WitnessCostB Scale) where
       module G = GB.General Scale _≤s_ CB
 ```

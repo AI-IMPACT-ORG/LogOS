@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -55,3 +55,16 @@ When adding new operations or types that have both bulk and boundary variants:
 1. Use the base name for the bulk version
 2. Add `∂` suffix for the boundary version
 3. Maintain consistency with existing naming
+
+## Equality And Refinement Vocabulary
+
+- `⊑`: refinement/order direction (primary kernel relation)
+- `≈`: mutual refinement (`a ⊑ b` and `b ⊑ a`)
+- `≡`: strict propositional equality (use only in strict/law-strengthened layers)
+- `≃`: legacy alias surface; prefer `≈` or `≡` explicitly
+
+### Context Relation Policy
+
+- `≤ctx` is a context relation in `WorldH` by default.
+- Preorder laws for `≤ctx` are supplied separately through
+  `LogOS.Minimal.WorldLaws.For.CtxPreorder`.

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,19 +16,19 @@ module LogOS.Ports.Semantic.SatMor where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
 
+open import LogOS.Ports.Semantic.PresentationCore using (SatSystem; satSystem)
+
 -- Convenience aliases for the ubiquitous "no-context" refinements.
 Ctx₀ : Set
 Ctx₀ = ⊤ {ℓ = lzero}
 
 record SatMor
   {ℓCtx₁ ℓCon₁ ℓSat₁ ℓCtx₂ ℓCon₂ ℓSat₂ : Level}
-  (Ctx₁ : Set ℓCtx₁)
-  (Con₁ : Set ℓCon₁)
-  (Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁)
-  (Ctx₂ : Set ℓCtx₂)
-  (Con₂ : Set ℓCon₂)
-  (Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂)
+  (S₁ : SatSystem {ℓCtx = ℓCtx₁} {ℓCon = ℓCon₁} {ℓSat = ℓSat₁})
+  (S₂ : SatSystem {ℓCtx = ℓCtx₂} {ℓCon = ℓCon₂} {ℓSat = ℓSat₂})
   : Set (lsuc (ℓCtx₁ ⊔ ℓCon₁ ⊔ ℓSat₁ ⊔ ℓCtx₂ ⊔ ℓCon₂ ⊔ ℓSat₂)) where
+  open SatSystem S₁ renaming (Ctx to Ctx₁; Con to Con₁; Sat to Sat₁)
+  open SatSystem S₂ renaming (Ctx to Ctx₂; Con to Con₂; Sat to Sat₂)
   field
     mapCtx : Ctx₁ → Ctx₂
     mapCon : Con₁ → Con₂
@@ -48,26 +48,71 @@ record SatMor
   Sat₂↑ : Ctx₁ → Con₂ → Set ℓSat₂
   Sat₂↑ p c = Sat₂ (mapCtx p) c
 
+  private
+    S₂↑ : SatSystem {ℓCtx = ℓCtx₁} {ℓCon = ℓCon₂} {ℓSat = ℓSat₂}
+    S₂↑ = satSystem Ctx₁ Con₂ Sat₂↑
+
+  -- Induced observational relations (keep names explicit at call sites).
+  ObsEq₁ : Con₁ → Con₁ → Set (ℓCtx₁ ⊔ ℓSat₁)
+  ObsEq₁ = SatSystem.ObsEq S₁
+
+  ObsLe₁ : Con₁ → Con₁ → Set (ℓCtx₁ ⊔ ℓSat₁)
+  ObsLe₁ = SatSystem.ObsLe S₁
+
+  Obs≈₁ : Con₁ → Con₁ → Set (ℓCtx₁ ⊔ ℓSat₁)
+  Obs≈₁ = SatSystem.Obs≈ S₁
+
+  ObsEq₁↔Obs≈₁ : ∀ {c d} → ObsEq₁ c d ↔ Obs≈₁ c d
+  ObsEq₁↔Obs≈₁ {c} {d} = SatSystem.ObsEq↔Obs≈ S₁ {x = c} {y = d}
+
+  ObsEq₂↑ : Con₂ → Con₂ → Set (ℓCtx₁ ⊔ ℓSat₂)
+  ObsEq₂↑ = Prop.ObsEqOn Sat₂↑
+
+  ObsLe₂↑ : Con₂ → Con₂ → Set (ℓCtx₁ ⊔ ℓSat₂)
+  ObsLe₂↑ = Prop.ObsLeOn Sat₂↑
+
+  Obs≈₂↑ : Con₂ → Con₂ → Set (ℓCtx₁ ⊔ ℓSat₂)
+  Obs≈₂↑ = SatSystem.Obs≈ S₂↑
+
+  ObsEq₂↑↔Obs≈₂↑ : ∀ {c d} → ObsEq₂↑ c d ↔ Obs≈₂↑ c d
+  ObsEq₂↑↔Obs≈₂↑ {c} {d} = SatSystem.ObsEq↔Obs≈ S₂↑ {x = c} {y = d}
+
   -- `mapCon` respects the observational equality induced by satisfaction,
   -- relative to the pulled-back target observers.
   mapCon-respects-ObsEq
     : ∀ {c d}
-    → Prop.ObsEqOn Sat₁ c d
-    → Prop.ObsEqOn Sat₂↑ (mapCon c) (mapCon d)
+    → ObsEq₁ c d
+    → ObsEq₂↑ (mapCon c) (mapCon d)
   mapCon-respects-ObsEq {c} {d} eq p =
     Prop.↔-trans
       (Prop.↔-sym (sat-↔ p c))
       (Prop.↔-trans (eq p) (sat-↔ p d))
 
+  -- Derived: `mapCon` also respects mutual refinement (the canonical `≈`-shaped form).
+  mapCon-respects-Obs≈
+    : ∀ {c d}
+    → Obs≈₁ c d
+    → Obs≈₂↑ (mapCon c) (mapCon d)
+  mapCon-respects-Obs≈ {c} {d} eq≈ =
+    Prop.to ObsEq₂↑↔Obs≈₂↑
+      (mapCon-respects-ObsEq (Prop.from ObsEq₁↔Obs≈₁ eq≈))
+
+  -- `mapCon` preserves the observational preorder (soundness direction) after
+  -- pulling back the target satisfaction along `mapCtx`.
+  mapCon-preserves-ObsLe
+    : ∀ {c d}
+    → ObsLe₁ c d
+    → ObsLe₂↑ (mapCon c) (mapCon d)
+  mapCon-preserves-ObsLe {c} {d} le p sat₂ =
+    sat→ p d (le p (sat← p c sat₂))
+
 record SatHom
   {ℓCtx₁ ℓCon₁ ℓSat₁ ℓCtx₂ ℓCon₂ ℓSat₂ : Level}
-  (Ctx₁ : Set ℓCtx₁)
-  (Con₁ : Set ℓCon₁)
-  (Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁)
-  (Ctx₂ : Set ℓCtx₂)
-  (Con₂ : Set ℓCon₂)
-  (Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂)
+  (S₁ : SatSystem {ℓCtx = ℓCtx₁} {ℓCon = ℓCon₁} {ℓSat = ℓSat₁})
+  (S₂ : SatSystem {ℓCtx = ℓCtx₂} {ℓCon = ℓCon₂} {ℓSat = ℓSat₂})
   : Set (lsuc (ℓCtx₁ ⊔ ℓCon₁ ⊔ ℓSat₁ ⊔ ℓCtx₂ ⊔ ℓCon₂ ⊔ ℓSat₂)) where
+  open SatSystem S₁ renaming (Ctx to Ctx₁; Con to Con₁; Sat to Sat₁)
+  open SatSystem S₂ renaming (Ctx to Ctx₂; Con to Con₂; Sat to Sat₂)
   field
     mapCtx : Ctx₁ → Ctx₂
     mapCon : Con₁ → Con₂
@@ -111,7 +156,8 @@ satHom-fromSatRefinement
     {Sat₁ : Ctx → Con → Set ℓSat₁}
     {Sat₂ : Ctx → Con → Set ℓSat₂}
   → SatRefinement Ctx Con Sat₁ Sat₂
-  → SatHom Ctx Con Sat₁ Ctx Con Sat₂
+  → SatHom (satSystem Ctx Con Sat₁)
+           (satSystem Ctx Con Sat₂)
 satHom-fromSatRefinement r =
   record
     { mapCtx = λ x → x
@@ -124,7 +170,8 @@ pullbackSatRefinement
     {Ctx₁ : Set ℓCtx₁} {Con₁ : Set ℓCon₁} {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
     {Ctx₂ : Set ℓCtx₂} {Con₂ : Set ℓCon₂} {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
     {Sat₂′ : Ctx₂ → Con₂ → Set ℓSat₂′}
-  → (m : SatHom Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
+  → (m : SatHom (satSystem Ctx₁ Con₁ Sat₁)
+                (satSystem Ctx₂ Con₂ Sat₂))
   → SatRefinement Ctx₂ Con₂ Sat₂ Sat₂′
   → SatRefinement Ctx₁ Con₁ Sat₁ (λ p c → Sat₂′ (SatHom.mapCtx m p) (SatHom.mapCon m c))
 pullbackSatRefinement m r =
@@ -164,8 +211,10 @@ satHom-fromSatMor
   : ∀ {ℓCtx₁ ℓCon₁ ℓSat₁ ℓCtx₂ ℓCon₂ ℓSat₂}
     {Ctx₁ : Set ℓCtx₁} {Con₁ : Set ℓCon₁} {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
     {Ctx₂ : Set ℓCtx₂} {Con₂ : Set ℓCon₂} {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
-  → SatMor Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂
-  → SatHom Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂
+  → SatMor (satSystem Ctx₁ Con₁ Sat₁)
+           (satSystem Ctx₂ Con₂ Sat₂)
+  → SatHom (satSystem Ctx₁ Con₁ Sat₁)
+           (satSystem Ctx₂ Con₂ Sat₂)
 satHom-fromSatMor m =
   record
     { mapCtx = SatMor.mapCtx m
@@ -178,8 +227,20 @@ idSatMor
     {Ctx : Set ℓCtx}
     {Con : Set ℓCon}
     (Sat : Ctx → Con → Set ℓSat)
-  → SatMor Ctx Con Sat Ctx Con Sat
+  → SatMor (satSystem Ctx Con Sat)
+           (satSystem Ctx Con Sat)
 idSatMor Sat =
+  record
+    { mapCtx = λ x → x
+    ; mapCon = λ x → x
+    ; sat-↔  = λ _ _ → Prop.↔-refl
+    }
+
+idSatMorS
+  : ∀ {ℓCtx ℓCon ℓSat : Level}
+    {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
+  → SatMor S S
+idSatMorS =
   record
     { mapCtx = λ x → x
     ; mapCon = λ x → x
@@ -191,8 +252,20 @@ idSatHom
     {Ctx : Set ℓCtx}
     {Con : Set ℓCon}
     (Sat : Ctx → Con → Set ℓSat)
-  → SatHom Ctx Con Sat Ctx Con Sat
+  → SatHom (satSystem Ctx Con Sat)
+           (satSystem Ctx Con Sat)
 idSatHom Sat =
+  record
+    { mapCtx = λ x → x
+    ; mapCon = λ x → x
+    ; sat-→  = λ _ _ sat → sat
+    }
+
+idSatHomS
+  : ∀ {ℓCtx ℓCon ℓSat : Level}
+    {S : SatSystem {ℓCtx = ℓCtx} {ℓCon = ℓCon} {ℓSat = ℓSat}}
+  → SatHom S S
+idSatHomS =
   record
     { mapCtx = λ x → x
     ; mapCon = λ x → x
@@ -201,12 +274,12 @@ idSatHom Sat =
 
 composeSatMor
   : ∀ {ℓCtx₁ ℓCon₁ ℓSat₁ ℓCtx₂ ℓCon₂ ℓSat₂ ℓCtx₃ ℓCon₃ ℓSat₃ : Level}
-    {Ctx₁ : Set ℓCtx₁} {Con₁ : Set ℓCon₁} {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
-    {Ctx₂ : Set ℓCtx₂} {Con₂ : Set ℓCon₂} {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
-    {Ctx₃ : Set ℓCtx₃} {Con₃ : Set ℓCon₃} {Sat₃ : Ctx₃ → Con₃ → Set ℓSat₃}
-  → SatMor Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂
-  → SatMor Ctx₂ Con₂ Sat₂ Ctx₃ Con₃ Sat₃
-  → SatMor Ctx₁ Con₁ Sat₁ Ctx₃ Con₃ Sat₃
+    {S₁ : SatSystem {ℓCtx = ℓCtx₁} {ℓCon = ℓCon₁} {ℓSat = ℓSat₁}}
+    {S₂ : SatSystem {ℓCtx = ℓCtx₂} {ℓCon = ℓCon₂} {ℓSat = ℓSat₂}}
+    {S₃ : SatSystem {ℓCtx = ℓCtx₃} {ℓCon = ℓCon₃} {ℓSat = ℓSat₃}}
+  → SatMor S₁ S₂
+  → SatMor S₂ S₃
+  → SatMor S₁ S₃
 composeSatMor m₁ m₂ =
   record
     { mapCtx = λ p → SatMor.mapCtx m₂ (SatMor.mapCtx m₁ p)
@@ -219,12 +292,12 @@ composeSatMor m₁ m₂ =
 
 composeSatHom
   : ∀ {ℓCtx₁ ℓCon₁ ℓSat₁ ℓCtx₂ ℓCon₂ ℓSat₂ ℓCtx₃ ℓCon₃ ℓSat₃ : Level}
-    {Ctx₁ : Set ℓCtx₁} {Con₁ : Set ℓCon₁} {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
-    {Ctx₂ : Set ℓCtx₂} {Con₂ : Set ℓCon₂} {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
-    {Ctx₃ : Set ℓCtx₃} {Con₃ : Set ℓCon₃} {Sat₃ : Ctx₃ → Con₃ → Set ℓSat₃}
-  → SatHom Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂
-  → SatHom Ctx₂ Con₂ Sat₂ Ctx₃ Con₃ Sat₃
-  → SatHom Ctx₁ Con₁ Sat₁ Ctx₃ Con₃ Sat₃
+    {S₁ : SatSystem {ℓCtx = ℓCtx₁} {ℓCon = ℓCon₁} {ℓSat = ℓSat₁}}
+    {S₂ : SatSystem {ℓCtx = ℓCtx₂} {ℓCon = ℓCon₂} {ℓSat = ℓSat₂}}
+    {S₃ : SatSystem {ℓCtx = ℓCtx₃} {ℓCon = ℓCon₃} {ℓSat = ℓSat₃}}
+  → SatHom S₁ S₂
+  → SatHom S₂ S₃
+  → SatHom S₁ S₃
 composeSatHom m₁ m₂ =
   record
     { mapCtx = λ p → SatHom.mapCtx m₂ (SatHom.mapCtx m₁ p)

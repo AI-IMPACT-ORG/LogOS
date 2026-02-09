@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -27,8 +27,11 @@ module For
     using
       ( KernelThin2Cat
       ; KernelThin2CatLaws
+      ; KernelRelThin2Cat
+      ; KernelRelThin2CatLaws
       ; KernelHom₁
       ; KernelHomPreorder
+      ; KernelHomRelPreorder
       ; idKernelHom₁
       ; _∘₁_
       ; _⇒_
@@ -58,19 +61,8 @@ module For
   -- Wrapper-core 2-category interface instance.
   KernelRef2Cat : Wrap.Ref2Cat Sig Q
   KernelRef2Cat =
-    record
-      { Obj = Kernel Sig Q
-      ; Hom = KernelHom₁
-      ; _∘_ = λ g f → _∘₁_ g f
-      ; id  = λ {A} → idKernelHom₁ A
-      ; _⇒_ = _⇒_
-      ; id⇒ = λ {A} {B} f → refl⇒ f
-      ; _∙_ = λ {A} {B} {f} {g} {h} fg gh →
-                trans⇒ {f = f} {g = g} {h = h} fg gh
-      ; whiskerL = λ {A} {B} {C} g {f} {f'} ff' →
-                     whiskerL {K₁ = A} {K₂ = B} {K₃ = C} g {f = f} {f' = f'} ff'
-      ; whiskerR = λ {A} {B} {C} {g} {g'} f gg' →
-                     whiskerR {K₁ = A} {K₂ = B} {K₃ = C} {g = g} {g' = g'} f gg'
-      ; _⊙_ = λ {A} {B} {C} {f} {f'} {g} {g'} ff' gg' →
-               _⊙_ {K₁ = A} {K₂ = B} {K₃ = C} {f = f} {f' = f'} {g = g} {g' = g'} ff' gg'
-      }
+    Wrap.RelThin2Cat→Ref2CatCore
+      {ℓObj = lsuc (lsuc ℓ)}
+      {ℓHom = lsuc (lsuc ℓ)}
+      {ℓ₂ = ℓ}
+      (KernelRelThin2Cat {ℓ = ℓ} {Sig = Sig} {Q = Q})

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,11 +11,11 @@ module LogOS.Theorems.Boundary.Graded.Guarded where
 -- guard naturality under graded kernel homomorphisms.
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude using (_×_; _,_; fst; snd)
 
 open import LogOS.Kernel.Graded
 open import LogOS.Kernel.Graded.Hom
-open import LogOS.Algebra.ConAlg
+open import LogOS.Minimal.ConAlg
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Base.Signature
@@ -51,10 +51,11 @@ decode-mapCode-γ*≤Th* {Sig = Sig} {Q = Q} K₁ K₂ h ht =
 -- Variant: derive `GradedKernelHomFlowStable` from step preservation using μ-fusion
 -- at the saturation grade.
 
-module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-         (K₁ K₂ : GradedKernel Sig Q)
-         (h : GradedKernelHom K₁ K₂)
-         where
+module ForHom
+  {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  (K₁ K₂ : GradedKernel Sig Q)
+  (h : GradedKernelHom K₁ K₂)
+  where
   private
     module GT = Truth.GuardedCore {ℓ = ℓ}
 
@@ -64,11 +65,6 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     CP₂ : ConPreorder ℓ
     CP₂ = BulkBoundary.bnd (GradedKernel.BB K₂)
 
-    map∂ : ConPreorder.Con CP₁ → ConPreorder.Con CP₂
-    map∂ = ConAlgHom≡.map∂ (GradedKernelHom.con-hom h)
-
-    module MF = MuFusion.For CP₁ CP₂
-
     GC₁sat : GT.GuardedClosure CP₁
     GC₁sat = GT.forgetGradedClosure (GradedKernel.GTruth K₁)
 
@@ -77,14 +73,10 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
   decode-mapCode-γ*≤Th*-fromFlow
     : (hf : GradedKernelHomFlow K₁ K₂ h)
-      (ω₁ : GT.OmegaCPO CP₁)
-      (ω₂ : GT.OmegaCPO CP₂)
-      (M  : MF.OmegaCPOMap ω₁ ω₂ map∂)
-      (FF₁ : GT.FiniteFirst CP₁ GC₁sat ω₁)
-      (FF₂ : GT.FiniteFirst CP₂ GC₂sat ω₂)
+    → MuFusion.GradedKernel.GradedKernelHomStabilisationAssumptions {K₁ = K₁} {K₂ = K₂} {h = h}
     → ConPreorder._⊑_ CP₂
         (GradedKernel.decode K₂ (GradedKernelHom.mapCode h (GradedKernel.γ* K₁)))
         (GradedClosure.Th* (GradedKernel.GTruth K₂))
-  decode-mapCode-γ*≤Th*-fromFlow hf ω₁ ω₂ M FF₁ FF₂ =
+  decode-mapCode-γ*≤Th*-fromFlow hf A =
     decode-mapCode-γ*≤Th* K₁ K₂ h
-      (MuFusion.GradedKernel.gradedKernelHomFlowStable-from hf ω₁ ω₂ M FF₁ FF₂)
+      (MuFusion.GradedKernel.gradedKernelHomFlowStable-from hf A)

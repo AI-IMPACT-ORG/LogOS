@@ -1,4 +1,4 @@
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -14,6 +14,7 @@ __pycache__/
 
 # Generated code artifacts
 transformer_tf.py
+scripts/emit_transformer_tf.sh
 LogOS/Packs/Agents/Experimental/Emit/Backends/TensorFlow/output/
 
 # Agda build artifacts / caches
@@ -31,6 +32,9 @@ MAlonzo/
 *.hi
 *.dyn_o
 *.dyn_hi
+
+# Tooling artifacts
+.github/cabal-index-state.txt
 
 # LaTeX build artifacts (paper sources are tracked; outputs are ignored)
 docs/Paper/

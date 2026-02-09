@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -21,10 +21,22 @@ import LogOS.Domain.Opacity.TruthSeparation as TruthSeparationₜ
 import LogOS.Domain.Opacity.TruthSeparationForcing as TruthSeparationForcingₜ
 import LogOS.Domain.Opacity.LogicLanglands as LogicLanglandsₜ
 
-import LogOS.Domain.Opacity.Applications.All as Applicationsₜ
-import LogOS.Domain.Opacity.NumberTheory.All as NumberTheoryₜ
+import LogOS.Domain.Opacity.Applications.GRH as GRHₜ
 
-module Core = Coreₜ
+import LogOS.Domain.Opacity.NumberTheory.HP.Interface as HPInterfaceₜ
+import LogOS.Domain.Opacity.NumberTheory.HP.Flow as HPFlowₜ
+import LogOS.Domain.Opacity.NumberTheory.HP.Opacity as HPOpacityₜ
+
+import LogOS.Domain.Opacity.NumberTheory.LFunction.Core as LFunctionCoreₜ
+import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann as LFunctionRiemannₜ
+import LogOS.Domain.Opacity.NumberTheory.LFunction.RiemannFacts as LFunctionRiemannFactsₜ
+import LogOS.Domain.Opacity.NumberTheory.LFunction.Selberg as LFunctionSelbergₜ
+import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack as LFunctionZerosPackₜ
+import LogOS.Domain.Opacity.NumberTheory.LFunction.RegulatedPartition as LFunctionRegulatedPartitionₜ
+import LogOS.Domain.Opacity.NumberTheory.LFunction.PartitionZetaBridge as LFunctionPartitionZetaBridgeₜ
+import LogOS.Domain.Opacity.NumberTheory.LFunction.DiagonalTX as LFunctionDiagonalTXₜ
+
+module OpacityCore = Coreₜ
 module Meaningfulness = Meaningfulnessₜ
 module GRHLedger = GRHLedgerₜ
 module GRH_Vacuity_Guards = GRH_Vacuity_Guardsₜ
@@ -36,5 +48,21 @@ module TruthSeparation = TruthSeparationₜ
 module TruthSeparationForcing = TruthSeparationForcingₜ
 module LogicLanglands = LogicLanglandsₜ
 
-module Applications = Applicationsₜ
-module NumberTheory = NumberTheoryₜ
+module Applications where
+  module GRH = GRHₜ
+
+module NumberTheory where
+  module HP where
+    module Interface = HPInterfaceₜ
+    module Flow = HPFlowₜ
+    module Opacity = HPOpacityₜ
+
+  module LFunction where
+    module Core = LFunctionCoreₜ
+    module Riemann = LFunctionRiemannₜ
+    module RiemannFacts = LFunctionRiemannFactsₜ
+    module Selberg = LFunctionSelbergₜ
+    module ZerosPack = LFunctionZerosPackₜ
+    module RegulatedPartition = LFunctionRegulatedPartitionₜ
+    module PartitionZetaBridge = LFunctionPartitionZetaBridgeₜ
+    module DiagonalTX = LFunctionDiagonalTXₜ

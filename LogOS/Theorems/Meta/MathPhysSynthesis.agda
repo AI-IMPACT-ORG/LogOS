@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Theorems.Meta.MathPhysSynthesis where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
-open import LogOS.Prelude.Product using (Σ; _,_; _×_; proj₁; proj₂)
+open import LogOS.Prelude using (Σ; _,_; _×_; proj₁; proj₂)
 open import LogOS.Prelude.NatOrder using (_≤ℕ_)
 
 open import LogOS.Base.Signature
@@ -24,6 +24,9 @@ open import LogOS.Kernel.Graded as GK using (GradedKernel)
 
 import LogOS.Theorems.Meta.Assumptions.Diagonal as Diag
 import LogOS.Theorems.Meta.ObserverCore as ObsCore
+
+-- Assumption ledger: this module depends on the diagonalisation axiom pack.
+module Assumptions = Diag
 
 -- ============================================================================
 -- MathPhysSynthesis
@@ -118,7 +121,7 @@ record MathPhysSynthesis {ℓCode ℓDec ℓT : Level}
                          (TruthK : Code → Set ℓT)
                          : Set (lsuc (ℓCode ⊔ ℓDec ⊔ ℓT)) where
   field
-    diagonal : Diag.TruthDiagonalC Code TruthK
+    diagonal : Assumptions.TruthDiagonalC Code TruthK
 
   open Observer Code Dec decode step TruthK public
 
@@ -128,14 +131,14 @@ fromKernel
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
     (TruthK : Kernel.Code K → Set ℓ)
-  → Diag.TruthDiagonal K TruthK
+  → Assumptions.TruthDiagonal K TruthK
   → MathPhysSynthesis (Kernel.Code K)
                       (ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
                       (Kernel.decode K)
                       (FlowCode K)
                       TruthK
 fromKernel K TruthK TD =
-  record { diagonal = Diag.TruthDiagonal→TruthDiagonalC TruthK TD }
+  record { diagonal = Assumptions.TruthDiagonal→TruthDiagonalC TruthK TD }
 
 -- Kernel instance helper (fully polymorphic): accept diagonalisation directly at
 -- the code language level, without the level restriction of `TruthDiagonal`.
@@ -144,7 +147,7 @@ fromKernelC
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
     (TruthK : Kernel.Code K → Set ℓT)
-  → Diag.TruthDiagonalC (Kernel.Code K) TruthK
+  → Assumptions.TruthDiagonalC (Kernel.Code K) TruthK
   → MathPhysSynthesis (Kernel.Code K)
                       (ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
                       (Kernel.decode K)
@@ -162,7 +165,7 @@ fromGradedKernel
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
     (TruthK : GradedKernel.Code K → Set ℓT)
-  → Diag.TruthDiagonalC (GradedKernel.Code K) TruthK
+  → Assumptions.TruthDiagonalC (GradedKernel.Code K) TruthK
   → MathPhysSynthesis (GradedKernel.Code K)
                       (ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K)))
                       (GradedKernel.decode K)

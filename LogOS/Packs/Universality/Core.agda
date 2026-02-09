@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,12 +17,12 @@ packTrust = record { level = stable }
 open import LogOS.Prelude
 
 -- Core building blocks (Domain). Keep them namespaced.
-import LogOS.Domain.Universality.Core as Domainₜ
+import LogOS.Universality.Core as Domainₜ
 module Domain = Domainₜ
 
 -- Stable scheme presentation of the universality core.
 module CoreScheme where
-  import LogOS.Domain.Universality.SchemePresentation as SP
+  import LogOS.Universality.SchemePresentation as SP
   import LogOS.Computation.Scheme as Scheme
 
   runCore : ∀ n u → Domain.CoreUCode
@@ -33,7 +33,7 @@ module CoreScheme where
 
 -- Kernel/port view of the universality core.
 module Ports where
-  import LogOS.Domain.Universality.KernelRich as KR
+  import LogOS.Universality.KernelRich as KR
   import LogOS.Ports.Semantic.CanonicalPorts as CP
 
   -- Note: `KR.UKR` is an observer-shaped kernel for *structure* and

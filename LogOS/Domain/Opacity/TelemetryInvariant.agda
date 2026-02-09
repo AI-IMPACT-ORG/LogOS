@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -33,4 +33,4 @@ telemetry-indistinguishable
   → p ≈∂Cosp[ B ] q
   → Trace≈ T (obs p) (obs q)
 telemetry-indistinguishable {B = B} {T = T} obs mono {p} {q} eq =
-  observe-∂-respects-from-mono {B = B} {T = T} obs mono {p} {q} eq
+  observe-∂-respects-from-mono {B = B} {T = T} obs mono {p = p} {q = q} eq

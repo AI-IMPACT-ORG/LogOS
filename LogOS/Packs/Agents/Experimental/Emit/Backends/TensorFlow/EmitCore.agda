@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,13 +15,8 @@ module For (B : Backend) where
   
   open import LogOS.Prelude.List using (List; []; _∷_; _++_)
   open import LogOS.Prelude.Bool using (Bool; true; false)
-  open import LogOS.Prelude.Nat using (ℕ)
+  open import LogOS.Prelude using (ℕ)
   open import LogOS.Prelude.String using (String; _++s_; intercalateS)
-  open import LogOS.Base.Signature using (LogOSSignature)
-  open import LogOS.Minimal.Adapter using (QAdapter)
-  open import LogOS.Minimal.Con using (BulkBoundary)
-  open import LogOS.Minimal.Truth as Truth
-  open import LogOS.Kernel.Graded using (GradedKernel)
   import LogOS.Packs.Agents.Emit.IR.BackendSyntax as BackendSyntax
   import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.SyntaxCore as SyntaxCore
   import LogOS.Packs.Agents.Emit.IR.Intent as Intent
@@ -730,66 +725,3 @@ module For (B : Backend) where
 
   emitOutputPath : String
   emitOutputPath = emitOutputDir ++s "/transformer_tf.py"
-  
-  module WithBridge
-    {ℓ : Level}
-    {Sig : LogOSSignature ℓ}
-    {Q : QAdapter ℓ}
-    (K : GradedKernel Sig Q)
-    (ωCPO : (let module GT = Truth.GuardedCore in GT.OmegaCPO)
-              (BulkBoundary.bnd (GradedKernel.BB K)))
-    where
-  
-    import LogOS.Packs.Agents.Experimental.Arguments.TransformerBridge as TransformerBridge
-    module TB = TransformerBridge.For K ωCPO
-    open QAdapter Q using (Scale)
-  
-    optimizerFromTag : TB.OptimizerTag → TFOptimizer
-    optimizerFromTag TB.sgd = Intent.sgd
-    optimizerFromTag TB.adam = Intent.adam
-
-    optimizerFromTagged : ∀ {g} → TB.TaggedTraining g → TFOptimizer
-    optimizerFromTagged T = optimizerFromTag (TB.TaggedTraining.tag T)
-
-    optimizerFromSGD : ∀ {g} → TB.SGDTraining g → TFOptimizer
-    optimizerFromSGD _ = optimizerFromTag TB.sgd
-
-    optimizerFromAdam : ∀ {g} → TB.AdamTraining g → TFOptimizer
-    optimizerFromAdam _ = optimizerFromTag TB.adam
-  
-    lossFromNextToken : ∀ {B} → TB.NextTokenLossObservableFromData B → TFLoss
-    lossFromNextToken _ = Intent.sparseCategorical
-  
-    record TFTrainingHooks (g : Scale) : Set (lsuc (lsuc ℓ)) where
-      field
-        spec : TB.TrainingSpec g
-        optimizer : TFOptimizer
-        loss : TFLoss
-  
-    defaultTrainingParamsFromHooks
-      : ∀ {g} → TFTrainingHooks g → TFTrainingParams
-    defaultTrainingParamsFromHooks hooks =
-      record
-        { datasetVar = "dataset"
-        ; inputVar = "x"
-        ; targetVar = "y"
-        ; taskVar = "task_id"
-        ; learningRate = param "learning_rate"
-        ; epochs = param "epochs"
-        ; optimizer = TFTrainingHooks.optimizer hooks
-        ; loss = TFTrainingHooks.loss hooks
-        ; schedule = Intent.constant
-        ; dataShape = Intent.paired
-        ; dataOps = []
-        ; telemetry = Intent.defaultTelemetry
-        }
-  
-    emitSpecFromHooks : ∀ {g} → TFHyperParams → TFTrainingHooks g → TFEmitSpec
-    emitSpecFromHooks h hooks =
-      record
-        { family = Intent.decoderOnly
-        ; hyper = h
-        ; train = defaultTrainingParamsFromHooks hooks
-        ; symbolic = Intent.defaultSymbolic
-        ; coupling = Intent.defaultCoupling
-        }

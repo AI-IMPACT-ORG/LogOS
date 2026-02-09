@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,7 +11,6 @@ module LogOS.Ports.Semantic.All where
 
 open import LogOS.Ports.Semantic.Core public
 open import LogOS.Ports.Semantic.SatMor public
-open import LogOS.Ports.Semantic.InterlinguaCore public
 open import LogOS.Ports.Semantic.Interlingua public
 open import LogOS.Ports.Semantic.VacuityGuards public
 import LogOS.Ports.Semantic.Interoperability as Interoperabilityₛ
@@ -29,8 +28,8 @@ module Hetero where
 module IO where
   open import LogOS.Ports.Semantic.ProofTransport public
 
-module Systems where
-  open import LogOS.Ports.Semantic.SystemIO public
+module Tooling where
+  open import LogOS.Ports.Semantic.SatSystemIO public
   open import LogOS.Ports.Semantic.BoundarySystemIO public
 
 module StrictReindex where

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,6 +22,8 @@ open import LogOS.Minimal.Con
     ; MonoOn
     ; monoOn-respects≈
     ; _≈CP_
+    ; ≈CP⇒
+    ; ≈CP⇐
     ; ≡→≈CP
     ; ≈CP-refl
     ; ≈CP-sym
@@ -30,12 +32,13 @@ open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel
+  hiding (Flow; Step)
   renaming
-    ( Box       to KBox
+    ( Box        to KBox
     ; decode-Box to decode-KBox
-    ; box-mono  to kbox-mono
+    ; box-mono   to kbox-mono
     )
-open import LogOS.Kernel.Core as KCore hiding (FlowCode)
+open import LogOS.Kernel.Shape as KCore hiding (FlowCode)
 import LogOS.Theorems.Code.Core as CodeCore
 import LogOS.Theorems.Meta.ObserverCore as ObsCore
 
@@ -110,13 +113,17 @@ module For
   -- --------------------------------------------------------------------------
   -- Guarded/operator view:
   -- `RawStep` is the kernel’s raw one-step operator (Guard ∘ Body).
-  -- `Step` is the canonical “compute then stabilise” step (`Box (Body _)`).
-  -- `Box` is the *stable* (closure) modality on decoded constraints:
-  --   Box = encode ∘ Flow ∘ decode.
+  -- `Step` is the canonical “compute then stabilise” step at the kernel’s
+  -- one-step grade (`BoxAt step (Body _)`).
+  -- `Box` is the *stable* (saturation) modality on decoded constraints:
+  --   Box = encode ∘ FlowSat ∘ decode.
   -- --------------------------------------------------------------------------
 
-  Flow : ConPreorder.Con CP → ConPreorder.Con CP
-  Flow = Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K)
+  FlowStep : ConPreorder.Con CP → ConPreorder.Con CP
+  FlowStep = GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K))
+
+  FlowSat : ConPreorder.Con CP → ConPreorder.Con CP
+  FlowSat = Truth.GuardedCore.GuardedClosure.Flow (GTruth K)
 
   Box : Ty → Ty
   Box = KBox K
@@ -124,51 +131,43 @@ module For
   decode-Box
     : ∀ gamma
     → denote (Box gamma)
-      ≡ Flow (denote gamma)
+      ≡ FlowSat (denote gamma)
   decode-Box = decode-KBox K
 
   -- Canonical “compute then stabilise” step.
   Step : Ty → Ty
-  Step γ = Box (Kernel.Body K γ)
+  Step γ =
+    BoxAt K (GTier.step (Kernel.G K))
+      (Kernel.Body K γ)
 
   decode-Step
     : ∀ gamma
     → denote (Step gamma)
-      ≡ Flow (Kernel.Body∂ K (denote gamma))
+      ≡ FlowStep (Kernel.Body∂ K (denote gamma))
   decode-Step gamma
-    rewrite decode-Box (Kernel.Body K gamma)
+    rewrite decode-BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K gamma)
           | Kernel.body-decode K gamma
     = refl
 
-  -- Legacy/raw step (operational presentation): `FlowCode = Guard ∘ Body`.
+  -- Raw operational step (operational presentation): `FlowCode = Guard ∘ Body`.
   RawStep : Ty → Ty
   RawStep = FlowCode K
 
   decode-RawStep
     : ∀ gamma
     → denote (RawStep gamma)
-      ≡ Flow (Kernel.Body∂ K (denote gamma))
+      ≡ FlowStep (Kernel.Body∂ K (denote gamma))
   decode-RawStep = decode-FlowCode K
 
   decode-RawStep≡decode-Step
     : ∀ γ → denote (RawStep γ) ≡ denote (Step γ)
-  decode-RawStep≡decode-Step = decode-FlowCode≡decode-BoxBody K
+  decode-RawStep≡decode-Step = decode-FlowCode≡decode-BoxAt-step-body K
 
   eqStep≈ : ∀ γ → _≈CP_ CP (denote (Step γ)) (denote (RawStep γ))
   eqStep≈ γ = ≡→≈CP {CP = CP} (sym (decode-RawStep≡decode-Step γ))
 
   module StepTransport =
     ObsCore.StepTransport≈ CP denote Step RawStep eqStep≈
-
-  private
-    body-mono
-      : ∀ {gamma delta}
-      → Refines gamma delta
-      → Refines (Kernel.Body K gamma) (Kernel.Body K delta)
-    body-mono {gamma} {delta} le
-      rewrite Kernel.body-decode K gamma
-            | Kernel.body-decode K delta
-      = Kernel.mono-Body∂ K le
 
   box-mono : ∀ {gamma delta} → Refines gamma delta → Refines (Box gamma) (Box delta)
   box-mono = kbox-mono K
@@ -180,25 +179,40 @@ module For
   box-respects-equiv {gamma} {delta} eq =
     monoOn-respects≈ {CP = KCore.CodePreorder S} box-monoOn eq
 
-  step-mono : ∀ {gamma delta} → Refines gamma delta → Refines (Step gamma) (Step delta)
-  step-mono le = box-mono (body-mono le)
+  -- Optional monotonicity facts for the operational step:
+  -- these require monotonicity of the boundary body operator `Body∂`.
+  module Monotone (bm : KCore.BodyMonotoneShape S) where
 
-  step-monoOn : MonoOn (KCore.CodePreorder S) Step
-  step-monoOn {gamma} {delta} le = step-mono {gamma = gamma} {delta = delta} le
+    private
+      body-mono
+        : ∀ {gamma delta}
+        → Refines gamma delta
+        → Refines (Kernel.Body K gamma) (Kernel.Body K delta)
+      body-mono {gamma} {delta} le
+        rewrite Kernel.body-decode K gamma
+              | Kernel.body-decode K delta
+        = KCore.BodyMonotoneShape.mono-Body∂ bm le
 
-  step-respects-equiv : ∀ {gamma delta} → Equiv gamma delta → Equiv (Step gamma) (Step delta)
-  step-respects-equiv {gamma} {delta} eq =
-    monoOn-respects≈ {CP = KCore.CodePreorder S} step-monoOn eq
+    step-mono : ∀ {gamma delta} → Refines gamma delta → Refines (Step gamma) (Step delta)
+    step-mono le =
+      boxAt-mono K (GTier.step (Kernel.G K)) (body-mono le)
 
-  rawStep-mono : ∀ {gamma delta} → Refines gamma delta → Refines (RawStep gamma) (RawStep delta)
-  rawStep-mono = CodeCore.flowCode-mono K
+    step-monoOn : MonoOn (KCore.CodePreorder S) Step
+    step-monoOn {gamma} {delta} le = step-mono {gamma = gamma} {delta = delta} le
 
-  rawStep-monoOn : MonoOn (KCore.CodePreorder S) RawStep
-  rawStep-monoOn {gamma} {delta} le = rawStep-mono {gamma = gamma} {delta = delta} le
+    step-respects-equiv : ∀ {gamma delta} → Equiv gamma delta → Equiv (Step gamma) (Step delta)
+    step-respects-equiv {gamma} {delta} eq =
+      monoOn-respects≈ {CP = KCore.CodePreorder S} step-monoOn eq
 
-  rawStep-respects-equiv : ∀ {gamma delta} → Equiv gamma delta → Equiv (RawStep gamma) (RawStep delta)
-  rawStep-respects-equiv {gamma} {delta} eq =
-    monoOn-respects≈ {CP = KCore.CodePreorder S} rawStep-monoOn eq
+    rawStep-mono : ∀ {gamma delta} → Refines gamma delta → Refines (RawStep gamma) (RawStep delta)
+    rawStep-mono = CodeCore.flowCode-mono K bm
+
+    rawStep-monoOn : MonoOn (KCore.CodePreorder S) RawStep
+    rawStep-monoOn {gamma} {delta} le = rawStep-mono {gamma = gamma} {delta = delta} le
+
+    rawStep-respects-equiv : ∀ {gamma delta} → Equiv gamma delta → Equiv (RawStep gamma) (RawStep delta)
+    rawStep-respects-equiv {gamma} {delta} eq =
+      monoOn-respects≈ {CP = KCore.CodePreorder S} rawStep-monoOn eq
 
   -- --------------------------------------------------------------------------
   -- Distinguished fixed-point witness: stable truth as a code-level witness.
@@ -208,7 +222,7 @@ module For
   truth = Kernel.γ* K
 
   truth-decoded
-    : denote truth ≡ Truth.GuardedCore.GuardedClosure.Th* (Kernel.GTruth K)
+    : denote truth ≡ Truth.GuardedCore.GuardedClosure.Th* (GTruth K)
   truth-decoded = Kernel.decode-γ* K
 
   truth-fixed
@@ -216,13 +230,13 @@ module For
       × Refines (Box truth) truth
   truth-fixed
     rewrite decode-Box truth | truth-decoded
-    = Truth.GuardedCore.GuardedClosure.Th*-fixed (Kernel.GTruth K)
+    = Truth.GuardedCore.GuardedClosure.Th*-fixed (GTruth K)
 
   truth≤Box : Refines truth (Box truth)
-  truth≤Box = fst truth-fixed
+  truth≤Box = ≈CP⇒ {CP = KCore.CodePreorder S} truth-fixed
 
   box≤truth : Refines (Box truth) truth
-  box≤truth = snd truth-fixed
+  box≤truth = ≈CP⇐ {CP = KCore.CodePreorder S} truth-fixed
 
   truth-step-fixed
     : Refines truth (Step truth)
@@ -230,10 +244,10 @@ module For
   truth-step-fixed =
     let
       CPCode = KCore.CodePreorder S
-      γ≤raw = fst (Kernel.γ*-guard K)
-      raw≤γ = snd (Kernel.γ*-guard K)
-      raw≤step = fst (flowCode≈BoxBody K truth)
-      step≤raw = snd (flowCode≈BoxBody K truth)
+      γ≤raw = Kernel.γ*-guard⇒ K
+      raw≤γ = Kernel.γ*-guard⇐ K
+      raw≤step = ≈CP⇒ {CP = CPCode} (flowCode≈BoxAt-step-body K truth)
+      step≤raw = ≈CP⇐ {CP = CPCode} (flowCode≈BoxAt-step-body K truth)
     in
     ( ConPreorder.trans CPCode γ≤raw raw≤step
     , ConPreorder.trans CPCode step≤raw raw≤γ

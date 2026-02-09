@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -21,6 +21,7 @@ module LogOS.Theorems.Boundary.MuFusion where
 open import LogOS.Prelude
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
+import LogOS.Minimal.MuFusion as MuFusionCore
 import LogOS.Theorems.Boundary.ContinuityCore as ContinuityCore
 
 module For
@@ -29,106 +30,11 @@ module For
   (CP₂ : ConPreorder ℓ₂)
   where
 
-  module GC₁ = Truth.GuardedCore {ℓ = ℓ₁}
-  module GC₂ = Truth.GuardedCore {ℓ = ℓ₂}
-
-  open ConPreorder CP₁ renaming (Con to Con₁; _⊑_ to _⊑₁_; trans to trans₁; refl to refl₁)
-  open ConPreorder CP₂ renaming (Con to Con₂; _⊑_ to _⊑₂_; trans to trans₂; refl to refl₂)
-
-  record OmegaCPOMap
-    (ω₁ : GC₁.OmegaCPO CP₁)
-    (ω₂ : GC₂.OmegaCPO CP₂)
-    (map : Con₁ → Con₂)
-    : Set (lsuc (ℓ₁ ⊔ ℓ₂)) where
-    open GC₁.OmegaCPO ω₁ renaming (⊥ to ⊥₁; supω to supω₁)
-    open GC₂.OmegaCPO ω₂ renaming (⊥ to ⊥₂; supω to supω₂)
-    field
-      mono-map : MonoMap CP₁ CP₂ map
-      strict⊥  : _⊑₂_ (map ⊥₁) ⊥₂
-
-      -- Scott continuity for maps between ωCPO preorders (lax, ω-chain only).
-      cont-ω
-        : ∀ (f : ℕ → Con₁)
-          (mono-chain : ∀ n → _⊑₁_ (f n) (f (suc n)))
-        → _⊑₂_ (map (supω₁ f)) (supω₂ (λ n → map (f n)))
-
-  -- Convenience: build an `OmegaCPOMap` from equalities (common when the map is
-  -- definitional or transported through an isomorphism).
-
-  mkOmegaCPOMap≡
-    : ∀ {ω₁ : GC₁.OmegaCPO CP₁} {ω₂ : GC₂.OmegaCPO CP₂}
-      {map : Con₁ → Con₂}
-    → MonoMap CP₁ CP₂ map
-    → (map⊥≡ : let open GC₁.OmegaCPO ω₁ renaming (⊥ to ⊥₁)
-                   open GC₂.OmegaCPO ω₂ renaming (⊥ to ⊥₂)
-              in map ⊥₁ ≡ ⊥₂)
-    → (map-supω≡
-        : let open GC₁.OmegaCPO ω₁ renaming (supω to supω₁)
-              open GC₂.OmegaCPO ω₂ renaming (supω to supω₂)
-          in ∀ (f : ℕ → Con₁)
-               (mono-chain : ∀ n → _⊑₁_ (f n) (f (suc n)))
-             → map (supω₁ f) ≡ supω₂ (λ n → map (f n)))
-    → OmegaCPOMap ω₁ ω₂ map
-  mkOmegaCPOMap≡ {ω₁ = ω₁} {ω₂ = ω₂} {map = map} monoMap map⊥≡ map-supω≡ =
-    record
-      { mono-map = monoMap
-      ; strict⊥  =
-          let open GC₁.OmegaCPO ω₁ renaming (⊥ to ⊥₁)
-              open GC₂.OmegaCPO ω₂ renaming (⊥ to ⊥₂)
-          in
-          subst (λ x → _⊑₂_ (map ⊥₁) x) map⊥≡ refl₂
-      ; cont-ω   = λ f mono-chain →
-          let open GC₁.OmegaCPO ω₁ renaming (supω to supω₁)
-              open GC₂.OmegaCPO ω₂ renaming (supω to supω₂)
-          in
-          subst (λ x → _⊑₂_ (map (supω₁ f)) x) (map-supω≡ f mono-chain) refl₂
-      }
-
-  μ-fusion≤
-    : ∀ {ω₁ : GC₁.OmegaCPO CP₁} {ω₂ : GC₂.OmegaCPO CP₂}
-      {map : Con₁ → Con₂}
-      (M : OmegaCPOMap ω₁ ω₂ map)
-      (F : Con₁ → Con₁)
-      (G : Con₂ → Con₂)
-    → (monoG : MonoOn CP₂ G)
-    → (inflF : ∀ c → _⊑₁_ c (F c))
-    → (comm  : ∀ c → _⊑₂_ (map (F c)) (G (map c)))
-    → _⊑₂_
-        (map (GC₁.Kleene.μ ω₁ F))
-        (GC₂.Kleene.μ ω₂ G)
-  μ-fusion≤ {ω₁ = ω₁} {ω₂ = ω₂} {map = map} M F G monoG inflF comm =
-    trans₂ mapμ≤sup-map-iter sup-map-iter≤μ
-    where
-      open OmegaCPOMap M
-      open GC₁.OmegaCPO ω₁ renaming (⊥ to ⊥₁; supω to supω₁)
-      open GC₂.OmegaCPO ω₂ renaming (⊥ to ⊥₂; supω to supω₂; ub to ub₂; least to least₂)
-
-      module K₁ = GC₁.Kleene ω₁
-      module K₂ = GC₂.Kleene ω₂
-
-      iter₁ = K₁.iter F
-      iter₂ = K₂.iter G
-
-      iter₁-mono-chain : ∀ n → _⊑₁_ (iter₁ n) (iter₁ (suc n))
-      iter₁-mono-chain = K₁.iter-mono-chain-infl F inflF
-
-      iter-map≤iter
-        : ∀ n → _⊑₂_ (map (iter₁ n)) (iter₂ n)
-      iter-map≤iter zero = strict⊥
-      iter-map≤iter (suc n) =
-        trans₂
-          (comm (iter₁ n))
-          (monoG (iter-map≤iter n))
-
-      mapμ≤sup-map-iter
-        : _⊑₂_ (map (K₁.μ F)) (supω₂ (λ n → map (iter₁ n)))
-      mapμ≤sup-map-iter =
-        cont-ω iter₁ iter₁-mono-chain
-
-      sup-map-iter≤μ
-        : _⊑₂_ (supω₂ (λ n → map (iter₁ n))) (K₂.μ G)
-      sup-map-iter≤μ =
-        least₂ (λ n → map (iter₁ n)) (K₂.μ G) (λ n → trans₂ (iter-map≤iter n) (ub₂ iter₂ n))
+  -- Minimal-layer core (ωCPO maps + μ-fusion).
+  --
+  -- This keeps Ports/Computation free of Theorems imports while ensuring a
+  -- single source of truth for the underlying structure/lemma.
+  open MuFusionCore.For CP₁ CP₂ public
 
   -- -------------------------------------------------------------------------
   -- Corollary: transport the distinguished stabilised truth `Th*`.
@@ -334,7 +240,7 @@ module Compose
 module Kernel where
   open import LogOS.Base.Signature
   open import LogOS.Minimal.Adapter
-  open import LogOS.Algebra.ConAlg
+  open import LogOS.Minimal.ConAlg
   open import LogOS.Kernel
   open import LogOS.Kernel.Hom
 
@@ -355,30 +261,45 @@ module Kernel where
 
         module MF = For CP₁ CP₂
 
+      -- Bundle the domain-theoretic assumptions used to derive `KernelHomFlowStable`
+      -- from `KernelHomFlow` via μ-fusion.
+
+      record KernelHomStabilisationAssumptions : Set (lsuc (lsuc ℓ)) where
+        field
+          ω₁ : GT.OmegaCPO CP₁
+          ω₂ : GT.OmegaCPO CP₂
+
+          M : MF.OmegaCPOMap ω₁ ω₂ map∂
+
+          FF₁ : GT.FiniteFirst CP₁ (GTruth K₁) ω₁
+          FF₂ : GT.FiniteFirst CP₂ (GTruth K₂) ω₂
+
       kernelHomFlowStable-from
         : (hf : KernelHomFlow K₁ K₂ h)
-          (ω₁ : GT.OmegaCPO CP₁)
-          (ω₂ : GT.OmegaCPO CP₂)
-          (M  : MF.OmegaCPOMap ω₁ ω₂ map∂)
-          (FF₁ : GT.FiniteFirst CP₁ (Kernel.GTruth K₁) ω₁)
-          (FF₂ : GT.FiniteFirst CP₂ (Kernel.GTruth K₂) ω₂)
+        → KernelHomStabilisationAssumptions
         → KernelHomFlowStable K₁ K₂ h
-      kernelHomFlowStable-from hf ω₁ ω₂ M FF₁ FF₂ =
+      kernelHomFlowStable-from hf A =
         let
           open KernelHomFlow hf
           module FH = GT.FlowHom flow-hom
 
           comm : ∀ c →
             ConPreorder._⊑_ CP₂
-              (map∂ (GT.GuardedClosure.Flow (Kernel.GTruth K₁) c))
-              (GT.GuardedClosure.Flow (Kernel.GTruth K₂) (map∂ c))
+              (map∂ (GT.GuardedClosure.Flow (GTruth K₁) c))
+              (GT.GuardedClosure.Flow (GTruth K₂) (map∂ c))
           comm = FH.preserves-F
 
           preservesTh : ConPreorder._⊑_ CP₂
-                          (map∂ (GT.GuardedClosure.Th* (Kernel.GTruth K₁)))
-                          (GT.GuardedClosure.Th* (Kernel.GTruth K₂))
+                          (map∂ (GT.GuardedClosure.Th* (GTruth K₁)))
+                          (GT.GuardedClosure.Th* (GTruth K₂))
           preservesTh =
-            MF.preserves-Th*-from-Flow M (Kernel.GTruth K₁) (Kernel.GTruth K₂) FF₁ FF₂ comm
+            MF.preserves-Th*-from-Flow
+              (KernelHomStabilisationAssumptions.M A)
+              (GTruth K₁)
+              (GTruth K₂)
+              (KernelHomStabilisationAssumptions.FF₁ A)
+              (KernelHomStabilisationAssumptions.FF₂ A)
+              comm
         in
         record
           { stable-hom =
@@ -391,7 +312,7 @@ module Kernel where
 module GradedKernel where
   open import LogOS.Base.Signature
   open import LogOS.Minimal.Adapter
-  open import LogOS.Algebra.ConAlg
+  open import LogOS.Minimal.ConAlg
   open import LogOS.Kernel.Graded
   open import LogOS.Kernel.Graded.Hom
 
@@ -418,15 +339,25 @@ module GradedKernel where
         GC₂sat : GT.GuardedClosure CP₂
         GC₂sat = GT.forgetGradedClosure (GradedKernel.GTruth K₂)
 
+      -- Bundle the domain-theoretic assumptions used to derive
+      -- `GradedKernelHomFlowStable` from `GradedKernelHomFlow` at the saturation
+      -- grade via μ-fusion.
+
+      record GradedKernelHomStabilisationAssumptions : Set (lsuc (lsuc ℓ)) where
+        field
+          ω₁ : GT.OmegaCPO CP₁
+          ω₂ : GT.OmegaCPO CP₂
+
+          M : MF.OmegaCPOMap ω₁ ω₂ map∂
+
+          FF₁ : GT.FiniteFirst CP₁ GC₁sat ω₁
+          FF₂ : GT.FiniteFirst CP₂ GC₂sat ω₂
+
       gradedKernelHomFlowStable-from
         : (hf : GradedKernelHomFlow K₁ K₂ h)
-          (ω₁ : GT.OmegaCPO CP₁)
-          (ω₂ : GT.OmegaCPO CP₂)
-          (M  : MF.OmegaCPOMap ω₁ ω₂ map∂)
-          (FF₁ : GT.FiniteFirst CP₁ GC₁sat ω₁)
-          (FF₂ : GT.FiniteFirst CP₂ GC₂sat ω₂)
+        → GradedKernelHomStabilisationAssumptions
         → GradedKernelHomFlowStable K₁ K₂ h
-      gradedKernelHomFlowStable-from hf ω₁ ω₂ M FF₁ FF₂ =
+      gradedKernelHomFlowStable-from hf A =
         let
           open GradedKernelHomFlow hf
 
@@ -444,7 +375,13 @@ module GradedKernel where
                           (map∂ (GradedClosure.Th* (GradedKernel.GTruth K₁)))
                           (GradedClosure.Th* (GradedKernel.GTruth K₂))
           preservesTh =
-            MF.preserves-Th*-from-Flow M GC₁sat GC₂sat FF₁ FF₂ comm
+            MF.preserves-Th*-from-Flow
+              (GradedKernelHomStabilisationAssumptions.M A)
+              GC₁sat
+              GC₂sat
+              (GradedKernelHomStabilisationAssumptions.FF₁ A)
+              (GradedKernelHomStabilisationAssumptions.FF₂ A)
+              comm
         in
         record
           { stable-hom =

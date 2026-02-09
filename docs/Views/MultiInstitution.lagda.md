@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -19,13 +19,13 @@ open import LogOS.Prelude public
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Base.Signature.Hom using (SigHom)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Kernel using (Kernel)
-import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheorems
-import LogOS.Ports.Semantic.InterlinguaStrictReindex as StrictReindex
-import LogOS.Ports.Semantic.Interoperability as Interoperability
-import LogOS.Adapters.Views.SatMor as ViewSatMor
-import LogOS.Ports.Semantic.InterlinguaStrictKernel
-import LogOS.Ports.Semantic.InterlinguaCodeKernel
+import LogOS.API.Views as Views
+open Views.Kernels using (Kernel)
+
+module ViewTheorems = Views.ViewTheorems
+module StrictReindex = Views.StrictReindex
+module ViewSatMor = Views.ViewSatMor
+module Interoperability = Views.PortsAdapters.Interoperability
 
 module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   (K : Kernel Sig Q)
@@ -152,7 +152,7 @@ Dictionary (literature ↔ LogOS)
 | Sentences (`Sen`) | strict formulas `Fml`, optional boundary sentence layer `Con∂` + `rename∂` | `Sen` can be taken trivial-on-morphisms, or made nontrivial via `rename∂`/`mapFml`. |
 | Models (`Mod`) | worlds/contexts `Cosp` (optionally a preorder via `_≤ctx_`) | Presented conservatively as discrete unless you assume `CtxPreorder`. |
 | Satisfaction | `Sat_S`, `Sat_H`, `Sat_H_bnd` | Three-tier interface (S/H/∂) rather than a single `⊨`. `Sat_H w c` is world‑indexed; `Sat_H_bnd (to∂ w) c` is the boundary-indexed coherence. |
-| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); mostly orthogonal to the institution story. |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital prequantale in the finite-join sense (not complete); mostly orthogonal to the institution story. |
 | Satisfaction condition | `Sat*-precompose` lemmas under reindexing | Implemented as literal precomposition in theorems (reindexing surface). |
 | Inter-institution translations | ports/adapters, hetero canonical adapters | “Presentation independence” is a first-class boundary feature. |
 
@@ -196,7 +196,7 @@ Theorem spine (authoritative)
 - Satisfaction condition with strict sentence translation:
   `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`ReindexingSatisfactionWithFml`),
   `SatS-precompose` (now a `↔` over `mapFml`).
-- LogicKernel variant:
+- `LogOS.Kernel`-qualified variant:
   `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`ReindexingSatisfactionWithFmlLogic`).
 - Sentence/program layer (covariant renaming and functoriality):
   `LogOS/Theorems/Meta/CHL/ViewTheorems.agda` (`For …` → `MultiInstitution.SentenceLayer`):
@@ -290,7 +290,7 @@ constant-on-morphisms. This remains a valid conservative presentation.
 However, LogOS now also provides an **optional nontrivial sentence/program layer** that is
 functorial along signature morphisms (the institution `Sen` direction):
 
-- `LogOS/Free/ConstraintsOverSig.agda` (`Con∂ Sig` and `rename∂ : SigHom Sig₁ Sig₂ → Con∂ Sig₁ → Con∂ Sig₂`)
+- `LogOS/Minimal/ConstraintsOverSig.agda` (`Con∂ Sig` and `rename∂ : SigHom Sig₁ Sig₂ → Con∂ Sig₁ → Con∂ Sig₂`)
 - `LogOS/Kernel/Reindex.agda` (`reindexKernelWithFml`, for strict formulas)
 
 This makes it possible to state satisfaction conditions with a genuine $\mathrm{Sen}(\sigma)$ map once a model
@@ -322,7 +322,7 @@ We use the following correspondence to the Agda fields:
 
 Disambiguation: this section uses $\mathrm{Con}_\partial$ for **semantic** boundary constraints (the boundary preorder).
 Separately, the library also provides an optional **syntactic** boundary sentence layer `Con∂` with renaming `rename∂`
-(see `LogOS/Free/ConstraintsOverSig.agda`), which can be used as an institution-style `Sen` if desired.
+(see `LogOS/Minimal/ConstraintsOverSig.agda`), which can be used as an institution-style `Sen` if desired.
 
 The kernel coherence laws include:
 $$

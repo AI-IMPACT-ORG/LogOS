@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -16,7 +16,7 @@ import LogOS.Theorems.Meta.Safety.All
 
 This note makes one claim precise:
 
-> The hexagonal architecture is forced by the *safety design choice*:
+> The hexagonal architecture is a derivable consequence of the *safety design choice*:
 > LogOS assumes only the kernel interface and requires all paradox‑enabling
 > structure (truth predicates, provability, diagonalization, comprehension, etc.)
 > to be introduced explicitly as *assumption packs*.

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,11 +12,12 @@ open import LogOS.Prelude
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Without_Vacuity_Guards)
 open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
-open import LogOS.Prelude.Product using (_×_; _,_; fst; snd; proj₁; proj₂)
+open import LogOS.Prelude using (_×_; _,_; fst; snd; proj₁; proj₂)
 
 import LogOS.Theorems.Meta.TruthPositivity as TP
 open TP public using (TruthPositivity)
 import LogOS.Theorems.Meta.ApplicationKit as AppKit
+import LogOS.Theorems.Meta.Dagger as Dag
 
 -- A “Weil criterion / explicit-formula” surface, phrased against an abstract
 -- spectral adapter RS and an observer-facing positivity interface TPo.
@@ -319,3 +320,38 @@ module QuartetWeilCriterion {ℓT ℓW ℓObs : Level}
     AppKit.MakeDerived Assumptions Claim
       (λ A → GRH_Without_Vacuity_Guards-from-WeilCriterion RS TPo (Assumptions.WC A))
   open Q public using (Pack; assumptionsOf; claimOf; mkPack)
+
+-- --------------------------------------------------------------------------
+-- Dagger / quadratic-positivity wrappers.
+--
+-- Convenience layer: interpret `DaggerTruthPositivity` as `TruthPositivity`
+-- (no new theorem strength; just a re-typed interface).
+
+module Dagger where
+
+  WeilCriterion†
+    : ∀ {ℓT ℓW ℓObs}
+      (RS  : RiemannSpectral)
+      (DTP : Dag.DaggerTruthPositivity {ℓT} {ℓW} {ℓObs})
+    → Set (lsuc (ℓT ⊔ ℓW ⊔ ℓObs))
+  WeilCriterion† RS DTP =
+    WeilCriterion RS (Dag.DaggerTruthPositivity.toTruthPositivity DTP)
+
+  WeilCriterionWeak†
+    : ∀ {ℓT ℓW ℓObs}
+      (RS  : RiemannSpectral)
+      (DTP : Dag.DaggerTruthPositivity {ℓT} {ℓW} {ℓObs})
+    → Set (lsuc (ℓT ⊔ ℓW ⊔ ℓObs))
+  WeilCriterionWeak† RS DTP =
+    WeilCriterionWeak RS (Dag.DaggerTruthPositivity.toTruthPositivity DTP)
+
+  GRH_Without_Vacuity_Guards-from-WeilCriterion†
+    : ∀ {ℓT ℓW ℓObs}
+      (RS  : RiemannSpectral)
+      (DTP : Dag.DaggerTruthPositivity {ℓT} {ℓW} {ℓObs})
+      (WC  : WeilCriterion† RS DTP)
+    → GRH_Without_Vacuity_Guards RS
+  GRH_Without_Vacuity_Guards-from-WeilCriterion† RS DTP WC =
+    GRH_Without_Vacuity_Guards-from-WeilCriterion RS
+      (Dag.DaggerTruthPositivity.toTruthPositivity DTP)
+      WC

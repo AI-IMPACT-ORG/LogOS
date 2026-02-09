@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -20,9 +20,10 @@ open import LogOS.Boundary.IO
 open import LogOS.Boundary.Port
 
 open import LogOS.Kernel
-import LogOS.Kernel.Boundary as KBoundary
+import LogOS.Boundary.FromKernel as KBoundary
 
-open import LogOS.Ports.Semantic.InterlinguaCore using (PresentationC; canonicalPresentation)
+open import LogOS.Ports.Semantic.HeteroInterlinguaCore using (PresentationC; canonicalPresentation)
+open import LogOS.Ports.Semantic.PresentationCore using (satSystem)
 import LogOS.Ports.Semantic.Interlingua as Interlingua
 import LogOS.Ports.Semantic.InterlinguaStrictKernel as StrictKernel
 import LogOS.Ports.Semantic.InterlinguaCodeKernel as CodeKernel
@@ -79,7 +80,7 @@ module For
 
   -- Kernel closure as a ported closure: Box = Extend Flow on the canonical CodePort.
 
-  Flow∂ = Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K)
+  Flow∂ = Truth.GuardedCore.GuardedClosure.Flow (GTruth K)
 
   Box≡ExtendFlow
     : ∀ (γ : Kernel.Code K)
@@ -92,8 +93,8 @@ module For
   SatS : LogOSSignature.Cosp Sig → Kernel.Fml K → Set ℓ
   SatS = ST.StrictLayer.Sat_S (Kernel.Strict K)
 
-  StrictPresentation : PresentationC (LogOSSignature.Cosp Sig) (Kernel.Fml K) SatS
-  StrictPresentation = canonicalPresentation SatS
+  StrictPresentation : PresentationC (satSystem (LogOSSignature.Cosp Sig) (Kernel.Fml K) SatS)
+  StrictPresentation = canonicalPresentation (satSystem (LogOSSignature.Cosp Sig) (Kernel.Fml K) SatS)
 
   -- Canonical strict compilation into the boundary port.
   module StrictInterlingua where

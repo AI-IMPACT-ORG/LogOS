@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -20,25 +20,23 @@ import LogOS.Packs.InfoTheory.Applications.DPI      as DPIApp
 import LogOS.Packs.InfoTheory.Applications.Capacity as CapApp
 import LogOS.Packs.InfoTheory.Applications.ThermoRG as ThermoRGApp
 
-import LogOS.Domain.InfoTheory.Shannon.Facts as ShannonFactsₜ
-import LogOS.Domain.InfoTheory.Shannon.Core  as ShannonCoreₜ
-import LogOS.Domain.InfoTheory.ObserverDPI   as ObserverDPIₜ
+import LogOS.Packs.InfoTheory.Core as InfoCore
 
 private
   ShannonFacts_exists : _
-  ShannonFacts_exists = ShannonFactsₜ.ShannonFacts
+  ShannonFacts_exists = InfoCore.ShannonFacts.ShannonFacts
 
   Carrier_exists : _
-  Carrier_exists = ShannonFactsₜ.Carrier
+  Carrier_exists = InfoCore.ShannonFacts.Carrier
 
   LogSumIneq_exists : _
-  LogSumIneq_exists = ShannonFactsₜ.LogSumIneq
+  LogSumIneq_exists = InfoCore.ShannonFacts.LogSumIneq
 
   DPIFacts_exists : _
   DPIFacts_exists = DPIApp.DPIFacts
 
-  module _ (F : ShannonFactsₜ.ShannonFacts) where
-    module C = ShannonCoreₜ.For F
+  module _ (F : InfoCore.ShannonFacts.ShannonFacts) where
+    module C = InfoCore.ShannonCore.For F
 
     Dist_exists : _
     Dist_exists = C.Dist
@@ -50,7 +48,7 @@ private
     KL≥0_exists = C.KL≥0
 
   ObserverChannel_exists : _
-  ObserverChannel_exists = ObserverDPIₜ.ObserverChannel
+  ObserverChannel_exists = InfoCore.ObserverDPI.ObserverChannel
 ```
 
 Trust level: **stable** (but *axiom-pack driven*).
@@ -74,6 +72,7 @@ the kernel, and you can connect the resulting inequalities to the complexity /
 physics-of-information pipelines elsewhere in the repo.
 
 Interpretation (analogy):
+<!-- CLAIM-STAMP: ANALOGY | anchor=docs/Applications/InfoTheory.lagda.md#thermorg-label -->
 `ThermoRG` uses “RG” as an interpretation label for coarse‑graining monotonicity.
 The formal content lives in the explicit `RGFacts`/`LandauerShannonFacts` records.
 
@@ -90,8 +89,10 @@ with the minimum structure the finite theorems in this pack actually use:
 - Operations (`0#`, `1#`, `_+_`, `_*_`, `-_`) and the one unit law used by the derived theorems (`*-idr`).
 - An order (`_≤_`) and enough finite-sum structure (`sum`, monotonicity, swap).
 - A positivity predicate `Pos`.
-- A total “KL term” `klTerm` with the usual 0‑extension convention.
+- A total “KL term” `klTerm`, together with the explicit nonnegative zero-case law
+  assumed by this library (`klTerm0≤ : 0 ≤ b → klTerm 0 b = 0`).
 - The log-sum inequality `logSumIneq` as the single heavy analytic ingredient.
+<!-- CLAIM-STAMP: LITERAL | anchor=LogOS/InfoTheory/Shannon/Facts.agda#ShannonFacts -->
 
 This keeps the library honest: if you change the analytic model, you do so by
 changing a record value, not by rewriting proofs.
@@ -103,6 +104,7 @@ finite objects (`Dist`, `Kernel`, pushforwards) and proves the first “real”
 lemma most downstream uses want:
 
 - `KL≥0` (Gibbs’ inequality / nonnegativity of KL) derived from `logSumIneq`.
+<!-- CLAIM-STAMP: LITERAL | anchor=LogOS/Packs/InfoTheory/Core.agda#ShannonCore.For.KL≥0 -->
 
 Everything beyond that is packaged as a small number of additional assumption records:
 
@@ -112,11 +114,12 @@ Everything beyond that is packaged as a small number of additional assumption re
 
 ## Connection back to LogOS (observer/semantics view)
 
-`LogOS.Domain.InfoTheory.ObserverDPI` rephrases “DPI” as a purely order‑theoretic
+`LogOS.InfoTheory.ObserverDPI` rephrases “DPI” as a purely order‑theoretic
 statement: an observer/channel is a `run : Obs → Obs` that is nonincreasing for
 an information preorder. This is a clean bridge point if you want to feed
 Shannon-style monotonicity statements into other LogOS stories without importing
 analytic detail into the kernel.
+<!-- CLAIM-STAMP: REPRESENTATIONAL | anchor=LogOS/InfoTheory/ObserverDPI.agda#ObserverChannel -->
 
 ## Where to look
 

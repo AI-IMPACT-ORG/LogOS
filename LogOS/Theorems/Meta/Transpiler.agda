@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -26,6 +26,7 @@ open import LogOS.Syntax.Prop as Prop
 import LogOS.Ports.Semantic.Interoperability as Interop
 open import LogOS.Ports.Semantic.PresentationCore using (PresentationC)
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
+open import LogOS.Ports.Semantic.PresentationCore using (SatSystem)
 import LogOS.Ports.Semantic.HeteroInterlinguaCore as HeteroCore
 import LogOS.Boundary.Budget as Budget
 
@@ -150,16 +151,12 @@ module For
 
 module Hetero
   {ℓCtx₁ ℓCon₁ ℓForm₁ ℓSat₁ : Level}
-  {Ctx₁ : Set ℓCtx₁}
-  {Con₁ : Set ℓCon₁}
-  {Sat₁ : Ctx₁ → Con₁ → Set ℓSat₁}
+  {S₁ : SatSystem {ℓCtx = ℓCtx₁} {ℓCon = ℓCon₁} {ℓSat = ℓSat₁}}
   {ℓCtx₂ ℓCon₂ ℓForm₂ ℓSat₂ : Level}
-  {Ctx₂ : Set ℓCtx₂}
-  {Con₂ : Set ℓCon₂}
-  {Sat₂ : Ctx₂ → Con₂ → Set ℓSat₂}
-  (m  : SatMor Ctx₁ Con₁ Sat₁ Ctx₂ Con₂ Sat₂)
-  (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ Con₁ Sat₁)
-  (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ Con₂ Sat₂)
+  {S₂ : SatSystem {ℓCtx = ℓCtx₂} {ℓCon = ℓCon₂} {ℓSat = ℓSat₂}}
+  (m  : SatMor S₁ S₂)
+  (P₁ : PresentationC {ℓForm = ℓForm₁} S₁)
+  (P₂ : PresentationC {ℓForm = ℓForm₂} S₂)
   where
 
   module H = HeteroCore.For m P₁ P₂

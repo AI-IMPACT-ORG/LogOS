@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,7 +13,7 @@ module LogOS.Theorems.Meta.Bootstrapping where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop as Prop
-open import LogOS.Prelude.Product using (_×_; _,_)
+open import LogOS.Prelude using (_×_; _,_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
@@ -21,9 +21,9 @@ open import LogOS.Minimal.Con using (BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel
-import LogOS.Kernel.Core as Core
+import LogOS.Kernel.Shape as Core
 import LogOS.Kernel.Graded as GK
-import LogOS.Kernel.Graded.ToKernel as GradedToKernel
+import LogOS.Kernel.FromGradedKernel as GradedToKernel
 
 open import LogOS.Boundary.IO
 open import LogOS.Boundary.Port
@@ -103,8 +103,9 @@ module For
   bootstrap∘unbootstrap≈id
     : Interop.For.Adapter≈ B Stage0Port Stage0Port
         bootstrap∘unbootstrap (Interop.idAdapter B Stage0Port)
-  bootstrap∘unbootstrap≈id p c =
+  bootstrap∘unbootstrap≈id =
     let
+      module I00 = Interop.For B Stage0Port Stage0Port
       module IBC = Interop.For B Stage0Port Stage1Port
       module ICB = Interop.For B Stage1Port Stage0Port
 
@@ -114,31 +115,33 @@ module For
           {B₁ = bootstrap} {B₁' = ICB.canonicalAdapter}
           unbootstrap≈canonical bootstrap≈canonical
 
-      step₁ : ∀ p c →
-        BoundaryPort.SatF Stage0Port p
-          (Interop.PortAdapter.map
+      step₁ =
+        I00.adapter≈-sym
+          {A = Interop.For.canonicalAdapter B Stage0Port Stage0Port}
+          {B =
             (Interop.composeAdapter B Stage0Port Stage1Port Stage0Port
-              IBC.canonicalAdapter ICB.canonicalAdapter)
-            c)
-          ↔
-        BoundaryPort.SatF Stage0Port p
-          (Interop.PortAdapter.map
-            (Interop.For.canonicalAdapter B Stage0Port Stage0Port)
-            c)
-      step₁ p c =
-        Prop.↔-sym (Interop.canonicalAdapter≈comp B Stage0Port Stage1Port Stage0Port p c)
+              (Interop.For.canonicalAdapter B Stage0Port Stage1Port)
+              (Interop.For.canonicalAdapter B Stage1Port Stage0Port))}
+          (Interop.canonicalAdapter≈comp B Stage0Port Stage1Port Stage0Port)
 
-      step₂ : ∀ p c →
-        BoundaryPort.SatF Stage0Port p
-          (Interop.PortAdapter.map
-            (Interop.For.canonicalAdapter B Stage0Port Stage0Port)
-            c)
-          ↔
-        BoundaryPort.SatF Stage0Port p
-          (Interop.PortAdapter.map (Interop.idAdapter B Stage0Port) c)
-      step₂ p c = Interop.canonicalAdapter≈id B Stage0Port p c
+      step₂ = Interop.canonicalAdapter≈id B Stage0Port
     in
-    Prop.↔-trans (step₀ p c) (Prop.↔-trans (step₁ p c) (step₂ p c))
+    I00.adapter≈-trans
+      {A = bootstrap∘unbootstrap}
+      {B =
+        (Interop.composeAdapter B Stage0Port Stage1Port Stage0Port
+          (Interop.For.canonicalAdapter B Stage0Port Stage1Port)
+          (Interop.For.canonicalAdapter B Stage1Port Stage0Port))}
+      {C = Interop.idAdapter B Stage0Port}
+      step₀
+      (I00.adapter≈-trans
+        {A =
+          (Interop.composeAdapter B Stage0Port Stage1Port Stage0Port
+            (Interop.For.canonicalAdapter B Stage0Port Stage1Port)
+            (Interop.For.canonicalAdapter B Stage1Port Stage0Port))}
+        {B = Interop.For.canonicalAdapter B Stage0Port Stage0Port}
+        {C = Interop.idAdapter B Stage0Port}
+        step₁ step₂)
 
   -- Round-trip (stage1/code): encode ∘ decode ≈ id (observationally).
   unbootstrap∘bootstrap : Interop.PortAdapter B Stage1Port Stage1Port
@@ -148,8 +151,9 @@ module For
   unbootstrap∘bootstrap≈id
     : Interop.For.Adapter≈ B Stage1Port Stage1Port
         unbootstrap∘bootstrap (Interop.idAdapter B Stage1Port)
-  unbootstrap∘bootstrap≈id p γ =
+  unbootstrap∘bootstrap≈id =
     let
+      module I11 = Interop.For B Stage1Port Stage1Port
       module ICB = Interop.For B Stage1Port Stage0Port
       module IBC = Interop.For B Stage0Port Stage1Port
 
@@ -159,31 +163,33 @@ module For
           {B₁ = unbootstrap} {B₁' = IBC.canonicalAdapter}
           bootstrap≈canonical unbootstrap≈canonical
 
-      step₁ : ∀ p γ →
-        BoundaryPort.SatF Stage1Port p
-          (Interop.PortAdapter.map
+      step₁ =
+        I11.adapter≈-sym
+          {A = Interop.For.canonicalAdapter B Stage1Port Stage1Port}
+          {B =
             (Interop.composeAdapter B Stage1Port Stage0Port Stage1Port
-              ICB.canonicalAdapter IBC.canonicalAdapter)
-            γ)
-          ↔
-        BoundaryPort.SatF Stage1Port p
-          (Interop.PortAdapter.map
-            (Interop.For.canonicalAdapter B Stage1Port Stage1Port)
-            γ)
-      step₁ p γ =
-        Prop.↔-sym (Interop.canonicalAdapter≈comp B Stage1Port Stage0Port Stage1Port p γ)
+              (Interop.For.canonicalAdapter B Stage1Port Stage0Port)
+              (Interop.For.canonicalAdapter B Stage0Port Stage1Port))}
+          (Interop.canonicalAdapter≈comp B Stage1Port Stage0Port Stage1Port)
 
-      step₂ : ∀ p γ →
-        BoundaryPort.SatF Stage1Port p
-          (Interop.PortAdapter.map
-            (Interop.For.canonicalAdapter B Stage1Port Stage1Port)
-            γ)
-          ↔
-        BoundaryPort.SatF Stage1Port p
-          (Interop.PortAdapter.map (Interop.idAdapter B Stage1Port) γ)
-      step₂ p γ = Interop.canonicalAdapter≈id B Stage1Port p γ
+      step₂ = Interop.canonicalAdapter≈id B Stage1Port
     in
-    Prop.↔-trans (step₀ p γ) (Prop.↔-trans (step₁ p γ) (step₂ p γ))
+    I11.adapter≈-trans
+      {A = unbootstrap∘bootstrap}
+      {B =
+        (Interop.composeAdapter B Stage1Port Stage0Port Stage1Port
+          (Interop.For.canonicalAdapter B Stage1Port Stage0Port)
+          (Interop.For.canonicalAdapter B Stage0Port Stage1Port))}
+      {C = Interop.idAdapter B Stage1Port}
+      step₀
+      (I11.adapter≈-trans
+        {A =
+          (Interop.composeAdapter B Stage1Port Stage0Port Stage1Port
+            (Interop.For.canonicalAdapter B Stage1Port Stage0Port)
+            (Interop.For.canonicalAdapter B Stage0Port Stage1Port))}
+        {B = Interop.For.canonicalAdapter B Stage1Port Stage1Port}
+        {C = Interop.idAdapter B Stage1Port}
+        step₁ step₂)
 
   -- Port-level equivalence: bootstrap and unbootstrap are quasi-inverses up to `Adapter≈`.
   BootstrapIso
@@ -219,18 +225,26 @@ module For
   stage1→stage0-unique
     : ∀ (A : Interop.PortAdapter B Stage1Port Stage0Port)
     → Interop.For.Adapter≈ B Stage1Port Stage0Port A bootstrap
-  stage1→stage0-unique A p γ =
+  stage1→stage0-unique A =
     let module I = Interop.For B Stage1Port Stage0Port in
-    Prop.↔-trans (I.adapter-unique A p γ)
-      (Prop.↔-sym (bootstrap≈canonical p γ))
+    I.adapter≈-trans
+      {A = A}
+      {B = I.canonicalAdapter}
+      {C = bootstrap}
+      (I.adapter-unique A)
+      (I.adapter≈-sym {A = bootstrap} {B = I.canonicalAdapter} bootstrap≈canonical)
 
   stage0→stage1-unique
     : ∀ (A : Interop.PortAdapter B Stage0Port Stage1Port)
     → Interop.For.Adapter≈ B Stage0Port Stage1Port A unbootstrap
-  stage0→stage1-unique A p c =
+  stage0→stage1-unique A =
     let module I = Interop.For B Stage0Port Stage1Port in
-    Prop.↔-trans (I.adapter-unique A p c)
-      (Prop.↔-sym (unbootstrap≈canonical p c))
+    I.adapter≈-trans
+      {A = A}
+      {B = I.canonicalAdapter}
+      {C = unbootstrap}
+      (I.adapter-unique A)
+      (I.adapter≈-sym {A = unbootstrap} {B = I.canonicalAdapter} unbootstrap≈canonical)
 
   -- Confluence: any two adapters between stages are ObsEq-equivalent.
   stage1→stage0-confluent
@@ -358,8 +372,13 @@ module For
       : Interop.For.Adapter≈ B Stage1Port P
           canonical-from-stage1
           (Interop.composeAdapter B Stage1Port Stage0Port P bootstrap canonical-from-stage0)
-    factors-through-bootstrap p φ =
-      Interlingua.translate-comp B Stage1Port Stage0Port P p φ
+    factors-through-bootstrap =
+      let module I = Interop.For B Stage1Port P in
+      Prop._↔_.to
+        (I.AdapterObsEq↔Adapter≈
+          {A = canonical-from-stage1}
+          {B = Interop.composeAdapter B Stage1Port Stage0Port P bootstrap canonical-from-stage0})
+        (λ p φ → Interlingua.translate-comp B Stage1Port Stage0Port P p φ)
 
   -- Telemetry-bundled check: bootstrap + trace-derived budget.
   module Telemetry
@@ -415,12 +434,10 @@ module FromGradedKernel
   {Sig : LogOSSignature ℓ}
   {Q : QAdapter ℓ}
   (K : GK.GradedKernel Sig Q)
-  (stepSat : GradedToKernel.StepIsSat K)
-  (bm : Core.BodyMonotoneShape (GK.GradedKernel.shape K))
   where
 
   K₀ : Kernel Sig Q
-  K₀ = GradedToKernel.asKernel K stepSat bm
+  K₀ = GradedToKernel.asKernel K
 
   module Base = For K₀
   open Base public

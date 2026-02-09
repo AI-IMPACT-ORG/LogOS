@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,10 +9,11 @@ module LogOS.Packs.InfoTheory.All where
 
 -- Information theory pack (Shannon + thermo/RG-facing surfaces).
 
-open import LogOS.Packs.Trust using (PackTrust; stable)
+open import LogOS.Packs.Trust using (PackTrust)
+import LogOS.Packs.InfoTheory.Core as PackCore
 
 packTrust : PackTrust
-packTrust = record { level = stable }
+packTrust = PackCore.packTrust
 
 module AssumptionBundles where
   open import LogOS.Packs.Assumptions.Physics public

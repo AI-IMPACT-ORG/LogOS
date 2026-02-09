@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -102,7 +102,7 @@ focused on the port/adapters spine and the precise (typed) translation/naturalit
 - `LogOS/Kernel/Reindex.agda`
 - `LogOS/Kernel/HomOverSig.agda`
 - Optional sentence-translation reindexing:
-  `reindexKernelWithFml` / `reindexLogicKernelWithFml` (syntax view change; satisfaction is related by the `Sat*-precompose` lemmas).
+  `reindexKernelWithFml` (syntax view change; satisfaction is related by the `Sat*-precompose` lemmas).
 - Canonical strict-syntax translation along reindexing:
   `LogOS/Ports/Semantic/InterlinguaStrictReindex.agda` (interlingua = `mapFml`).
 - Canonical heterogeneous adapter across changing satisfactions:
@@ -127,7 +127,7 @@ Minimal port interface (export + import legs, with satisfaction equivalences (�
 
 Generic presentation interface over an arbitrary satisfaction relation:
 
-- `LogOS/Ports/Semantic/InterlinguaCore.agda` (`PresentationC`)
+- `LogOS/Ports/Semantic/PresentationCore.agda` (`PresentationC`)
 
 ## Layer 5: canonical interlingua (forced translation)
 
@@ -157,6 +157,9 @@ In LogOS, the limit-level (Kleene `μ`) transport lives in the interoperability
 spine:
 
 - `LogOS/Ports/Semantic/Interoperability.agda` (`Limit.translate-μ≤`, `Limit.translate-μ≤↑`).
+  For a thin-2-category packaging of presentations (over a fixed satisfaction),
+  see `LogOS/Ports/Semantic/Presentation2Cat.agda` and the CategoryTheory wrapper
+  `LogOS/Theorems/CategoryTheory/Presentation2Ref2Cat.agda`.
 
 Both theorems package *all* required hypotheses as small records:
 
@@ -169,6 +172,9 @@ Both theorems package *all* required hypotheses as small records:
 The reusable domain-theoretic engine is:
 
 - `LogOS/Theorems/Boundary/MuFusion.agda` (`μ-fusion≤`).
+  The ωCPO-map assumptions that μ-fusion needs also form a thin 2-category:
+  `LogOS/Theorems/Boundary/OmegaCPOMap2Cat.agda` (and wrapper
+  `LogOS/Theorems/CategoryTheory/OmegaCPO2Cat.agda`).
 
 Interoperability theorems (adapters between ports over a shared boundary satisfaction):
 - `adapter-respects-ObsEqF` (ObsEqF transported by any adapter)
@@ -214,6 +220,12 @@ For computation‑level comparison and transport (process morphisms, naturality 
 budgeted execution, etc.):
 
 - `LogOS/Computation/SchemeCategory.agda`
+- Thin-2-category bookkeeping for processes (objects = processes, 1-cells = lax process morphisms, 2-cells = pointwise refinement):
+  `LogOS/Computation/Process2Cat.agda` and the CategoryTheory wrapper `LogOS/Theorems/CategoryTheory/Process2Ref2Cat.agda`.
+- Limit/run semantics via Kleene `μ` on ωCPO state preorders (explicit assumptions) and transport along lax morphisms (via μ-fusion):
+  `LogOS/Computation/ProcessLimit.agda` (`run∞`, `TransportLax.run∞-map≤`).
+- Compositional packaging (“sub-2-category”) for `run∞` preservation:
+  `LogOS/Computation/ProcessLimitSub2Cat.agda` (objects carry `LimitData`, 1-cells carry ω-continuity of the map; lemma `preserves-run∞`).
 
 ## Tooling: inputs/outputs (certificates)
 
@@ -226,7 +238,7 @@ use the generic `ProofSystem` interface and its pullback along canonical transla
 
 For a compact “external logic system” wrapper (presentation + prover/solver I/O), see:
 
-- `LogOS/Ports/Semantic/SystemIO.agda` (`SystemIO`, `rebase`, `rebaseAlongSatMor`)
+- `LogOS/Ports/Semantic/SatSystemIO.agda` (`SatSystemIO`, `rebase`, `rebaseAlongSatMor`)
   (`rebaseAlongSatMor` pulls back both prover + model-checker; the model-checker transport is canonical via `mapCtx`).
 
 ## Canonical import map

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,13 +16,12 @@ open import LogOS.Minimal.Con using (BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel.Graded using (GradedKernel)
-open import LogOS.Kernel.Graded.ToKernel as ToKernel
 open import LogOS.Kernel as Kernel
-import LogOS.Kernel.Core as KCore
 
 import LogOS.Packs.Agents.Experimental.Learning.RGFlow as RGFlow
 import LogOS.Packs.Agents.Experimental.Arguments.ScalingLaws as ScalingLaws
 import LogOS.Theorems.Meta.LimitPublicisation as LP
+import LogOS.Packs.Agents.Experimental.Arguments.Context as Ctx
 
 -- Generic learning vs scaling-law bridge: RG steps + scaling dimensions.
 
@@ -81,21 +80,28 @@ module For
 
   -- Optional: publicise scaling bounds when step-grade = sat.
   module Public
-    {stepSat : ToKernel.StepIsSat K}
-    {bm : KCore.BodyMonotoneShape (GradedKernel.shape K)}
     where
 
-    module SLPublic = SL.Public {stepSat = stepSat} {bm = bm}
+    module SLPublic = SL.Public
     open SLPublic public
 
     learning-scalingBound-public
       : ∀ {g} (T : LearningTraining g)
       → (stableBoundBoxBody : ∀ γ →
           ScalingBoundK (step T) (dim T) γ
-          ↔
-          ScalingBoundK (step T) (dim T) (Kernel.Box K₀ (Kernel.Body K₀ γ)))
+            ↔ ScalingBoundK (step T) (dim T)
+                (BoxAt K₀ (GTier.step (Kernel.G K₀)) (Kernel.Body K₀ γ)))
       → ∀ {γ}
       → ScalingBoundK (step T) (dim T) γ
       → LP.LimitPublicisation K₀ (ScalingBoundK (step T) (dim T)) γ
     learning-scalingBound-public T stableBoundBoxBody =
       scalingBound-public (step T) (dim T) stableBoundBoxBody
+
+-- Context-bundled entrypoint (convenience).
+module ForCtx
+  {ℓ : Level}
+  {Sig : LogOSSignature ℓ}
+  {Q : QAdapter ℓ}
+  (C : Ctx.Context Sig Q)
+  where
+  open For (Ctx.Context.K C) (Ctx.Context.ωCPO C) public

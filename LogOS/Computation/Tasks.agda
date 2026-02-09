@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,6 +17,7 @@ open import LogOS.Prelude
 
 open import LogOS.Computation.Core using (iterate; Computation)
 open import LogOS.Minimal.ScaleOps using (ScaleOps)
+import LogOS.Minimal.Truth as Truth
 import LogOS.Computation.Scheme as Sch
 import LogOS.Computation.SchemeCategory as Cat
 
@@ -208,23 +209,36 @@ module ForProcess
       maph = Cat.ProcessHom.map (Cat.ProcessHomCost.hom hc)
 
     run≤From-map
-      : ∀ Ops g c
-      → Cat.Process.decode P₂
-          (Cat.Process.close P₂
-            (Cat.run≤ P₂ (Cat.castOps→ hc Ops) (Cat.castScale→ hc g) (maph c)))
-        ≡ run≤From Ops g c
-    run≤From-map Ops g c = Cat.run≤-meaning-comm hc Ops g c
-
-    run≤Task-map
-      : ∀ Ops t
+      : ∀ (Ops₁ : ScaleOps Q) (Ops₂ : ScaleOps (Cat.Process.Q P₂)) g c
+      → (stepsEq :
+           ScaleOps.steps Ops₂
+             (ScaleOps.budget Ops₂ (Truth.GuardedCore.GradeHom.map (Cat.ProcessHomCost.grade hc) g))
+           ≡
+           ScaleOps.steps Ops₁ (ScaleOps.budget Ops₁ g))
       → Cat.Process.decode P₂
           (Cat.Process.close P₂
             (Cat.run≤ P₂
-              (Cat.castOps→ hc Ops)
-              (Cat.castScale→ hc (Graded.grade t))
+              Ops₂
+              (Truth.GuardedCore.GradeHom.map (Cat.ProcessHomCost.grade hc) g)
+              (maph c)))
+        ≡ run≤From Ops₁ g c
+    run≤From-map Ops₁ Ops₂ g c stepsEq = Cat.run≤-meaning-comm hc Ops₁ Ops₂ g c stepsEq
+
+    run≤Task-map
+      : ∀ (Ops₁ : ScaleOps Q) (Ops₂ : ScaleOps (Cat.Process.Q P₂)) t
+      → (stepsEq :
+           ScaleOps.steps Ops₂
+             (ScaleOps.budget Ops₂ (Truth.GuardedCore.GradeHom.map (Cat.ProcessHomCost.grade hc) (Graded.grade t)))
+           ≡
+           ScaleOps.steps Ops₁ (ScaleOps.budget Ops₁ (Graded.grade t)))
+      → Cat.Process.decode P₂
+          (Cat.Process.close P₂
+            (Cat.run≤ P₂
+              Ops₂
+              (Truth.GuardedCore.GradeHom.map (Cat.ProcessHomCost.grade hc) (Graded.grade t))
               (maph (Graded.payload t))))
-        ≡ run≤Task Ops t
-    run≤Task-map Ops t = run≤From-map Ops (Graded.grade t) (Graded.payload t)
+        ≡ run≤Task Ops₁ t
+    run≤Task-map Ops₁ Ops₂ t stepsEq = run≤From-map Ops₁ Ops₂ (Graded.grade t) (Graded.payload t) stepsEq
 
 -- --------------------------------------------------------------------------
 -- Scheme view: run either a raw code state, or a compiled input, for an

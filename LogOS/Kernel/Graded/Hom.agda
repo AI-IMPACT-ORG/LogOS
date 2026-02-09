@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,14 +10,14 @@ module LogOS.Kernel.Graded.Hom where
 open import LogOS.Prelude
 
 open import LogOS.Kernel.Graded
-open import LogOS.Kernel.Core as KCore hiding (FlowCode)
+open import LogOS.Kernel.Shape as KCore hiding (FlowCode)
 open import LogOS.Kernel.HomCore as HomCore
 open import LogOS.Kernel.Graded.ConAlgOf public using (conAlgOf)
 open import LogOS.Kernel.Graded.HomWithGradeKit as WGKit
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
-open import LogOS.Algebra.ConAlg
+open import LogOS.Minimal.ConAlg
 open import LogOS.Minimal.Truth as Truth
 
 private

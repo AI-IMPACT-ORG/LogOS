@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -18,13 +18,13 @@ module docs.Views.HoTT_3Level where
 open import LogOS.Prelude public
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Kernel using (Kernel)
-import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheorems
+import LogOS.API.Views as Views
+open Views.Kernels using (Kernel)
 
 module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   (K : Kernel Sig Q)
   where
-  module V = ViewTheorems.For K
+  module V = Views.ViewTheorems.For K
   open V.HoTT3Level public
 
   private
@@ -83,7 +83,7 @@ Dictionary (literature ↔ LogOS)
 | Modality / local operator | `Flow` (guarded closure) | Inflationary + idempotent-lax; pre-fixed points (hence fixed up to `≈`) are “stable truths”. |
 | Truncation/extensionality upgrades | antisymmetry / proof-irrelevance packs | Upgrades mutual refinement to equality when assumed. |
 | Reflection (syntax-in-logic) | `Code`, `encode`, `decode`, `Guard`, `Body` | A reflective interface, not an additional truth layer. |
-| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); used for graded/budgeted variants. |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital prequantale in the finite-join sense (not complete); used for graded/budgeted variants. |
 
 Core definitions (literature style)
 -----------------------------------
@@ -144,7 +144,7 @@ Key points:
 - LogOS is built as a **three-tier** system (S/H/G) with **explicit coherences**
   between the tiers.
 - The core does **not** assume `_≡_` coincides with `_↔_` or with mutual refinement (`≈`);
-  it uses preorders and explicit bi-implications. This is the host-minimal, transport-friendly default.
+  it uses preorders and explicit bi-implications. This is the prototype, transport-friendly default.
 - “Univalence-like” principles appear as **opt-in upgrades** (e.g. antisymmetry / faithfulness),
   allowing movement between an extensional (set-like) and a homotopical (`_↔_`-first) reading
   without changing the kernel.
@@ -181,10 +181,10 @@ LogOS names the tiers:
    - A code layer (`Code`, `encode`, `decode`, `Guard`, `Body`) internalising admissible steps.
    - This is the “+” in “3+ levels”: it is not another truth predicate, but a reflective interface
      that lets the kernel speak about its own boundary reasoning at `decode` level.
-   - The reflection/guard coherence law is a kernel field (unguarded kernel: `LogOS/Kernel.agda`,
-     uniform interface: `LogOS/Kernel/LogicKernel.agda`).
+   - The reflection/guard coherence law is a kernel field (ungraded kernel: `LogOS/Kernel/UngradedKernel.agda`,
+     uniform interface: `LogOS/Kernel.agda`).
    - Optional tightening (functorial syntax): a signature-indexed “sentence/program” layer with
-     covariant translation along `SigHom` lives in `LogOS/Free/ConstraintsOverSig.agda`. This is
+     covariant translation along `SigHom` lives in `LogOS/Minimal/ConstraintsOverSig.agda`. This is
      the institution-style `Sen` direction and complements the kernel’s contravariant model
      reindexing (`reindexKernel`). If you want strict-formula translation at the kernel surface,
      use `reindexKernelWithFml`.
@@ -201,7 +201,8 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
-open import LogOS.Kernel using (Kernel)
+import LogOS.API.Views as Views
+open Views.Kernels using (Kernel)
 open import LogOS.Syntax.Prop using (_↔_)
 import LogOS.Minimal.Truth as Truth
 
@@ -279,7 +280,7 @@ This 1.0 library does *not* claim “full HoTT” in the sense of:
 
 Instead, the repo is engineered so that:
 
-1) the core stays small and host-minimal,
+1) the core stays small and prototype,
 2) `_↔_`-first coherence is the default (via `_↔_`, projectors, and transport),
 3) univalence-like principles can be added as *explicit, scoped* assumption packs
    where the application warrants it (e.g. collapsing mutual-refinement classes under antisymmetry/proof-irrelevance).

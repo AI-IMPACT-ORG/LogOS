@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,11 +12,11 @@ open import LogOS.Syntax.Prop using (_↔_)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Minimal.Con
+open import LogOS.Minimal.View using (≃→≈[V])
 open import LogOS.Kernel
-open import LogOS.Kernel.Boundary
 open import LogOS.Kernel.Endo
-open import LogOS.Boundary.Port
+open import LogOS.Kernel.Tiers as KTiers
+open import LogOS.Kernel.Eq using (module ForKernel)
 
 -- Kernel self-reflection “up to the explicit boundary”: codes are observed only
 -- via the boundary view `Sat_H_bnd ∘ decode`.
@@ -27,32 +27,27 @@ open import LogOS.Boundary.Port
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
          (K : Kernel Sig Q) where
-  open Kernel K using (BB; Sat_H_bnd; sat-coh; encode; decode; decode∘encode; reify; reify-decode; γ*; decode-γ*)
+  open Kernel K using (Sat_H_bnd; encode; decode; decode∘encode; reify; reify-decode; γ*; decode-γ*)
+  open ForKernel K
 
-  private
-    CP = BulkBoundary.bnd BB
-    module CP = ConPreorder CP
+  module KT = KTiers.For K
 
   -- Boundary observational equality on codes: two codes agree when they
   -- induce the same boundary observations across all boundary contexts.
 
   infix 4 _≈∂_
   _≈∂_ : Kernel.Code K → Kernel.Code K → Set ℓ
-  γ ≈∂ δ = decode γ ≈∂[ boundaryIO K ] decode δ
+  _≈∂_ = KT._≈obs_
 
-  -- Propositional equality of decoded constraints implies boundary equivalence.
+  -- Strict decoded equality implies boundary equivalence.
 
-  decode≡→≈∂ : ∀ {γ δ} → decode γ ≡ decode δ → γ ≈∂ δ
-  decode≡→≈∂ {γ} {δ} eq p =
-    record
-      { to   = λ s → subst (Sat_H_bnd p) eq s
-      ; from = λ s → subst (Sat_H_bnd p) (sym eq) s
-      }
+  ≃K→≈∂ : ∀ {γ δ} → γ ≃K δ → γ ≈∂ δ
+  ≃K→≈∂ eq = ≃→≈[V] {V = KT.decodeObsView} eq
 
   -- Reify is observationally inert at the boundary.
 
   reify≈∂ : ∀ γ → reify γ ≈∂ γ
-  reify≈∂ γ = decode≡→≈∂ (reify-decode γ)
+  reify≈∂ γ = ≃K→≈∂ (reify-decode γ)
 
   -- Reify is a decode-level idempotent retraction.
 

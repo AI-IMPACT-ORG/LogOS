@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
 set -euo pipefail
+
+die() {
+  echo "stable-surface-no-guardless-exports-check: $*" >&2
+  exit 1
+}
 
 # LogOS policy check:
 # stable pack entrypoints should not export “guardless”/raw claims such as
@@ -12,49 +17,57 @@ set -euo pipefail
 # Rationale: stable surfaces are intended to be meaningfully interpretable without
 # readers having to discover and add vacuity guards retroactively.
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
 cd "$ROOT"
+
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+
+# shellcheck source=lib/stable_packs.sh
+source "${SCRIPT_DIR}/lib/stable_packs.sh"
 
 PATTERN='Without_Vacuity_Guards|module[[:space:]]+Guardless\b|\.Guardless\b'
 
 stable_roots=()
-while IFS= read -r allfile; do
-  if grep -q "level = stable" "$allfile" 2>/dev/null; then
-    stable_roots+=("$(dirname "$allfile")")
+stable_roots_text=""
+if ! stable_roots_text="$(stable_pack_roots)"; then
+  rc="$?"
+  if [[ "$rc" -eq 1 ]]; then
+    die "no stable packs found (expected `packTrust = record { level = stable }` in LogOS/Packs/**/All.agda)"
   fi
-done < <(find LogOS/Packs -name 'All.agda' -print 2>/dev/null | sort)
-
+  die "failed to discover stable pack roots"
+fi
+while IFS= read -r root; do
+  [[ -z "${root}" ]] && continue
+  stable_roots+=("${root}")
+done <<< "${stable_roots_text}"
 if [ "${#stable_roots[@]}" -eq 0 ]; then
-  echo "stable-surface-no-guardless-exports-check: OK (no stable packs found)"
-  exit 0
+  die "no stable packs found (expected `packTrust = record { level = stable }` in LogOS/Packs/**/All.agda)"
 fi
 
 bad=""
 for root in "${stable_roots[@]}"; do
-  if command -v rg >/dev/null 2>&1; then
-    out="$(rg -n "$PATTERN" "$root" \
-      --glob '*.agda' \
-      --glob '!**/Experimental/**' \
-      --glob '!**/Legacy/**' \
-      2>/dev/null || true)"
-  else
-    out="$(find "$root" -type f -name '*.agda' \
-      ! -path '*/Experimental/*' \
-      ! -path '*/Legacy/*' \
-      -print0 2>/dev/null \
-      | xargs -0 grep -nE "$PATTERN" 2>/dev/null || true)"
+  out=""
+  status=0
+  set +e
+  out="$(rg -n \
+    --glob '*.agda' \
+    --glob '!**/_build/**' \
+    --glob '!**/Experimental/**' \
+    -- "$PATTERN" "$root" 2>&1)"
+  status="$?"
+  set -e
+  if [ "$status" -eq 2 ]; then
+    die $'rg error:\n'"${out}"
   fi
-
-  if [ -n "$out" ]; then
+  if [ "$status" -eq 0 ]; then
     bad="${bad}${out}"$'\n'
   fi
 done
 
 if [ -n "$bad" ]; then
-  echo "stable-surface-no-guardless-exports-check: FAIL" >&2
-  echo "Found guardless/raw claim exports inside stable pack trees (excluding Legacy/Experimental):" >&2
-  echo "$bad" >&2
-  exit 1
+  die $'Found guardless/raw claim exports inside stable pack trees (excluding Experimental):\n'"$bad"
 fi
 
 echo "stable-surface-no-guardless-exports-check: OK"

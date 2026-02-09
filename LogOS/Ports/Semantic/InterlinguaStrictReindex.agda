@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,18 +19,12 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel
-open import LogOS.Kernel.Reindex using (reindexKernelWithFml; reindex-satS-withFml)
-open import LogOS.Kernel.LogicKernel
-open import LogOS.Kernel.LogicKernel.Reindex using (reindexLogicKernelWithFml; reindexLogic-satS-withFml)
+open import LogOS.Kernel.Reindex using (reindexKernelWithFml; reindexLogic-satS-withFml)
 
-open import LogOS.Ports.Semantic.InterlinguaCore as InterlinguaCore
-open import LogOS.Ports.Semantic.PresentationCore using (PresentationC)
+open import LogOS.Ports.Semantic.HeteroInterlinguaCore as InterlinguaCore
+open import LogOS.Ports.Semantic.PresentationCore using (SatSystem; satSystem; PresentationC)
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
-import LogOS.Ports.Semantic.HeteroInterlinguaCore as Hetero
-open import LogOS.Adapters.Views.SatMor using
-  ( satMor-reindexKernel-strict
-  ; satMor-reindexLogicKernel-strict
-  )
+open import LogOS.Adapters.Views.SatMor using (satMor-reindexKernel-strict)
 
 module ForKernel
   {ℓ : Level}
@@ -51,63 +45,21 @@ module ForKernel
   SatS₂ : LogOSSignature.Cosp Sig₂ → Kernel.Fml K → Set ℓ
   SatS₂ = Truth.StrictTruth.StrictLayer.Sat_S (Kernel.Strict K)
 
-  P₁ : PresentationC (LogOSSignature.Cosp Sig₁) Fml₁ SatS₁
-  P₁ = canonicalPresentation SatS₁
+  S₁ : SatSystem
+  S₁ = satSystem (LogOSSignature.Cosp Sig₁) Fml₁ SatS₁
 
-  P₂ : PresentationC (LogOSSignature.Cosp Sig₂) (Kernel.Fml K) SatS₂
-  P₂ = canonicalPresentation SatS₂
+  S₂ : SatSystem
+  S₂ = satSystem (LogOSSignature.Cosp Sig₂) (Kernel.Fml K) SatS₂
 
-  m : SatMor (LogOSSignature.Cosp Sig₁) Fml₁ SatS₁
-              (LogOSSignature.Cosp Sig₂) (Kernel.Fml K) SatS₂
+  P₁ : PresentationC S₁
+  P₁ = InterlinguaCore.canonicalPresentation S₁
+
+  P₂ : PresentationC S₂
+  P₂ = InterlinguaCore.canonicalPresentation S₂
+
+  m : SatMor S₁ S₂
   m = satMor-reindexKernel-strict σ K mapFml
-  module I = Hetero.For m P₁ P₂
-
-  translate≈mapFml : I._≈⇒_ I.translate mapFml
-  translate≈mapFml = InterlinguaCore.canonical-translate≈mapCon m
-
-  mapFml-preserves-Sat
-    : ∀ p φ
-    → SatS₁ p φ ↔ SatS₂ (SigHom.mapCosp σ p) (mapFml φ)
-  mapFml-preserves-Sat = reindex-satS-withFml σ K mapFml
-
-  mapFml-unique
-    : ∀ (t : Fml₁ → Kernel.Fml K)
-    → I.SemPreserving t
-    → I._≈⇒_ t mapFml
-  mapFml-unique t pres p φ =
-    Prop.↔-trans
-      (I.translate-unique t pres p φ)
-      (translate≈mapFml p φ)
-
-module ForLogicKernel
-  {ℓ : Level}
-  {Sig₁ Sig₂ : LogOSSignature ℓ}
-  {Q : QAdapter ℓ}
-  (σ : SigHom Sig₁ Sig₂)
-  (K : LogicKernel Sig₂ Q)
-  {Fml₁ : Set ℓ}
-  (mapFml : Fml₁ → LogicKernel.Fml K)
-  where
-
-  K₁ : LogicKernel Sig₁ Q
-  K₁ = reindexLogicKernelWithFml σ K mapFml
-
-  SatS₁ : LogOSSignature.Cosp Sig₁ → Fml₁ → Set ℓ
-  SatS₁ = Truth.StrictTruth.StrictLayer.Sat_S (LogicKernel.Strict K₁)
-
-  SatS₂ : LogOSSignature.Cosp Sig₂ → LogicKernel.Fml K → Set ℓ
-  SatS₂ = Truth.StrictTruth.StrictLayer.Sat_S (LogicKernel.Strict K)
-
-  P₁ : PresentationC (LogOSSignature.Cosp Sig₁) Fml₁ SatS₁
-  P₁ = canonicalPresentation SatS₁
-
-  P₂ : PresentationC (LogOSSignature.Cosp Sig₂) (LogicKernel.Fml K) SatS₂
-  P₂ = canonicalPresentation SatS₂
-
-  m : SatMor (LogOSSignature.Cosp Sig₁) Fml₁ SatS₁
-              (LogOSSignature.Cosp Sig₂) (LogicKernel.Fml K) SatS₂
-  m = satMor-reindexLogicKernel-strict σ K mapFml
-  module I = Hetero.For m P₁ P₂
+  module I = InterlinguaCore.For m P₁ P₂
 
   translate≈mapFml : I._≈⇒_ I.translate mapFml
   translate≈mapFml = InterlinguaCore.canonical-translate≈mapCon m
@@ -118,10 +70,17 @@ module ForLogicKernel
   mapFml-preserves-Sat = reindexLogic-satS-withFml σ K mapFml
 
   mapFml-unique
-    : ∀ (t : Fml₁ → LogicKernel.Fml K)
+    : ∀ (t : Fml₁ → Kernel.Fml K)
     → I.SemPreserving t
     → I._≈⇒_ t mapFml
-  mapFml-unique t pres p φ =
-    Prop.↔-trans
-      (I.translate-unique t pres p φ)
-      (translate≈mapFml p φ)
+  mapFml-unique t pres =
+    let
+      t≈tr : I._≈⇒_ t I.translate
+      t≈tr = I.translate-unique t pres
+
+      tr≈map : I._≈⇒_ I.translate mapFml
+      tr≈map = translate≈mapFml
+    in
+    ( (λ p φ sat → I.Trans≈⇒ tr≈map p φ (I.Trans≈⇒ t≈tr p φ sat))
+    , (λ p φ sat → I.Trans≈⇐ t≈tr p φ (I.Trans≈⇐ tr≈map p φ sat))
+    )

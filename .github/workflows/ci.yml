@@ -1,4 +1,4 @@
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -14,40 +14,55 @@ on:
 
 jobs:
   check-all:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Set up Haskell toolchain
-        uses: haskell-actions/setup@v2
+        uses: haskell-actions/setup@dc63c94789664bb2910876ec3dfeeaa24d23b96b # v2.10.2
         with:
           ghc-version: "9.6.6"
           cabal-version: "3.12.1.0"
+          cabal-update: false
 
       - name: System deps (Agda build)
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev zlib1g-dev ripgrep
+          sudo apt-get install -y libgmp-dev zlib1g-dev ripgrep shellcheck
 
       - name: Cache cabal store
-        uses: actions/cache@v4
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.cabal/store
             ~/.cabal/packages
-          key: ${{ runner.os }}-cabal-agda-2.8.0
+          key: ${{ runner.os }}-cabal-agda-2.8.0-${{ hashFiles('.github/cabal-index-state.txt') }}
 
       - name: Install Agda (pinned)
         run: |
-          cabal update
-          cabal install Agda-2.8.0 --installdir="$HOME/.local/bin" --install-method=copy --overwrite-policy=always
+          CABAL_INDEX_STATE="$(grep -Ev '^[[:space:]]*(#|$)' .github/cabal-index-state.txt | head -n 1)"
+          if [[ -z "${CABAL_INDEX_STATE}" ]]; then
+            echo "Missing cabal index-state in .github/cabal-index-state.txt" >&2
+            exit 1
+          fi
+          echo "Cabal index-state: ${CABAL_INDEX_STATE}"
+          cabal update --index-state="${CABAL_INDEX_STATE}"
+          cabal install Agda-2.8.0 --index-state="${CABAL_INDEX_STATE}" --installdir="$HOME/.local/bin" --install-method=copy --overwrite-policy=always
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Full check (CI + full typecheck)
+      - name: Full clean gate (CI + full typecheck)
         run: |
           make check-all
+
+      - name: Shellcheck (scripts)
+        run: |
+          make shellcheck
 
       - name: Smoke test (library-file mode)
         run: |
           make clean
           make agda-lib-check
+
+      - name: HTML docs (Agda HTML backend)
+        run: |
+          make html

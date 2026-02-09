@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,11 +16,14 @@ module Arguments where
   import LogOS.Packs.Agents.Experimental.Arguments.ScalingLaws as ScalingLaws
   import LogOS.Packs.Agents.Experimental.Arguments.LearningScaling as LearningScaling
   import LogOS.Packs.Agents.Experimental.Arguments.TransformerScaling as TransformerScaling
+  import LogOS.Packs.Agents.Experimental.Arguments.ControlledFeedback as ControlledFeedback
   import LogOS.Packs.Agents.Experimental.Arguments.TransformerFormalization as TransformerFormalization
   import LogOS.Packs.Agents.Experimental.Arguments.TransformerBridge as TransformerBridge
   import LogOS.Packs.Agents.Experimental.Arguments.TransformerScalingPipeline as TransformerScalingPipeline
   import LogOS.Packs.Agents.Experimental.Arguments.Transformer as Transformer
-  import LogOS.Packs.Agents.Experimental.Arguments.LogOSDiscoveryScaling as LogOSDiscoveryScaling
+  import LogOS.Packs.Agents.Experimental.Arguments.Scaling as Scaling
+  import LogOS.Packs.Agents.Experimental.Arguments.Discovery as Discovery
+  import LogOS.Packs.Agents.Experimental.Arguments.DiscoveryScaling as DiscoveryScaling
   import LogOS.Packs.Agents.Experimental.Arguments.KolmogorovDiscoveryScaling as KolmogorovDiscoveryScaling
   import LogOS.Packs.Agents.Experimental.Arguments.KolmogorovOptimality as KolmogorovOptimality
   import LogOS.Packs.Agents.Experimental.Arguments.SolomonoffLearning as SolomonoffLearning
@@ -32,6 +35,7 @@ module Arguments where
   -- - `LogOS.Packs.Agents.Experimental.Arguments.ScalingLaws`
   -- - `LogOS.Packs.Agents.Experimental.Arguments.LearningScaling`
   -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerScaling`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.ControlledFeedback`
   -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerFormalization`
   -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerBridge`
   -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerScalingPipeline`
@@ -39,7 +43,7 @@ module Arguments where
   -- - `LogOS.Packs.Agents.Experimental.Arguments.TransformerKolmogorovScaling`
   --
   -- Discovery scaling (optional):
-  -- - `LogOS.Packs.Agents.Experimental.Arguments.LogOSDiscoveryScaling`
+  -- - `LogOS.Packs.Agents.Experimental.Arguments.DiscoveryScaling`
   -- - `LogOS.Packs.Agents.Experimental.Arguments.KolmogorovDiscoveryScaling`
   -- - `LogOS.Packs.Agents.Experimental.Arguments.KolmogorovOptimality`
   -- - `LogOS.Packs.Agents.Experimental.Arguments.SolomonoffLearning`
@@ -48,6 +52,7 @@ module Emit where
   -- Anchor modules for reachability/discoverability (kept namespaced).
   import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.DataPlan as TensorFlowDataPlan
   import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Emit as TensorFlowEmit
+  import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.EmitBridge as TensorFlowEmitBridge
   import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.EmitCore as TensorFlowEmitCore
   import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Features.Coupling as TensorFlowCoupling
   import LogOS.Packs.Agents.Experimental.Emit.Backends.TensorFlow.Features.Symbolic as TensorFlowSymbolic
@@ -75,6 +80,21 @@ module Safety where
   import LogOS.Packs.Agents.Experimental.Safety.NoTotalAuditor as NoTotalAuditor
   -- Kept lightweight: import directly.
   -- - `LogOS.Packs.Agents.Experimental.Safety.NoTotalAuditor`
+
+module Frameworks where
+  -- Meta-reasoning / diagonal-barrier surfaces are intentionally kept here
+  -- (experimental): they depend on explicit diagonalisation assumption packs.
+  open import LogOS.Packs.Agents.Frameworks.GodelMachine public
+  open import LogOS.Packs.Agents.Frameworks.MetaReasoning public
+
+module Comparisons where
+  -- Limitation theorems are diagonal/barrier results, hence experimental.
+  open import LogOS.Packs.Agents.Comparisons.Limitations public
+
+module Examples where
+  -- Domain-facing examples are kept out of the stable surface to preserve the
+  -- “stable roots do not reach `LogOS.Domain.*` transitively” policy.
+  open import LogOS.Packs.Agents.Examples.ReindexedNetwork public
 
 module Capstone where
   import LogOS.Packs.Agents.Experimental.Capstone as Capstone

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -12,86 +12,115 @@ die() {
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ALLOWLIST_FILE="${SCRIPT_DIR}/postulate_allowlist.txt"
 
 cd "${LIB_ROOT}"
 
-extract_agda_blocks() {
-  # Print Agda code lines inside ```agda fenced blocks, prefixed with file:line:.
-  local file="$1"
-  awk -v f="$file" '
-    BEGIN { inside = 0 }
-    /^[[:space:]]*```[[:space:]]*agda[[:space:]]*$/ { inside = 1; next }
-    /^[[:space:]]*```[[:space:]]*$/ { if (inside == 1) { inside = 0; next } }
-    inside == 1 { printf "%s:%d:%s\n", f, NR, $0 }
-  ' "$file"
-}
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
 
-scan_docs_agda_blocks() {
-  local out=""
-  while IFS= read -r -d '' f; do
-    out+=$(extract_agda_blocks "$f" || true)
-    out+=$'\n'
-  done < <(find docs -type f -name '*.lagda.md' -not -path './_build/*' -print0 2>/dev/null || true)
-  printf "%s" "$out"
-}
+# shellcheck source=lib/docs_agda_blocks.sh
+source "${SCRIPT_DIR}/lib/docs_agda_blocks.sh"
 
 scan() {
   local pattern="$1"
 
-  if command -v rg >/dev/null 2>&1; then
-    local out status
-    set +e
-    out="$(rg -n --glob '*.agda' --glob '!_build/**' -- "${pattern}" . 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'rg error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
-  else
-    local out status
-    set +e
-    out="$(grep -RIn --include='*.agda' --exclude-dir='_build' -E -- "${pattern}" . 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'grep error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
+  local out status
+  set +e
+  out="$(rg -n --glob '*.agda' --glob '!_build/**' -- "${pattern}" . 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
 }
 
-ALLOW_RE=(
-  '^(\./)?LogOS/.*/Demo/.*\.agda:'
-  '^(\./)?LogOS/.*/Demos/.*\.agda:'
-  '^(\./)?Models/.*/Demo/.*\.agda:'
-  '^(\./)?Models/.*/Demos/.*\.agda:'
-)
+read_allowlist() {
+  if [[ ! -f "${ALLOWLIST_FILE}" ]]; then
+    die "missing allowlist file: ${ALLOWLIST_FILE}"
+  fi
+
+  local line
+  while IFS= read -r line; do
+    line="${line%%#*}"
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -z "${line}" ]] && continue
+    printf "%s\n" "${line#./}"
+  done < "${ALLOWLIST_FILE}"
+}
 
 filter_allowlist() {
   local out
   out="$(cat)"
-  for re in "${ALLOW_RE[@]}"; do
-    out="$(printf "%s" "${out}" | grep -v -E "${re}" || true)"
-  done
+  local f
+  while IFS= read -r f; do
+    [[ -z "${f}" ]] && continue
+    out="$(printf "%s" "${out}" | grep -v -F "${f}:" || true)"
+    out="$(printf "%s" "${out}" | grep -v -F "./${f}:" || true)"
+  done < <(read_allowlist)
   printf "%s" "${out}"
+}
+
+justification_ok() {
+  local file="$1"
+  local missing=()
+
+  grep -q "POSTULATE-JUSTIFICATION" "$file" || missing+=("POSTULATE-JUSTIFICATION")
+  grep -q -E "Threat model:" "$file" || missing+=("Threat model:")
+  grep -q -E "Why unavoidable:" "$file" || missing+=("Why unavoidable:")
+  grep -q -E "Isolation:" "$file" || missing+=("Isolation:")
+  grep -q -E "Forbidden imports:" "$file" || missing+=("Forbidden imports:")
+
+  if ((${#missing[@]})); then
+    printf "missing justification fields (%s)\n" "${missing[*]}"
+    return 1
+  fi
+  return 0
 }
 
 POSTULATE_PATTERN='^[[:space:]]*postulate[[:space:]]*$|^[[:space:]]*postulate[[:space:]]'
 postulates="$(scan "${POSTULATE_PATTERN}" | filter_allowlist)"
 if [[ -n "${postulates}" ]]; then
-  die $'found postulate outside allowed locations:\n'"${postulates}"$'\n\nAllowed:\n  - Models/**/Demo/**/*.agda\n  - Models/**/Demos/**/*.agda'
+  die $'found postulate outside explicit allowlist:\n'"${postulates}"$'\n\nRule: `postulate` is forbidden by default; whitelist specific files in scripts/postulate_allowlist.txt.'
+fi
+
+# For whitelisted files that contain `postulate`, require a structured justification.
+postulate_files=""
+out=""
+status=0
+set +e
+out="$(rg -l --glob '*.agda' --glob '!_build/**' -- "${POSTULATE_PATTERN}" . 2>&1)"
+status="$?"
+set -e
+if [[ "$status" -eq 2 ]]; then
+  die $'rg error:\n'"${out}"
+fi
+if [[ "$status" -eq 1 ]]; then
+  out=""
+fi
+postulate_files="$(printf "%s" "${out}" | sed 's#^\\./##')"
+
+if [[ -n "${postulate_files}" ]]; then
+  while IFS= read -r f; do
+    [[ -z "${f}" ]] && continue
+    f="${f#./}"
+    # Enforce that every postulate-bearing file is explicitly whitelisted.
+    if ! read_allowlist | grep -Fxq "${f}"; then
+      die "file contains `postulate` but is not in allowlist: ${f}"
+    fi
+    if ! reason="$(justification_ok "${f}")"; then
+      die "file contains `postulate` but lacks required justification block: ${f} (${reason})"
+    fi
+  done <<< "${postulate_files}"
 fi
 
 # Docs parity: do not allow `postulate` in Agda fenced code blocks.
 
-docs_postulates="$(scan_docs_agda_blocks | grep -E '^[^:]+:[0-9]+:[[:space:]]*postulate([[:space:]]|$)' || true)"
+docs_postulates="$(docs_scan_agda_blocks | grep -E '^[^:]+:[0-9]+:[[:space:]]*postulate([[:space:]]|$)' || true)"
 if [[ -n "${docs_postulates}" ]]; then
   die $'found postulate in docs (Agda code blocks):\n'"${docs_postulates}"
 fi

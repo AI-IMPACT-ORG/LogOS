@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,7 +22,6 @@ module LogOS.Domain.Opacity.Core where
 import LogOS.Domain.Opacity.Meaningfulness as Meaningfulnessₜ
 import LogOS.Domain.Opacity.WeilPositivityBridge as WeilPositivityBridgeₜ
 import LogOS.Domain.Opacity.WeilCriterionLedger as WeilCriterionLedgerₜ
-import LogOS.Domain.Opacity.WeilCriterionDagger as WeilCriterionDaggerₜ
 import LogOS.Domain.Opacity.ZetaTruthLedger as ZetaTruthLedgerₜ
 import LogOS.Domain.Opacity.ObservableSector as ObservableSectorₜ
 
@@ -43,7 +42,6 @@ module Meaningfulness = Meaningfulnessₜ
 
 module WeilPositivityBridge = WeilPositivityBridgeₜ
 module WeilCriterionLedger = WeilCriterionLedgerₜ
-module WeilCriterionDagger = WeilCriterionDaggerₜ
 module ZetaTruthLedger = ZetaTruthLedgerₜ
 module ObservableSector = ObservableSectorₜ
 

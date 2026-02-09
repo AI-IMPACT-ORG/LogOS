@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,7 +15,6 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
-open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel
 
 open import LogOS.Boundary.IO
@@ -40,7 +39,7 @@ module For
 
   guard-decode-core
     : ∀ γ → Kernel.decode K (Kernel.Guard K γ)
-        ≡ Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K) (Kernel.decode K γ)
+        ≡ GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K)) (Kernel.decode K γ)
   guard-decode-core = Kernel.guard-decode K
 
   decode∘encode-core : ∀ c → Kernel.decode K (Kernel.encode K c) ≡ c
@@ -74,7 +73,7 @@ module For
         → Interop.For.Adapter≈ B codePort boundaryPort A bootstrap
       bootstrap-iso : BS.BootstrapIso codePort boundaryPort
       guard-decode  : ∀ γ → Kernel.decode K (Kernel.Guard K γ)
-                       ≡ Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K) (Kernel.decode K γ)
+                       ≡ GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K)) (Kernel.decode K γ)
       decode∘encode : ∀ c → Kernel.decode K (Kernel.encode K c) ≡ c
 
   architecture : Architecture

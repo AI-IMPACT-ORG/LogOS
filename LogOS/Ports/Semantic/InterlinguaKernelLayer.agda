@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,11 +22,13 @@ open import LogOS.Boundary.IO
 open import LogOS.Boundary.Port
 
 open import LogOS.Kernel
-import LogOS.Kernel.Boundary as KBoundary
+import LogOS.Boundary.FromKernel as KBoundary
 
-open import LogOS.Ports.Semantic.InterlinguaCore using (PresentationC; canonicalPresentation)
+open import LogOS.Ports.Semantic.HeteroInterlinguaCore using (PresentationC; canonicalPresentation)
 open import LogOS.Ports.Semantic.Interlingua using (toPresentationC)
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
+open import LogOS.Ports.Semantic.PresentationCore using (satSystem)
+open import LogOS.Ports.Semantic.Core using (boundarySatSystemFromIO)
 import LogOS.Ports.Semantic.HeteroInterlinguaCore as Hetero
 
 module For
@@ -38,27 +40,23 @@ module For
   {ℓX ℓSat : Level}
   (X : Set ℓX)
   (SatX : LogOSSignature.Cosp Sig → X → Set ℓSat)
-  (m0 : SatMor (LogOSSignature.Cosp Sig) X SatX
-               (LogOSSignature.∂Cosp Sig)
-               (BulkBoundary.Con_bnd (Kernel.BB K))
-               (BoundaryIO.Sat∂ (KBoundary.boundaryIO K)))
+  (m0 : SatMor
+          (satSystem (LogOSSignature.Cosp Sig) X SatX)
+          (boundarySatSystemFromIO (KBoundary.boundaryIO K)))
   where
 
   B : BoundaryIO Sig Q (Kernel.HWorld K) (Kernel.BB K) (Kernel.HTruth K)
   B = KBoundary.boundaryIO K
 
-  m : SatMor (LogOSSignature.Cosp Sig) X SatX
-             (LogOSSignature.∂Cosp Sig)
-             (BulkBoundary.Con_bnd (Kernel.BB K))
-             (BoundaryIO.Sat∂ B)
+  m : SatMor
+        (satSystem (LogOSSignature.Cosp Sig) X SatX)
+        (boundarySatSystemFromIO B)
   m = m0
 
-  P₁ : PresentationC (LogOSSignature.Cosp Sig) X SatX
-  P₁ = canonicalPresentation SatX
+  P₁ : PresentationC (satSystem (LogOSSignature.Cosp Sig) X SatX)
+  P₁ = canonicalPresentation (satSystem (LogOSSignature.Cosp Sig) X SatX)
 
-  P₂ : PresentationC (LogOSSignature.∂Cosp Sig)
-                    (BulkBoundary.Con_bnd (Kernel.BB K))
-                    (BoundaryIO.Sat∂ B)
+  P₂ : PresentationC (boundarySatSystemFromIO B)
   P₂ = toPresentationC B P
 
   module H = Hetero.For m P₁ P₂
@@ -87,4 +85,6 @@ module For
     : ∀ (t : X → BoundaryPort.Form P)
     → H.SemPreserving t
     → H._≈⇒_ compile t
-  compile≈interp t pres p φ = Prop.↔-sym (H.translate-unique t pres p φ)
+  compile≈interp t pres =
+    let eq = H.translate-unique t pres in
+    (H.Trans≈⇐ eq , H.Trans≈⇒ eq)

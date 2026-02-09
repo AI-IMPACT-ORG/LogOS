@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -21,10 +21,12 @@ open import LogOS.Prelude public
 open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary; MonoMap)
 open import LogOS.Minimal.Adjunction using (MonoidalOps; LaxMonoidalAdjunction)
 
-import LogOS.Theorems.CategoryTheory.AdjunctionMonads as AdjMon
-import LogOS.Theorems.CategoryTheory.BeckChevalley as BC
-import LogOS.Theorems.Reflection.ForcingSheaves as ForcingSheaves
-import LogOS.Theorems.Reflection.NucleusMu as NucleusMu
+import LogOS.API.Views as Views
+
+module AdjMon = Views.AdjunctionMonads
+module BC = Views.BeckChevalley
+module ForcingSheaves = Views.ForcingSheaves
+module NucleusMu = Views.NucleusMu
 
 module Quotes
   {ℓ : Level}
@@ -110,7 +112,7 @@ Dictionary (literature ↔ LogOS)
 | Frobenius reciprocity (lax) | `AdjunctionMonads.Frobenius.frobenius-ext≤` | One-way inequality; matches LogOS’ lax/irreversible stance. |
 | Beck–Chevalley (lax) | `LogOS/Theorems/CategoryTheory/BeckChevalley.agda` | Packaged as commutation squares up to refinement. |
 | “Generated nucleus/closure” via μ | `LogOS/Theorems/Reflection/NucleusMu.agda` | Builds μ-generated closures; closure-operator packaging uses explicit ωCPO + a continuity witness for the step. |
-| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); not used directly here, but becomes relevant when instantiating graded/budgeted kernels. |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital prequantale in the finite-join sense (not complete); not used directly here, but becomes relevant when instantiating graded/budgeted kernels. |
 
 Core definitions (literature style)
 -----------------------------------

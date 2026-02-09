@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,19 +13,19 @@ open import LogOS.Base.Signature using (LogOSSignature; module LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Boundary.Telemetry using (TelemetryTrace; ProgramTelemetryPort)
 open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; sat-→₀)
-open import LogOS.Prelude.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude using (ℕ; zero; suc)
 open import LogOS.Prelude.NatOrder using (_≤ℕ_; trans≤ℕ)
-open import LogOS.Prelude.Product using (Σ; _×_; _,_)
+open import LogOS.Prelude using (Σ; _×_; _,_)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 import LogOS.Packs.Agents.Experimental.Physics.MaxwellAgent as Maxwell
 import LogOS.Theorems.Meta.LandauerIO as LIO
-import LogOS.Domain.Complexity.MeasurementCapacity as MC
-import LogOS.Domain.Complexity.SecondLaw as SL
-import LogOS.Domain.Complexity.LCUToLandauer as LCU
-import LogOS.Domain.Complexity.DataProcessingInequality as DPI
-import LogOS.Domain.Complexity.InfoProcessingBounds as IPB
+import LogOS.Complexity.MeasurementCapacity as MC
+import LogOS.Complexity.SecondLaw as SL
+import LogOS.Complexity.LCUToLandauer as LCU
+import LogOS.Complexity.DataProcessingInequality as DPI
+import LogOS.Complexity.InfoProcessingBounds as IPB
 open import LogOS.Kernel.Graded using (GradedKernel)
 import LogOS.Packs.Agents.Learning.SoftPolicy as Soft
 import LogOS.Packs.Agents.Learning.Core as LearningCore

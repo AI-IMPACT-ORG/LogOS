@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -7,13 +7,14 @@ SPDX-License-Identifier: GPL-3.0-only
 # LogOS architecture (one-page diagram)
 
 This is a “blast-radius” view of the codebase: where meaning is defined, and what is allowed to depend on what.
+Arrows indicate the allowed import direction: code in a lower box may import code in boxes above it.
 
 ```
 ┌───────────────────────────────┐
-│ Host surface (namespaced)      │
-│ `LogOS/Host/*`                 │
-│ (only place allowed to import  │
-│  `Agda.Primitive` /            │
+│ Host surface (allowlisted)     │
+│ `LogOS/Host/**`                │
+│ (only allowlisted files may    │
+│  import `Agda.Primitive` /     │
 │  `Agda.Builtin.*`)             │
 └───────────────┬───────────────┘
                 │
@@ -22,6 +23,14 @@ This is a “blast-radius” view of the codebase: where meaning is defined, and
 │ Prelude (curated base)         │
 │ `LogOS/Prelude.agda`           │
 │ + `LogOS/Prelude/*`            │
+│ (the host re-export bridge)    │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ Core foundations               │
+│ `LogOS/Base/*`, `LogOS/Syntax/*`│
+│ `LogOS/Algebra/*`, `LogOS/Free/*`│
 └───────────────┬───────────────┘
                 │
                 ▼
@@ -33,16 +42,16 @@ This is a “blast-radius” view of the codebase: where meaning is defined, and
                 │
                 ▼
 ┌───────────────────────────────┐
-│ Kernel integration             │
-│ `LogOS/Kernel/*`               │
-│ (S/H/G + Code, reindexing, …)  │
+│ Kernel + quantitative + compute │
+│ `LogOS/Kernel/*`, `LogOS/QAdapters/*` │
+│ `LogOS/Computation/*`          │
 └───────────────┬───────────────┘
                 │
                 ▼
 ┌───────────────────────────────┐
-│ Ports + adapters spine         │
-│ `LogOS/Ports/*`, `LogOS/Adapters/*` │
-│ + boundary I/O `LogOS/Boundary/*`   │
+│ Boundary + ports + adapters    │
+│ `LogOS/Boundary/*`, `LogOS/Ports/*` │
+│ `LogOS/Adapters/*`             │
 └───────────────┬───────────────┘
                 │
                 ▼
@@ -53,9 +62,20 @@ This is a “blast-radius” view of the codebase: where meaning is defined, and
                 │
                 ▼
 ┌───────────────────────────────┐
-│ Domain developments            │
-│ `LogOS/Domain/*`               │
-│ (e.g. ZFC / Opacity / IR / …)  │
+│ Topic libraries (mature)       │
+│ `LogOS/{ZFC,UniversalIR,Universality,Complexity,InfoTheory}/*` │
+│ `LogOS/ObjectLogic/*`          │
+│ (domain developments that are  │
+│  safe to depend on from stable │
+│  pack surfaces)                │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│ Experimental domains           │
+│ `LogOS/Domain/*` (Opacity)     │
+│ (stable roots must not reach   │
+│  this namespace transitively)  │
 └───────────────┬───────────────┘
                 │
                 ▼
@@ -65,6 +85,9 @@ This is a “blast-radius” view of the codebase: where meaning is defined, and
 │ (`packTrust` governs stability)│
 └───────────────────────────────┘
 ```
+
+Note: `LogOS/API/*` are core-only navigation/entry surfaces (no `LogOS.Domain.*` / `LogOS.Packs.*` imports) that sit
+“beside” this stack; they re-export selected core layers without introducing application dependencies.
 
 ## Canonical navigation surfaces
 
@@ -81,4 +104,10 @@ This is a “blast-radius” view of the codebase: where meaning is defined, and
 - No direct `LogOS.Host.*` imports outside Prelude bridge: `scripts/host_import_check.sh`
 - Layering (core must not import domains/packs/docs): `scripts/import_layer_check.sh`
 - Stable surfaces must not import experimental: `scripts/stable_surface_no_experimental_imports_check.sh`
+- Stable surfaces must not import `LogOS.Domain.*` directly: `scripts/stable_surface_no_domain_imports_check.sh`
+- Stable surfaces must not import `LogOS.Theorems.Meta.Assumptions.*` directly: `scripts/stable_surface_no_meta_assumption_imports_check.sh`
+- Stable surfaces must not reach `LogOS.Domain.*` or `LogOS.Theorems.Meta.Assumptions.*` transitively:
+  `scripts/stable_surface_no_banned_transitive_imports_check.sh`
+- Assumption ledger required when importing assumption packs: `scripts/assumptions_ledger_check.sh`
 - “Honesty” gates (`--safe`, no forbidden postulates, no dangerous pragmas): `scripts/honesty_check.sh`, `scripts/postulate_policy_check.sh`, `scripts/safe_options_check.sh`, `scripts/dangerous_pragmas_check.sh`
+  - Postulate allowlist/config: `scripts/postulate_allowlist.txt`

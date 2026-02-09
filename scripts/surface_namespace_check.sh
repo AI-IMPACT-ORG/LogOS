@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -17,38 +17,83 @@ cd "${LIB_ROOT}"
 
 status=0
 
+tmp="$(mktemp)"
+trap 'rm -f "$tmp"' EXIT
+
+find LogOS/Packs \
+  -type d -name '_build' -prune -o \
+  -type f -name 'Surface.agda' -print0 >"${tmp}"
+
+count=0
 while IFS= read -r -d '' surf; do
-  parent="$(basename "$(dirname "${surf}")")"
-  if [[ "${parent}" == "Experimental" ]]; then
-    pack="$(basename "$(dirname "$(dirname "${surf}")")")"
-    allowed="open import LogOS.Packs.${pack}.Experimental.All public"
+  count=$((count + 1))
+  surf="${surf#./}"
+
+  rel="${surf#LogOS/Packs/}"
+  rel_dir="$(dirname "${rel}")"
+  pack_mod="${rel_dir//\//.}"
+  allowed="open import LogOS.Packs.${pack_mod}.All public"
+
+  out=""
+  awk_status=0
+  set +e
+  out="$(awk -v f="$surf" -v expected="$allowed" '
+      function ind(s) { match(s, /^[ ]*/); return RLENGTH }
+      /^[ ]*(open[ ]+import|import)[ ]+/ {
+        n++
+        line[n] = $0
+        lineno[n] = NR
+        trim = $0
+        sub(/^[ ]+/, "", trim)
+        trimmed[n] = trim
+        indent[n] = ind($0)
+        if (trim == expected) {
+          if (base != "") dup = 1
+          base = indent[n]
+        }
+      }
+      END {
+        bad = 0
+        if (dup) {
+          printf "%s: multiple required surface imports: %s\n", f, expected
+          bad = 1
+        }
+        if (base == "") {
+          printf "%s: missing required surface import: %s\n", f, expected
+          bad = 1
+        }
+        if (base != "" && base != 0) {
+          printf "%s:%d: required surface import must be top-level (no indentation): %s\n", f, expLine, expected
+          bad = 1
+        }
+        for (i = 1; i <= n; i++) {
+          if (trimmed[i] == expected) continue
+          if (base != "" && indent[i] <= base) {
+            printf "%s:%d: top-level surface import must be namespaced (wrap in `module ... where`): %s\n", f, lineno[i], trimmed[i]
+            bad = 1
+          }
+        }
+        exit bad
+      }
+    ' "$surf" 2>&1)"
+  awk_status="$?"
+  set -e
+
+  if [[ "$awk_status" -eq 0 ]]; then
+    if [[ -n "$out" ]]; then
+      die $'internal error: surface lock awk produced output on success:\n'"${out}"
+    fi
+  elif [[ "$awk_status" -eq 1 ]]; then
+    echo "$out" >&2
+    status=1
   else
-    pack="${parent}"
-    allowed="open import LogOS.Packs.${pack}.All public"
+    die $'internal error: surface lock awk failed:\n'"${out}"
   fi
+done < "${tmp}"
 
-  # Top-level imports start at column 1; nested module imports are indented.
-  top_imports="$(grep -n '^open import ' "${surf}" || true)"
-
-  if [[ -z "${top_imports}" ]]; then
-    echo "surface-namespace-check: ${surf}: missing top-level \`${allowed}\`" >&2
-    status=1
-    continue
-  fi
-
-  missing_allowed="$(printf '%s\n' "${top_imports}" | grep -F "${allowed}" || true)"
-  if [[ -z "${missing_allowed}" ]]; then
-    echo "surface-namespace-check: ${surf}: missing required \`${allowed}\`" >&2
-    status=1
-  fi
-
-  bad="$(printf '%s\n' "${top_imports}" | grep -v -F "${allowed}" || true)"
-  if [[ -n "${bad}" ]]; then
-    echo "surface-namespace-check: ${surf}: unexpected top-level open imports:" >&2
-    echo "${bad}" >&2
-    status=1
-  fi
-done < <(find LogOS/Packs -mindepth 2 -maxdepth 3 -type f -name 'Surface.agda' -print0)
+if [[ "${count}" -eq 0 ]]; then
+  die "no pack Surface.agda files found under LogOS/Packs"
+fi
 
 if [[ "${status}" -ne 0 ]]; then
   exit 1

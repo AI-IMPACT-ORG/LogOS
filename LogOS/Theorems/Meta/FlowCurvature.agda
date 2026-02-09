@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,14 +9,15 @@ module LogOS.Theorems.Meta.FlowCurvature where
 
 open import LogOS.Prelude
 
-open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_; _*_)
+open import LogOS.Prelude using (ℕ; zero; suc; _+_; _*_)
 open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ; weakenRight)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel
 open import LogOS.Computation.Core using (Computation; iterate)
+open import LogOS.Kernel.Eq using (module ForKernel)
 
 -- RG-flavoured quantitative semantics for Flow:
 --
@@ -41,6 +42,7 @@ module For
   where
 
   open Kernel K
+  open ForKernel K using (_≃K_)
 
   FlowComp : Computation Code
   FlowComp = record { Step = FlowCode K ; Halts = λ _ → ⊤ {ℓ = ℓ} }
@@ -52,7 +54,7 @@ module For
   record Budget : Set (lsuc ℓ) where
     field
       B    : Code → ℕ
-      Bext : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → B γ₁ ≡ B γ₂
+      Bext : ∀ γ₁ γ₂ → γ₁ ≃K γ₂ → B γ₁ ≡ B γ₂
 
   -- A bounded-curvature assumption: one flow step increases the budget by at most κ.
   -- (κ = 0 is the “RG fixed-point” / flow-invariant budget discipline.)

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,6 +22,7 @@ import LogOS.Theorems.Meta.CHL.Category as Categoryₜ
 import LogOS.Theorems.Meta.CHL.SyntaxCompleteness as Syntaxₜ
 import LogOS.Theorems.Meta.CHL.Completeness as Completenessₜ
 import LogOS.Theorems.Meta.CHL.Capstone as Capstoneₜ
+import LogOS.Theorems.Meta.CHL.AdequacyInstances as AdequacyInstancesₜ
 import LogOS.Theorems.Meta.CHL.Definition as Definitionₜ
 import LogOS.Theorems.Meta.CHL.ViewTheorems as ViewTheoremsₜ
 
@@ -37,5 +38,6 @@ module Category = Categoryₜ
 module SyntaxCompleteness = Syntaxₜ
 module Completeness = Completenessₜ
 module Capstone = Capstoneₜ
+module AdequacyInstances = AdequacyInstancesₜ
 module Definition = Definitionₜ
 module ViewTheorems = ViewTheoremsₜ

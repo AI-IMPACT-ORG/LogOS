@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,8 @@ module LogOS.Prelude.List where
 
 open import LogOS.Host.List public
 
-open import LogOS.Prelude.Level using (Level; _⊔_)
-open import LogOS.Prelude.Product using (Σ; _,_)
+open import LogOS.Prelude using (Level; _⊔_)
+open import LogOS.Prelude using (Σ; _,_)
 
 -- Minimal list-wise predicate (avoid pulling in an external stdlib).
 data All {ℓ₁ ℓ₂ : Level} {A : Set ℓ₁}

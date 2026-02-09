@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,10 +7,9 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Minimal.Con where
 
-open import LogOS.Prelude.Level using (Level; lsuc; _⊔_; Lift; lift)
-open import LogOS.Prelude.Relation.Binary.PropositionalEquality using (_≡_)
-open import LogOS.Prelude.Product using (_,_)
-open import LogOS.Syntax.Prop as Prop using (_≤Pred_; _∧_; _↔_; ↔-refl)
+open import LogOS.Prelude using (Level; lsuc; _⊔_; Lift; lift; _≡_; _,_) renaming (refl to refl≡; trans to trans≡)
+open import LogOS.Syntax.Prop as Prop using (_∧_; _↔_; ↔-refl)
+open import LogOS.Minimal.RelPreorder using (RelPreorder; PredRelPreorder)
 
 -- Minimal constraint carriers with preorder.
 --
@@ -25,6 +24,16 @@ record ConPreorder (ℓ : Level) : Set (lsuc ℓ) where
     _⊑_  : Con → Con → Set ℓ
     refl : ∀ {c} → _⊑_ c c
     trans : ∀ {a b c} → _⊑_ a b → _⊑_ b c → _⊑_ a c
+
+-- Equality as a preorder carrier (useful as a strict/“discrete” constraint space).
+EqConPreorder : ∀ {ℓ} (X : Set ℓ) → ConPreorder ℓ
+EqConPreorder X =
+  record
+    { Con = X
+    ; _⊑_ = _≡_
+    ; refl = refl≡
+    ; trans = trans≡
+    }
 
 -- Degeneracy witness: the preorder relation is top (everything refines everything).
 --
@@ -49,6 +58,19 @@ _≈CP_ CP x y = ConPreorder._⊑_ CP x y ∧ ConPreorder._⊑_ CP y x
   → Prop._↔_ (_≈CP_ CP x y)
               (ConPreorder._⊑_ CP x y ∧ ConPreorder._⊑_ CP y x)
 ≈CP↔Le {CP = CP} = Prop.↔-refl
+
+-- Directional projections (canonical names).
+≈CP⇒
+  : ∀ {ℓ} {CP : ConPreorder ℓ} {x y : ConPreorder.Con CP}
+  → _≈CP_ CP x y
+  → ConPreorder._⊑_ CP x y
+≈CP⇒ (xy , _) = xy
+
+≈CP⇐
+  : ∀ {ℓ} {CP : ConPreorder ℓ} {x y : ConPreorder.Con CP}
+  → _≈CP_ CP x y
+  → ConPreorder._⊑_ CP y x
+≈CP⇐ (_ , yx) = yx
 
 ≈CP-refl
   : ∀ {ℓ} (CP : ConPreorder ℓ) (c : ConPreorder.Con CP)
@@ -134,17 +156,19 @@ monoMap-respects≈
   → ∀ {x y} → _≈CP_ CP₁ x y → _≈CP_ CP₂ (f x) (f y)
 monoMap-respects≈ monoF (xy , yx) = (monoF xy , monoF yx)
 
--- Predicates as constraints: for a carrier `A`, predicates `A → Set ℓ` form a
--- preorder under pointwise implication (`_≤Pred_`), lifted to avoid universe
--- mismatch (`ConPreorder` lives in one universe).
+-- Predicates as constraints: `PredRelPreorder` gives the natural two-level
+-- preorder (carrier in `lsuc ℓ`, relation in `ℓ`). `PredConPreorder` is the
+-- compatibility wrapper for code expecting one-level `ConPreorder`.
 
 PredConPreorder : ∀ {ℓ} (A : Set ℓ) → ConPreorder (lsuc ℓ)
 PredConPreorder {ℓ} A =
+  let RP = PredRelPreorder A in
   record
-    { Con  = A → Set ℓ
-    ; _⊑_  = λ P Q → Lift (lsuc ℓ) (P ≤Pred Q)
-    ; refl = lift (λ _ p → p)
-    ; trans = λ pq qr → lift (λ a pa → Lift.lower qr a (Lift.lower pq a pa))
+    { Con = RelPreorder.Con RP
+    ; _⊑_ = λ P Q → Lift (lsuc ℓ) (RelPreorder._⊑_ RP P Q)
+    ; refl = lift (RelPreorder.refl RP)
+    ; trans = λ pq qr →
+        lift (RelPreorder.trans RP (Lift.lower pq) (Lift.lower qr))
     }
 
 -- Optionally distinguish bulk/boundary preorders

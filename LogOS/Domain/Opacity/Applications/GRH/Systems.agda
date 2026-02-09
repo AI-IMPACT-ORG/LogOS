@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,15 +11,14 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Minimal.World
 open import LogOS.Minimal.Closure using (ClosureOp)
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
-open import LogOS.Kernel.Initial using (InitialKernel)
 
 open import LogOS.Domain.Opacity.NumberTheory.HP.Interface as HPi
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann
-open import LogOS.Domain.Opacity.Applications.GRH.ZetaBridge
 open import LogOS.Domain.Opacity.Applications.GRH.HPGRHLimit as HPLimit
 import LogOS.Domain.Opacity.TruthSeparation as TruthSep
 import LogOS.Domain.Opacity.TruthSeparationForcing as TruthSepF
@@ -33,59 +32,39 @@ import LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStable as AWMLS
 import LogOS.Domain.Opacity.AccessibleWeilMeetLimitBridgeStableCofinal as AWMLSC
 import LogOS.Domain.Opacity.ZetaAccessibleMeetLimitLedgerStable as ZAMLS
 import LogOS.Domain.Opacity.ZetaHasseYonedaLedger as ZHY
-open import LogOS.Theorems.Meta.GRHBridge as GRHB
+import LogOS.Theorems.Meta.GRHBridge as GRHB
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.RiemannFacts using (RiemannFacts; RiemannSpectralFromFacts)
+
+open import LogOS.Domain.Opacity.Applications.GRH.ZetaBridge public using
+  ( GRH_Without_Vacuity_Guards_from_finite
+  ; GRH_Without_Vacuity_Guards_from_limit
+  )
+
+open import LogOS.Domain.Opacity.TruthSeparationForcing public using
+  ( GRH_Without_Vacuity_Guards_from_ProperForcingTruthSeparation )
 
 -- One-line "systems" wrappers that present conditional GRH theorems
 -- for operator (HP) and categorical (nucleus) bridges.
 
-GRH_Without_Vacuity_Guards_HPFinite
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (K   : Kernel Sig Q)
-    (HP  : HPi.HPInterface K)
-    (EF  : HPi.EmbedFaithful K HP)
-    (RS  : RiemannSpectral)
-    (B   : ZetaOpBridgeFinite Sig Q K HP RS)
-  → ∀ s → RiemannSpectral.NontrivialZero RS s → RiemannSpectral.OnLine RS s
-GRH_Without_Vacuity_Guards_HPFinite K HP EF RS B = GRH_Without_Vacuity_Guards_from_finite K HP EF RS B
-
-GRH_Without_Vacuity_Guards_HP∞
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (K   : Kernel Sig Q)
-    (AHP : HPLimit.ApproxHP Sig Q K)
-    (RS  : RiemannSpectral)
-    (B   : ZetaOpBridgeLimit Sig Q K AHP RS)
-    (i   : HPLimit.ResIdx.I (HPLimit.ApproxHP.idx AHP))
-  → ∀ s → RiemannSpectral.NontrivialZero RS s → RiemannSpectral.OnLine RS s
-GRH_Without_Vacuity_Guards_HP∞ K AHP RS B i = GRH_Without_Vacuity_Guards_from_limit K AHP RS B i
-
-GRH_Without_Vacuity_Guards_Nucleus
+GRH_Without_Vacuity_Guards_via_GlobalNucleus
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K   : Kernel Sig Q)
     (RS  : RiemannSpectral)
     (GN  : GRHB.GlobalNucleusBridge K (RStoSP RS))
   → ∀ s → RiemannSpectral.NontrivialZero RS s → RiemannSpectral.OnLine RS s
-GRH_Without_Vacuity_Guards_Nucleus K RS GN = GRHB.GRH_Without_Vacuity_Guards_via_GlobalNucleus K (RStoSP RS) GN
+GRH_Without_Vacuity_Guards_via_GlobalNucleus K RS GN =
+  GRHB.GRH_Without_Vacuity_Guards_via_GlobalNucleus K (RStoSP RS) GN
 
-GRH_Without_Vacuity_Guards_Nucleus∞
+GRH_Without_Vacuity_Guards_via_GlobalNucleus∞
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K   : Kernel Sig Q)
     (RS  : RiemannSpectral)
     {Idx : Set}
     (GL  : GRHB.GlobalNucleusLimit K (RStoSP RS) Idx)
   → ∀ s → RiemannSpectral.NontrivialZero RS s → RiemannSpectral.OnLine RS s
-GRH_Without_Vacuity_Guards_Nucleus∞ K RS {Idx} GL = GRHB.GRH_Without_Vacuity_Guards_via_GlobalNucleus∞ K (RStoSP RS) GL
-
-GRH_Without_Vacuity_Guards_Forcing
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (K   : Kernel Sig Q)
-    (RS  : RiemannSpectral)
-    (J   : ClosureOp (BulkBoundary.bnd (Kernel.BB K)))
-    (Sep : TruthSepF.ProperForcingTruthSeparation K RS J)
-  → ∀ s → RiemannSpectral.NontrivialZero RS s → RiemannSpectral.OnLine RS s
-GRH_Without_Vacuity_Guards_Forcing K RS J Sep =
-  TruthSepF.GRH_Without_Vacuity_Guards_from_ProperForcingTruthSeparation K RS J Sep
+GRH_Without_Vacuity_Guards_via_GlobalNucleus∞ K RS {Idx} GL =
+  GRHB.GRH_Without_Vacuity_Guards_via_GlobalNucleus∞ K (RStoSP RS) GL
 
 -- PNT as stability (observer-facing): if a model supplies a Flow-based
 -- separation witness and a boundary constraint encoding the PNT statement,
@@ -198,11 +177,11 @@ GRH_Without_Vacuity_Guards_ZetaMeetLimitStable K F L =
 
 GRH_Without_Vacuity_Guards_ZetaHasseYoneda
   : ∀ {ℓ ℓW} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : Worlds.WorldH Sig Q)
     (K  : Kernel Sig Q)
     (F  : RiemannFacts)
-    (L  : ZHY.ZetaHasseYonedaLedger {ℓ = ℓ} {ℓW = ℓW} IK K F)
+    (L  : ZHY.ZetaHasseYonedaLedger {ℓ = ℓ} {ℓW = ℓW} HWorld K F)
   → ∀ s → RiemannSpectral.NontrivialZero (RiemannSpectralFromFacts F) s
         → RiemannSpectral.OnLine (RiemannSpectralFromFacts F) s
-GRH_Without_Vacuity_Guards_ZetaHasseYoneda IK K F L =
+GRH_Without_Vacuity_Guards_ZetaHasseYoneda HWorld K F L =
   ZHY.ZetaHasseYonedaLedger.GRH_Without_Vacuity_Guardsζ L

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,15 +15,15 @@ open import LogOS.Minimal.ScaleOps using (ScaleOps; BudgetOps)
 import LogOS.Minimal.Truth as Truth
 
 import LogOS.Computation.Scheme as Sch
+import LogOS.Computation.ExecCore as ExecCore
 open import LogOS.Computation.Core using (iterate; iterate-mono)
 import LogOS.Computation.Core as CompCore
 module StepSim = CompCore.StepSimulation
-open import LogOS.Boundary.Telemetry using (TelemetryTrace)
 
 -- A “process” is the part of a `Scheme` that is shared by many paradigms:
 -- state carrier + dynamics + closure operator + observation + cost algebra.
 --
--- A “choice” then supplies a compiler + a fuel bound into that shared process.
+-- An “interface” then supplies a compiler + a fuel bound into that shared process.
 
 record Process {ℓO ℓC ℓQ : Level} (Output : Set ℓO) : Set (lsuc (ℓO ⊔ ℓC ⊔ ℓQ)) where
   field
@@ -59,24 +59,8 @@ costExecP
   : ∀ {ℓO ℓC ℓQ} {Output : Set ℓO}
     (P : Process {ℓO} {ℓC} {ℓQ} Output)
   → ℕ → Process.Con P → QAdapter.Scale (Process.Q P)
-costExecP P zero    c = QAdapter.e (Process.Q P)
-costExecP P (suc n) c =
-  QAdapter._·_ (Process.Q P) (Process.stepCost P c) (costExecP P n (Process.Step P c))
-
-processTelemetry
-  : ∀ {ℓO ℓC ℓQ : Level}
-    {Output : Set ℓO}
-  → Process {ℓO} {ℓC} {ℓQ} Output
-  → TelemetryTrace ℓQ
-processTelemetry P =
-  record { trace = scalePreorder (Process.Q P) }
-
-execTelemetry
-  : ∀ {ℓO ℓC ℓQ : Level}
-    {Output : Set ℓO}
-    (P : Process {ℓO} {ℓC} {ℓQ} Output)
-  → ℕ → Process.Con P → TelemetryTrace.Trace (processTelemetry P)
-execTelemetry P = costExecP P
+costExecP P =
+  ExecCore.costExec (Process.Q P) (Process.Step P) (Process.stepCost P)
 
 withinBudget
   : ∀ {ℓO ℓC ℓQ : Level}
@@ -84,7 +68,7 @@ withinBudget
     (P : Process {ℓO} {ℓC} {ℓQ} Output)
   → ℕ → Process.Con P → QAdapter.Scale (Process.Q P) → Set ℓQ
 withinBudget P n c b =
-  QAdapter._≤s_ (Process.Q P) (execTelemetry P n c) b
+  QAdapter._≤s_ (Process.Q P) (costExecP P n c) b
 
 processOf
   : ∀ {ℓI ℓO ℓC ℓQ}
@@ -134,7 +118,7 @@ processWithCost P Q' stepCost' =
     ; stepCost = stepCost'
     }
 
-record Choice
+record Interface
   {ℓI ℓO ℓC ℓQ : Level}
   (Input : Set ℓI)
   {Output : Set ℓO}
@@ -145,23 +129,144 @@ record Choice
     compile : Input → Con
     fuel    : Input → ℕ
 
-schemeFromChoice
+-- ============================================================================
+-- Staging / specialisation (semantic, scheme-level)
+--
+-- This is the “conservative Futamura move”: curry an interface/scheme along a
+-- product input. No new structure is assumed; the result is a derived interface
+-- (or scheme) with the same underlying dynamics, closure, observation, and cost
+-- model.
+-- ============================================================================
+
+specializeInterface
+  : ∀ {ℓS ℓD ℓO ℓC ℓQ}
+    {Static : Set ℓS} {Dynamic : Set ℓD} {Output : Set ℓO}
+    {P : Process {ℓO} {ℓC} {ℓQ} Output}
+  → Interface (Static × Dynamic) P
+  → Static
+  → Interface Dynamic P
+specializeInterface I s =
+  record
+    { compile = λ d → Interface.compile I (s , d)
+    ; fuel    = λ d → Interface.fuel I (s , d)
+    }
+
+schemeFromInterface
   : ∀ {ℓI ℓO ℓC ℓQ}
     {Input : Set ℓI} {Output : Set ℓO}
     (P : Process {ℓO} {ℓC} {ℓQ} Output)
-    → Choice Input P
+    → Interface Input P
     → Sch.Scheme Input Output
-schemeFromChoice P C =
+schemeFromInterface P I =
   record
     { CP       = Process.CP P
     ; Step     = Process.Step P
     ; Close     = Process.Close P
-    ; compile  = Choice.compile C
-    ; fuel     = Choice.fuel C
+    ; compile  = Interface.compile I
+    ; fuel     = Interface.fuel I
     ; decode   = Process.decode P
     ; Q        = Process.Q P
     ; stepCost = Process.stepCost P
     }
+
+specializeScheme
+  : ∀ {ℓS ℓD ℓO ℓC ℓQ}
+    {Static : Set ℓS} {Dynamic : Set ℓD} {Output : Set ℓO}
+  → Sch.Scheme {ℓC = ℓC} {ℓQ = ℓQ} (Static × Dynamic) Output
+  → Static
+  → Sch.Scheme {ℓC = ℓC} {ℓQ = ℓQ} Dynamic Output
+specializeScheme S s =
+  record
+    { CP       = Sch.Scheme.CP S
+    ; Step     = Sch.Scheme.Step S
+    ; Close     = Sch.Scheme.Close S
+    ; compile  = λ d → Sch.Scheme.compile S (s , d)
+    ; fuel     = λ d → Sch.Scheme.fuel S (s , d)
+    ; decode   = Sch.Scheme.decode S
+    ; Q        = Sch.Scheme.Q S
+    ; stepCost = Sch.Scheme.stepCost S
+    }
+
+-- Semantic correctness: staging is just currying, so `run`/`run≤`/`cost` commute
+-- definitionally.
+
+run-specializeInterface
+  : ∀ {ℓS ℓD ℓO ℓC ℓQ}
+    {Static : Set ℓS} {Dynamic : Set ℓD} {Output : Set ℓO}
+    {P : Process {ℓO} {ℓC} {ℓQ} Output}
+    (I : Interface (Static × Dynamic) P)
+  → ∀ s d
+  → Sch.run (schemeFromInterface P (specializeInterface I s)) d
+    ≡ Sch.run (schemeFromInterface P I) (s , d)
+run-specializeInterface _ _ _ = refl
+
+run-specializeScheme
+  : ∀ {ℓS ℓD ℓO ℓC ℓQ}
+    {Static : Set ℓS} {Dynamic : Set ℓD} {Output : Set ℓO}
+    (S : Sch.Scheme {ℓC = ℓC} {ℓQ = ℓQ} (Static × Dynamic) Output)
+  → ∀ s d
+  → Sch.run (specializeScheme S s) d ≡ Sch.run S (s , d)
+run-specializeScheme _ _ _ = refl
+
+run≤-specializeScheme
+  : ∀ {ℓS ℓD ℓO ℓC ℓQ}
+    {Static : Set ℓS} {Dynamic : Set ℓD} {Output : Set ℓO}
+    (S : Sch.Scheme {ℓC = ℓC} {ℓQ = ℓQ} (Static × Dynamic) Output)
+    (Ops : ScaleOps (Sch.Scheme.Q S))
+    (b : Sch.Scheme.Scale S)
+  → ∀ s d
+  → Sch.run≤ (specializeScheme S s) Ops b d
+      ≡ Sch.run≤ S Ops b (s , d)
+run≤-specializeScheme _ _ _ _ _ = refl
+
+cost-specializeScheme
+  : ∀ {ℓS ℓD ℓO ℓC ℓQ}
+    {Static : Set ℓS} {Dynamic : Set ℓD} {Output : Set ℓO}
+    (S : Sch.Scheme {ℓC = ℓC} {ℓQ = ℓQ} (Static × Dynamic) Output)
+  → ∀ s d
+  → Sch.cost (specializeScheme S s) d
+      ≡ Sch.cost S (s , d)
+cost-specializeScheme S s d =
+  trans cost≡costExec
+    (trans
+      (trans
+        (costExec-specializeScheme (Sch.Scheme.fuel S' d) (Sch.Scheme.compile S' d))
+        (cong₂
+          (Sch.Scheme.costExec S)
+          fuel≡
+          compile≡))
+      (sym cost≡costExecᵣ))
+  where
+    S' = specializeScheme S s
+
+    cost≡costExec
+      : Sch.cost S' d
+          ≡ Sch.Scheme.costExec S'
+              (Sch.Scheme.fuel S' d)
+              (Sch.Scheme.compile S' d)
+    cost≡costExec = refl
+
+    fuel≡ : Sch.Scheme.fuel S' d ≡ Sch.Scheme.fuel S (s , d)
+    fuel≡ = refl
+
+    compile≡ : Sch.Scheme.compile S' d ≡ Sch.Scheme.compile S (s , d)
+    compile≡ = refl
+
+    cost≡costExecᵣ
+      : Sch.cost S (s , d)
+          ≡ Sch.Scheme.costExec S
+              (Sch.Scheme.fuel S (s , d))
+              (Sch.Scheme.compile S (s , d))
+    cost≡costExecᵣ = refl
+
+    costExec-specializeScheme
+      : ∀ n c
+      → Sch.Scheme.costExec S' n c ≡ Sch.Scheme.costExec S n c
+    costExec-specializeScheme zero    _ = refl
+    costExec-specializeScheme (suc n) c =
+      cong
+        (λ z → Sch.Scheme._·_ S (Sch.Scheme.stepCost S c) z)
+        (costExec-specializeScheme n (Sch.Scheme.Step S c))
 
 -- Morphisms between processes: structure-preserving translations of states
 -- (and optionally a cost comparison).
@@ -286,28 +391,28 @@ _∘ProcessHomLax_ {P₃ = P₃} g f =
     ; decode-comm = λ c → LogOS.Prelude.trans (decodeg (mapf c)) (decodef c)
     }
 
-mapChoice
+mapInterface
   : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
     {Input : Set ℓI} {Output : Set ℓO}
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ₁} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ₂} Output}
-    → ProcessHom P₁ P₂ → Choice Input P₁ → Choice Input P₂
-mapChoice h C =
+    → ProcessHom P₁ P₂ → Interface Input P₁ → Interface Input P₂
+mapInterface h I =
   record
-    { compile = λ x → ProcessHom.map h (Choice.compile C x)
-    ; fuel    = Choice.fuel C
+    { compile = λ x → ProcessHom.map h (Interface.compile I x)
+    ; fuel    = Interface.fuel I
     }
 
-mapChoiceLax
+mapInterfaceLax
   : ∀ {ℓI ℓO ℓC₁ ℓQ₁ ℓC₂ ℓQ₂}
     {Input : Set ℓI} {Output : Set ℓO}
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ₁} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ₂} Output}
-    → ProcessHomLax P₁ P₂ → Choice Input P₁ → Choice Input P₂
-mapChoiceLax h C =
+    → ProcessHomLax P₁ P₂ → Interface Input P₁ → Interface Input P₂
+mapInterfaceLax h I =
   record
-    { compile = λ x → ProcessHomLax.map h (Choice.compile C x)
-    ; fuel    = Choice.fuel C
+    { compile = λ x → ProcessHomLax.map h (Interface.compile I x)
+    ; fuel    = Interface.fuel I
     }
 
 -- Cost-aware process morphism (small, high-leverage):
@@ -315,63 +420,6 @@ mapChoiceLax h C =
 -- transport “computes within budget” statements across paradigms.
 
 record ProcessHomCost
-  {ℓO ℓC₁ ℓC₂ ℓQ : Level}
-  {Output : Set ℓO}
-  (P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output)
-  (P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output)
-  : Set (lsuc (ℓO ⊔ ℓC₁ ⊔ ℓC₂ ⊔ ℓQ)) where
-  open Process P₁ renaming (Con to Con₁; Step to Step₁; stepCost to cost₁; Q to Q₁)
-  open Process P₂ renaming (Con to Con₂; Step to Step₂; stepCost to cost₂; Q to Q₂)
-  field
-    hom : ProcessHom P₁ P₂
-    Q-comm : Q₂ ≡ Q₁
-    stepCost-comm
-      : ∀ c
-      → subst (λ Q → QAdapter.Scale Q) Q-comm (cost₂ (ProcessHom.map hom c))
-        ≡ cost₁ c
-
-open ProcessHomCost public
-
--- Cast helpers for the “same-Q up to propositional equality” story.
--- These keep proofs readable by localising the `subst (λ Q → ...)` noise.
-
-castScale→
-  : ∀ {ℓO ℓC₁ ℓC₂ ℓQ} {Output : Set ℓO}
-    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
-    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
-  → ProcessHomCost P₁ P₂
-  → QAdapter.Scale (Process.Q P₁)
-  → QAdapter.Scale (Process.Q P₂)
-castScale→ hc =
-  subst (λ Q → QAdapter.Scale Q) (sym (ProcessHomCost.Q-comm hc))
-
-castScale←
-  : ∀ {ℓO ℓC₁ ℓC₂ ℓQ} {Output : Set ℓO}
-    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
-    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
-  → ProcessHomCost P₁ P₂
-  → QAdapter.Scale (Process.Q P₂)
-  → QAdapter.Scale (Process.Q P₁)
-castScale← hc =
-  subst (λ Q → QAdapter.Scale Q) (ProcessHomCost.Q-comm hc)
-
-castOps→
-  : ∀ {ℓO ℓC₁ ℓC₂ ℓQ} {Output : Set ℓO}
-    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
-    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
-  → ProcessHomCost P₁ P₂
-  → ScaleOps (Process.Q P₁)
-  → ScaleOps (Process.Q P₂)
-castOps→ hc =
-  subst (λ Q → ScaleOps Q) (sym (ProcessHomCost.Q-comm hc))
-
--- Cost transport across *different* Q adapters, via a lax grade morphism.
---
--- This is the “right” transport in the kernel setting: costs live in a quantale,
--- and comparisons between different quantales are typically lax (monoid/quantale
--- homomorphisms are inequalities, not equalities).
-
-record ProcessHomCostWithGrade
   {ℓO ℓC₁ ℓC₂ ℓQ : Level}
   {Output : Set ℓO}
   (P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output)
@@ -391,29 +439,9 @@ record ProcessHomCostWithGrade
           (cost₂ (ProcessHom.map hom c))
           (Truth.GuardedCore.GradeHom.map grade (cost₁ c))
 
-open ProcessHomCostWithGrade public
+open ProcessHomCost public
 
--- Old-style (same-Q) cost morphisms embed into lax grade-transport morphisms.
--- This lets downstream code use the grade-aware lemmas uniformly.
-
-ProcessHomCost→WithGrade
-  : ∀ {ℓO ℓC₁ ℓC₂ ℓQ} {Output : Set ℓO}
-    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
-    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
-  → ProcessHomCost P₁ P₂
-  → ProcessHomCostWithGrade P₁ P₂
-ProcessHomCost→WithGrade {P₁ = P₁} {P₂ = P₂} (record { hom = h ; Q-comm = refl ; stepCost-comm = stepCostComm }) =
-  record
-    { hom = h
-    ; grade = Truth.GuardedCore.idGradeHom
-    ; stepCost≤ = λ c →
-        subst
-          (λ z → QAdapter._≤s_ (Process.Q P₂) z (Process.stepCost P₁ c))
-          (sym (stepCostComm c))
-          (QAdapter.≤s-refl (Process.Q P₂))
-    }
-
--- Budget transport primitives (no global “quantale laws” required):
+-- Budget transport primitives (no global “prequantale laws” required):
 -- we only need that step-costs commute on mapped states.
 
 iterStep
@@ -516,42 +544,58 @@ run≤-map
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
     (hc : ProcessHomCost P₁ P₂)
-  → ∀ (Ops : ScaleOps (Process.Q P₁))
+  → ∀ (Ops₁ : ScaleOps (Process.Q P₁))
+      (Ops₂ : ScaleOps (Process.Q P₂))
       (g : QAdapter.Scale (Process.Q P₁))
       (c : Process.Con P₁)
-  → ProcessHom.map (ProcessHomCost.hom hc) (run≤ P₁ Ops g c)
-    ≡ run≤ P₂
-        (castOps→ hc Ops)
-        (castScale→ hc g)
+  → (stepsEq :
+       ScaleOps.steps Ops₂ (ScaleOps.budget Ops₂ (Truth.GuardedCore.GradeHom.map (ProcessHomCost.grade hc) g))
+       ≡
+       ScaleOps.steps Ops₁ (ScaleOps.budget Ops₁ g))
+  → ProcessHom.map (ProcessHomCost.hom hc) (run≤ P₁ Ops₁ g c)
+    ≡ run≤ P₂ Ops₂ (Truth.GuardedCore.GradeHom.map (ProcessHomCost.grade hc) g)
         (ProcessHom.map (ProcessHomCost.hom hc) c)
-run≤-map {P₁ = P₁} {P₂ = P₂}
-  (record { hom = h ; Q-comm = refl ; stepCost-comm = _ }) Ops g c =
-  iterStep-map {P₁ = P₁} {P₂ = P₂} h (ScaleOps.steps Ops (ScaleOps.budget Ops g)) c
+run≤-map {P₁ = P₁} {P₂ = P₂} hc Ops₁ Ops₂ g c stepsEq =
+  let
+    h = ProcessHomCost.hom hc
+    φ = ProcessHomCost.grade hc
+    open Truth.GuardedCore.GradeHom φ renaming (map to mapg)
+
+    n₁ = ScaleOps.steps Ops₁ (ScaleOps.budget Ops₁ g)
+  in
+  LogOS.Prelude.trans
+    (iterStep-map {P₁ = P₁} {P₂ = P₂} h n₁ c)
+    (cong
+      (λ n → iterStep P₂ n (ProcessHom.map h c))
+      (LogOS.Prelude.sym stepsEq))
 
 run≤-meaning-comm
   : ∀ {ℓO ℓC₁ ℓC₂ ℓQ} {Output : Set ℓO}
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
     (hc : ProcessHomCost P₁ P₂)
-  → ∀ (Ops : ScaleOps (Process.Q P₁))
+  → ∀ (Ops₁ : ScaleOps (Process.Q P₁))
+      (Ops₂ : ScaleOps (Process.Q P₂))
       (g : QAdapter.Scale (Process.Q P₁))
       (c : Process.Con P₁)
+  → (stepsEq :
+       ScaleOps.steps Ops₂ (ScaleOps.budget Ops₂ (Truth.GuardedCore.GradeHom.map (ProcessHomCost.grade hc) g))
+       ≡
+       ScaleOps.steps Ops₁ (ScaleOps.budget Ops₁ g))
   → Process.decode P₂
       (Process.close P₂
-        (run≤ P₂
-          (castOps→ hc Ops)
-          (castScale→ hc g)
+        (run≤ P₂ Ops₂ (Truth.GuardedCore.GradeHom.map (ProcessHomCost.grade hc) g)
           (ProcessHom.map (ProcessHomCost.hom hc) c)))
-    ≡ Process.decode P₁ (Process.close P₁ (run≤ P₁ Ops g c))
-run≤-meaning-comm {P₁ = P₁} {P₂ = P₂}
-  hc@(record { hom = h ; Q-comm = refl ; stepCost-comm = _ }) Ops g c =
+    ≡ Process.decode P₁ (Process.close P₁ (run≤ P₁ Ops₁ g c))
+run≤-meaning-comm {P₁ = P₁} {P₂ = P₂} hc Ops₁ Ops₂ g c stepsEq =
   let
+    h = ProcessHomCost.hom hc
     open Process P₁ renaming (close to norm₁; decode to dec₁) hiding (refl; trans)
     open Process P₂ renaming (close to norm₂; decode to dec₂) hiding (refl; trans)
-    r = run≤ P₁ Ops g c
+    r = run≤ P₁ Ops₁ g c
   in
   LogOS.Prelude.trans
-    (cong (λ x → dec₂ (norm₂ x)) (sym (run≤-map hc Ops g c)))
+    (cong (λ x → dec₂ (norm₂ x)) (sym (run≤-map hc Ops₁ Ops₂ g c stepsEq)))
     (LogOS.Prelude.trans
       (cong dec₂ (sym (ProcessHom.norm-comm h r)))
       (ProcessHom.decode-comm h (norm₁ r)))
@@ -560,29 +604,29 @@ costExecP≡costExec
   : ∀ {ℓI ℓO ℓC ℓQ}
     {Input : Set ℓI} {Output : Set ℓO}
     (P : Process {ℓO} {ℓC} {ℓQ} Output)
-    (C : Choice Input P)
+    (I : Interface Input P)
   → ∀ n c
-  → costExecP P n c ≡ Sch.Scheme.costExec (schemeFromChoice P C) n c
-costExecP≡costExec P C zero    _ = refl
-costExecP≡costExec P C (suc n) c =
+  → costExecP P n c ≡ Sch.Scheme.costExec (schemeFromInterface P I) n c
+costExecP≡costExec P I zero    _ = refl
+costExecP≡costExec P I (suc n) c =
   cong
     (λ t → QAdapter._·_ (Process.Q P) (Process.stepCost P c) t)
-    (costExecP≡costExec P C n (Process.Step P c))
+    (costExecP≡costExec P I n (Process.Step P c))
 
 costExecP-map≤
   : ∀ {ℓO ℓC₁ ℓC₂ ℓQ} {Output : Set ℓO}
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
-    (hc : ProcessHomCostWithGrade P₁ P₂)
+    (hc : ProcessHomCost P₁ P₂)
   → ∀ n c
   → QAdapter._≤s_ (Process.Q P₂)
-      (costExecP P₂ n (ProcessHom.map (ProcessHomCostWithGrade.hom hc) c))
-      (Truth.GuardedCore.GradeHom.map (ProcessHomCostWithGrade.grade hc) (costExecP P₁ n c))
+      (costExecP P₂ n (ProcessHom.map (ProcessHomCost.hom hc) c))
+      (Truth.GuardedCore.GradeHom.map (ProcessHomCost.grade hc) (costExecP P₁ n c))
 costExecP-map≤ {P₁ = P₁} {P₂ = P₂} hc n c =
   go n c
   where
-    h = ProcessHomCostWithGrade.hom hc
-    φ = ProcessHomCostWithGrade.grade hc
+    h = ProcessHomCost.hom hc
+    φ = ProcessHomCost.grade hc
     open Truth.GuardedCore.GradeHom φ renaming (map to mapg; mono to monog; unit-lax to unitl; mul-lax to mull)
 
     Q₁ = Process.Q P₁
@@ -618,7 +662,7 @@ costExecP-map≤ {P₁ = P₁} {P₂ = P₂} hc n c =
         stepCost₀ : _≤₂_
                       (Process.stepCost P₂ c₂)
                       (mapg (Process.stepCost P₁ c))
-        stepCost₀ = ProcessHomCostWithGrade.stepCost≤ hc c
+        stepCost₀ = ProcessHomCost.stepCost≤ hc c
 
         step≤ : _≤₂_
                   (QAdapter._·_ Q₂ (Process.stepCost P₂ c₂) (costExecP P₂ n (Process.Step P₂ c₂)))
@@ -632,39 +676,65 @@ costExecP-map≤ {P₁ = P₁} {P₂ = P₂} hc n c =
       in
       trans₂ step≤ mul≤
 
-costExecP-map
-  : ∀ {ℓO ℓC₁ ℓC₂ ℓQ} {Output : Set ℓO}
+-- Cost transport (scheme view):
+-- the observed cost of running a compiled input is preserved *laxly* under a
+-- cost-aware process morphism (mapped through the grade hom).
+
+costAt-map≤
+  : ∀ {ℓI ℓO ℓC₁ ℓC₂ ℓQ}
+    {Input : Set ℓI} {Output : Set ℓO}
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
     (hc : ProcessHomCost P₁ P₂)
-  → ∀ n c
-  → castScale← hc (costExecP P₂ n (ProcessHom.map (ProcessHomCost.hom hc) c))
-    ≡ costExecP P₁ n c
-costExecP-map {P₁ = P₁} {P₂ = P₂}
-  (record { hom = h ; Q-comm = refl ; stepCost-comm = stepCostComm }) n c =
-  go n c
-  where
-    go
-      : ∀ n c → costExecP P₂ n (ProcessHom.map h c) ≡ costExecP P₁ n c
-    go zero    _ = refl
-    go (suc n) c =
-      trans
-        (cong
-          (λ x →
-            QAdapter._·_
-              (Process.Q P₁)
-              x
-              (costExecP P₂ n (Process.Step P₂ (ProcessHom.map h c))))
-          (stepCostComm c))
-        (cong
-          (λ z →
-            QAdapter._·_
-              (Process.Q P₁)
-              (Process.stepCost P₁ c)
-              z)
-          (trans
-            (cong (costExecP P₂ n) (sym (ProcessHom.step-comm h c)))
-            (go n (Process.Step P₁ c))))
+    (I  : Interface Input P₁)
+  → ∀ n x
+  → QAdapter._≤s_ (Process.Q P₂)
+      (Sch.Scheme.costAt (schemeFromInterface P₂ (mapInterface (ProcessHomCost.hom hc) I)) n x)
+      (Truth.GuardedCore.GradeHom.map (ProcessHomCost.grade hc)
+        (Sch.Scheme.costAt (schemeFromInterface P₁ I) n x))
+costAt-map≤ {P₁ = P₁} {P₂ = P₂} hc I n x =
+  let
+    h = ProcessHomCost.hom hc
+    φ = ProcessHomCost.grade hc
+    open Truth.GuardedCore.GradeHom φ renaming (map to mapg)
+
+    S₁ = schemeFromInterface P₁ I
+    S₂ = schemeFromInterface P₂ (mapInterface h I)
+
+    c = Sch.Scheme.compile S₁ x
+
+    eq₁ : costExecP P₁ n c ≡ Sch.Scheme.costExec S₁ n c
+    eq₁ = costExecP≡costExec P₁ I n c
+
+    eq₂ : costExecP P₂ n (ProcessHom.map h c) ≡ Sch.Scheme.costExec S₂ n (ProcessHom.map h c)
+    eq₂ = costExecP≡costExec P₂ (mapInterface h I) n (ProcessHom.map h c)
+
+    p₀ : QAdapter._≤s_ (Process.Q P₂)
+           (costExecP P₂ n (ProcessHom.map h c))
+           (mapg (costExecP P₁ n c))
+    p₀ = costExecP-map≤ hc n c
+
+    p₁ : QAdapter._≤s_ (Process.Q P₂)
+           (Sch.Scheme.costExec S₂ n (ProcessHom.map h c))
+           (mapg (costExecP P₁ n c))
+    p₁ =
+      subst
+        (λ z → QAdapter._≤s_ (Process.Q P₂) z (mapg (costExecP P₁ n c)))
+        eq₂
+        p₀
+
+    p₂ : QAdapter._≤s_ (Process.Q P₂)
+           (Sch.Scheme.costExec S₂ n (ProcessHom.map h c))
+           (mapg (Sch.Scheme.costExec S₁ n c))
+    p₂ =
+      subst
+        (λ z → QAdapter._≤s_ (Process.Q P₂)
+                (Sch.Scheme.costExec S₂ n (ProcessHom.map h c))
+                z)
+        (cong mapg eq₁)
+        p₁
+  in
+  p₂
 
 -- ==========================================================================
 -- Budgeted execution transport (new: operational, “machines are schemes”)
@@ -678,55 +748,35 @@ costExecP-map {P₁ = P₁} {P₂ = P₂}
 -- visible across different presentations of the same process.
 -- ==========================================================================
 
-ExecWithin-map-grade
-  : ∀ {ℓI ℓO ℓC₁ ℓC₂ ℓQ}
-    {Input : Set ℓI} {Output : Set ℓO}
-    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
-    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
-    (hc : ProcessHomCostWithGrade P₁ P₂)
-    (C  : Choice Input P₁)
-  → ∀ n c (b : QAdapter.Scale (Process.Q P₁)) c'
-  → Sch.ExecWithin (schemeFromChoice P₁ C) n c b c'
-  → Sch.ExecWithin
-      (schemeFromChoice P₂ (mapChoice (ProcessHomCostWithGrade.hom hc) C))
-      n
-      (ProcessHom.map (ProcessHomCostWithGrade.hom hc) c)
-      (Truth.GuardedCore.GradeHom.map (ProcessHomCostWithGrade.grade hc) b)
-      (ProcessHom.map (ProcessHomCostWithGrade.hom hc) c')
-
 ExecWithin-map
   : ∀ {ℓI ℓO ℓC₁ ℓC₂ ℓQ}
     {Input : Set ℓI} {Output : Set ℓO}
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
     (hc : ProcessHomCost P₁ P₂)
-    (C  : Choice Input P₁)
+    (I  : Interface Input P₁)
   → ∀ n c (b : QAdapter.Scale (Process.Q P₁)) c'
-  → Sch.ExecWithin (schemeFromChoice P₁ C) n c b c'
+  → Sch.ExecWithin (schemeFromInterface P₁ I) n c b c'
   → Sch.ExecWithin
-      (schemeFromChoice P₂ (mapChoice (ProcessHomCost.hom hc) C))
+      (schemeFromInterface P₂ (mapInterface (ProcessHomCost.hom hc) I))
       n
       (ProcessHom.map (ProcessHomCost.hom hc) c)
-      (castScale→ hc b)
+      (Truth.GuardedCore.GradeHom.map (ProcessHomCost.grade hc) b)
       (ProcessHom.map (ProcessHomCost.hom hc) c')
-ExecWithin-map {P₁ = P₁} {P₂ = P₂}
-  hc@(record { hom = h ; Q-comm = refl ; stepCost-comm = _ })
-  C n c b c' ew =
-  ExecWithin-map-grade (ProcessHomCost→WithGrade hc) C n c b c' ew
 
 -- Lax-grade variant: transport budgeted executions across different Q adapters.
 --
 -- Budgets are mapped using the grade morphism.
 
-ExecWithin-map-grade {P₁ = P₁} {P₂ = P₂} hc C n c b c' (reach , cost≤) =
+ExecWithin-map {P₁ = P₁} {P₂ = P₂} hc C n c b c' (reach , cost≤) =
   reach₂ , cost≤₂
   where
-    h = ProcessHomCostWithGrade.hom hc
-    φ = ProcessHomCostWithGrade.grade hc
+    h = ProcessHomCost.hom hc
+    φ = ProcessHomCost.grade hc
     open Truth.GuardedCore.GradeHom φ renaming (map to mapg; mono to monog)
 
-    S₁ = schemeFromChoice P₁ C
-    S₂ = schemeFromChoice P₂ (mapChoice h C)
+    S₁ = schemeFromInterface P₁ C
+    S₂ = schemeFromInterface P₂ (mapInterface h C)
 
     map = ProcessHom.map h
 
@@ -746,7 +796,7 @@ ExecWithin-map-grade {P₁ = P₁} {P₂ = P₂} hc C n c b c' (reach , cost≤)
         eq₁ = costExecP≡costExec P₁ C n c
 
         eq₂ : costExecP P₂ n (map c) ≡ Sch.Scheme.costExec S₂ n (map c)
-        eq₂ = costExecP≡costExec P₂ (mapChoice h C) n (map c)
+        eq₂ = costExecP≡costExec P₂ (mapInterface h C) n (map c)
 
         p₀ : QAdapter._≤s_ (Sch.Scheme.Q S₂) (costExecP P₂ n (map c)) (mapg (costExecP P₁ n c))
         p₀ = costExecP-map≤ hc n c
@@ -771,99 +821,16 @@ ReachesWithin-map
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
     (hc : ProcessHomCost P₁ P₂)
-    (C  : Choice Input P₁)
+    (I  : Interface Input P₁)
   → ∀ c (b : QAdapter.Scale (Process.Q P₁)) c'
-  → Sch.ReachesWithin (schemeFromChoice P₁ C) c b c'
+  → Sch.ReachesWithin (schemeFromInterface P₁ I) c b c'
   → Sch.ReachesWithin
-      (schemeFromChoice P₂ (mapChoice (ProcessHomCost.hom hc) C))
+      (schemeFromInterface P₂ (mapInterface (ProcessHomCost.hom hc) I))
       (ProcessHom.map (ProcessHomCost.hom hc) c)
-      (castScale→ hc b)
+      (Truth.GuardedCore.GradeHom.map (ProcessHomCost.grade hc) b)
       (ProcessHom.map (ProcessHomCost.hom hc) c')
-ReachesWithin-map {P₁ = P₁} {P₂ = P₂}
-  hc@(record { hom = h ; Q-comm = refl ; stepCost-comm = _ })
-  C c b c' (n , ew) =
+ReachesWithin-map hc C c b c' (n , ew) =
   n , ExecWithin-map hc C n c b c' ew
-
-ReachesWithin-map-grade
-  : ∀ {ℓI ℓO ℓC₁ ℓC₂ ℓQ}
-    {Input : Set ℓI} {Output : Set ℓO}
-    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
-    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
-    (hc : ProcessHomCostWithGrade P₁ P₂)
-    (C  : Choice Input P₁)
-  → ∀ c (b : QAdapter.Scale (Process.Q P₁)) c'
-  → Sch.ReachesWithin (schemeFromChoice P₁ C) c b c'
-  → Sch.ReachesWithin
-      (schemeFromChoice P₂ (mapChoice (ProcessHomCostWithGrade.hom hc) C))
-      (ProcessHom.map (ProcessHomCostWithGrade.hom hc) c)
-      (Truth.GuardedCore.GradeHom.map (ProcessHomCostWithGrade.grade hc) b)
-      (ProcessHom.map (ProcessHomCostWithGrade.hom hc) c')
-ReachesWithin-map-grade hc C c b c' (n , ew) =
-  n , ExecWithin-map-grade hc C n c b c' ew
-
--- Cost commutation for mapped choices (analogue of `run-comm`).
---
--- This is the easiest way to make “budget transport” explicit without needing
--- halting/normalisation proofs: the total fuel-bounded cost is preserved
--- (up to the `Q-comm` coercion).
-
-cost-comm
-  : ∀ {ℓI ℓO ℓC₁ ℓC₂ ℓQ}
-    {Input : Set ℓI} {Output : Set ℓO}
-    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
-    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
-    (hc : ProcessHomCost P₁ P₂)
-    (C  : Choice Input P₁)
-  → ∀ x →
-    castScale← hc (Sch.cost (schemeFromChoice P₂ (mapChoice (ProcessHomCost.hom hc) C)) x)
-      ≡ Sch.cost (schemeFromChoice P₁ C) x
-cost-comm {P₁ = P₁} {P₂ = P₂}
-  hc C x =
-  lemma
-  where
-    h = ProcessHomCost.hom hc
-
-    S₁ = schemeFromChoice P₁ C
-    S₂ = schemeFromChoice P₂ (mapChoice h C)
-
-    n : ℕ
-    n = Choice.fuel C x
-
-    c : Process.Con P₁
-    c = Choice.compile C x
-
-    c₂ : Process.Con P₂
-    c₂ = Sch.Scheme.compile S₂ x
-
-    eq₁ : costExecP P₁ n c ≡ Sch.Scheme.costExec S₁ n c
-    eq₁ = costExecP≡costExec P₁ C n c
-
-    eq₂ : costExecP P₂ n c₂ ≡ Sch.Scheme.costExec S₂ n c₂
-    eq₂ = costExecP≡costExec P₂ (mapChoice h C) n c₂
-
-    lemma
-      : castScale← hc (Sch.cost S₂ x) ≡ Sch.cost S₁ x
-    lemma =
-      trans
-        (cong (castScale← hc) (sym eq₂))
-        (trans
-          (costExecP-map hc n c)
-          eq₁)
-
-ComputesWithin-map-grade
-  : ∀ {ℓI ℓO ℓC₁ ℓC₂ ℓQ}
-    {Input : Set ℓI} {Output : Set ℓO}
-    {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
-    {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
-    (hc : ProcessHomCostWithGrade P₁ P₂)
-    (C  : Choice Input P₁)
-  → ∀ x (b : QAdapter.Scale (Process.Q P₁)) y
-  → Sch.Scheme.ComputesWithin (schemeFromChoice P₁ C) x b y
-  → Sch.Scheme.ComputesWithin
-      (schemeFromChoice P₂ (mapChoice (ProcessHomCostWithGrade.hom hc) C))
-      x
-      (Truth.GuardedCore.GradeHom.map (ProcessHomCostWithGrade.grade hc) b)
-      y
 
 ComputesWithin-map
   : ∀ {ℓI ℓO ℓC₁ ℓC₂ ℓQ}
@@ -871,28 +838,23 @@ ComputesWithin-map
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ} Output}
     (hc : ProcessHomCost P₁ P₂)
-    (C  : Choice Input P₁)
+    (I  : Interface Input P₁)
   → ∀ x (b : QAdapter.Scale (Process.Q P₁)) y
-  → Sch.Scheme.ComputesWithin (schemeFromChoice P₁ C) x b y
+  → Sch.Scheme.ComputesWithin (schemeFromInterface P₁ I) x b y
   → Sch.Scheme.ComputesWithin
-      (schemeFromChoice P₂ (mapChoice (ProcessHomCost.hom hc) C))
+      (schemeFromInterface P₂ (mapInterface (ProcessHomCost.hom hc) I))
       x
-      (castScale→ hc b)
+      (Truth.GuardedCore.GradeHom.map (ProcessHomCost.grade hc) b)
       y
-ComputesWithin-map {P₁ = P₁} {P₂ = P₂}
-  hc@(record { hom = h ; Q-comm = refl ; stepCost-comm = _ })
-  C x b y proof =
-  ComputesWithin-map-grade (ProcessHomCost→WithGrade hc) C x b y proof
-
-ComputesWithin-map-grade {P₁ = P₁} {P₂ = P₂} hc C x b y proof =
+ComputesWithin-map {P₁ = P₁} {P₂ = P₂} hc C x b y proof =
   go proof
   where
-    h = ProcessHomCostWithGrade.hom hc
-    φ = ProcessHomCostWithGrade.grade hc
+    h = ProcessHomCost.hom hc
+    φ = ProcessHomCost.grade hc
     open Truth.GuardedCore.GradeHom φ renaming (map to mapg)
 
-    S₁ = schemeFromChoice P₁ C
-    S₂ = schemeFromChoice P₂ (mapChoice h C)
+    S₁ = schemeFromInterface P₁ C
+    S₂ = schemeFromInterface P₂ (mapInterface h C)
 
     go
       : Sch.Scheme.ComputesWithin S₁ x b y
@@ -905,7 +867,7 @@ ComputesWithin-map-grade {P₁ = P₁} {P₂ = P₂} hc C x b y proof =
         reach₂-cost≤₂
           : Sch.ExecWithin S₂ n (Sch.Scheme.compile S₂ x) (mapg b) c₂
         reach₂-cost≤₂ =
-          ExecWithin-map-grade hc C n (Sch.Scheme.compile S₁ x) b c' (reach , cost≤)
+          ExecWithin-map hc C n (Sch.Scheme.compile S₁ x) b c' (reach , cost≤)
 
         reach₂ : Sch.exec S₂ n x ≡ c₂
         reach₂ = fst reach₂-cost≤₂
@@ -927,6 +889,7 @@ ComputesWithin-map-grade {P₁ = P₁} {P₂ = P₂} hc C x b y proof =
               (ProcessHom.decode-comm h (Sch.Scheme.close S₁ c'))
               outEq)
 
+-- ==========================================================================
 -- Simulation preserves semantics (unbounded, fuel-free):
 -- a process homomorphism transports `ComputesTo` proofs from one representation
 -- to another (textbook “correctness of simulation” shape).
@@ -937,15 +900,15 @@ ComputesTo-map
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ₁} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ₂} Output}
     (h  : ProcessHom P₁ P₂)
-    (C  : Choice Input P₁)
+    (I  : Interface Input P₁)
   → ∀ x y
-  → Sch.Scheme.ComputesTo (schemeFromChoice P₁ C) x y
-  → Sch.Scheme.ComputesTo (schemeFromChoice P₂ (mapChoice h C)) x y
+  → Sch.Scheme.ComputesTo (schemeFromInterface P₁ I) x y
+  → Sch.Scheme.ComputesTo (schemeFromInterface P₂ (mapInterface h I)) x y
 ComputesTo-map {P₁ = P₁} {P₂ = P₂} h C x y proof =
   go proof
   where
-    S₁ = schemeFromChoice P₁ C
-    S₂ = schemeFromChoice P₂ (mapChoice h C)
+    S₁ = schemeFromInterface P₁ C
+    S₂ = schemeFromInterface P₂ (mapInterface h C)
 
     exec-map
       : ∀ n x → ProcessHom.map h (Sch.exec S₁ n x) ≡ Sch.exec S₂ n x
@@ -1055,7 +1018,7 @@ module Semantics where
 
   Meaning≤-natural = run≤-meaning-comm
 
-  Choice-natural-lax = mapChoiceLax
+  Interface-natural-lax = mapInterfaceLax
   ExecTrace-natural-lax = iterStep-map≤
   --
   -- Note: lax morphisms only transport *execution traces* (preorder reachability).
@@ -1067,10 +1030,6 @@ module Semantics where
 
   ComputesTo-natural = ComputesTo-map
   ComputesWithin-natural = ComputesWithin-map
-
-  ExecWithin-natural-grade = ExecWithin-map-grade
-  ReachesWithin-natural-grade = ReachesWithin-map-grade
-  ComputesWithin-natural-grade = ComputesWithin-map-grade
 -- A small but useful derived lemma: if you have a process morphism and you run
 -- a choice against P₁, then mapping its *normalised execution trace* into P₂
 -- preserves the observed output.
@@ -1084,12 +1043,12 @@ run-comm
     {P₁ : Process {ℓO} {ℓC₁} {ℓQ₁} Output}
     {P₂ : Process {ℓO} {ℓC₂} {ℓQ₂} Output}
     (h : ProcessHom P₁ P₂)
-    (C : Choice Input P₁)
-    → ∀ x → Sch.run (schemeFromChoice P₂ (mapChoice h C)) x ≡ Sch.run (schemeFromChoice P₁ C) x
-run-comm {P₁ = P₁} {P₂ = P₂} h C x = lemma
+    (I : Interface Input P₁)
+    → ∀ x → Sch.run (schemeFromInterface P₂ (mapInterface h I)) x ≡ Sch.run (schemeFromInterface P₁ I) x
+run-comm {P₁ = P₁} {P₂ = P₂} h I x = lemma
   where
-    S₁ = schemeFromChoice P₁ C
-    S₂ = schemeFromChoice P₂ (mapChoice h C)
+    S₁ = schemeFromInterface P₁ I
+    S₂ = schemeFromInterface P₂ (mapInterface h I)
 
     open Process P₁ renaming (Con to Con₁; Step to Step₁; close to norm₁; decode to decode₁) hiding (refl; trans)
     open Process P₂ renaming (Con to Con₂; Step to Step₂; close to norm₂; decode to decode₂) hiding (refl; trans)
@@ -1109,7 +1068,7 @@ run-comm {P₁ = P₁} {P₂ = P₂} h C x = lemma
     exec-map n x = iterate-map n (Sch.Scheme.compile S₁ x)
 
     n : ℕ
-    n = Choice.fuel C x
+    n = Interface.fuel I x
 
     map-norm-exec
       : ProcessHom.map h (norm₁ (Sch.exec S₁ n x)) ≡ norm₂ (Sch.exec S₂ n x)

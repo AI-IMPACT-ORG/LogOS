@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,8 +12,17 @@ module LogOS.API.Strengthenings where
 --
 -- This keeps the core interfaces weak (preorders/lax laws), but makes the
 -- strengthenings discoverable and easy to import.
+--
+-- This surface is for:
+-- - optional upgrade bundles (μ-limit transport, stronger closure/adjunction laws, ω-sup interfaces)
+--
+-- Not for:
+-- - minimal safe core work (use `LogOS.API.Minimal`)
+-- - hiding axiom usage: axiom interfaces live under `LogOS.API.Axioms` and are explicit.
 
 open import LogOS.Prelude public
+
+import LogOS.API.Axioms as Axioms
 
 module Orders where
   open import LogOS.Minimal.Con public
@@ -24,8 +33,14 @@ module Worlds where
 
 module Closure where
   open import LogOS.Minimal.Closure public
-  open import LogOS.Theorems.Reflection.Projector public renaming (idemp≡ to projector-idemp≡)
-  open import LogOS.Theorems.Modal.S4 public renaming (idemp≡ to S4-idemp≡)
+
+  -- Re-export the specific idempotence witnesses without pulling the full
+  -- theorem modules into this surface.
+  import LogOS.Theorems.Reflection.Projector as Projector
+  import LogOS.Theorems.Modal.S4 as S4
+
+  projector-idemp≡ = Projector.idemp≡
+  S4-idemp≡ = S4.idemp≡
 
 module Adjunctions where
   open import LogOS.Minimal.Adjunction public
@@ -40,7 +55,7 @@ module Categories where
 
 module OmegaSup where
   -- Optional ω-sup selection interfaces used by μ-induction and limit reasoning.
-  open import LogOS.Axioms.OmegaSup.Interface public
+  open Axioms.OmegaSup public
 
 module Stabilisation where
   -- Domain-theoretic glue for “limit/stabilised” reasoning (μ / ωCPO / transport).

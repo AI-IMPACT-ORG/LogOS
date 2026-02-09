@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -15,6 +15,7 @@ Shared anchors:
 
 Key entrypoints:
 - Ports/adapters spine (hexagonal architecture): `docs/DeepDive/Architecture_PortsAdapters.lagda.md`
+- Futamura × diagonal showcase walkthrough: `docs/DeepDive/FutamuraDiagonal_Showcase.lagda.md`
 - PL mechanization spine (syntax/statics/dynamics): `docs/DeepDive/PLSpine.lagda.md`
   - Code spine used by the doc: `docs/DeepDive/PLSpineSpine.agda`
 - Kernel implementer notes: `docs/DeepDive/IMPLEMENTING_KERNEL.md`

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -25,7 +25,7 @@ open import LogOS.Syntax.Prop as Prop
 open import LogOS.Boundary.IO
 open import LogOS.Boundary.Port
 
-import LogOS.Ports.Semantic.InterlinguaCore as Core
+import LogOS.Ports.Semantic.HeteroInterlinguaCore as Core
 
 toPresentationC
   : ∀ {ℓ : Level}
@@ -37,7 +37,11 @@ toPresentationC
     (B : BoundaryIO Sig Q W BB H)
     (P : BoundaryPort {ℓForm = ℓForm} Sig Q W BB H B)
   → Core.PresentationC {ℓForm = ℓForm}
-      (LogOSSignature.∂Cosp Sig) (BulkBoundary.Con_bnd BB) (BoundaryIO.Sat∂ B)
+      (record
+        { Ctx = LogOSSignature.∂Cosp Sig
+        ; Con = BulkBoundary.Con_bnd BB
+        ; Sat = BoundaryIO.Sat∂ B
+        })
 toPresentationC B P = record
   { Form   = BoundaryPort.Form P
   ; SatF   = BoundaryPort.SatF P
@@ -82,7 +86,7 @@ module For
     Sat∂≈F₂ = P2.Sat∂≈F
     SatF≈∂₂ = P2.SatF≈∂
 
-    module C = Core.ForPresentations {SatC = BoundaryIO.Sat∂ B} (toPresentationC B P₁) (toPresentationC B P₂)
+    module C = Core.ForPresentations (toPresentationC B P₁) (toPresentationC B P₂)
 
   -- Boundary observational equality (w.r.t. `Sat∂`).
 
@@ -117,6 +121,21 @@ module For
   Trans≈ : (Form₁ → Form₂) → (Form₁ → Form₂) → Set (ℓ ⊔ ℓForm₁)
   Trans≈ = _≈⇒_
 
+  Trans≈-refl : ∀ (t : Form₁ → Form₂) → Trans≈ t t
+  Trans≈-refl _ =
+    ( (λ _ _ sat → sat)
+    , (λ _ _ sat → sat)
+    )
+
+  Trans≈-sym : ∀ {t u : Form₁ → Form₂} → Trans≈ t u → Trans≈ u t
+  Trans≈-sym eq = (C.Trans≈⇐ eq , C.Trans≈⇒ eq)
+
+  Trans≈-trans : ∀ {t u v : Form₁ → Form₂} → Trans≈ t u → Trans≈ u v → Trans≈ t v
+  Trans≈-trans tu uv =
+    ( (λ p φ sat → C.Trans≈⇒ uv p φ (C.Trans≈⇒ tu p φ sat))
+    , (λ p φ sat → C.Trans≈⇐ tu p φ (C.Trans≈⇐ uv p φ sat))
+    )
+
   -- A satisfaction-preserving-and-reflecting translation (`SemPreserving`) is unique up to `≈⇒`.
 
   SemPreserving : (Form₁ → Form₂) → Set (ℓ ⊔ ℓForm₁)
@@ -127,6 +146,17 @@ module For
     → SemPreserving t
     → Trans≈ t translate
   translate-unique = C.translate-unique
+
+  -- Confluence: any two `SemPreserving` translations agree up to satisfaction.
+  translate-confluent
+    : ∀ (t u : Form₁ → Form₂)
+    → SemPreserving t
+    → SemPreserving u
+    → Trans≈ t u
+  translate-confluent t u presT presU =
+    Trans≈-trans
+      (translate-unique t presT)
+      (Trans≈-sym (translate-unique u presU))
 
   -- -------------------------------------------------------------------------
   -- Ported closure/normalisation: any boundary endomap lifts to every port.
@@ -148,7 +178,7 @@ module For
     → Prop._↔_ (SatF₂ p (translate (Extend₁ F φ)))
                (SatF₂ p (Extend₂ F (translate φ)))
   ported-closure-naturality F extF p φ =
-    C.ported-closure-naturality F extF p φ
+    C.ported-closure-naturality≈ F extF p φ
 
   -- Alias (paper-friendly name).
   extend-commutes-with-translate = ported-closure-naturality
@@ -224,9 +254,30 @@ translate-id
   → Prop._↔_
       (BoundaryPort.SatF P p (translate B P P φ))
       (BoundaryPort.SatF P p φ)
-translate-id B P p φ = Core.translate-id-core (toPresentationC B P) p φ
+translate-id B P p φ =
+  let
+    eq = Core.translate-id-core (toPresentationC B P)
+  in
+    Prop.intro (fst eq p φ) (snd eq p φ)
 
 translate-unique
+  : ∀ {ℓ : Level}
+    {ℓForm₁ ℓForm₂ : Level}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q}
+    {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B : BoundaryIO Sig Q W BB H)
+    (P₁ : BoundaryPort {ℓForm = ℓForm₁} Sig Q W BB H B)
+    (P₂ : BoundaryPort {ℓForm = ℓForm₂} Sig Q W BB H B)
+    (t : BoundaryPort.Form P₁ → BoundaryPort.Form P₂)
+  → (∀ (p : LogOSSignature.∂Cosp Sig) (φ : BoundaryPort.Form P₁)
+     → Prop._↔_ (BoundaryPort.SatF P₁ p φ) (BoundaryPort.SatF P₂ p (t φ)))
+  → Core.ForPresentations._≈⇒_ (toPresentationC B P₁) (toPresentationC B P₂)
+      t (translate B P₁ P₂)
+translate-unique B P₁ P₂ = For.translate-unique B P₁ P₂
+
+translate-unique-ObsEq
   : ∀ {ℓ : Level}
     {ℓForm₁ ℓForm₂ : Level}
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -242,7 +293,34 @@ translate-unique
   → (∀ (p : LogOSSignature.∂Cosp Sig) (φ : BoundaryPort.Form P₁)
      → Prop._↔_ (BoundaryPort.SatF P₂ p (t φ))
                 (BoundaryPort.SatF P₂ p (translate B P₁ P₂ φ)))
-translate-unique B P₁ P₂ = For.translate-unique B P₁ P₂
+translate-unique-ObsEq B P₁ P₂ t pres p φ =
+  let
+    eq = translate-unique B P₁ P₂ t pres
+  in
+    Prop.intro (fst eq p φ) (snd eq p φ)
+
+translate-unique-Obs≈
+  : ∀ {ℓ : Level}
+    {ℓForm₁ ℓForm₂ : Level}
+    {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    {W : Worlds.WorldH Sig Q}
+    {BB : BulkBoundary ℓ}
+    {H : (let module HT = Truth.HomotypicalTruth Sig Q W in HT.HLayer) BB}
+    (B : BoundaryIO Sig Q W BB H)
+    (P₁ : BoundaryPort {ℓForm = ℓForm₁} Sig Q W BB H B)
+    (P₂ : BoundaryPort {ℓForm = ℓForm₂} Sig Q W BB H B)
+    (t : BoundaryPort.Form P₁ → BoundaryPort.Form P₂)
+  → (∀ (p : LogOSSignature.∂Cosp Sig) (φ : BoundaryPort.Form P₁)
+     → Prop._↔_ (BoundaryPort.SatF P₁ p φ) (BoundaryPort.SatF P₂ p (t φ)))
+  → (φ : BoundaryPort.Form P₁)
+  → Core.PresentationC.Obs≈F (toPresentationC B P₂) (t φ) (translate B P₁ P₂ φ)
+translate-unique-Obs≈ B P₁ P₂ t pres φ =
+  let
+    eq = translate-unique B P₁ P₂ t pres
+  in
+    ( (λ p sat → fst eq p φ sat)
+    , (λ p sat → snd eq p φ sat)
+    )
 
 translate-comp
   : ∀ {ℓ : Level}
@@ -260,7 +338,14 @@ translate-comp
       (BoundaryPort.SatF P₃ p (translate B P₁ P₃ φ))
       (BoundaryPort.SatF P₃ p (translate B P₂ P₃ (translate B P₁ P₂ φ)))
 translate-comp B P₁ P₂ P₃ p φ =
-  Core.translate-comp-core (toPresentationC B P₁) (toPresentationC B P₂) (toPresentationC B P₃) p φ
+  let
+    eq =
+      Core.translate-comp-core
+        (toPresentationC B P₁)
+        (toPresentationC B P₂)
+        (toPresentationC B P₃)
+  in
+    Prop.intro (fst eq p φ) (snd eq p φ)
 
 ported-closure-naturality
   : ∀ {ℓ : Level}

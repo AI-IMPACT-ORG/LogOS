@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,6 +10,7 @@ module Tests.ContinuityOne where
 open import LogOS.Prelude
 
 open import LogOS.API.Kernel
+open import LogOS.Minimal.World
 open import LogOS.Minimal.Truth as Truth
 
 -- One-point boundary preorder and trivial structures
@@ -74,8 +75,7 @@ OmegaCPO₁ = record
 
 FiniteFirst₁ : GT₁.FiniteFirst (BulkBoundary.bnd BB₁) GTruth₁ OmegaCPO₁
 FiniteFirst₁ = record
-  { approx0 = •
-  ; approxS = λ _ → •
+  { approxS = λ _ → •
   ; base = refl
   ; step = λ _ → refl
   ; Th⋆-as-sup = (tt , tt)
@@ -119,17 +119,13 @@ K₁ = record
       ; reify = λ γ → γ
       ; Body∂ = λ c → c
       }
-  ; GTruth = GTruth₁
-  ; laws = record
-      { shapeLaws = record
-          { decode∘encode = λ _ → refl
-          ; γ*-guard = (tt , tt)
-          ; reify-decode = λ _ → refl
-          ; body-decode = λ _ → refl
-          }
-      ; mono-Body∂ = λ _ → tt
-      ; mono-Flow = λ _ → tt
-      ; guard-decode = λ _ → refl
-      ; decode-γ* = refl
+  ; shapeLaws = record
+      { decode∘encode = λ _ → refl
+      ; γ*-guard      = (tt , tt)
+      ; reify-decode  = λ _ → refl
+      ; body-decode   = λ _ → refl
       }
+  ; G = fromGuardedClosure GTruth₁
+  ; guard-decode = λ _ → refl
+  ; decode-γ*    = refl
   }

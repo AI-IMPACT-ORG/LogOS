@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,19 +22,14 @@ open import LogOS.Base.Signature.Hom using (SigHom; composeSigHom)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 open import LogOS.Syntax.Prop as Prop
-open import LogOS.Algebra.ConAlg using (idHom≡)
+open import LogOS.Minimal.ConAlg using (idHom≡)
 
 open import LogOS.Kernel using (Kernel)
 import LogOS.Kernel.Reindex as Reindex
 import LogOS.Kernel.Hom2Cat as K2
 import LogOS.Kernel.Hom as KH
 
-import LogOS.Kernel.LogicKernel as LK
-import LogOS.Kernel.LogicKernel.FromKernel as LKFromK
-import LogOS.Kernel.LogicKernel.Hom.FromKernel as LKHom
-import LogOS.Kernel.LogicKernel.Hom2Cat as LK2
-import LogOS.Kernel.LogicKernel.ConAlgOf as LKConAlg
-import LogOS.Kernel.LogicKernel.Reindex as LKReindex
+import LogOS.Kernel as LK
 open import LogOS.Minimal.Truth as Truth
 
 -- ============================================================================
@@ -57,9 +52,6 @@ module ReindexingAssoc
     B : Kernel Sig₁ Q
     B = reindexKernel (composeSigHom σ τ) K
 
-    asLK : Kernel Sig₁ Q → LK.LogicKernel Sig₁ Q
-    asLK = LKFromK.asLogicKernel
-
     CP : Kernel Sig₁ Q → ConPreorder ℓ
     CP X = BulkBoundary.bnd (Kernel.BB X)
 
@@ -68,7 +60,7 @@ module ReindexingAssoc
     record
       { hom =
           record
-            { con-hom    = idHom≡ (LKConAlg.conAlgOf (asLK B))
+            { con-hom    = idHom≡ (KH.conAlgOf B)
             ; mapCode    = λ γ → γ
             ; map-encode = λ _ → refl
             ; map-decode = λ _ → refl
@@ -81,7 +73,7 @@ module ReindexingAssoc
     record
       { hom =
           record
-            { con-hom    = idHom≡ (LKConAlg.conAlgOf (asLK A))
+            { con-hom    = idHom≡ (KH.conAlgOf A)
             ; mapCode    = λ γ → γ
             ; map-encode = λ _ → refl
             ; map-decode = λ _ → refl
@@ -173,7 +165,7 @@ module ReindexingSatisfactionWithFml
     → Prop._↔_
         (ST₁.StrictLayer.Sat_S (Kernel.Strict K₁) w φ)
         (ST₂.StrictLayer.Sat_S (Kernel.Strict K₂) (SigHom.mapCosp σ w) (mapFml φ))
-  SatS-precompose = reindex-satS-withFml σ K₂ mapFml
+  SatS-precompose = reindexLogic-satS-withFml σ K₂ mapFml
 
   SatH-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
@@ -199,92 +191,84 @@ module ReindexingSatisfactionWithFml
 module ReindexingSatisfactionWithFmlLogic
   {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
   (σ : SigHom Sig₁ Sig₂)
-  (K₂ : LK.LogicKernel Sig₂ Q)
+  (K₂ : LK.Kernel Sig₂ Q)
   {Fml₁ : Set ℓ}
-  (mapFml : Fml₁ → LK.LogicKernel.Fml K₂)
+  (mapFml : Fml₁ → LK.Kernel.Fml K₂)
   where
 
   open LK
-  open LogicKernel
+  open Kernel
 
-  K₁ : LK.LogicKernel Sig₁ Q
-  K₁ = LKReindex.reindexLogicKernelWithFml σ K₂ mapFml
+  K₁ : LK.Kernel Sig₁ Q
+  K₁ = Reindex.reindexKernelWithFml σ K₂ mapFml
 
   module ST₁ = Truth.StrictTruth Sig₁
   module ST₂ = Truth.StrictTruth Sig₂
-  module HT₁ = Truth.HomotypicalTruth Sig₁ Q (LogicKernel.HWorld K₁)
-  module HT₂ = Truth.HomotypicalTruth Sig₂ Q (LogicKernel.HWorld K₂)
+  module HT₁ = Truth.HomotypicalTruth Sig₁ Q (Kernel.HWorld K₁)
+  module HT₂ = Truth.HomotypicalTruth Sig₂ Q (Kernel.HWorld K₂)
 
   SatS-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
         (φ : Fml₁)
     → Prop._↔_
-        (ST₁.StrictLayer.Sat_S (LogicKernel.Strict K₁) w φ)
-        (ST₂.StrictLayer.Sat_S (LogicKernel.Strict K₂) (SigHom.mapCosp σ w) (mapFml φ))
-  SatS-precompose = LKReindex.reindexLogic-satS-withFml σ K₂ mapFml
+        (ST₁.StrictLayer.Sat_S (Kernel.Strict K₁) w φ)
+        (ST₂.StrictLayer.Sat_S (Kernel.Strict K₂) (SigHom.mapCosp σ w) (mapFml φ))
+  SatS-precompose = Reindex.reindexLogic-satS-withFml σ K₂ mapFml
 
   SatH-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
-        (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
-    → HT₁.HLayer.Sat_H (LogicKernel.HTruth K₁) w c
-      ≡ HT₂.HLayer.Sat_H (LogicKernel.HTruth K₂) (SigHom.mapCosp σ w) c
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+    → HT₁.HLayer.Sat_H (Kernel.HTruth K₁) w c
+      ≡ HT₂.HLayer.Sat_H (Kernel.HTruth K₂) (SigHom.mapCosp σ w) c
   SatH-precompose _ _ = refl
 
   SatHbnd-precompose
     : ∀ (w : LogOSSignature.∂Cosp Sig₁)
-        (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
-    → LogicKernel.Sat_H_bnd K₁ w c ≡ LogicKernel.Sat_H_bnd K₂ (SigHom.map∂Cosp σ w) c
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
+    → Kernel.Sat_H_bnd K₁ w c ≡ Kernel.Sat_H_bnd K₂ (SigHom.map∂Cosp σ w) c
   SatHbnd-precompose _ _ = refl
 
   SatHcoh-precompose
     : ∀ (w : LogOSSignature.Cosp Sig₁)
-        (c : ConPreorder.Con (BulkBoundary.bnd (LogicKernel.BB K₁)))
+        (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
     → Prop._↔_
-        (HT₁.HLayer.Sat_H (LogicKernel.HTruth K₁) w c)
-        (LogicKernel.Sat_H_bnd K₁ (LogOSSignature.to∂ Sig₁ w) c)
-  SatHcoh-precompose = LogicKernel.sat-coh K₁
+        (HT₁.HLayer.Sat_H (Kernel.HTruth K₁) w c)
+        (Kernel.Sat_H_bnd K₁ (LogOSSignature.to∂ Sig₁ w) c)
+  SatHcoh-precompose = Kernel.sat-coh K₁
 
 -- ============================================================================
--- 3) Kernel ↪ LogicKernel is 2-fully-faithful (by definitional restriction)
+-- 3) Kernel ↪ Kernel is 2-fully-faithful (by definitional restriction)
 -- ============================================================================
 
-module KernelIntoLogicKernel
+module KernelIntoKernel
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   where
 
-  asLogicKernel : Kernel Sig Q → LK.LogicKernel Sig Q
-  asLogicKernel = LKFromK.asLogicKernel
+  asKernel : Kernel Sig Q → Kernel Sig Q
+  asKernel K = K
 
-  toLKHom₁
+  toKernelHom₁
     : ∀ {K₁ K₂ : Kernel Sig Q}
     → K2.KernelHom₁ K₁ K₂
-    → LK2.LogicKernelHom₁ (asLogicKernel K₁) (asLogicKernel K₂)
-  toLKHom₁ h =
-    record
-      { hom   = LKHom.asLogicKernelHom (K2.KernelHom₁.hom h)
-      ; mono∂ = K2.KernelHom₁.mono∂ h
-      }
+    → K2.KernelHom₁ (asKernel K₁) (asKernel K₂)
+  toKernelHom₁ h = h
 
-  fromLKHom₁
+  fromKernelHom₁
     : ∀ {K₁ K₂ : Kernel Sig Q}
-    → LK2.LogicKernelHom₁ (asLogicKernel K₁) (asLogicKernel K₂)
+    → K2.KernelHom₁ (asKernel K₁) (asKernel K₂)
     → K2.KernelHom₁ K₁ K₂
-  fromLKHom₁ h =
-    record
-      { hom   = LKHom.asKernelHom (LK2.LogicKernelHom₁.hom h)
-      ; mono∂ = LK2.LogicKernelHom₁.mono∂ h
-      }
+  fromKernelHom₁ h = h
 
   to-from
     : ∀ {K₁ K₂ : Kernel Sig Q}
       (h : K2.KernelHom₁ K₁ K₂)
-    → fromLKHom₁ {K₁ = K₁} {K₂ = K₂} (toLKHom₁ {K₁ = K₁} {K₂ = K₂} h) ≡ h
+    → fromKernelHom₁ {K₁ = K₁} {K₂ = K₂} (toKernelHom₁ {K₁ = K₁} {K₂ = K₂} h) ≡ h
   to-from _ = refl
 
   from-to
     : ∀ {K₁ K₂ : Kernel Sig Q}
-      (h : LK2.LogicKernelHom₁ (asLogicKernel K₁) (asLogicKernel K₂))
-    → toLKHom₁ {K₁ = K₁} {K₂ = K₂} (fromLKHom₁ {K₁ = K₁} {K₂ = K₂} h) ≡ h
+      (h : K2.KernelHom₁ (asKernel K₁) (asKernel K₂))
+    → toKernelHom₁ {K₁ = K₁} {K₂ = K₂} (fromKernelHom₁ {K₁ = K₁} {K₂ = K₂} h) ≡ h
   from-to _ = refl
 
 -- ============================================================================
@@ -295,7 +279,7 @@ module RefinementLaws
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   where
 
-  open LK2 public using
+  open K2 public using
     ( _⇒_
     ; _≈_
     ; whiskerL
@@ -319,54 +303,54 @@ module FlowGuardTransport
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   where
 
-  -- Ungraded kernel version (already proven at the decoded boundary level).
-  open KH public using (KernelHomFlow; map-guard-decode≤; map-flowcode-decode≤)
+  -- Kernel-hom flow preservation interface (saturation step).
+  open KH public using (KernelHomFlow)
 
-  -- LogicKernel version: a uniform “step semantics commutes with morphisms” lemma.
-  map-guard-decode≤-LogicKernel
-    : ∀ {K₁ K₂ : LK.LogicKernel Sig Q}
-      {h : LK2.LogicKernelHom₁ K₁ K₂}
-      (hf : LK2.LogicKernelHomFlow₁ h)
-      (γ : LK.LogicKernel.Code K₁)
-    → ConPreorder._⊑_ (BulkBoundary.bnd (LK.LogicKernel.BB K₂))
-        (LK.LogicKernel.decode K₂ (LK2.LogicKernelHom₁.mapCode₁ h (LK.LogicKernel.Guard K₁ γ)))
-        (LK.GTier.Flow (LK.LogicKernel.G K₂) (LK.GTier.step (LK.LogicKernel.G K₂))
-          (LK.LogicKernel.decode K₂ (LK2.LogicKernelHom₁.mapCode₁ h γ)))
-  map-guard-decode≤-LogicKernel {K₁ = K₁} {K₂ = K₂} {h = h} hf γ =
+  -- Kernel version: a uniform “step semantics commutes with morphisms” lemma.
+  map-guard-decode≤-Kernel
+    : ∀ {K₁ K₂ : LK.Kernel Sig Q}
+      {h : K2.KernelHom₁ K₁ K₂}
+      (hf : K2.KernelHomFlow₁ h)
+      (γ : LK.Kernel.Code K₁)
+    → ConPreorder._⊑_ (BulkBoundary.bnd (LK.Kernel.BB K₂))
+        (LK.Kernel.decode K₂ (K2.KernelHom₁.mapCode₁ h (LK.Kernel.Guard K₁ γ)))
+        (LK.GTier.Flow (LK.Kernel.G K₂) (LK.GTier.step (LK.Kernel.G K₂))
+          (LK.Kernel.decode K₂ (K2.KernelHom₁.mapCode₁ h γ)))
+  map-guard-decode≤-Kernel {K₁ = K₁} {K₂ = K₂} {h = h} hf γ =
     let
-      CP₂  = BulkBoundary.bnd (LK.LogicKernel.BB K₂)
-      step₁ = LK.GTier.step (LK.LogicKernel.G K₁)
-      step₂ = LK.GTier.step (LK.LogicKernel.G K₂)
-      Flow₁ = LK.GTier.Flow (LK.LogicKernel.G K₁)
-      Flow₂ = LK.GTier.Flow (LK.LogicKernel.G K₂)
+      CP₂  = BulkBoundary.bnd (LK.Kernel.BB K₂)
+      step₁ = LK.GTier.step (LK.Kernel.G K₁)
+      step₂ = LK.GTier.step (LK.Kernel.G K₂)
+      Flow₁ = LK.GTier.Flow (LK.Kernel.G K₁)
+      Flow₂ = LK.GTier.Flow (LK.Kernel.G K₂)
 
-      eq-guard₁ : LK.LogicKernel.decode K₁ (LK.LogicKernel.Guard K₁ γ)
-                  ≡ Flow₁ step₁ (LK.LogicKernel.decode K₁ γ)
-      eq-guard₁ = LK.LogicKernel.guard-decode K₁ γ
+      eq-guard₁ : LK.Kernel.decode K₁ (LK.Kernel.Guard K₁ γ)
+                  ≡ Flow₁ step₁ (LK.Kernel.decode K₁ γ)
+      eq-guard₁ = LK.Kernel.guard-decode K₁ γ
 
-      eq-mapγ : LK.LogicKernel.decode K₂ (LK2.LogicKernelHom₁.mapCode₁ h γ)
-                ≡ LK2.LogicKernelHom₁.map∂₁ h (LK.LogicKernel.decode K₁ γ)
-      eq-mapγ = LK2.LogicKernelHom₁.map-decode₁ h γ
+      eq-mapγ : LK.Kernel.decode K₂ (K2.KernelHom₁.mapCode₁ h γ)
+                ≡ K2.KernelHom₁.map∂₁ h (LK.Kernel.decode K₁ γ)
+      eq-mapγ = K2.KernelHom₁.map-decode₁ h γ
 
-      eq-mapGuard : LK.LogicKernel.decode K₂ (LK2.LogicKernelHom₁.mapCode₁ h (LK.LogicKernel.Guard K₁ γ))
-                    ≡ LK2.LogicKernelHom₁.map∂₁ h (LK.LogicKernel.decode K₁ (LK.LogicKernel.Guard K₁ γ))
-      eq-mapGuard = LK2.LogicKernelHom₁.map-decode₁ h (LK.LogicKernel.Guard K₁ γ)
+      eq-mapGuard : LK.Kernel.decode K₂ (K2.KernelHom₁.mapCode₁ h (LK.Kernel.Guard K₁ γ))
+                    ≡ K2.KernelHom₁.map∂₁ h (LK.Kernel.decode K₁ (LK.Kernel.Guard K₁ γ))
+      eq-mapGuard = K2.KernelHom₁.map-decode₁ h (LK.Kernel.Guard K₁ γ)
 
       step : ConPreorder._⊑_ CP₂
-              (LK2.LogicKernelHom₁.map∂₁ h (Flow₁ step₁ (LK.LogicKernel.decode K₁ γ)))
-              (Flow₂ step₂ (LK2.LogicKernelHom₁.map∂₁ h (LK.LogicKernel.decode K₁ γ)))
-      step = LK2.LogicKernelHomFlow₁.preserves-step hf (LK.LogicKernel.decode K₁ γ)
+              (K2.KernelHom₁.map∂₁ h (Flow₁ step₁ (LK.Kernel.decode K₁ γ)))
+              (Flow₂ step₂ (K2.KernelHom₁.map∂₁ h (LK.Kernel.decode K₁ γ)))
+      step = K2.KernelHomFlow₁.preserves-step hf (LK.Kernel.decode K₁ γ)
     in
     subst
-      (λ x → ConPreorder._⊑_ CP₂ x (Flow₂ step₂ (LK.LogicKernel.decode K₂ (LK2.LogicKernelHom₁.mapCode₁ h γ))))
+      (λ x → ConPreorder._⊑_ CP₂ x (Flow₂ step₂ (LK.Kernel.decode K₂ (K2.KernelHom₁.mapCode₁ h γ))))
       (sym eq-mapGuard)
       (subst
         (λ y → ConPreorder._⊑_ CP₂
-                (LK2.LogicKernelHom₁.map∂₁ h (LK.LogicKernel.decode K₁ (LK.LogicKernel.Guard K₁ γ)))
+                (K2.KernelHom₁.map∂₁ h (LK.Kernel.decode K₁ (LK.Kernel.Guard K₁ γ)))
                 (Flow₂ step₂ y))
         (sym eq-mapγ)
         (subst
-          (λ z → ConPreorder._⊑_ CP₂ (LK2.LogicKernelHom₁.map∂₁ h z)
-                    (Flow₂ step₂ (LK2.LogicKernelHom₁.map∂₁ h (LK.LogicKernel.decode K₁ γ))))
+          (λ z → ConPreorder._⊑_ CP₂ (K2.KernelHom₁.map∂₁ h z)
+                    (Flow₂ step₂ (K2.KernelHom₁.map∂₁ h (LK.Kernel.decode K₁ γ))))
           (sym eq-guard₁)
           step))

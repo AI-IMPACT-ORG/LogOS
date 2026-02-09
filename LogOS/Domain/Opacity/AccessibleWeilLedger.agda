@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -127,8 +127,9 @@ GRH_Without_Vacuity_Guards_from_AccessibleWeilLedger {ℓC = ℓC} K F L =
 -- Strengthening: kernel-stable truth implies probe observability.
 --
 -- If `W-pos` is itself decode-extensional and stable under the kernel’s closure
--- modality (`Box ∘ Body`), then a *plain* truth fact `W-pos (probe s)` upgrades
--- to the probe observability premise `Pr W-pos (probe s)`.
+-- modality at the chosen computational step (`BoxAt step ∘ Body`), then a *plain*
+-- truth fact `W-pos (probe s)` upgrades to the probe observability premise
+-- `Pr W-pos (probe s)`.
 --
 -- Mechanically this is discharged by `LP.TruthK→Pr-BoxBody` (which internally
 -- transports Box∘Body-stability to FlowCode-stability using decode-extensionality).
@@ -144,7 +145,8 @@ record AccessibleWeilLedgerRSStableTruth {ℓ ℓW : Level}
     WProbe : WPI.WeilProbeImplication RS (Kernel.Code K) W-pos
 
     W-ext    : Comm.DecodeExtensional′ K W-pos
-    W-stableBoxBody : ∀ γ → W-pos γ ↔ W-pos (Box K (Kernel.Body K γ))
+    W-stableBoxBody
+      : ∀ γ → W-pos γ ↔ W-pos (BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K γ))
 
     holds-probe
       : ∀ s → NontrivialZero s
@@ -199,7 +201,8 @@ record AccessibleWeilLedgerStableTruth {ℓ ℓW : Level}
     WProbe : WPI.WeilProbeImplication RS (Kernel.Code K) W-pos
 
     W-ext    : Comm.DecodeExtensional′ K W-pos
-    W-stableBoxBody : ∀ γ → W-pos γ ↔ W-pos (Box K (Kernel.Body K γ))
+    W-stableBoxBody
+      : ∀ γ → W-pos γ ↔ W-pos (BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K γ))
 
     holds-probe
       : ∀ s → NontrivialZero s

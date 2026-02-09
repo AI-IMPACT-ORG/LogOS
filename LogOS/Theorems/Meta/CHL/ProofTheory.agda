@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,9 +18,12 @@ open import LogOS.Minimal.Con using (BulkBoundary)
 import LogOS.Minimal.Con.Rewrite as ConRewrite
 
 open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
-import LogOS.Theorems.Meta.Assumptions.Core as Assump
+import LogOS.Theorems.Meta.ConditionalPacks as Assump
 open import LogOS.Theorems.Meta.Base using (NonTrivialC)
 import LogOS.Theorems.Meta.CHL.Core as CHL
+
+-- Assumption ledger: this module depends on the shared provability/ops packs.
+module Assumptions = Assump
 
 module For
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -53,10 +56,10 @@ module For
     in cut-refines step₁ step₂
 
   -- Decode-extensionality for provability.
-  prov-ext : Assump.DecodeExtensional K Prov
+  prov-ext : Assumptions.DecodeExtensional K Prov
   prov-ext _ _ eq le = R.substR eq le
 
-  mkProvability : NonTrivialC {K = K} Prov → Assump.Provability K
+  mkProvability : NonTrivialC {K = K} Prov → Assumptions.Provability K
   mkProvability nt =
     record
       { Prov    = Prov
@@ -67,7 +70,7 @@ module For
   -- ProvabilityOps with Box fixed to the stable closure modality, Imp left as a parameter.
   mkOps
     : (Imp : Ty → Ty → Ty)
-    → Assump.ProvabilityOps K
+    → Assumptions.ProvabilityOps K
   mkOps Imp =
     record
       { Imp = Imp
@@ -80,14 +83,14 @@ module For
   record Hilbert : Set (lsuc ℓ) where
     field
       Imp     : Ty → Ty → Ty
-      prov    : Assump.Provability K
-      ops     : Assump.ProvabilityOps K
-      impRule : Assump.ImpRules K prov ops
+      prov    : Assumptions.Provability K
+      ops     : Assumptions.ProvabilityOps K
+      impRule : Assumptions.ImpRules K prov ops
 
   hilbert-from
     : (Imp : Ty → Ty → Ty)
     → (nt : NonTrivialC {K = K} Prov)
-    → Assump.ImpRules K (mkProvability nt) (mkOps Imp)
+    → Assumptions.ImpRules K (mkProvability nt) (mkOps Imp)
     → Hilbert
   hilbert-from Imp nt rules =
     record

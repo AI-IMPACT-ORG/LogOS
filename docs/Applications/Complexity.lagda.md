@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -12,15 +12,16 @@ module docs.Applications.Complexity where
 
 -- Sync guard: these imports anchor the pack surfaces referenced below.
 -- If they drift, the docs build fails.
-import LogOS.Packs.Complexity.Experimental.Core
+import LogOS.Packs.Complexity.Experimental.Core as Core
 import LogOS.Packs.Complexity.Experimental.PvsNP.Public
 import LogOS.Packs.Complexity.Experimental.Applications.All
 
 -- Identifier sync guards (claim-heavy): these names are referenced in the prose.
-import LogOS.Domain.Complexity.PvsNPLedger as PvsNP
-import LogOS.Domain.Complexity.ProofSearchOpacitySpine as PSOS
-import LogOS.Domain.Complexity.TruthRoute_Grade_Only as TR
-open import LogOS.Theorems.Meta.BudgetedSeparationOutput using (WitnessCost)
+import LogOS.Packs.Complexity.Experimental.ProofSearchOpacitySpine as PSOS
+open import LogOS.Packs.Complexity.Experimental.Core using (WitnessCost)
+
+module PvsNP = Core.PvsNPLedger
+module TR    = Core.TruthRoute_Grade_Only
 
 module PvsNPFor = PvsNP.For
 module PvsNPFromTruthRoute = PvsNP.FromTruthRoute
@@ -37,6 +38,7 @@ Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
 Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
 
 Interpretation (analogy):
+<!-- CLAIM-STAMP: ANALOGY | anchor=docs/Applications/Complexity.lagda.md#interpretation -->
 the “physics” wording in this note is a label for explicit resource/cost assumption records.
 No physical semantics is imported by default; only the cited Agda assumptions and theorems apply.
 
@@ -65,34 +67,37 @@ Safe import (curated experimental complexity surfaces only): `LogOS/Packs/Comple
 
 ## SAT as the canonical target
 
-- Definition + witness system: `LogOS/Domain/Complexity/Targets/SAT.agda`
-- SAT as proof search: `LogOS/Domain/Complexity/Targets/SATProofSearch.agda` (module `Graded`)
+- Definition + witness system: `LogOS/Complexity/Targets/SAT.agda`
+- SAT as proof search: `LogOS/Complexity/Targets/SATProofSearch.agda` (module `Graded`)
 - Conditional separation pipeline (SAT + proof lower bound):
-  `LogOS/Domain/Complexity/Targets/SAT.agda` (module `CostGuardsGraded`)
-- NP-completeness axiom pack (reduction-based): `LogOS/Domain/Complexity/Targets/SAT.agda`
+  `LogOS/Complexity/Targets/SAT.agda` (module `CostGuardsGraded`)
+- NP-completeness axiom pack (reduction-based): `LogOS/Complexity/Targets/SAT.agda`
   (module `ClassicalNPComplete`, provides “SAT ∈ P ⇒ NP ⊆ P” via reduction transport)
   This is the standard Cook–Levin/Karp argument, stated as an explicit axiom pack.
-  Under the physics-aligned hardness assumptions in this pack, the *ledger yields*
-  a SAT∉P-shaped conclusion for the chosen encoding/budget notion, so the antecedent
-  does not hold in those models.
+  <!-- CLAIM-STAMP: REPRESENTATIONAL | anchor=LogOS/Complexity/Targets/SAT.agda#ClassicalNPComplete -->
+  Under the physics-aligned hardness assumptions in this pack, the ledger yields
+  a separation in the internal (grade/budget-based) P/NP-shaped interface for the
+  chosen encoding/budget notion. In those models, this makes the antecedent
+  ("SAT ∈ P" in the classical reduction pack) false.
 - SAT-from-physics assumption ledger:
-  `LogOS/Domain/Complexity/Targets/SAT.agda` (module `CostGuardsGraded.For.SATFromProof`)
+  `LogOS/Complexity/Targets/SAT.agda` (module `CostGuardsGraded.For.SATFromProof`)
 
 The claim is deliberately **conditional**: LogOS does not assert a proof of
 classical separation in ZFC. What it *does* provide is a clean pipeline:
 
+<!-- CLAIM-STAMP: LITERAL | anchor=LogOS/Packs/Complexity/Experimental/PvsNP/Public.agda#surface -->
 > physically aligned bottleneck axioms + universal computation surface  
 > ⇒ a sufficient condition for a separation claim
 
 Proof-search opacity spine (opacity core, reused here):
-- `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda`
+- `LogOS/Complexity/ProofSearchOpacitySpine.agda`
 - This re-exports the spectral/budgeted separation machinery and applies it to
   proof-search oracles, keeping the hardness story non-deterministic.
 - Budgets are first-class: use `ProofSearchOpacitySpine.For.Budgeted.General` to
-  swap in any budget carrier (ℕ, quantale scales, physical cost models).
+  swap in any budget carrier (ℕ, prequantale scales, physical cost models).
 
 Many-one reductions (literature-aligned baseline):
-- `LogOS/Domain/Complexity/Reduction.agda` (many-one + poly-bounded reductions, decider transport).
+- `LogOS/Complexity/Reduction.agda` (many-one + poly-bounded reductions, decider transport).
   Use `Reduction.Classical.inPFromPolyReduction` and
   `Reduction.Classical.notInPFromPolyReduction` for transport along reductions.
 
@@ -101,21 +106,21 @@ Many-one reductions (literature-aligned baseline):
 1) **Foundational layer (centerpiece):** verification vs unbounded search under
 budgeted classicalization.
 
-- Narrative/theorem surface: `LogOS/Domain/Complexity/ProofSearchSeparation.agda`
-- Capstone theorem (grade-native core): `LogOS/Domain/Complexity/ProofSearchCapstoneGraded.agda`
+- Narrative/theorem surface: `LogOS/Complexity/ProofSearchSeparation.agda`
+- Capstone theorem (grade-native core): `LogOS/Complexity/ProofSearchCapstoneGraded.agda`
 
 2) **Bridge layer:** connect physical “no poly-budget decider” conclusions back
 to standard P/NP-style time/correctness predicates.
 
-- Bridge (grade reindexing): `LogOS/Domain/Complexity/PhysToTruthRouteBridge.agda`
+- Bridge (grade reindexing): `LogOS/Complexity/PhysToTruthRouteBridge.agda`
 
 For a literature-aligned classical interface (ℕ-bound compat; cost = time), use:
 
-- `LogOS/Domain/Complexity/PvsNPLedger.agda` (namespaced as `LogOS.Packs.Complexity.Experimental.Core.PvsNPLedger`)
+- `LogOS/Complexity/PvsNPLedger.agda` (namespaced as `LogOS.Packs.Complexity.Experimental.Core.PvsNPLedger`)
 
 For the minimal info-theory route (kernel-native, conditional), use:
 
-- `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda` (namespaced as `LogOS.Packs.Complexity.Experimental.Core.PvsNPFromInfo_Grade_Only`)
+- `LogOS/Complexity/PvsNPFromInfo_Grade_Only.agda` (namespaced as `LogOS.Packs.Complexity.Experimental.Core.PvsNPFromInfo_Grade_Only`)
 
 ## The strongest explicit axiom ledger (opacity-aligned style)
 
@@ -140,9 +145,9 @@ following explicit assumptions in a record (ledger):
 6) Verification is poly-bounded
    - If you want "verification in P", add a polynomial check bound (e.g. via
      `ProofSearchGraded` or `LanguageWitnessW`), and the standard non-degeneracy
-     guardrails from `LogOS/Domain/Complexity/Model.agda` (module `StandardCMLaws`).
+     guardrails from `LogOS/Complexity/Model.agda` (module `StandardCMLaws`).
 7) Classical alignment (literature-aligned)
-   - Use `LogOS/Domain/Complexity/PvsNPLedger.agda` with `QNat` and `gradeBound = τ`
+   - Use `LogOS/Complexity/PvsNPLedger.agda` with `QNat` and `gradeBound = τ`
    - This is the explicit alignment bridge to standard time-bound P/NP definitions (cost := time).
 
 All of these are already present as explicit record fields in the codebase; no
@@ -174,12 +179,10 @@ complexity strands, while keeping assumptions explicit:
 
 ## Guardrails (non-vacuity)
 
-- `LogOS/Domain/Complexity/Model.agda` (`StandardCMLaws.EncodingsInDomain`, `StandardCMLaws.ReasonableSize`)
-- `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda` (`NonDegenerate`)
-- `LogOS/Domain/Complexity/Examples/GoldenPath.agda` (`Minsky.For.SizeBudget`, `Minsky.For.cost≤budget`)
-- `LogOS/Domain/Complexity/ProofSearchOpacitySpine.agda` (`VacuityGuards`)
-- `LogOS/Domain/Complexity/MeasurementCapacity.agda` (`MeasurementCapacityGuards`, `NonUnitaryCapacityGuards`)
-- `LogOS/Domain/Complexity/SecondLaw.agda` (`SecondLawGuards`)
+- `LogOS/Complexity/Model.agda` (`StandardCMLaws.EncodingsInDomain`, `StandardCMLaws.ReasonableSize`)
+- `LogOS/Complexity/ProofSearchOpacitySpine.agda` (`VacuityGuards`)
+- `LogOS/Complexity/MeasurementCapacity.agda` (`MeasurementCapacityGuards`, `NonUnitaryCapacityGuards`)
+- `LogOS/Complexity/SecondLaw.agda` (`SecondLawGuards`)
 
 These keep the ledger honest by ruling out degenerate encodings and vacuous
 resource bounds.
@@ -187,33 +190,32 @@ resource bounds.
 ## Optional routes and instantiations (tucked away)
 
 - Info‑hardness route (DetBottleneck + InfoHardness):
-  `LogOS/Domain/Complexity/InfoHardnessBridge.agda`,
-  `LogOS/Domain/Complexity/PvsNPFromInfo_Grade_Only.agda`
+  `LogOS/Complexity/InfoHardnessBridge.agda`,
+  `LogOS/Complexity/PvsNPFromInfo_Grade_Only.agda`
 - ETH-shaped assumption (uniform, ℕ-bound):
   `TruthRoute_Grade_Only.UniformNat.ETHAssumption` and
-  `LogOS/Domain/Complexity/Targets/SAT.agda` (module `ClassicalETH`)
+  `LogOS/Complexity/Targets/SAT.agda` (module `ClassicalETH`)
 - Proof-complexity lower bounds (verification vs search):
-  `LogOS/Domain/Complexity/PhysProofBridgeWGraded.agda` (`ProofLowerBound`)
-  + `LogOS/Domain/Complexity/Targets/SATProofSearch.agda`
+  `LogOS/Complexity/PhysProofBridgeWGraded.agda` (`ProofLowerBound`)
+  + `LogOS/Complexity/Targets/SATProofSearch.agda`
 - Physical axiom packs:
-  `LogOS/Domain/Complexity/LCUToLandauer.agda`,
-  `LogOS/Domain/Complexity/MeasurementCapacity.agda`
+  `LogOS/Complexity/LCUToLandauer.agda`,
+  `LogOS/Complexity/MeasurementCapacity.agda`
   (records `MeasurementCapacity`, `NonUnitaryCapacity` with optional non-vacuity guards),
-  `LogOS/Domain/Complexity/SecondLaw.agda` (record `SecondLawAssumptions` with `SecondLawGuards`),
-  `LogOS/Domain/Complexity/InfoProcessingBounds.agda`
+  `LogOS/Complexity/SecondLaw.agda` (record `SecondLawAssumptions` with `SecondLawGuards`),
+  `LogOS/Complexity/InfoProcessingBounds.agda`
 - Classical alignment pipeline:
-  `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda` (module `UniformNatFromRuns`) →
-  `LogOS/Domain/Complexity/PvsNPLedger.agda`
-  (uniform encodings live in `LogOS/Domain/Complexity/TruthRoute_Grade_Only.agda`
+  `LogOS/Complexity/TruthRoute_Grade_Only.agda` (module `UniformNatFromRuns`) →
+  `LogOS/Complexity/PvsNPLedger.agda`
+  (uniform encodings live in `LogOS/Complexity/TruthRoute_Grade_Only.agda`
   (module `UniformNat`; non-uniform adapter: `NonUniformNat`))
 - UniversalIR substrate and examples:
-  `LogOS/Domain/UniversalIR/`,
-  `LogOS/Domain/Complexity/Examples/InfoRouteChain.agda`,
-  `LogOS/Domain/Complexity/Examples/GoldenPath.agda`
+  `LogOS/UniversalIR/`,
+  `LogOS/Complexity/UniversalIRCM.agda`
 - Target example (SAT):
-  `LogOS/Domain/Complexity/Targets/SAT.agda`
-  - Kernel route: `LogOS/Domain/Complexity/Targets/SAT.agda` (module `CostGuardsGraded.Kernel`)
-- SAT as proof search (proofs = assignments): `LogOS/Domain/Complexity/Targets/SATProofSearch.agda`
+  `LogOS/Complexity/Targets/SAT.agda`
+  - Kernel route: `LogOS/Complexity/Targets/SAT.agda` (module `CostGuardsGraded.Kernel`)
+- SAT as proof search (proofs = assignments): `LogOS/Complexity/Targets/SATProofSearch.agda`
 
 ## Barrier-aware framing
 

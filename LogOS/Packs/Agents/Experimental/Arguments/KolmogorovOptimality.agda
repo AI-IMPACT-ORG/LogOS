@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,13 +16,14 @@ module LogOS.Packs.Agents.Experimental.Arguments.KolmogorovOptimality where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
 
-open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude using (ℕ)
 open import LogOS.Prelude.NatOrder using (_≤ℕ_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (BulkBoundary; ConPreorder)
 open import LogOS.Kernel.Graded using (GradedKernel)
+open import LogOS.Kernel.Eq using (module ForGradedKernel)
 import LogOS.Kernel.Graded as GK
 import LogOS.Theorems.Meta.MathPhysSynthesis as MPS
 
@@ -34,6 +35,7 @@ module For
   where
 
   open GradedKernel K public using (Code; decode; reify; reify-decode)
+  open ForGradedKernel K using (_≃K_)
 
   Dec : Set ℓ
   Dec = ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K))
@@ -41,7 +43,7 @@ module For
   -- Kolmogorov/Solomonoff optimality relative to a code-size model.
   KOptimal : (Code → ℕ) → Code → Set ℓ
   KOptimal size γ =
-    ∀ δ → decode δ ≡ decode γ → size γ ≤ℕ size δ
+    ∀ δ → δ ≃K γ → size γ ≤ℕ size δ
 
   -- Publicised/stable fragment of KOptimal.
   module Obs (size : Code → ℕ) where

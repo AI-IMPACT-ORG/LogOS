@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,29 +12,29 @@ module LogOS.Theorems.CategoryTheory.Yoneda where
 -- ============================================================================
 --
 -- This module builds up a Yoneda-like result incrementally using LogOS-native
--- concepts: equality of morphisms up to strict decode equality (`≡`), S/H/G tiers,
+-- concepts: equality of morphisms up to strict decoded meaning (`≃K`), S/H/G tiers,
 -- and the initial kernel.
 --
 -- Approach:
--- 1. Start with morphism equality up to strict decode equality (`≡`) (LogOS-native)
+-- 1. Start with morphism equality up to strict decoded meaning (`≃K`) (LogOS-native)
 -- 2. Show properties preserved by kernel homomorphisms
 -- 3. Connect to initial kernel via foldK
 -- 4. Build up to representability results
 -- ============================================================================
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (Σ; _,_)
+open import LogOS.Prelude using (Σ; _,_)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
+open import LogOS.Minimal.World
 open import LogOS.Kernel
 open import LogOS.Kernel.Hom
-open import LogOS.Kernel.Initial
-open import LogOS.Syntax.Eq using (module ForKernel)
+open import LogOS.Kernel.Eq using (module ForKernel)
 open import LogOS.Syntax.Prop as Prop
-open import LogOS.Algebra.ConAlg using (ConAlgHom≡)
+open import LogOS.Minimal.ConAlg using (ConAlgHom≡)
 import LogOS.Theorems.CategoryTheory.KernelCat as KC
-open import LogOS.Theorems.Meta.DecodeTransportKit using (mapCode≈K-from-decode≡)
+open import LogOS.Theorems.Meta.DecodeTransportKit using (mapCode≈K-from-≃K)
 
 Hom
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -64,24 +64,41 @@ id
 id {Sig = Sig} {Q = Q} {K = K} =
   KC.KernelCat.id (KC.KernelCat-instance Sig Q) {A = K}
 
+-- Initiality witness for the kernel category.
+
+FreeK
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (HWorld : Worlds.WorldH Sig Q)
+  → Kernel Sig Q
+FreeK {Sig = Sig} {Q = Q} HWorld =
+  KC.InitialUpToDecode.I (KC.initial-from-build Sig Q HWorld)
+
+foldK
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (HWorld : Worlds.WorldH Sig Q)
+    (K : Kernel Sig Q)
+  → Hom (FreeK HWorld) K
+foldK {Sig = Sig} {Q = Q} HWorld =
+  KC.InitialUpToDecode.fold (KC.initial-from-build Sig Q HWorld)
+
 -- ============================================================================
--- STEP 1: Strict Decode Equality for Morphisms (LogOS-Native)
+-- STEP 1: Strict Decoded Meaning for Morphisms (LogOS-Native)
 -- ============================================================================
--- In this development, morphisms are equal up to *strict* decode equality (`≡`)
--- on decoded boundary constraints at the target (this is `KernelCat.eqHom`).
+-- In this development, morphisms are equal up to *strict* decoded meaning (`≃K`)
+-- on code maps at the target kernel (this is `KernelCat.eqHom`).
 -- This is the foundation for our Yoneda results.
 
 -- Morphisms from FreeK to K are equal up to decode
--- This is the core uniqueness property from InitialKernel
+-- This is the core uniqueness property from the initiality witness (`InitialUpToDecode`).
 
 morphism-uniqueness-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : Worlds.WorldH Sig Q)
     (K : Kernel Sig Q)
-    (h : Hom (InitialKernel.FreeK IK) K)
-  → EqHom (InitialKernel.foldK IK K) h
-morphism-uniqueness-decode IK K h =
-  let _ , _ , eq = InitialKernel.unique≃ IK K h in eq
+    (h : Hom (FreeK HWorld) K)
+  → EqHom (foldK HWorld K) h
+morphism-uniqueness-decode {Sig = Sig} {Q = Q} HWorld K h =
+  KC.InitialUpToDecode.init (KC.initial-from-build Sig Q HWorld) K h
 
 -- ============================================================================
 -- STEP 2: Properties Preserved by Kernel Homomorphisms (LogOS-Native)
@@ -127,11 +144,11 @@ open DecodePreservingProperty public
 -- Any morphism h : FreeK → K equals foldK up to decode
 yoneda-morphism-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : Worlds.WorldH Sig Q)
     (K : Kernel Sig Q)
-    (h : Hom (InitialKernel.FreeK IK) K)
-  → EqHom (InitialKernel.foldK IK K) h
-yoneda-morphism-decode IK K h = morphism-uniqueness-decode IK K h
+    (h : Hom (FreeK HWorld) K)
+  → EqHom (foldK HWorld K) h
+yoneda-morphism-decode HWorld K h = morphism-uniqueness-decode HWorld K h
 
 -- ============================================================================
 -- STEP 4: Yoneda for Properties (Using Morphism Equality up to Decode)
@@ -142,27 +159,27 @@ yoneda-morphism-decode IK K h = morphism-uniqueness-decode IK K h
 -- Transport property from K to FreeK via foldK
 property-transport-fold
   : ∀ {ℓ ℓP} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : Worlds.WorldH Sig Q)
     (K : Kernel Sig Q)
     (P : Kernel Sig Q → Set ℓP)
     (DPP : DecodePreservingProperty P)
     (pK : P K)
-  → P (InitialKernel.FreeK IK)
-property-transport-fold IK K P DPP pK =
-  transport DPP (InitialKernel.foldK IK K) pK
+  → P (FreeK HWorld)
+property-transport-fold HWorld K P DPP pK =
+  transport DPP (foldK HWorld K) pK
 
 -- Uniqueness: any morphism from FreeK to K gives the same transport (up to decode)
 property-transport-unique
   : ∀ {ℓ ℓP} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : Worlds.WorldH Sig Q)
     (K : Kernel Sig Q)
     (P : Kernel Sig Q → Set ℓP)
     (DPP : DecodePreservingProperty P)
-    (h : Hom (InitialKernel.FreeK IK) K)
+    (h : Hom (FreeK HWorld) K)
     (pK : P K)
-  → transport DPP (InitialKernel.foldK IK K) pK ≡ transport DPP h pK
-property-transport-unique IK K P DPP h pK =
-  transport-decode DPP (yoneda-morphism-decode IK K h) pK
+  → transport DPP (foldK HWorld K) pK ≡ transport DPP h pK
+property-transport-unique HWorld K P DPP h pK =
+  transport-decode DPP (yoneda-morphism-decode HWorld K h) pK
 
 -- ============================================================================
 -- STEP 5: Code-Level Properties (LogOS-Native)
@@ -203,11 +220,11 @@ code-property-transport-respects-decode
     (P₂ : Kernel.Code K₂ → Set ℓ)
     (CP₂ : CodeProperty K₂ P₂)
     {γ₁ γ₂ : Kernel.Code K₁}
-    (eq : Kernel.decode K₁ γ₁ ≡ Kernel.decode K₁ γ₂)
+    (eq : ForKernel._≃K_ K₁ γ₁ γ₂)
   → code-property-transport h P₂ CP₂ γ₁ → code-property-transport h P₂ CP₂ γ₂
 code-property-transport-respects-decode {K₁ = K₁} {K₂ = K₂} h P₂ CP₂ {γ₁} {γ₂} eq p =
   let open ForKernel K₂ in
-  decode-extensional CP₂ (mapCode≈K-from-decode≡ h eq) p
+  decode-extensional CP₂ (mapCode≈K-from-≃K h eq) p
 
 -- ============================================================================
 -- STEP 6: Connection to LogOS Transport Theorems (S↔H)
@@ -257,23 +274,21 @@ S↔H-coherence {Sig = Sig} K w φ =
 -- These are already proven and connect S and H tiers via coh-LH
 yoneda-S→H-transport
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
     (K : Kernel Sig Q)
     (w : LogOSSignature.Cosp Sig)
     (φ : Kernel.Fml K)
     (pS : S-satisfaction-property K w φ)
   → H-satisfaction-property K w (Kernel.TransH K φ)
-yoneda-S→H-transport {Sig = Sig} {Q = Q} IK K w φ pS = S→H Sig Q K w φ pS
+yoneda-S→H-transport {Sig = Sig} {Q = Q} K w φ pS = S→H Sig Q K w φ pS
 
 yoneda-H→S-transport
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
     (K : Kernel Sig Q)
     (w : LogOSSignature.Cosp Sig)
     (φ : Kernel.Fml K)
     (pH : H-satisfaction-property K w (Kernel.TransH K φ))
   → S-satisfaction-property K w φ
-yoneda-H→S-transport {Sig = Sig} {Q = Q} IK K w φ pH = H→S Sig Q K w φ pH
+yoneda-H→S-transport {Sig = Sig} {Q = Q} K w φ pH = H→S Sig Q K w φ pH
 
 -- ============================================================================
 -- STEP 7: Extension to G-Tier (Guarded Closure)
@@ -288,8 +303,8 @@ G-fixedpoint-property
   → Set ℓ
 G-fixedpoint-property Sig Q K =
   let module GT = Truth.GuardedTruth Sig Q
-      open GT.GuardedClosure (Kernel.GTruth K)
-  in Th* ≡ Flow Th*
+      open GT.GuardedClosure (GTruth K) renaming (Th* to Th*ᵍ ; Flow to Flowᵍ)
+  in Th*ᵍ ≡ Flowᵍ Th*ᵍ
 
 -- Code-level fixed point property (γ* at a kernel)
 code-fixedpoint-property
@@ -320,8 +335,8 @@ decode-fixedpoint-connection
     (K : Kernel Sig Q)
   → Kernel.decode K (Kernel.γ* K) 
     ≡ (let module GT = Truth.GuardedTruth Sig Q
-           open GT.GuardedClosure (Kernel.GTruth K)
-       in Th*)
+           open GT.GuardedClosure (GTruth K) renaming (Th* to Th*ᵍ)
+       in Th*ᵍ)
 decode-fixedpoint-connection K = Kernel.decode-γ* K
 
 -- Yoneda insight for G-tier: The guarded fixed point γ* at any kernel K
@@ -337,28 +352,28 @@ decode-fixedpoint-connection K = Kernel.decode-γ* K
 -- Bijection up to decode-level equality
 yoneda-representable-decode
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : Worlds.WorldH Sig Q)
     (K : Kernel Sig Q)
-  → Prop._↔_ (Hom (InitialKernel.FreeK IK) K)
-             (Hom (InitialKernel.FreeK IK) (InitialKernel.FreeK IK))
-yoneda-representable-decode IK K = record
+  → Prop._↔_ (Hom (FreeK HWorld) K)
+             (Hom (FreeK HWorld) (FreeK HWorld))
+yoneda-representable-decode HWorld K = record
   { to = λ h → id
-  ; from = λ idFree → InitialKernel.foldK IK K
+  ; from = λ idFree → foldK HWorld K
   }
 
 -- Round-trip: from ∘ to = id (up to decode)
 -- This is the key non-trivial result: any h equals foldK up to decode
 yoneda-representable-roundtrip
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : Worlds.WorldH Sig Q)
     (K : Kernel Sig Q)
-    (h : Hom (InitialKernel.FreeK IK) K)
-  → EqHom (Prop.from (yoneda-representable-decode IK K)
-                     (Prop.to (yoneda-representable-decode IK K) h))
+    (h : Hom (FreeK HWorld) K)
+  → EqHom (Prop.from (yoneda-representable-decode HWorld K)
+                     (Prop.to (yoneda-representable-decode HWorld K) h))
           h
-yoneda-representable-roundtrip IK K h =
+yoneda-representable-roundtrip HWorld K h =
   -- from (to h) = from id = foldK, so this reduces to yoneda-morphism-decode
-  yoneda-morphism-decode IK K h
+  yoneda-morphism-decode HWorld K h
 
 -- ============================================================================
 -- STEP 9: Generalization to Arbitrary Objects (Full Yoneda)
@@ -483,7 +498,7 @@ yoneda-generalized-roundtrip-2 {Sig = Sig} {Q = Q} K P DPP α K' h =
 -- The initial kernel provides a canonical presentation where `Code` coincides
 -- with boundary constraints, and every kernel receives a canonical morphism
 -- (fold) from it. The lemma below records the induced decode-level commutation
--- law; it is a direct consequence of `InitialKernel.unique≃`.
+-- law; it is a direct consequence of the `KernelHom.map-decode` law for `foldK`.
 --
 -- Stronger "logic-level uniqueness" conjectures about characterizing admissible
 -- code layers from abstract self-similarity axioms are intentionally not
@@ -491,17 +506,15 @@ yoneda-generalized-roundtrip-2 {Sig = Sig} {Q = Q} K P DPP α K' h =
 
 code-structure-uniqueness-via-fold
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : Worlds.WorldH Sig Q)
     (K : Kernel Sig Q)
   → -- The code structure at K is determined by foldK
     -- Any code γ at FreeK maps to a code at K via foldK, and this is unique
-    (∀ γ → Kernel.decode K (KernelHom.mapCode (InitialKernel.foldK IK K) γ)
-            ≡ ConAlgHom≡.map∂ (KernelHom.con-hom (InitialKernel.foldK IK K))
-                              (Kernel.decode (InitialKernel.FreeK IK) γ))
-code-structure-uniqueness-via-fold IK K γ =
-  -- This follows directly from unique≃
-  let eq1 , _ , _ = InitialKernel.unique≃ IK K (InitialKernel.foldK IK K)
-  in eq1 γ
+    (∀ γ → Kernel.decode K (KernelHom.mapCode (foldK HWorld K) γ)
+            ≡ ConAlgHom≡.map∂ (KernelHom.con-hom (foldK HWorld K))
+                              (Kernel.decode (FreeK HWorld) γ))
+code-structure-uniqueness-via-fold HWorld K γ =
+  KernelHom.map-decode (foldK HWorld K) γ
 
 -- The key insight: In the initial kernel, Code = Constraint (self-similar).
 -- This canonical structure determines all other kernels' code structures

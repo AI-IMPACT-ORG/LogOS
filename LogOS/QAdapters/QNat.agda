@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,14 +9,14 @@ module LogOS.QAdapters.QNat where
 
 open import LogOS.Prelude
 
-open import LogOS.Prelude.Nat using (ℕ; zero; suc; _+_)
+open import LogOS.Prelude using (ℕ; zero; suc; _+_)
 open import LogOS.Prelude.NatOrder using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; trans≤ℕ; weakenRight)
 open import LogOS.Prelude.NatExtra using (_⊔ℕ_; max-left; max-right; ⊔ℕ-least; +-assoc; +-zeroˡ; +-zeroʳ; ⊔ℕ-distrib-+ʳ; ⊔ℕ-distrib-+ˡ)
 
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.ScaleOps using (ScaleOps; ScaleOpsLaws; BudgetOps)
 
--- Numeric quantale+time adapter: costs are naturals with preorder ≤ and monoid +.
+-- Numeric prequantale+time adapter: costs are naturals with preorder ≤ and monoid +.
 -- This is the default “step counting / time” adapter used by many demos.
 
 private

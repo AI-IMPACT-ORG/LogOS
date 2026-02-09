@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Packs.Agents.Experimental.Arguments.KolmogorovDiscoveryScaling wher
 
 open import LogOS.Prelude
 
-open import LogOS.Prelude.Nat using (ℕ)
+open import LogOS.Prelude using (ℕ)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
@@ -20,6 +20,7 @@ open import LogOS.Kernel.Graded using (GradedKernel)
 import LogOS.Packs.Agents.Experimental.Learning.RGFlow as RGFlow
 import LogOS.Packs.Agents.Experimental.Arguments.ScalingLaws as ScalingLaws
 import LogOS.Packs.Agents.Experimental.Arguments.KolmogorovOptimality as KOpt
+import LogOS.Packs.Agents.Experimental.Arguments.Context as Ctx
 
 -- Kolmogorov-optimal discovery, publicised via self-reference (Pr).
 -- This prevents "assuming the answer": discovery is the maximal admissible,
@@ -61,3 +62,12 @@ module For
     → SL.ScalingBound s (dim A) γ
   discovery-scalingBound {s = s} A d =
     SL.scalingBound-from-stable s (dim A) (stable A d)
+
+-- Context-bundled entrypoint (convenience).
+module ForCtx
+  {ℓ : Level}
+  {Sig : LogOSSignature ℓ}
+  {Q : QAdapter ℓ}
+  (C : Ctx.Context Sig Q)
+  where
+  open For (Ctx.Context.K C) (Ctx.Context.ωCPO C) public

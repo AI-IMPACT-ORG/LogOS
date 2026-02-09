@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,7 +13,7 @@ open import LogOS.Prelude
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Packs.Assumptions.All
 
-import LogOS.Domain.UniversalIR.KernelRichG as UIR
+import LogOS.UniversalIR.KernelRichG as UIR
 
 core-uir : LogicCore {lzero}
 core-uir = coreFromGradedKernel UIR.GUKR

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Opacity.TruthSeparationForcing where
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (_×_; _,_; proj₁)
+open import LogOS.Prelude using (_×_; _,_; proj₁)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
@@ -16,8 +16,7 @@ open import LogOS.Minimal.Con
 open import LogOS.Minimal.Closure using (ClosureOp; NontrivialClosureOp; cl; infl; idemp-lax)
 open import LogOS.Kernel
 open import LogOS.Ports.Semantic.SatMor using (SatRefinement₀; composeSatRefinement; sat-→₀)
-import LogOS.Kernel.LogicKernel.FromKernel as LK
-import LogOS.Kernel.LogicKernel.EndoRelative as EndoRel
+import LogOS.Kernel.EndoRelative as EndoRel
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
 open import LogOS.Domain.Opacity.SpectralPack using (RStoSP)
@@ -131,7 +130,7 @@ GRH_Without_Vacuity_Guards_from_ProperForcingTruthSeparation
 GRH_Without_Vacuity_Guards_from_ProperForcingTruthSeparation K RS J Sep =
   GRH_Without_Vacuity_Guards_from_ForcingTruthSeparation K RS J (ProperForcingTruthSeparation.sep Sep)
 
--- Closure-step calculus relative to a forcing nucleus J (LogicKernel-level).
+-- Closure-step calculus relative to a forcing nucleus J (Kernel-level).
 module ForcingSteps
   {ℓ : Level}
   {Sig : LogOSSignature ℓ}
@@ -140,6 +139,6 @@ module ForcingSteps
   (J   : ClosureOp (BulkBoundary.bnd (Kernel.BB K)))
   where
 
-  module F = EndoRel.FromClosureOp (LK.asLogicKernel K) J
+  module F = EndoRel.FromClosureOp K J
   open F public using
     ( ClosureStep; mkClosureStep; J-closeStep; _∘Step_; _thenStep_ )

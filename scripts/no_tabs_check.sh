@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -18,39 +18,41 @@ cd "${LIB_ROOT}"
 TAB=$'\t'
 
 scan_tabs() {
-  if command -v rg >/dev/null 2>&1; then
-    local out status
-    set +e
-    out="$(rg -n --glob '*.agda' --glob '*.lagda.md' --glob '!_build/**' -- "${TAB}" . 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'rg error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
-  else
-    local out status
-    set +e
-    out="$(grep -RIn --include='*.agda' --include='*.lagda.md' --exclude-dir='_build' -- "${TAB}" . 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'grep error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
+  command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+
+  local out status
+  set +e
+  out="$(
+    rg -n --hidden --fixed-strings \
+      --glob '*.agda' \
+      --glob '*.lagda.md' \
+      --glob '*.md' \
+      --glob '*.sh' \
+      --glob '*.yml' \
+      --glob '*.yaml' \
+      --glob '*.json' \
+      --glob '*.tex' \
+      --glob '*.cff' \
+      --glob '*.agda-lib' \
+      --glob '!_build/**' \
+      --glob '!.git/**' \
+      --glob '!.agda/**' \
+      -- "${TAB}" . 2>&1
+  )"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
 }
 
 bad_tabs="$(scan_tabs)"
 if [[ -n "${bad_tabs}" ]]; then
-  die $'found tab characters in Agda source / literate docs:\n'"${bad_tabs}"
+  die $'found tab characters in repo text sources:\n'"${bad_tabs}"
 fi
 
 echo "no-tabs-check: OK"
-

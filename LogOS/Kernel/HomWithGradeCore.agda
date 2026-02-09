@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module LogOS.Kernel.HomWithGradeCore where
 open import LogOS.Prelude
 
 open import LogOS.Minimal.Adapter
-open import LogOS.Algebra.ConAlg
+open import LogOS.Minimal.ConAlg
 
 -- Shared “structural hom + grade map” core.
 --
@@ -49,9 +49,9 @@ module WithOps {ℓ : Level} (ops : Ops {ℓ}) where
       map-decode : ∀ γ → decode K₂ (mapCode γ) ≡ ConAlgHom≡.map∂ con-hom (decode K₁ γ)
       grade-hom  : GradeHom Q₁ Q₂
 
-    infix 4 _≈Code_
-    _≈Code_ : Code K₁ → Code K₁ → Set ℓ
-    _≈Code_ γ δ = decode K₁ γ ≡ decode K₁ δ
+    infix 4 _≃Code_
+    _≃Code_ : Code K₁ → Code K₁ → Set ℓ
+    _≃Code_ γ δ = decode K₁ γ ≡ decode K₁ δ
 
   idHomWithGrade
     : ∀ {Q : QAdapter ℓ}
@@ -110,4 +110,3 @@ module WithOps {ℓ : Level} (ops : Ops {ℓ}) where
     let open HomWithGrade h in
     trans (map-decode (Body K₁ γ))
           (cong (ConAlgHom≡.map∂ con-hom) (body-decode K₁ γ))
-

@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -16,6 +16,7 @@ import docs.Views.HoTT_3Level as HoTT_3Level
 import docs.Views.CategoricalLogic as CategoricalLogic
 import docs.Views.Topos as Topos
 import docs.Views.ObserverSemantics as ObserverSemantics
+import docs.Views.ControlledFeedback as ControlledFeedback
 import docs.Views.CurryHowardLambek as CurryHowardLambek
 import docs.Views.MeredithSentences as MeredithSentences
 ```
@@ -42,5 +43,6 @@ Views (entrypoints)
 - Categorical logic (2-category view): `docs/Views/CategoricalLogic.lagda.md`
 - Topos-shaped reading (nuclei/sheaves; realizability orientation): `docs/Views/Topos.lagda.md`
 - Observer semantics (physics-of-information interpretation): `docs/Views/ObserverSemantics.lagda.md`
+- Controlled feedback (budgeted stabilisation): `docs/Views/ControlledFeedback.lagda.md`
 - Curry–Howard–Lambek capstone (proof/model/category/observer bundle): `docs/Views/CurryHowardLambek.lagda.md`
-- Meredith sentences (ultra-compact LogicKernel/CHL core): `docs/Views/MeredithSentences.lagda.md`
+- Meredith sentences (ultra-compact Kernel/CHL core): `docs/Views/MeredithSentences.lagda.md`

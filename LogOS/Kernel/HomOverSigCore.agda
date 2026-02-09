@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ module LogOS.Kernel.HomOverSigCore where
 --
 -- This module factors out the bookkeeping shared by:
 -- - `LogOS.Kernel.HomOverSig`
--- - `LogOS.Kernel.LogicKernel.HomOverSig`
+-- - `LogOS.Kernel.HomOverSig`
 --
 -- It is intentionally lightweight: it does not assume anything about the
 -- internal structure of objects or morphisms, only that:

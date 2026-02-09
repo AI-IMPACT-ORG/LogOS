@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,8 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Domain.Opacity.Meaningfulness where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (¬_)
-open import LogOS.Prelude.Product using (Σ; _,_)
+open import LogOS.Theorems.Meta.Guards using (NonEmptyPred; NotTopPred)
 
 open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSpectral)
 
@@ -22,5 +21,5 @@ open import LogOS.Domain.Opacity.NumberTheory.LFunction.Riemann using (RiemannSp
 record VacuityGuards (RS : RiemannSpectral) : Set₁ where
   open RiemannSpectral RS
   field
-    hasNontrivialZero : Σ Spectral NontrivialZero
-    onLineNotTop      : Σ Spectral (λ s → ¬ OnLine s)
+    hasNontrivialZero : NonEmptyPred Spectral NontrivialZero
+    onLineNotTop      : NotTopPred Spectral OnLine

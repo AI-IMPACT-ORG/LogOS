@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -23,15 +23,65 @@ open import LogOS.Boundary.Port using (BoundaryPort)
 
 open import LogOS.Ports.Semantic.PresentationCore using (PresentationC)
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
+open import LogOS.Ports.Semantic.PresentationCore using (satSystem)
 
-open import LogOS.Kernel.LogicKernel using (LogicKernel; Box; Th*)
+open import LogOS.Kernel using (Kernel; Box; Th*)
 
-import LogOS.Kernel.LogicKernel.VacuityGuards as KVac
+import LogOS.Boundary.KernelVacuityGuards as KVac
 import LogOS.Ports.Semantic.VacuityGuards as PVac
 import LogOS.QAdapters.Guards as QVac
 
 import LogOS.Ports.Semantic.Interoperability as Interoperability
 import LogOS.Theorems.Boundary.Stabilisation as Stabilisation
+
+import LogOS.Minimal.Thin2Cat as Thin2Cat
+import LogOS.Minimal.RelThin2Cat as RelThin2Cat
+import LogOS.Theorems.CategoryTheory.WrapperCore as WrapperCore
+import LogOS.Ports.Semantic.Presentation2Cat as Presentation2Cat
+import LogOS.Computation.Process2Cat as Process2Cat
+import LogOS.Computation.ProcessLimit as ProcessLimit
+import LogOS.Computation.ProcessLimitSub2Cat as ProcessLimitSub2Cat
+import LogOS.Theorems.Boundary.OmegaCPOMap2Cat as OmegaCPOMap2Cat
+
+private
+  thin2cat-comp-mono-exists : _
+  thin2cat-comp-mono-exists = Thin2Cat.comp-mono
+
+  relthin2cat-comp-mono-exists : _
+  relthin2cat-comp-mono-exists = RelThin2Cat.comp-mono
+
+  thin2cat→ref2catcore-exists : _
+  thin2cat→ref2catcore-exists = WrapperCore.Thin2Cat→Ref2CatCore
+
+  relthin2cat→ref2catcore-exists : _
+  relthin2cat→ref2catcore-exists = WrapperCore.RelThin2Cat→Ref2CatCore
+
+  presentationThin2Cat-exists : _
+  presentationThin2Cat-exists = Presentation2Cat.For.PresentationThin2Cat
+
+  presentationRelThin2Cat-exists : _
+  presentationRelThin2Cat-exists = Presentation2Cat.For.PresentationRelThin2Cat
+
+  processThin2Cat-exists : _
+  processThin2Cat-exists = Process2Cat.For.ProcessThin2Cat
+
+  processRelThin2Cat-exists : _
+  processRelThin2Cat-exists = Process2Cat.For.ProcessRelThin2Cat
+
+  omegaCPOThin2Cat-exists : _
+  omegaCPOThin2Cat-exists = OmegaCPOMap2Cat.For.OmegaCPOThin2Cat
+
+  omegaCPORelThin2Cat-exists : _
+  omegaCPORelThin2Cat-exists = OmegaCPOMap2Cat.For.OmegaCPORelThin2Cat
+
+  run∞-exists : _
+  run∞-exists = ProcessLimit.For.run∞
+
+  run∞-map≤-exists : _
+  run∞-map≤-exists = ProcessLimit.TransportLax.run∞-map≤
+
+  preserves-run∞-exists : _
+  preserves-run∞-exists = ProcessLimitSub2Cat.For.preserves-run∞
 
 module _ {ℓ₁ ℓ₂ : Level} (CP₁ : ConPreorder ℓ₁) (CP₂ : ConPreorder ℓ₂) where
   module MF = Stabilisation.MuFusion.For CP₁ CP₂
@@ -53,9 +103,13 @@ module _
   {Ctx₂ : Set ℓCtx₂}
   (CP₂ : ConPreorder ℓCon₂)
   {Sat₂ : Ctx₂ → ConPreorder.Con CP₂ → Set ℓSat₂}
-  (m  : SatMor Ctx₁ (ConPreorder.Con CP₁) Sat₁ Ctx₂ (ConPreorder.Con CP₂) Sat₂)
-  (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ (ConPreorder.Con CP₁) Sat₁)
-  (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ (ConPreorder.Con CP₂) Sat₂)
+  (m  : SatMor
+          (satSystem Ctx₁ (ConPreorder.Con CP₁) Sat₁)
+          (satSystem Ctx₂ (ConPreorder.Con CP₂) Sat₂))
+  (P₁ : PresentationC {ℓForm = ℓForm₁}
+          (satSystem Ctx₁ (ConPreorder.Con CP₁) Sat₁))
+  (P₂ : PresentationC {ℓForm = ℓForm₂}
+          (satSystem Ctx₂ (ConPreorder.Con CP₂) Sat₂))
   where
   module Limit = Interoperability.Limit CP₁ CP₂ m P₁ P₂
   translate-μ≤-exists : _
@@ -63,11 +117,11 @@ module _
   translate-μ≤↑-exists : _
   translate-μ≤↑-exists = Limit.translate-μ≤↑
 
-module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : LogicKernel Sig Q) where
+module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) where
   box-exists : _
   box-exists = Box K
   th*-exists : _
-  th*-exists = Th* (LogicKernel.G K)
+  th*-exists = Th* (Kernel.G K)
 
   kernelVacuityGuards-exists : _
   kernelVacuityGuards-exists = KVac.KernelVacuityGuards K
@@ -102,24 +156,35 @@ This repository distinguishes four kinds of statements:
 Notation (used throughout the docs): `≡` is propositional equality, `c ⊑ d` is (directed) refinement in a preorder,
 `c ≈ d` is mutual refinement (two inequalities), and `P ↔ Q` is a satisfaction equivalence (paired implications).
 
+Claim stamp sidecar format (CNL-lite):
+<!-- CLAIM-STAMP: LITERAL | anchor=path#symbol -->
+<!-- CLAIM-STAMP: STABILISED | anchor=path#symbol -->
+<!-- CLAIM-STAMP: REPRESENTATIONAL | anchor=path#symbol -->
+<!-- CLAIM-STAMP: ANALOGY | anchor=path#symbol -->
+These sidecar comments are optional for prose in general, but required in the highest-risk public claims.
+They are machine-checked by `make claim-stamp-check`.
+
+Relation/equality governance (views + pullbacks): `docs/Kernel/RelationDiscipline.lagda.md`.
+Canonical view registry (what relations are induced by what maps): `docs/Kernel/ViewRegistry.lagda.md`.
+
 This page is a compact “claim register”: it points to the **exact code surfaces**
 that define what each phrase means.
 
 ## Kernel objects (literal)
 
-- **Kernel shape:** `LogOS/Kernel/Core.agda` (`KernelShape`).
+- **Kernel shape:** `LogOS/Kernel/Shape.agda` (`KernelShape`).
   This is the “shared” interface: S/H truth, boundary constraints, and reflective code (`encode`/`decode`).
-- **LogicKernel:** `LogOS/Kernel/LogicKernel.agda` (`LogicKernel`).
+- **Kernel:** `LogOS/Kernel.agda` (`Kernel`).
   This repackages a kernel shape together with a parameterised guarded tier (`GTier`) so the same interface covers
   ungraded and graded kernels uniformly.
 
 ## Stabilised truth (closure; lax by default)
 
-- **Operational code step:** `LogOS/Kernel/Core.agda` (`FlowCode`) and `LogOS/Kernel/LogicKernel.agda` (`FlowCode`).
+- **Operational code step:** `LogOS/Kernel/Shape.agda` (`FlowCode`) and `LogOS/Kernel.agda` (`FlowCode`).
   This is the one-step update on code (`Guard ∘ Body`).
-- **Closure modality:** `LogOS/Kernel/LogicKernel.agda` (`BoxAt`, `Box`).
+- **Closure modality:** `LogOS/Kernel.agda` (`BoxAt`, `Box`).
   These are *code-level* modalities defined by `encode ∘ Flow ∘ decode`.
-- **Distinguished “stable truth”:** `LogOS/Kernel/LogicKernel.agda` (`GTier.Th*` / `Th*`).
+- **Distinguished “stable truth”:** `LogOS/Kernel.agda` (`GTier.Th*` / `Th*`).
   By default this is only a *lax fixed point* (`Th* ⊑ Flow sat Th*` and `Flow sat Th* ⊑ Th*`), not a least pre-fixed point.
 
 If you want leastness/μ-induction strength (and to relate `Th*` to Kleene `μ`), the explicit domain-theoretic assumptions live in:
@@ -154,15 +219,37 @@ Limit/stabilisation transport for presentations (Kleene `μ`) is also explicitly
 - `LogOS/Ports/Semantic/Interoperability.agda` (`Limit.translate-μ≤`, `Limit.translate-μ≤↑`).
   These are satisfaction-level implications (`SatF₂↑`), not equalities, and require explicit ωCPO/continuity hypotheses.
 
+Limit/stabilisation transport for *processes* is also explicitly packaged:
+
+- `LogOS/Computation/ProcessLimit.agda` defines `run∞` (“execute for arbitrarily many steps from a given state”) as a Kleene `μ` in a slice preorder, together with a transport theorem `TransportLax.run∞-map≤` under explicit ωCPO/continuity assumptions.
+- `LogOS/Computation/ProcessLimitSub2Cat.agda` packages the same story as a compositional interface: objects carry the `LimitData` needed to define `run∞`, and 1-cells carry the ω-continuity witness needed to preserve it (lemma `preserves-run∞`).
+
+## 2-categorical bookkeeping (typed guardrail, no new axioms)
+
+Several “refinement calculus” stories are packaged as thin 2-categories (`RelThin2Cat`, and the same-universe specialization `Thin2Cat`) so Agda can check:
+- parallel morphisms can be compared (2-cells),
+- whiskered, and
+- composed.
+
+This is a typing/structuring device; it does not add logical power.
+
+Authoritative modules:
+- `LogOS/Minimal/RelThin2Cat.agda` (thin 2-category interface over a two-level hom preorder).
+- `LogOS/Minimal/Thin2Cat.agda` (same-universe specialization + laws as `≈`).
+- `LogOS/Theorems/CategoryTheory/WrapperCore.agda` (`Ref2CatCore` and the conversions `RelThin2Cat→Ref2CatCore` / `Thin2Cat→Ref2CatCore`).
+- Instances: kernels (`LogOS/Kernel/Hom2Cat.agda`), ports (`LogOS/Theorems/CategoryTheory/Port2Cat.agda`), presentations (`LogOS/Ports/Semantic/Presentation2Cat.agda`), processes (`LogOS/Computation/Process2Cat.agda`), and ωCPO maps (`LogOS/Theorems/Boundary/OmegaCPOMap2Cat.agda`).
+
 ## Meaningfulness / vacuity guards
 
 Many kernels/models deliberately support “scaffold” instantiations where satisfaction is trivial (e.g. always true).
 To prevent accidental over-interpretation, “meaningfulness” is expressed as explicit guards:
 
-- Kernel guards: `LogOS/Kernel/LogicKernel/VacuityGuards.agda` (`KernelVacuityGuards`).
+- Kernel guards: `LogOS/Boundary/KernelVacuityGuards.agda` (`KernelVacuityGuards`).
   These witnesses are **observational** (distinguishable by boundary satisfaction), not merely “by definition”.
 - Port/adapter guards: `LogOS/Ports/Semantic/VacuityGuards.agda` (`PortVacuityGuards`, `AdapterVacuityGuards`).
-- Quantale/scale guards: `LogOS/QAdapters/Guards.agda` (`QAdapterVacuityGuards`).
+- First-class non-triviality records (portable inputs to the guard spine): `LogOS/Ports/Semantic/Meaningful.agda`
+  (`MeaningfulBoundaryIO`, `MeaningfulSatSystem`, and conversions to/from `VacuityGuards`).
+- Prequantale/scale guards: `LogOS/QAdapters/Guards.agda` (`QAdapterVacuityGuards`).
 
 Concrete sanity: `Tests/MeaningfulModels.agda` exhibits a tiny explicit model inhabiting these guards, showing they are
 satisfiable and non-empty.

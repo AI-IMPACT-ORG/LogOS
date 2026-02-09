@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -34,7 +34,7 @@ FlowClosureOp
   → ClosureOp (BulkBoundary.bnd (Kernel.BB K))
 FlowClosureOp {ℓ = ℓ} K =
   let module GC = Truth.GuardedCore {ℓ = ℓ} in
-  GC.closureOfGuardedClosure (Kernel.GTruth K)
+  GC.closureOfGuardedClosure (GTruth K)
 
 -- Optional strengthening: use the boundary closure induced by the bulk↔boundary
 -- adjunction `ext ⊣ bnd`, i.e. `T = bnd ∘ ext`, as a forcing nucleus.

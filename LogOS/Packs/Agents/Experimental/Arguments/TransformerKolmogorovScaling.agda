@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module LogOS.Packs.Agents.Experimental.Arguments.TransformerKolmogorovScaling wh
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
 
-open import LogOS.Prelude.Nat using (ℕ; _+_)
+open import LogOS.Prelude using (ℕ; _+_)
 open import LogOS.Prelude.NatOrder using (_≤ℕ_; dec≤ℕ; not≤→≥)
 
 open import LogOS.Base.Signature using (LogOSSignature)
@@ -20,14 +20,12 @@ open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel.Graded using (GradedKernel)
 import LogOS.Kernel.Graded as GK
-
-import LogOS.Domain.UniversalIR.Core.UCode as U
-import LogOS.Domain.UniversalIR.Size as USize
+open import LogOS.Kernel.Eq using (module ForGradedKernel)
 
 import LogOS.Packs.Agents.Experimental.Arguments.TransformerBridge as TransformerBridge
 import LogOS.Packs.Agents.Experimental.Learning.RGFlow as RGFlow
 import LogOS.Packs.Agents.Experimental.Arguments.ScalingLaws as ScalingLaws
-import LogOS.Theorems.Meta.MathPhysSynthesis as MPS
+import LogOS.Packs.Agents.Experimental.Arguments.Context as Ctx
 
 -- Kolmogorov/Kt-optimal discovery aligned with the transformer bridge.
 
@@ -44,7 +42,8 @@ module For
   module RG = RGFlow.For K ωCPO
   module SL = ScalingLaws.For K ωCPO
 
-  open GradedKernel K using (Code; decode; encode; decode∘encode)
+  open GradedKernel K using (Code; decode; reify)
+  open ForGradedKernel K
   open QAdapter Q using (_≤s_; Scale)
 
   Dec : Set ℓ
@@ -52,26 +51,20 @@ module For
 
   record UniversalIRCompile : Set (lsuc (lsuc ℓ)) where
     field
-      compile : Code → U.UCode
-
-    size : Code → ℕ
-    size γ = USize.ucodeSize (compile (encode (decode γ)))
-
-    size-ext : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → size γ₁ ≡ size γ₂
-    size-ext γ₁ γ₂ decEq =
-      cong (λ c → USize.ucodeSize (compile (encode c))) decEq
+      size : Code → ℕ
+      size-ext : ∀ γ₁ γ₂ → γ₁ ≃K γ₂ → size γ₁ ≡ size γ₂
 
   record CodeBudget : Set (lsuc (lsuc ℓ)) where
     field
       B : Code → ℕ
-      Bext : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → B γ₁ ≡ B γ₂
+      Bext : ∀ γ₁ γ₂ → γ₁ ≃K γ₂ → B γ₁ ≡ B γ₂
 
   kt : (Code → ℕ) → (Code → ℕ) → Code → ℕ
   kt size budget γ = size γ + budget γ
 
   KtOptimal : (Code → ℕ) → (Code → ℕ) → Code → Set ℓ
   KtOptimal size budget γ =
-    ∀ δ → decode δ ≡ decode γ → kt size budget γ ≤ℕ kt size budget δ
+    ∀ δ → δ ≃K γ → kt size budget γ ≤ℕ kt size budget δ
 
   KtOptimalLoss
     : (obs : Dec → Scale)
@@ -89,59 +82,100 @@ module For
     (budget : Code → ℕ)
     where
 
-    module O = MPS.Observer Code Dec decode (GK.FlowCode K)
-                              (KtOptimalLoss obs size budget)
-    open O using (Pr; Pr-ext; Pr-stable)
+    record ResidualBoundary : Set (lsuc (lsuc ℓ)) where
+      field
+        Resid : Set ℓ
+        residual : Dec → Resid
 
-    DiscoverCode : Code → Set (lsuc (lsuc ℓ))
-    DiscoverCode = Pr
+    record ResidualDiscovery : Set (lsuc (lsuc (lsuc ℓ))) where
+      field
+        boundary : ResidualBoundary
+        DiscoverResidual
+          : ResidualBoundary.Resid boundary
+          → Set (lsuc (lsuc ℓ))
+        reify-invariant
+          : ∀ γ
+          → DiscoverResidual
+              (ResidualBoundary.residual boundary (decode (reify γ)))
+            ↔ DiscoverResidual
+                (ResidualBoundary.residual boundary (decode γ))
 
-    discover-reify : ∀ γ → DiscoverCode (GradedKernel.reify K γ) ↔ DiscoverCode γ
-    discover-reify γ =
-      let eq = GradedKernel.reify-decode K γ in
-      record
-        { to   = λ d → Pr-ext (GradedKernel.reify K γ) γ eq d
-        ; from = λ d → Pr-ext γ (GradedKernel.reify K γ) (sym eq) d
-        }
+    DiscoverCode : ResidualDiscovery → Code → Set (lsuc (lsuc ℓ))
+    DiscoverCode D γ =
+      ResidualDiscovery.DiscoverResidual D
+        (ResidualBoundary.residual
+          (ResidualDiscovery.boundary D)
+          (decode γ))
 
-  record KolmogorovBridge {g : Scale} : Set (lsuc (lsuc ℓ)) where
+    discover-residual
+      : ∀ (D : ResidualDiscovery) {γ δ}
+      → ResidualBoundary.residual (ResidualDiscovery.boundary D) (decode γ)
+          ≡ ResidualBoundary.residual (ResidualDiscovery.boundary D) (decode δ)
+      → DiscoverCode D γ
+      → DiscoverCode D δ
+    discover-residual D eq d =
+      subst
+        (ResidualDiscovery.DiscoverResidual D)
+        eq
+        d
+
+    discover-reify
+      : ∀ (D : ResidualDiscovery) γ
+      → DiscoverCode D (reify γ) ↔ DiscoverCode D γ
+    discover-reify D γ = ResidualDiscovery.reify-invariant D γ
+
+  record KolmogorovBridge {g : Scale} : Set (lsuc (lsuc (lsuc ℓ))) where
     field
-      train : TB.TrainingSpec g
+      train : TB.Training.TrainingSpec g
       uir : UniversalIRCompile
       budget : CodeBudget
+      discovery
+        : Obs.ResidualDiscovery
+            (TB.Training.LossObservableFromData.obs (TB.Training.TrainingSpec.lossObsData train))
+            (UniversalIRCompile.size uir)
+            (CodeBudget.B budget)
       stable
         : ∀ {γ}
           → Obs.DiscoverCode
-              (TB.LossObservableFromData.obs (TB.TrainingSpec.lossObsData train))
+              (TB.Training.LossObservableFromData.obs (TB.Training.TrainingSpec.lossObsData train))
               (UniversalIRCompile.size uir)
               (CodeBudget.B budget)
+              discovery
               γ
           → RG.RGStable
-              (TB.TransformerTrainingBridge.step (TB.trainingBridgeFromSpec train))
+              (TB.Training.TransformerTrainingBridge.step (TB.Training.trainingBridgeFromSpec train))
               (decode γ)
 
   open KolmogorovBridge public
 
   stepOf : ∀ {g} → KolmogorovBridge {g} → RG.RGStep g
   stepOf B =
-    TB.TransformerTrainingBridge.step (TB.trainingBridgeFromSpec (KolmogorovBridge.train B))
+    TB.Training.TransformerTrainingBridge.step (TB.Training.trainingBridgeFromSpec (KolmogorovBridge.train B))
+
+  dimOf : ∀ {g} → (B : KolmogorovBridge {g}) → RG.ScalingDimension (stepOf B)
+  dimOf B =
+    TB.Training.TransformerTrainingBridge.dim (TB.Training.trainingBridgeFromSpec (train B))
+
+  DiscoverAt : ∀ {g} (B : KolmogorovBridge {g}) → Code → Set (lsuc (lsuc ℓ))
+  DiscoverAt B =
+    Obs.DiscoverCode
+      (TB.Training.LossObservableFromData.obs (TB.Training.TrainingSpec.lossObsData (train B)))
+      (UniversalIRCompile.size (uir B))
+      (CodeBudget.B (budget B))
+      (discovery B)
 
   discovery-scalingBound
     : ∀ {g} (B : KolmogorovBridge {g})
     → ∀ {γ}
-    → Obs.DiscoverCode
-        (TB.LossObservableFromData.obs (TB.TrainingSpec.lossObsData (train B)))
-        (UniversalIRCompile.size (uir B))
-        (CodeBudget.B (budget B))
-        γ
+    → DiscoverAt B γ
     → SL.ScalingBound
-        (TB.TransformerTrainingBridge.step (TB.trainingBridgeFromSpec (train B)))
-        (TB.TransformerTrainingBridge.dim (TB.trainingBridgeFromSpec (train B)))
+        (stepOf B)
+        (dimOf B)
         γ
   discovery-scalingBound B d =
     SL.scalingBound-from-stable
-      (TB.TransformerTrainingBridge.step (TB.trainingBridgeFromSpec (train B)))
-      (TB.TransformerTrainingBridge.dim (TB.trainingBridgeFromSpec (train B)))
+      (stepOf B)
+      (dimOf B)
       (stable B d)
 
   record BudgetPhase (B : Code → ℕ) : Set (lsuc (lsuc ℓ)) where
@@ -154,7 +188,7 @@ module For
     High : Code → Set
     High γ = cut ≤ℕ B γ
 
-  record TwoRegimeBridge {g : Scale} : Set (lsuc (lsuc ℓ)) where
+  record TwoRegimeBridge {g : Scale} : Set (lsuc (lsuc (lsuc ℓ))) where
     field
       base : KolmogorovBridge {g}
       phase : BudgetPhase (CodeBudget.B (KolmogorovBridge.budget base))
@@ -165,12 +199,7 @@ module For
 
   scalingLow
     : ∀ {g} (B : TwoRegimeBridge {g}) {γ}
-    → Obs.DiscoverCode
-        (TB.LossObservableFromData.obs
-          (TB.TrainingSpec.lossObsData (train (base B))))
-        (UniversalIRCompile.size (uir (base B)))
-        (CodeBudget.B (budget (base B)))
-        γ
+    → DiscoverAt (base B) γ
     → BudgetPhase.Low (phase B) γ
     → SL.ScalingBound (stepOf (base B)) (dimLow B) γ
   scalingLow B d _ =
@@ -181,12 +210,7 @@ module For
 
   scalingHigh
     : ∀ {g} (B : TwoRegimeBridge {g}) {γ}
-    → Obs.DiscoverCode
-        (TB.LossObservableFromData.obs
-          (TB.TrainingSpec.lossObsData (train (base B))))
-        (UniversalIRCompile.size (uir (base B)))
-        (CodeBudget.B (budget (base B)))
-        γ
+    → DiscoverAt (base B) γ
     → BudgetPhase.High (phase B) γ
     → SL.ScalingBound (stepOf (base B)) (dimHigh B) γ
   scalingHigh B d _ =
@@ -199,8 +223,8 @@ module For
     field
       compute : Code → ℕ
       dataBudget : Code → ℕ
-      compute-ext : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → compute γ₁ ≡ compute γ₂
-      data-ext : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → dataBudget γ₁ ≡ dataBudget γ₂
+      compute-ext : ∀ γ₁ γ₂ → γ₁ ≃K γ₂ → compute γ₁ ≡ compute γ₂
+      data-ext : ∀ γ₁ γ₂ → γ₁ ≃K γ₂ → dataBudget γ₁ ≡ dataBudget γ₂
 
     ComputeLimited : Code → Set
     ComputeLimited γ = compute γ ≤ℕ dataBudget γ
@@ -230,7 +254,7 @@ module For
       ; data-ext = TB.ResourceBudgets.data-ext R
       }
 
-  record ChinchillaBridge {g : Scale} : Set (lsuc (lsuc ℓ)) where
+  record ChinchillaBridge {g : Scale} : Set (lsuc (lsuc (lsuc ℓ))) where
     field
       base : KolmogorovBridge {g}
       budgets : ComputeDataBudget
@@ -241,12 +265,7 @@ module For
 
   compute-limited-scaling
     : ∀ {g} (B : ChinchillaBridge {g}) {γ}
-    → Obs.DiscoverCode
-        (TB.LossObservableFromData.obs
-          (TB.TrainingSpec.lossObsData (train (base B))))
-        (UniversalIRCompile.size (uir (base B)))
-        (CodeBudget.B (budget (base B)))
-        γ
+    → DiscoverAt (base B) γ
     → ComputeDataBudget.ComputeLimited (budgets B) γ
     → SL.ScalingBound (stepOf (base B)) (dimCompute B) γ
   compute-limited-scaling B d _ =
@@ -257,12 +276,7 @@ module For
 
   data-limited-scaling
     : ∀ {g} (B : ChinchillaBridge {g}) {γ}
-    → Obs.DiscoverCode
-        (TB.LossObservableFromData.obs
-          (TB.TrainingSpec.lossObsData (train (base B))))
-        (UniversalIRCompile.size (uir (base B)))
-        (CodeBudget.B (budget (base B)))
-        γ
+    → DiscoverAt (base B) γ
     → ComputeDataBudget.DataLimited (budgets B) γ
     → SL.ScalingBound (stepOf (base B)) (dimData B) γ
   data-limited-scaling B d _ =
@@ -273,12 +287,7 @@ module For
 
   chinchilla-compare
     : ∀ {g} (B : ChinchillaBridge {g}) {γ}
-    → Obs.DiscoverCode
-        (TB.LossObservableFromData.obs
-          (TB.TrainingSpec.lossObsData (train (base B))))
-        (UniversalIRCompile.size (uir (base B)))
-        (CodeBudget.B (budget (base B)))
-        γ
+    → DiscoverAt (base B) γ
     → SL.ScalingBound (stepOf (base B)) (dimCompute B) γ
       ⊎ SL.ScalingBound (stepOf (base B)) (dimData B) γ
   chinchilla-compare B {γ} d with dec≤ℕ (ComputeDataBudget.compute (budgets B) γ) (ComputeDataBudget.dataBudget (budgets B) γ)
@@ -286,3 +295,12 @@ module For
     inj₁ (compute-limited-scaling B d comp≤data)
   ... | inj₂ not≤ =
     inj₂ (data-limited-scaling B d (not≤→≥ not≤))
+
+-- Context-bundled entrypoint (convenience).
+module ForCtx
+  {ℓ : Level}
+  {Sig : LogOSSignature ℓ}
+  {Q : QAdapter ℓ}
+  (C : Ctx.Context Sig Q)
+  where
+  open For (Ctx.Context.K C) (Ctx.Context.ωCPO C) public

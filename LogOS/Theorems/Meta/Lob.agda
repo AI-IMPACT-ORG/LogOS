@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,7 +13,7 @@ open import LogOS.Syntax.Prop using (¬_)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
-open import LogOS.Theorems.Meta.Assumptions.Core public using
+open import LogOS.Theorems.Meta.ConditionalPacks public using
   ( Provability
   ; ProvabilityOps
   ; ProvabilityOpsC

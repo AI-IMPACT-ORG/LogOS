@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,11 +14,12 @@ module LogOS.Theorems.Code.Graded where
 open import LogOS.Prelude
 
 open import LogOS.Kernel.Graded
-open import LogOS.Kernel.Core as KCore hiding (FlowCode)
+open import LogOS.Kernel.Shape as KCore hiding (FlowCode)
 open import LogOS.Kernel.Graded.Hom
 open import LogOS.Minimal.Con
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Kernel.Eq using (module ForGradedKernel)
 
 -- Guard naturality at decode-level (lax): under a graded kernel homomorphism with
 -- Flow preservation and step-grade alignment, decoding mapCode (Guard γ) lies
@@ -218,7 +219,7 @@ decode-FlowCode-eq K γ = decode-FlowCode K γ
 γ*-decode≤stepBody K =
   let
     CP = BulkBoundary.bnd (GradedKernel.BB K)
-    le = fst (GradedKernel.γ*-guard K)
+    le = GradedKernel.γ*-guard⇒ K
     eq = decode-FlowCode-eq K (GradedKernel.γ* K)
   in
   subst
@@ -236,7 +237,7 @@ stepBody≤γ*-decode
 stepBody≤γ*-decode K =
   let
     CP = BulkBoundary.bnd (GradedKernel.BB K)
-    le = snd (GradedKernel.γ*-guard K)
+    le = GradedKernel.γ*-guard⇐ K
     eq = decode-FlowCode-eq K (GradedKernel.γ* K)
   in
   subst
@@ -248,14 +249,15 @@ decode-FlowCode-γ*-eq
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : GradedKernel Sig Q)
   → BulkBoundaryPO (GradedKernel.BB K)
-  → GradedKernel.decode K (FlowCode K (GradedKernel.γ* K)) ≡ GradedKernel.decode K (GradedKernel.γ* K)
+  → ForGradedKernel._≃K_ K (FlowCode K (GradedKernel.γ* K)) (GradedKernel.γ* K)
 decode-FlowCode-γ*-eq K po =
   let
     open GradedKernel K
+    open ForGradedKernel K
     open BulkBoundaryPO po using (po-bnd)
     open PartialOrder po-bnd using (antisym)
-    le₁ = fst (GradedKernel.γ*-guard K)
-    le₂ = snd (GradedKernel.γ*-guard K)
+    le₁ = GradedKernel.γ*-guard⇒ K
+    le₂ = GradedKernel.γ*-guard⇐ K
   in antisym le₂ le₁
 
 decode-FlowCode-mono

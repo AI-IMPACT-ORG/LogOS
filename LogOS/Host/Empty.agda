@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,12 @@ module LogOS.Host.Empty where
 
 -- Minimal empty type surface (std-lib compatible name).
 --
--- LogOS defines `⊥` and `⊥-elim` in `LogOS.Syntax.Prop`; we re-export that
--- canonical definition here to keep the host-wrapper layer lightweight.
+-- This belongs in the Host layer so higher layers (Prelude/Syntax/…) can
+-- depend on it without inverting the layering discipline.
 
-open import LogOS.Syntax.Prop public using (⊥; ⊥-elim)
+open import LogOS.Host.Level public using (Level)
 
+data ⊥ {ℓ : Level} : Set ℓ where
+
+⊥-elim : ∀ {ℓ₁ ℓ₂ : Level} {A : Set ℓ₂} → ⊥ {ℓ₁} → A
+⊥-elim ()

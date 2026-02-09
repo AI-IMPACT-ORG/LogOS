@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,7 +15,6 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (BulkBoundary)
-open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel
 import LogOS.Computation.Core as Comp
 
@@ -47,7 +46,7 @@ module For
   -- Boundary small-step semantics: Flow ∘ Body∂.
   Step∂ : Con∂ → Con∂
   Step∂ c =
-    Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K) (Kernel.Body∂ K c)
+    GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K)) (Kernel.Body∂ K c)
 
   BoundaryComputation : Comp.Computation Con∂
   BoundaryComputation =

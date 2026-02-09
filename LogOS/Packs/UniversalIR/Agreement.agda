@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,7 +10,7 @@ module LogOS.Packs.UniversalIR.Agreement where
 -- Curated, paper-facing surface for the “one algorithm, many paradigms, same
 -- run” agreement theorem.
 
-open import LogOS.Domain.UniversalIR.Theorems public
+open import LogOS.UniversalIR.Theorems public
   using (ParadigmsCorrect; ParadigmsRunEq; patask-paradigms-correct; patask-paradigms-runEq)
 
 five-paradigm-correct = patask-paradigms-correct
@@ -23,7 +23,7 @@ five-paradigm-agreement = patask-paradigms-runEq
 -- This is “more general tasks” in the sense of a larger input language.
 -- The compilers in `TheoremsExpr` are extensional (compile-by-observation).
 
-open import LogOS.Domain.UniversalIR.TheoremsExpr public
+open import LogOS.UniversalIR.TheoremsExpr public
   using
     ( ExprParadigmsCorrect
     ; ExprParadigmsRunEq

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,10 +12,11 @@ module LogOS.Packs.ZFC.All where
 -- Canonical pack-first entrypoint:
 -- `open import LogOS.Packs.ZFC.All as ZFC`
 
-open import LogOS.Packs.Trust using (PackTrust; stable)
+open import LogOS.Packs.Trust using (PackTrust)
+import LogOS.Packs.ZFC.Core as PackCore
 
 packTrust : PackTrust
-packTrust = record { level = stable }
+packTrust = PackCore.packTrust
 
 module Core where
   open import LogOS.Packs.ZFC.Core public
@@ -28,6 +29,9 @@ module Applications where
 
 module VacuityGuards where
   open import LogOS.Packs.ZFC.VacuityGuards public
+
+module Examples where
+  open import LogOS.Packs.ZFC.Examples public
 
 -- Common discoverability alias: “meaningfulness” here is “non-vacuity”.
 module Meaningfulness = VacuityGuards

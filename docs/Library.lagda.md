@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -25,6 +25,14 @@ vacuous) and `deprecated` (migration marker; avoid for new work).
 
 Reading discipline (guardrail)
 ------------------------------
+Import discipline (non-negotiable for release)
+---------------------------------------------
+For stable downstream use and publication-facing docs:
+
+- Import *only* `LogOS/API/*` and `LogOS/Packs/*/Surface.agda` (or the pack umbrella module (the All.agda next to that pack’s Surface.agda) when you truly want the larger namespace).
+- Do not import `LogOS.Domain.*` or `LogOS.Theorems.Meta.Assumptions.*` (CI checks stable surfaces for transitive reach).
+- Prefer `≈`/`⊑`/`↔` relations in statements; reserve `≡` for definitional/propositional equality claims you can justify.
+
 For canonical vocabulary and claim kinds, use:
 
 - `docs/Terminology.lagda.md` (relation words and μ phrasing).
@@ -47,6 +55,12 @@ Where to start:
 - AI-assisted modelling workflow: `docs/DeepDive/AIAssistedModeling.lagda.md`
 - PL mechanization spine (syntax/statics/dynamics): `docs/DeepDive/PLSpine.lagda.md`
 - Kernel views (same core, different readings): `docs/Views/All.lagda.md`
+
+Onboarding tracks (pick your poison)
+------------------------------------
+- Logician (proof/model/category): `docs/Terminology.lagda.md`, `docs/Kernel/ClaimRegister.lagda.md`, `docs/Views/CurryHowardLambek.lagda.md`, `docs/Views/CategoricalLogic.lagda.md`, `LogOS/API/Views.agda`.
+- Systems engineer (APIs/policy/attack surface): `docs/Architecture_Diagram.md`, `docs/DeepDive/API_Surfaces.lagda.md`, `docs/LogOS_Overview.lagda.md`, `LogOS/API/Minimal.agda`, `LogOS/API/Architecture.agda`.
+- PL expert (syntax/semantics/translation): `docs/DeepDive/PLSpine.lagda.md`, `docs/Applications/Universality.lagda.md`, `docs/Views/UniversalLogic.lagda.md`, `LogOS/Computation/Scheme.agda`, `LogOS/Packs/UniversalIR/Surface.agda`.
 
 Stable import surfaces:
 - Minimal kernel API: `LogOS/API/Minimal.agda`

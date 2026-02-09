@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -25,11 +25,12 @@ The core idea
   - Any diagonalisation/fixed‑point assumptions live in the *local* FreeKernel proof, not in transport.
 
 Entry points
-- Assumptions (structural): `LogOS/Theorems/Meta/Assumptions/Core.agda`
+- Conditional packs (structural): `LogOS/Theorems/Meta/ConditionalPacks.agda`
+- Assumptions (non-diagonal): `LogOS/Theorems/Meta/Assumptions/Core.agda`
 - Assumptions (diagonalisation): `LogOS/Theorems/Meta/Assumptions/Diagonal.agda`
   - Umbrella re-export: `LogOS/Theorems/Meta/Assumptions.agda`
 - Core provability ops (HBL/Imp scaffolding, kernel-independent `*C` records):
-  `LogOS/Theorems/Meta/Assumptions/Core.agda`
+  `LogOS/Theorems/Meta/ConditionalPacks.agda`
 - Transport: `LogOS/Theorems/Meta/Full.agda`
 - Rice/Tarski (conditional wrappers): `LogOS/Theorems/Meta/Rice.agda`, `LogOS/Theorems/Meta/Tarski.agda`
 - Löb/Gödel (conditional): `LogOS/Theorems/Meta/Lob.agda`, `LogOS/Theorems/Meta/Godel.agda`
@@ -45,14 +46,12 @@ Entry points
 - Maximal communicable truth (Flow-stable): `LogOS/Theorems/Meta/CommunicableTruth.agda`
 - Safe reflection (literature-aligned):
   - Generic safe reflection: `LogOS/Theorems/Meta/ObserverCore.agda` (`Safe⋆≈`, `safe⋆≈-sound`, `safe⋆≈-stable`).
-    (Legacy, ≡-based: `Safe⋆`, `safe⋆-sound`, `safe⋆-stable`.)
   - Kernel-safe reflection (FlowCode): `LogOS/Theorems/Meta/CommunicableTruth.agda`
     (`Safe⋆`, `safe⋆-core` connecting kernel ↔ generic).
-  - LogicKernel instantiation: `LogOS/Theorems/Meta/ObserverFromLogicKernel.agda`
-    (`Safe⋆`, `SafeTruthAt`, and the step presentation equivalence
-    `Observable⋆↔Observable⋆-FlowCode`).
-  - Guarded truth-at-world for `LogicKernel`: `LogOS/Theorems/Meta/GuardedTruthAt.agda`
-    (largest admissible fragment of `TruthAt`, with a `FlowCode` vs “compute-then-stabilise” equivalence).
+  - Kernel instantiation: `LogOS/Theorems/Meta/ObserverFromKernel.agda`
+    (`Safe⋆`, `SafeTruthAt`).
+  - Guarded truth-at-world for `Kernel`: `LogOS/Theorems/Meta/GuardedTruthAt.agda`
+    (largest admissible fragment of `TruthAt`).
 - Safety spine (design choice → architecture + paradox gates):
   - `LogOS/Theorems/Meta/Safety/DesignChoice.agda`
   - `LogOS/Theorems/Meta/Safety/ArchitectureFromSafety.agda`

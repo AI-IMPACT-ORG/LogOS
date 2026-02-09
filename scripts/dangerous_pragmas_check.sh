@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -15,59 +15,30 @@ LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 cd "${LIB_ROOT}"
 
-extract_agda_blocks() {
-  # Print Agda code lines inside ```agda fenced blocks, prefixed with file:line:.
-  local file="$1"
-  awk -v f="$file" '
-    BEGIN { inside = 0 }
-    /^[[:space:]]*```[[:space:]]*agda[[:space:]]*$/ { inside = 1; next }
-    /^[[:space:]]*```[[:space:]]*$/ { if (inside == 1) { inside = 0; next } }
-    inside == 1 { printf "%s:%d:%s\n", f, NR, $0 }
-  ' "$file"
-}
+# This check relies on ripgrep’s stable regex + glob semantics.
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
 
-scan_docs_agda_blocks() {
-  local out=""
-  while IFS= read -r -d '' f; do
-    out+=$(extract_agda_blocks "$f" || true)
-    out+=$'\n'
-  done < <(find docs -type f -name '*.lagda.md' -not -path './_build/*' -print0 2>/dev/null || true)
-  printf "%s" "$out"
-}
+# shellcheck source=lib/docs_agda_blocks.sh
+source "${SCRIPT_DIR}/lib/docs_agda_blocks.sh"
 
 scan_agda_sources() {
   local pattern="$1"
 
-  if command -v rg >/dev/null 2>&1; then
-    local out status
-    set +e
-    out="$(rg -n \
-      --glob '*.agda' \
-      --glob '!_build/**' \
-      -- "${pattern}" . 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'rg error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
-  else
-    local out status
-    set +e
-    out="$(grep -RIn --include='*.agda' --exclude-dir='_build' -E -- "${pattern}" . 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'grep error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
+  local out status
+  set +e
+  out="$(rg -n \
+    --glob '*.agda' \
+    --glob '!_build/**' \
+    -- "${pattern}" . 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
 }
 
 # We already enforce `{-# OPTIONS --safe #-}` everywhere. This check is a belt-and-
@@ -105,7 +76,7 @@ if [[ -n "${bad_prim}" ]]; then
   die $'found primitive declarations:\n'"${bad_prim}"
 fi
 
-docs_code="$(scan_docs_agda_blocks)"
+docs_code="$(docs_scan_agda_blocks)"
 
 docs_bad_opts="$(printf "%s" "${docs_code}" | grep -E '^[^:]+:[0-9]+:.*\{-# OPTIONS[^}]*--(no-termination-check|no-positivity-check|type-in-type|rewriting)' || true)"
 if [[ -n "${docs_bad_opts}" ]]; then

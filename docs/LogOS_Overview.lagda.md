@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -28,7 +28,9 @@ At the top level:
 - `LogOS/*` — the core logic and the Kernel interface (small, host‑minimal).
 - `LogOS/Algebra/*` — small algebraic surfaces (e.g. braiding, graph surface).
 - `LogOS/QAdapters/*` — ready‑made quantitative adapters (`QAdapter` instances).
-- `LogOS/Domain/*` — application/domain developments (ZFC, Complexity, UniversalIR, …).
+- `LogOS/{ZFC,UniversalIR,Universality,Complexity,InfoTheory}/*` — mature topic libraries (domain developments safe to depend on from stable packs).
+- `LogOS/Domain/*` — quarantined experimental domains (currently: Opacity).
+- `LogOS/ObjectLogic/*` — object logics (FOL/ND, ZF/ZFC sentences) used by some packs/views.
 - `LogOS/Packs/*` — curated, publication-facing entrypoints (ZFC, Universality, UniversalIR, Opacity, Complexity, Agents, …).
 - `docs/*` — narrative docs (this file + topic guides).
 - `Tests/*` — regression aggregation for CI.
@@ -44,8 +46,10 @@ The library uses a hexagonal (ports/adapters) structure:
   - `LogOS/Ports/Semantic/*` (boundary presentations + canonical interlingua)
   - `LogOS/Adapters/Views/*` (signature/kernel/presentation/process adapters)
   - `LogOS/Theorems/*`, `LogOS/Algebra/*` (laws and derived structure)
-- **Domain packs:** ZFC / complexity / physics-of-information developments live under `LogOS/Domain/*`
-  and stay within the safe core (no direct `Agda.*` host imports; prefer the allowlisted `LogOS/Host/*` wrappers via `LogOS.Prelude`).
+- **Domain developments:** most large developments live as topic libraries under
+  `LogOS/{ZFC,UniversalIR,Universality,Complexity,InfoTheory}/*` and stay within the safe core
+  (no direct `Agda.*` host imports; prefer the allowlisted `LogOS/Host/*` wrappers via `LogOS.Prelude`).
+  Truly experimental domains are quarantined under `LogOS/Domain/*` (Opacity), and stable pack surfaces are CI‑enforced to not reach that namespace transitively.
 
 This keeps “what the logic *is*” separate from “how we *use* it”.
 
@@ -82,7 +86,8 @@ and the curated map `LogOS/API/Architecture.agda`.
 Host-Minimal Surface (Portability Claim)
 ----------------------------------------
 To make “LogOS could be hosted elsewhere” precise, the repo enforces a tiny host
-surface: only `LogOS/Host/*` may import `Agda.Builtin.*` / `Agda.Primitive`.
+surface: only a small allowlisted subset of `LogOS/Host/**` may import
+`Agda.Builtin.*` / `Agda.Primitive` (see `scripts/host_surface_check.sh`).
 
 Everything else should import `LogOS.Prelude` (which re-exports the wrappers),
 not `Agda.*` directly.
@@ -96,17 +101,18 @@ Kernel in One Page
 The kernel is parameterized by:
 
 - a signature `Sig : LogOSSignature ℓ` (world/boundary carriers + operations), and
-- a quantitative adapter `Q : QAdapter ℓ` (a quantale‑like budget/grade algebra; finite joins by default).
+- a quantitative adapter `Q : QAdapter ℓ` (a prequantale‑like budget/grade algebra; finite joins by default).
 
 In this file, `Con_bnd` means the carrier of boundary constraints: the `Con` of
 the boundary preorder.
 
 Integrated kernel interfaces:
 
-- `KernelShape` (`LogOS/Kernel/Core.agda`): S/H/G tiers, boundary I/O, and reflection.
+- `KernelShape` (`LogOS/Kernel/Shape.agda`): S/H/G tiers, boundary I/O, and reflection.
 - `Kernel` (`LogOS/Kernel.agda`) and `GradedKernel` (`LogOS/Kernel/Graded.agda`): concrete integrated records.
-- `LogicKernel` (`LogOS/Kernel/LogicKernel.agda`): a uniform surface that factors out the guarded tier so
+- `Kernel` (`LogOS/Kernel.agda`): the canonical surface that integrates S/H/G truth with reflection.
   ungraded and graded kernels share the same API.
+- Boundary-first packaging (“open systems”): `System` (`LogOS/System.agda`) bundles a `BoundaryIO` with its ambient signature/world/truth data and exposes the induced boundary satisfaction system and canonical boundary port.
 
 Truth is tiered and local:
 
@@ -165,9 +171,9 @@ preorder-safe and proof-relevant (no hidden antisymmetry/proof-irrelevance).
 Minimal entry points (recommended imports)
 -----------------------------------------
 - Minimal core: `LogOS/API/Minimal.agda`
-- Unified kernel interface: `LogOS/API/LogicKernel.agda` and `LogOS/Kernel/LogicKernel.agda`
-- Concrete kernel interface (unguarded G-tier): `LogOS/Kernel.agda`
-- Initial/canonical kernels: `LogOS/Kernel/Initial.agda` and `LogOS/Kernel/Infinite/Initial.agda`
+- Unified kernel interface: `LogOS/API/Kernel.agda` and `LogOS/Kernel.agda`
+- Concrete kernel interface (ungraded G-tier): `LogOS/Kernel/UngradedKernel.agda`
+- Initial/canonical kernels: `LogOS/Kernel/UngradedKernel/Initial.agda` and `LogOS/Kernel/UngradedKernel/Infinite/Initial.agda`
 - Stable lock surfaces: `LogOS/Packs/ZFC/Surface.agda`, `LogOS/Packs/Universality/Surface.agda`, `LogOS/Packs/Agents/Surface.agda`
 
 One System, Many Views (Unifier)

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,21 +18,21 @@ import LogOS.Packs.Agents.EndoFixedPointCore as Core
 -- Shared fixed-point wrappers for endomaps in application packs.
 -- These are lightweight adapters around the kernel-level Kleene μ utilities.
 
-module LogicKernel where
-  open import LogOS.Kernel.LogicKernel using (LogicKernel)
-  import LogOS.Kernel.LogicKernel.Endo as LKEndo
-  import LogOS.Theorems.Boundary.LogicKernel.Mu as LKMu
+module Kernel where
+  open import LogOS.Kernel using (Kernel)
+  import LogOS.Kernel.Endo as LKEndo
+  import LogOS.Theorems.Boundary.Kernel.Mu as LKMu
 
   module For
     {ℓ : Level}
     {Sig : LogOSSignature ℓ}
     {Q : QAdapter ℓ}
-    (K : LogicKernel Sig Q)
+    (K : Kernel Sig Q)
     (ωCPO : (let module GT = Truth.GuardedCore in GT.OmegaCPO)
-              (BulkBoundary.bnd (LogicKernel.BB K)))
+              (BulkBoundary.bnd (Kernel.BB K)))
     where
 
-    open LogicKernel K using (BB)
+    open Kernel K using (BB)
     open BulkBoundary BB using (Con_bnd)
     open LKEndo
 

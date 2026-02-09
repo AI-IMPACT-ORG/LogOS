@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -26,18 +26,18 @@ packTrust = record { level = stable }
 
 -- Core building blocks (Domain). Keep them namespaced to make the “math objects”
 -- pop and to avoid accidental surface drift.
-import LogOS.Domain.UniversalIR.IR as IRₜ
-import LogOS.Domain.UniversalIR.Encoding as Encodingₜ
-import LogOS.Domain.UniversalIR.Backend as Backendₜ
-import LogOS.Domain.UniversalIR.Core as Coreₜ
-import LogOS.Domain.UniversalIR.Std as Stdₜ
-import LogOS.Domain.UniversalIR.Blum as Blumₜ
-import LogOS.Domain.UniversalIR.Task as Taskₜ
-import LogOS.Domain.UniversalIR.CompilerCorrectness as CompilerCorrectnessₜ
-import LogOS.Domain.UniversalIR.Schemes as Schemesₜ
-import LogOS.Domain.UniversalIR.Universality as Universalityₜ
-import LogOS.Domain.UniversalIR.ArbitraryTasks as ArbitraryTasksₜ
-import LogOS.Domain.UniversalIR.TasksToUProcess as TasksToUProcessₜ
+import LogOS.UniversalIR.IR as IRₜ
+import LogOS.UniversalIR.Encoding as Encodingₜ
+import LogOS.UniversalIR.Backend as Backendₜ
+import LogOS.UniversalIR.Core as Coreₜ
+import LogOS.UniversalIR.Std as Stdₜ
+import LogOS.UniversalIR.Blum as Blumₜ
+import LogOS.UniversalIR.Task as Taskₜ
+import LogOS.UniversalIR.CompilerCorrectness as CompilerCorrectnessₜ
+import LogOS.UniversalIR.Schemes as Schemesₜ
+import LogOS.UniversalIR.Universality as Universalityₜ
+import LogOS.UniversalIR.ArbitraryTasks as ArbitraryTasksₜ
+import LogOS.UniversalIR.TasksToUProcess as TasksToUProcessₜ
 
 module IR = IRₜ
 module Encoding = Encodingₜ

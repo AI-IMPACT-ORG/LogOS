@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -134,7 +134,7 @@ pyPrint2 label value = exprStmt (call (var "print") (pos label ∷ pos value ∷
 
 licenseHeader : List PyStmt
 licenseHeader =
-  pyComment "LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning"
+  pyComment "LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI"
   ∷ pyComment "Copyright (C) 2026 AI.IMPACT GmbH"
   ∷ pyComment "SPDX-License-Identifier: GPL-3.0-only"
   ∷ pyBlank

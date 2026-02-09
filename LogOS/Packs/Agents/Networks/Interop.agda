@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,7 +13,7 @@ open import LogOS.Boundary.Port using (BoundaryPort)
 open import LogOS.Syntax.Prop as Prop
 open import LogOS.Ports.Semantic.Interlingua using (toPresentationC)
 open import LogOS.Ports.Semantic.PresentationCore using (PresentationC)
-open import LogOS.Ports.Semantic.SystemIO using (SystemIO; SystemIO↑; rebaseAlongSatMor)
+open import LogOS.Ports.Semantic.SatSystemIO using (SatSystemIO; SatSystemIO↑; rebaseAlongSatMor)
 import LogOS.Ports.Semantic.HeteroInterlinguaCore as Hetero
 import LogOS.Ports.Semantic.Interoperability as Interop
 import LogOS.Ports.Semantic.SignaturePushoutHub as SigHub
@@ -24,10 +24,11 @@ open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Base.Signature.Hom using (SigSpan; SigPushout; SigCocone)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPreorder)
+open import LogOS.Minimal.View as View
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Kernel.LogicKernel using (LogicKernel)
-open import LogOS.Kernel.LogicKernel.Reindex using (reindexLogicKernel)
-import LogOS.Kernel.LogicKernel.Boundary as LKBoundary
+open import LogOS.Kernel using (Kernel)
+open import LogOS.Kernel.Reindex using (reindexKernel)
+import LogOS.Boundary.FromKernel as LKBoundary
 
 -- Heterogeneous interlingua for network edges (conservative/equivalence):
 -- combine a SatMor edge with boundary ports to obtain canonical translations
@@ -83,20 +84,27 @@ module ForEquiv
                      (SatF₂↑ p (Interop.HeteroPortAdapter.map A ψ))
   adapter-respects-ObsEq A = Interop.heteroAdapter-respects-ObsEqF m PR PS A
 
+  adapter-respects-Obs≈
+    : ∀ (A : EdgeAdapter) {φ ψ}
+    → PresentationC.Obs≈F PR φ ψ
+    → View.Obs≈ SatF₂↑ (Interop.HeteroPortAdapter.map A φ)
+                       (Interop.HeteroPortAdapter.map A ψ)
+  adapter-respects-Obs≈ A = Interop.heteroAdapter-respects-Obs≈F m PR PS A
+
   -- Tool rebasing along an edge (pullback along the edge SatMor).
   rebaseAlongEdge
     : ∀ {ℓName ℓFormS ℓWProver ℓWModel}
       {Name : Set ℓName}
-    → SystemIO
+    → SatSystemIO
         {ℓForm = ℓFormS}
         {ℓWProver = ℓWProver}
         {ℓWModel = ℓWModel}
-        Name (Ctx s) (Con s) (Sat s)
-    → SystemIO↑
+        Name (BoundarySystemAt s)
+    → SatSystemIO↑
         {ℓForm = ℓFormR}
         {ℓWProver = ℓWProver}
         {ℓWModel = ℓWModel}
-        Name (Ctx r) (Con r) (Sat r)
+        Name (BoundarySystemAt r)
   rebaseAlongEdge sys = rebaseAlongSatMor m PR sys
 
   -- -------------------------------------------------------------------------
@@ -185,15 +193,15 @@ module PushoutHub
   (span : SigSpan Sig₀ Sig₁ Sig₂)
   (po   : SigPushout span)
   {Q : QAdapter ℓ}
-  (K : LogicKernel (SigPushout.SigP po) Q)
+  (K : Kernel (SigPushout.SigP po) Q)
   {ℓFormL ℓFormR ℓFormP : Level}
   (PortL : BoundaryPort {ℓForm = ℓFormL} Sig₁ Q _ _ _
-            (LKBoundary.boundaryIO (reindexLogicKernel (SigCocone.inl (SigPushout.cocone po)) K)))
+            (LKBoundary.boundaryIO (reindexKernel (SigCocone.inl (SigPushout.cocone po)) K)))
   (PortR : BoundaryPort {ℓForm = ℓFormR} Sig₂ Q _ _ _
-            (LKBoundary.boundaryIO (reindexLogicKernel (SigCocone.inr (SigPushout.cocone po)) K)))
+            (LKBoundary.boundaryIO (reindexKernel (SigCocone.inr (SigPushout.cocone po)) K)))
   (PortP : BoundaryPort {ℓForm = ℓFormP} (SigPushout.SigP po) Q _ _ _
             (LKBoundary.boundaryIO K))
   where
 
-  module Hub = SigHub.ForLogicKernel span po K
+  module Hub = SigHub.ForKernel span po K
   open Hub.Ports PortL PortR PortP public

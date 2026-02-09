@@ -1,10 +1,10 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-% View — Meredith Sentences (LogicKernel / CHL Core)
+% View — Meredith Sentences (Kernel / CHL Core)
 
 ```agda
 {-# OPTIONS --safe #-}
@@ -20,125 +20,127 @@ open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPreorder ; BulkBoundary ; _≈CP_)
 import LogOS.Minimal.Truth as Truth
-import LogOS.Kernel.Core as Core
-open import LogOS.Kernel.LogicKernel as LK
-import LogOS.Kernel.LogicKernel.BudgetedTier as LKBud
-import LogOS.Theorems.Boundary.ContinuityCore as ContinuityCore
-import LogOS.Theorems.Boundary.Stabilisation as Stabilisation
+import LogOS.API.Kernel as Kernels
+import LogOS.API.Strengthenings as Strengthenings
+
+module Shape = Kernels.Shape
+module LK = Kernels
+module Stabilisation = Strengthenings.Stabilisation
+module ContinuityCore = Strengthenings.Stabilisation.ContinuityCore
 
 module MuFusion = Stabilisation.MuFusion
 
 module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-  (K : LK.LogicKernel Sig Q)
+  (K : LK.Kernel Sig Q)
   where
 
   Code : Set ℓ
-  Code = LK.LogicKernel.Code K
+  Code = LK.Kernel.Code K
 
   CP : ConPreorder ℓ
-  CP = BulkBoundary.bnd (LK.LogicKernel.BB K)
+  CP = BulkBoundary.bnd (LK.Kernel.BB K)
 
   -- ------------------------------------------------------------------------
-  -- Meredith anchors (LogicKernel interface, unpacked as named lemmas).
+  -- Meredith anchors (Kernel interface, unpacked as named lemmas).
   --
   -- These are not extra axioms: each is a field/lemma (often `refl` after
   -- unfolding the canonical bridges) in
-  -- `LogOS/Kernel/LogicKernel.agda`.
+  -- `LogOS/Kernel.agda`.
   -- ------------------------------------------------------------------------
 
   Meredith₁-decode∘encode
-    : ∀ c → LK.LogicKernel.decode K (LK.LogicKernel.encode K c) ≡ c
-  Meredith₁-decode∘encode = LK.LogicKernel.decode∘encode K
+    : ∀ c → LK.Kernel.decode K (LK.Kernel.encode K c) ≡ c
+  Meredith₁-decode∘encode = LK.Kernel.decode∘encode K
 
   Meredith₂-reify-decode
-    : ∀ γ → LK.LogicKernel.decode K (LK.LogicKernel.reify K γ) ≡ LK.LogicKernel.decode K γ
-  Meredith₂-reify-decode = LK.LogicKernel.reify-decode K
+    : ∀ γ → LK.Kernel.decode K (LK.Kernel.reify K γ) ≡ LK.Kernel.decode K γ
+  Meredith₂-reify-decode = LK.Kernel.reify-decode K
 
   Meredith₃-body-decode
     : ∀ γ →
-      LK.LogicKernel.decode K (LK.LogicKernel.Body K γ)
-        ≡ LK.LogicKernel.Body∂ K (LK.LogicKernel.decode K γ)
-  Meredith₃-body-decode = LK.LogicKernel.body-decode K
+      LK.Kernel.decode K (LK.Kernel.Body K γ)
+        ≡ LK.Kernel.Body∂ K (LK.Kernel.decode K γ)
+  Meredith₃-body-decode = LK.Kernel.body-decode K
 
   Meredith₄-guard-decode
     : ∀ γ →
-      LK.LogicKernel.decode K (LK.LogicKernel.Guard K γ)
-        ≡ LK.GTier.Flow (LK.LogicKernel.G K) (LK.GTier.step (LK.LogicKernel.G K))
-            (LK.LogicKernel.decode K γ)
-  Meredith₄-guard-decode = LK.LogicKernel.guard-decode K
+      LK.Kernel.decode K (LK.Kernel.Guard K γ)
+        ≡ LK.GTier.Flow (LK.Kernel.G K) (LK.GTier.step (LK.Kernel.G K))
+            (LK.Kernel.decode K γ)
+  Meredith₄-guard-decode = LK.Kernel.guard-decode K
 
   Meredith₅-γ*-flowcode-fixed
-    : Core.Code≈ (LK.LogicKernel.shape K)
-        (LK.LogicKernel.γ* K)
-        (LK.FlowCode K (LK.LogicKernel.γ* K))
-  Meredith₅-γ*-flowcode-fixed = LK.LogicKernel.γ*-guard K
+    : Shape.Code≈ (LK.Kernel.shape K)
+        (LK.Kernel.γ* K)
+        (LK.FlowCode K (LK.Kernel.γ* K))
+  Meredith₅-γ*-flowcode-fixed = LK.Kernel.γ*-guard K
 
   Meredith₆-decode-γ*
-    : LK.LogicKernel.decode K (LK.LogicKernel.γ* K)
-        ≡ LK.GTier.Th* (LK.LogicKernel.G K)
-  Meredith₆-decode-γ* = LK.LogicKernel.decode-γ* K
+    : LK.Kernel.decode K (LK.Kernel.γ* K)
+        ≡ LK.GTier.Th* (LK.Kernel.G K)
+  Meredith₆-decode-γ* = LK.Kernel.decode-γ* K
 
   Meredith₇-Th*-fixed
     : (ConPreorder._⊑_ CP
-        (LK.GTier.Th* (LK.LogicKernel.G K))
-        (LK.GTier.Flow (LK.LogicKernel.G K) (LK.GTier.sat (LK.LogicKernel.G K))
-          (LK.GTier.Th* (LK.LogicKernel.G K))))
+        (LK.GTier.Th* (LK.Kernel.G K))
+        (LK.GTier.Flow (LK.Kernel.G K) (LK.GTier.sat (LK.Kernel.G K))
+          (LK.GTier.Th* (LK.Kernel.G K))))
       ×
       (ConPreorder._⊑_ CP
-        (LK.GTier.Flow (LK.LogicKernel.G K) (LK.GTier.sat (LK.LogicKernel.G K))
-          (LK.GTier.Th* (LK.LogicKernel.G K)))
-        (LK.GTier.Th* (LK.LogicKernel.G K)))
-  Meredith₇-Th*-fixed = LK.GTier.Th*-fixed (LK.LogicKernel.G K)
+        (LK.GTier.Flow (LK.Kernel.G K) (LK.GTier.sat (LK.Kernel.G K))
+          (LK.GTier.Th* (LK.Kernel.G K)))
+        (LK.GTier.Th* (LK.Kernel.G K)))
+  Meredith₇-Th*-fixed = LK.GTier.Th*-fixed (LK.Kernel.G K)
 
   Meredith₇-infl-sat
     : ∀ c →
       ConPreorder._⊑_ CP
         c
-        (LK.GTier.Flow (LK.LogicKernel.G K) (LK.GTier.sat (LK.LogicKernel.G K)) c)
-  Meredith₇-infl-sat = LK.GTier.infl-sat (LK.LogicKernel.G K)
+        (LK.GTier.Flow (LK.Kernel.G K) (LK.GTier.sat (LK.Kernel.G K)) c)
+  Meredith₇-infl-sat = LK.GTier.infl-sat (LK.Kernel.G K)
 
   Meredith₇-idemp-sat
     : ∀ c →
       ConPreorder._⊑_ CP
-        (LK.GTier.Flow (LK.LogicKernel.G K) (LK.GTier.sat (LK.LogicKernel.G K))
-          (LK.GTier.Flow (LK.LogicKernel.G K) (LK.GTier.sat (LK.LogicKernel.G K)) c))
-        (LK.GTier.Flow (LK.LogicKernel.G K) (LK.GTier.sat (LK.LogicKernel.G K)) c)
-  Meredith₇-idemp-sat = LK.GTier.idemp-sat (LK.LogicKernel.G K)
+        (LK.GTier.Flow (LK.Kernel.G K) (LK.GTier.sat (LK.Kernel.G K))
+          (LK.GTier.Flow (LK.Kernel.G K) (LK.GTier.sat (LK.Kernel.G K)) c))
+        (LK.GTier.Flow (LK.Kernel.G K) (LK.GTier.sat (LK.Kernel.G K)) c)
+  Meredith₇-idemp-sat = LK.GTier.idemp-sat (LK.Kernel.G K)
 
   -- CHL-facing operational anchor: raw step agrees (up to mutual refinement) with
   -- “compute-then-stabilise at the step grade”.
   Meredith₈-flowCode≈boxAt-step-body
     : ∀ γ →
-      Core.Code≈ (LK.LogicKernel.shape K)
+      Shape.Code≈ (LK.Kernel.shape K)
         (LK.FlowCode K γ)
-        (LK.BoxAt K (LK.GTier.step (LK.LogicKernel.G K)) (LK.LogicKernel.Body K γ))
+        (LK.BoxAt K (LK.GTier.step (LK.Kernel.G K)) (LK.Kernel.Body K γ))
   Meredith₈-flowCode≈boxAt-step-body = LK.flowCode≈BoxAt-step-body K
 
   -- ------------------------------------------------------------------------
   -- Budgeted/resource view anchors (optional strengthening; no new axioms).
   -- ------------------------------------------------------------------------
 
-  module Resource (BT : LKBud.BudgetedTier K) where
-    module D = LKBud.Derived K BT
-    open LKBud.BudgetedTier BT
+  module Resource (BT : LK.BudgetedTier K) where
+    module D = LK.Derived K BT
+    open LK.BudgetedTier BT
 
     boxAt-mono-grade
       : ∀ {g g'}
       → _≤g_ g g'
       → (γ : Code)
-      → Core.Code≤ (LK.LogicKernel.shape K) (LK.BoxAt K g γ) (LK.BoxAt K g' γ)
+      → Shape.Code≤ (LK.Kernel.shape K) (LK.BoxAt K g γ) (LK.BoxAt K g' γ)
     boxAt-mono-grade = D.boxAt-mono-grade
 
     boxAt-comp-lax
       : ∀ g g' (γ : Code)
-      → Core.Code≤ (LK.LogicKernel.shape K)
+      → Shape.Code≤ (LK.Kernel.shape K)
           (LK.BoxAt K g' (LK.BoxAt K g γ))
           (LK.BoxAt K (_·g_ g g') γ)
     boxAt-comp-lax = D.boxAt-comp-lax
 
     boxAt≤Box
       : ∀ g (γ : Code)
-      → Core.Code≤ (LK.LogicKernel.shape K) (LK.BoxAt K g γ) (LK.Box K γ)
+      → Shape.Code≤ (LK.Kernel.shape K) (LK.BoxAt K g γ) (LK.Box K γ)
     boxAt≤Box = D.boxAt≤Box
 
   -- ------------------------------------------------------------------------
@@ -149,25 +151,25 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     module GC = Truth.GuardedCore {ℓ = ℓ}
     open ConPreorder CP using (Con; _⊑_)
 
-    satK : LK.GTier.Step (LK.LogicKernel.G K)
-    satK = LK.GTier.sat (LK.LogicKernel.G K)
+    satK : LK.GTier.Step (LK.Kernel.G K)
+    satK = LK.GTier.sat (LK.Kernel.G K)
 
     FlowSat : Con → Con
-    FlowSat = LK.GTier.Flow (LK.LogicKernel.G K) satK
+    FlowSat = LK.GTier.Flow (LK.Kernel.G K) satK
 
     monoSat : ∀ {c c'} → _⊑_ c c' → _⊑_ (FlowSat c) (FlowSat c')
     monoSat le =
-      LK.GTier.mono (LK.LogicKernel.G K) {g = satK} le
+      LK.GTier.mono (LK.Kernel.G K) {g = satK} le
 
     GCsat : GC.GuardedClosure CP
     GCsat =
       record
         { Flow      = FlowSat
         ; mono      = monoSat
-        ; infl      = LK.GTier.infl-sat (LK.LogicKernel.G K)
-        ; idemp-lax = LK.GTier.idemp-sat (LK.LogicKernel.G K)
-        ; Th*       = LK.GTier.Th* (LK.LogicKernel.G K)
-        ; Th*-fixed = LK.GTier.Th*-fixed (LK.LogicKernel.G K)
+        ; infl      = LK.GTier.infl-sat (LK.Kernel.G K)
+        ; idemp-lax = LK.GTier.idemp-sat (LK.Kernel.G K)
+        ; Th*       = LK.GTier.Th* (LK.Kernel.G K)
+        ; Th*-fixed = LK.GTier.Th*-fixed (LK.Kernel.G K)
         }
 
     module C = ContinuityCore.For CP GCsat
@@ -206,13 +208,13 @@ module Quotes {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
 Purpose
 -------
-Fix `K : LogicKernel Sig Q` (`LogOS/Kernel/LogicKernel.agda`). This view presents
+Fix `K : Kernel Sig Q` (`LogOS/Kernel.agda`). This view presents
 the CHL-facing kernel as a compact “axiom poem”: a small list of named equations
 and refinements that pin down the core interface (decode/encode, reflection,
 guard/body, closure, and the distinguished stable witness).
 
 Interpretation (analogy):
-this document is a derived presentation (“view”) over the CHL-facing `LogicKernel`;
+this document is a derived presentation (“view”) over the CHL-facing `Kernel`;
 it does not add logical power.
 
 Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
@@ -220,20 +222,19 @@ Claim/assumption discipline: `docs/Kernel/ClaimRegister.lagda.md`.
 
 Scope (formal)
 --------------
-- Parameter: `LogicKernel Sig Q`.
-- Derived from: any `Kernel Sig Q` via `LogOS/Kernel/LogicKernel/FromKernel.agda`.
+- Parameter: `Kernel Sig Q`.
 
 Dictionary (literature ↔ LogOS)
 -------------------------------
 
 | Literature concept | LogOS identifier(s) | Notes |
 |---|---|---|
-| “Axiom poem” / compact interface axioms | (M₁–M₈) anchors in `LogicKernel` | Not additional axioms: each line is a field/lemma (often `refl` after unfolding canonical bridges). |
+| “Axiom poem” / compact interface axioms | (M₁–M₈) anchors in `Kernel` | Not additional axioms: each line is a field/lemma (often `refl` after unfolding canonical bridges). |
 | Closure/modality □ | `Flow` / `BoxAt` / `Box` | In graded form: `BoxAt g γ := encode (Flow g (decode γ))`. `Box` is the ungraded/saturation instance. |
 | Stable truth / fixed point invariant | `Th*`, `γ*` | `Th*` is a distinguished lax fixed-point witness; μ-characterisation is optional. |
 | Kleene μ / least pre-fixed point | `μ` (when `OmegaCPO` + `FiniteFirst`) | Limit semantics is explicit and hypothesis-driven. |
-| Resource/quantale indexing | `BudgetedTier` (grades `g`) | Purely an optional view: it does not add logical power to the core. |
-| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital quantale in the finite-join sense (not complete); used via the graded/budgeted tier. |
+| Resource/prequantale indexing | `BudgetedTier` (grades `g`) | Purely an optional view: it does not add logical power to the core. |
+| Resource/budget algebra | `QAdapter` (`LogOS/Minimal/Adapter.agda`) | Unital prequantale in the finite-join sense (not complete); used via the graded/budgeted tier. |
 
 Concretely, the resource view is anchored by `boxAt-mono-grade` and `boxAt-comp-lax`: grade monotonicity and lax compositionality of `BoxAt`.
 
@@ -241,7 +242,7 @@ Core definitions (literature style)
 -----------------------------------
 
 **Definition (Meredith anchor).** Each “Meredith sentence” in this file is a
-field/lemma of `LogicKernel` (or a definitional consequence of that interface),
+field/lemma of `Kernel` (or a definitional consequence of that interface),
 presented with a conventional symbolic spelling (`⟦_⟧`, `η`, `□`, …) and an exact
 Agda anchor name (`Meredith₁`–`Meredith₈` above).
 
@@ -260,8 +261,8 @@ What is novel here (residual vs the literature)
 
 Theorem spine (authoritative)
 -----------------------------
-- LogicKernel core laws: `LogOS/Kernel/LogicKernel.agda` (the anchored `Meredith₁`–`Meredith₈` fields/lemmas above).
-- Resource/budget view (optional): `LogOS/Kernel/LogicKernel/BudgetedTier.agda`.
+- Kernel core laws: `LogOS/Kernel.agda` (the anchored `Meredith₁`–`Meredith₈` fields/lemmas above).
+- Resource/budget view (optional): `LogOS/Kernel/BudgetedTier.agda`.
 - μ/least-pre-fixed-point characterisation (optional): `LogOS/Theorems/Boundary/ContinuityCore.agda` (`Th*≈μFlow`).
 - μ-fusion transport (optional): `LogOS/Theorems/Boundary/MuFusion.agda` (`preserves-Th*-from-Flow`).
 - The prose below is explanatory; the Agda anchors above are the authoritative claims.
@@ -276,12 +277,12 @@ Notation (barebones)
 - `B := Body`, `B∂ := Body∂`, `▹ := Guard`.
 - `FlowCode γ := ▹ (B γ)`  (raw operational step).
 - `g : Step` (step index). Canonical bridges: from `Kernel`, `Step = ⊤` (no nontrivial budgets);
-  from `GradedKernel`, `Step = QAdapter.Scale Q` (`LogOS/Kernel/LogicKernel/FromKernel.agda`,
-  `LogOS/Kernel/LogicKernel/FromGradedKernel.agda`).
+  from `GradedKernel`, `Step = QAdapter.Scale Q` (`LogOS/Kernel/FromUngradedKernel.agda`,
+  `LogOS/Kernel/FromGradedKernel.agda`).
   `Flow₍g₎ : Con → Con`, `□₍g₎ γ := η (Flow₍g₎ ⟦γ⟧)`.
   A `BudgetedTier K` equips `Step` with an order `≤g` and multiplication `·g` (plus `sat-top`,
   monotonicity, and lax composition). Canonical instances are provided in
-  `LogOS/Kernel/LogicKernel/BudgetedTier.agda` (`budgetedTierFromKernel`, `budgetedTierFromGradedKernel`).
+  `LogOS/Kernel/BudgetedTier.agda` (`budgetedTierFromUngradedKernel`, `budgetedTierFromGradedKernel`).
 - `□ γ := □₍sat₎ γ`, `★ := γ*`, `Θ := Th*`.
 - `μ F` = Kleene μ (ω-sup of iterates from `⊥`, when `OmegaCPO` is assumed).
   (Disambiguation: this is unrelated to the notation `ClosureOp.Notation.μ` for “monad multiplication”
@@ -306,7 +307,7 @@ Meredith sentences (core)
 
 Meredith sentences (resource spelling, optional)
 ------------------------------------------------
-If you assume a `BudgetedTier K` (`LogOS/Kernel/LogicKernel/BudgetedTier.agda`):
+If you assume a `BudgetedTier K` (`LogOS/Kernel/BudgetedTier.agda`):
 - (R₁a) `g ≤ h ⇒ □₍g₎ γ ⊢ □₍h₎ γ`
 - (R₁b) `□₍h₎ (□₍g₎ γ) ⊢ □₍g·h₎ γ`  (apply `g` then `h`)
 - (R₁c) `□₍g₎ γ ⊢ □γ`  (by `BudgetedTier.sat-top`)
@@ -335,3 +336,4 @@ Cross references
 - Views index: `docs/Views/All.lagda.md`
 - CHL capstone: `docs/Views/CurryHowardLambek.lagda.md`
 - Observer semantics (physics-of-information interpretation): `docs/Views/ObserverSemantics.lagda.md`
+- Controlled feedback (budgeted stabilisation): `docs/Views/ControlledFeedback.lagda.md`

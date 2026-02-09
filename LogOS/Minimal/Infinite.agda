@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,7 +13,7 @@ module LogOS.Minimal.Infinite where
 
 open import LogOS.Prelude
 
-open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude using (_×_; _,_; fst; snd)
 open import LogOS.Prelude.Ordinal as Ord
 
 open import LogOS.Minimal.Con
@@ -80,7 +80,7 @@ module For
     → _⊑_ Th⋆ c
   approx-all→Th⋆≤ c ub =
     let
-      th≤sup = fst Th⋆-as-supω
+      th≤sup = ≈CP⇒ {CP = CP} Th⋆-as-supω
       sup≤c  = approx-all→supω≤ c ub
     in trans≤ th≤sup sup≤c
 
@@ -116,7 +116,7 @@ module For
     : PartialOrder CP
     → F Th⋆ ≡ Th⋆
   FlowTh⋆≡Th⋆ po =
-    PartialOrder.antisym po (snd Th*-fixed) (fst Th*-fixed)
+    PartialOrder.antisym po (≈CP⇐ {CP = CP} Th*-fixed) (≈CP⇒ {CP = CP} Th*-fixed)
 
   -- Stability-reflection schema (assumption record):
   -- if a predicate is (1) upward closed and (2) closed under ω-sups,
@@ -140,5 +140,5 @@ module For
     let
       open StablePredicate SP
       Psup   = supClosed approxS approx-mono-step Pn
-      sup≤th = snd Th⋆-as-supω
+      sup≤th = ≈CP⇐ {CP = CP} Th⋆-as-supω
     in upClosed sup≤th Psup

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,7 +22,7 @@ open import LogOS.Minimal.Con using (ConPreorder; MonoOn)
 import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Computation.SchemeCategory using (Process; ProcessHomLax; StepMono)
-import LogOS.Theorems.Boundary.MuFusion as MuFusion
+import LogOS.Minimal.MuFusion as MuFusion
 
 -- --------------------------------------------------------------------------
 -- Slice preorder above a chosen base element.

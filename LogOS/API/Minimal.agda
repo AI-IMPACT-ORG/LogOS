@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,7 +23,12 @@ module LogOS.API.Minimal where
 -- - Kernel authoring: `LogOS/API/Minimal.agda` (this module) or `LogOS/API/Kernel.agda`.
 -- - Port-first downstream work: `LogOS/API/PortsAdapters.agda` or `LogOS/API/Architecture.agda`.
 -- - Foundations only: `LogOS/API/Foundation.agda`.
+--
+-- Not for:
+-- - axiom-driven strengthenings (use `LogOS.API.Axioms` / `LogOS.API.Strengthenings`)
+-- - curated application packs (use `LogOS.Packs.*.Surface`)
 
+open import LogOS.API.Foundation public
 open import LogOS.API.Kernel public
 
 -- Kernel-derived computation surface.
@@ -41,7 +46,7 @@ open import LogOS.Computation.Blum       public
 --   sig : LogOSSignature ℓ
 --   sig = record { ... }
 --   
---   -- Choose a Quantale+Time adapter (finite-join quantale + time monoid homomorphism into `Scale`).
+--   -- Choose a Prequantale+Time adapter (finite-join prequantale + time monoid homomorphism into `Scale`).
 --   -- Ready-made instances:
 --   --   `LogOS.QAdapters.QNat.QNat`    (steps/time as ℕ, with max/join)
 --   --   `LogOS.QAdapters.QNat2.QNat2`  (two-axis budgets: unitary + measurement)

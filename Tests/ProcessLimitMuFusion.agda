@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,6 +18,7 @@ import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Computation.SchemeCategory using (Process; ProcessHomLax)
 import LogOS.Computation.ProcessLimit as PL
+import LogOS.Computation.ProcessLimitSub2Cat as PLSub
 
 private
   module GC = Truth.GuardedCore {ℓ = lzero}
@@ -86,3 +87,16 @@ _ : ∀ c → Process._⊑_ P
           (ProcessHomLax.map h (PL.For.run∞ P D c))
           (PL.For.run∞ P D (ProcessHomLax.map h c))
 _ = PL.TransportLax.run∞-map≤ D D h cont-map
+
+module Sub = PLSub.For {ℓO = lzero} {ℓC = lzero} {ℓQ = lzero} {Output = Con₀}
+
+A : Sub.Obj
+A = record { P = P ; D = D }
+
+f∞ : Sub.Hom₁ A A
+f∞ = record { hom = h ; cont = cont-map }
+
+_ : ∀ c → Process._⊑_ P
+          (ProcessHomLax.map h (PL.For.run∞ P D c))
+          (PL.For.run∞ P D (ProcessHomLax.map h c))
+_ = Sub.preserves-run∞ f∞

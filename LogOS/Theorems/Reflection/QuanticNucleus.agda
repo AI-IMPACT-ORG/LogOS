@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,58 +8,58 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Reflection.QuanticNucleus where
 
 open import LogOS.Prelude hiding (refl; trans) renaming (_⊔_ to _⊔ℓ_)
-open import LogOS.Algebra.Quantale public
-open import LogOS.Minimal.Con using (ConPreorder; MonoOn)
+open import LogOS.Minimal.Prequantale public hiding (refl; trans)
+open import LogOS.Minimal.Con using (ConPreorder; MonoOn; ≈CP⇒; ≈CP⇐)
 
-record Nucleus {ℓ : Level} (Q : Quantale {ℓ}) : Set (lsuc ℓ) where
-  open Quantale Q
+record Nucleus {ℓ : Level} (Q : Prequantale {ℓ}) : Set (lsuc ℓ) where
+  open Prequantale Q
     renaming (CP to CPQ; _⊔_ to _⊔Q_; _·_ to _·Q_; e to eQ)
     hiding (_≈_)
   field
-    j         : Quantale.Con Q → Quantale.Con Q
+    j         : Prequantale.Con Q → Prequantale.Con Q
     mono      : MonoOn CPQ j
-    infl      : ∀ (c : Quantale.Con Q) → ConPreorder._⊑_ CPQ c (j c)
-    idemp-lax : ∀ (c : Quantale.Con Q) → ConPreorder._⊑_ CPQ (j (j c)) (j c)
+    infl      : ∀ (c : Prequantale.Con Q) → ConPreorder._⊑_ CPQ c (j c)
+    idemp-lax : ∀ (c : Prequantale.Con Q) → ConPreorder._⊑_ CPQ (j (j c)) (j c)
     join-pres
-      : ∀ (a b : Quantale.Con Q)
-      → Quantale._≈_ Q (j (a ⊔Q b)) (j a ⊔Q j b)
+      : ∀ (a b : Prequantale.Con Q)
+      → Prequantale._≈_ Q (j (a ⊔Q b)) (j a ⊔Q j b)
     mul-pres
-      : ∀ (a b : Quantale.Con Q)
-      → Quantale._≈_ Q (j (a ·Q b)) (j a ·Q j b)
+      : ∀ (a b : Prequantale.Con Q)
+      → Prequantale._≈_ Q (j (a ·Q b)) (j a ·Q j b)
 
 open Nucleus public
 
-record Fixed {ℓ : Level} {Q : Quantale {ℓ}} (N : Nucleus Q) : Set ℓ where
-  open Quantale Q
+record Fixed {ℓ : Level} {Q : Prequantale {ℓ}} (N : Nucleus Q) : Set ℓ where
+  open Prequantale Q
   field
-    val   : Quantale.Con Q
-    fixed : ConPreorder._⊑_ (Quantale.CP Q) (j N val) val
+    val   : Prequantale.Con Q
+    fixed : ConPreorder._⊑_ (Prequantale.CP Q) (j N val) val
 
 open Fixed public
 
 quotient
-  : ∀ {ℓ} {Q : Quantale {ℓ}} (N : Nucleus Q)
-  → Quantale.Con Q → Fixed N
+  : ∀ {ℓ} {Q : Prequantale {ℓ}} (N : Nucleus Q)
+  → Prequantale.Con Q → Fixed N
 quotient N c = record { val = j N c ; fixed = idemp-lax N c }
 
 fixedConPreorder
-  : ∀ {ℓ} {Q : Quantale {ℓ}} (N : Nucleus Q)
+  : ∀ {ℓ} {Q : Prequantale {ℓ}} (N : Nucleus Q)
   → ConPreorder ℓ
 fixedConPreorder {Q = Q} N = record
   { Con  = Fixed N
-  ; _⊑_  = λ x y → ConPreorder._⊑_ (Quantale.CP Q) (val x) (val y)
-  ; refl = ConPreorder.refl (Quantale.CP Q)
-  ; trans = ConPreorder.trans (Quantale.CP Q)
+  ; _⊑_  = λ x y → ConPreorder._⊑_ (Prequantale.CP Q) (val x) (val y)
+  ; refl = ConPreorder.refl (Prequantale.CP Q)
+  ; trans = ConPreorder.trans (Prequantale.CP Q)
   }
 
-fixedQuantale
-  : ∀ {ℓ} {Q : Quantale {ℓ}} (N : Nucleus Q)
-  → Quantale {ℓ}
-fixedQuantale {Q = Q} N =
+fixedPrequantale
+  : ∀ {ℓ} {Q : Prequantale {ℓ}} (N : Nucleus Q)
+  → Prequantale {ℓ}
+fixedPrequantale {Q = Q} N =
   record
     { CP = fixedConPreorder N
     ; _⊔_ = λ x y → record
-        { val = Quantale._⊔_ Q (val x) (val y)
+        { val = Prequantale._⊔_ Q (val x) (val y)
         ; fixed =
             let
               step₁ = fst (join-pres N (val x) (val y))
@@ -72,82 +72,82 @@ fixedQuantale {Q = Q} N =
                   {d = val y}
                   (fixed x)
                   (fixed y)
-            in ConPreorder.trans (Quantale.CP Q) step₁ step₂
+            in ConPreorder.trans (Prequantale.CP Q) step₁ step₂
         }
-    ; ⊥ = quotient N (Quantale.⊥ Q)
+    ; ⊥ = quotient N (Prequantale.⊥ Q)
     ; ⊥-least = λ x →
         let
-          step₁ = mono N (Quantale.⊥-least Q (val x))
+          step₁ = mono N (Prequantale.⊥-least Q (val x))
           step₂ = fixed x
-        in ConPreorder.trans (Quantale.CP Q) step₁ step₂
-    ; ⊔-ub₁ = λ x y → Quantale.⊔-ub₁ Q (val x) (val y)
-    ; ⊔-ub₂ = λ x y → Quantale.⊔-ub₂ Q (val x) (val y)
-    ; ⊔-least = λ {x} {y} {z} x≤z y≤z → Quantale.⊔-least Q x≤z y≤z
+        in ConPreorder.trans (Prequantale.CP Q) step₁ step₂
+    ; ⊔-ub₁ = λ x y → Prequantale.⊔-ub₁ Q (val x) (val y)
+    ; ⊔-ub₂ = λ x y → Prequantale.⊔-ub₂ Q (val x) (val y)
+    ; ⊔-least = λ {x} {y} {z} x≤z y≤z → Prequantale.⊔-least Q x≤z y≤z
     ; _·_ = λ x y → record
-        { val = Quantale._·_ Q (val x) (val y)
+        { val = Prequantale._·_ Q (val x) (val y)
         ; fixed =
             let
               step₁ = fst (mul-pres N (val x) (val y))
-              step₂ = Quantale.·-mono Q (fixed x) (fixed y)
-            in ConPreorder.trans (Quantale.CP Q) step₁ step₂
+              step₂ = Prequantale.·-mono Q (fixed x) (fixed y)
+            in ConPreorder.trans (Prequantale.CP Q) step₁ step₂
         }
-    ; e = quotient N (Quantale.e Q)
-    ; ·-mono = λ {x} {y} {z} {w} x≤y z≤w → Quantale.·-mono Q x≤y z≤w
-    ; ·-assoc = λ x y z → Quantale.·-assoc Q (val x) (val y) (val z)
+    ; e = quotient N (Prequantale.e Q)
+    ; ·-mono = λ {x} {y} {z} {w} x≤y z≤w → Prequantale.·-mono Q x≤y z≤w
+    ; ·-assoc = λ x y z → Prequantale.·-assoc Q (val x) (val y) (val z)
     ; ·-idl = λ x →
         let
-            open ConPreorder (Quantale.CP Q)
-            eQ = Quantale.e Q
-            step₁ : ConPreorder._⊑_ (Quantale.CP Q) (Quantale._·_ Q (j N eQ) (val x)) (val x)
+            open ConPreorder (Prequantale.CP Q)
+            eQ = Prequantale.e Q
+            step₁ : ConPreorder._⊑_ (Prequantale.CP Q) (Prequantale._·_ Q (j N eQ) (val x)) (val x)
             step₁ =
               trans
-                (Quantale.·-mono Q refl (infl N (val x)))
+                (Prequantale.·-mono Q (ConPreorder.refl (Prequantale.CP Q)) (infl N (val x)))
                 (trans
                   (snd (mul-pres N eQ (val x)))
                   (trans
-                    (mono N (fst (Quantale.·-idl Q (val x))))
+                    (mono N (fst (Prequantale.·-idl Q (val x))))
                     (fixed x)))
-            step₂ : ConPreorder._⊑_ (Quantale.CP Q) (val x) (Quantale._·_ Q (j N eQ) (val x))
+            step₂ : ConPreorder._⊑_ (Prequantale.CP Q) (val x) (Prequantale._·_ Q (j N eQ) (val x))
             step₂ =
               trans
                 (infl N (val x))
                 (trans
-                  (mono N (snd (Quantale.·-idl Q (val x))))
+                  (mono N (snd (Prequantale.·-idl Q (val x))))
                   (trans
                     (fst (mul-pres N eQ (val x)))
-                    (Quantale.·-mono Q refl (fixed x))))
+                    (Prequantale.·-mono Q (ConPreorder.refl (Prequantale.CP Q)) (fixed x))))
         in step₁ , step₂
     ; ·-idr = λ x →
         let
-            open ConPreorder (Quantale.CP Q)
-            eQ = Quantale.e Q
-            step₁ : ConPreorder._⊑_ (Quantale.CP Q) (Quantale._·_ Q (val x) (j N eQ)) (val x)
+            open ConPreorder (Prequantale.CP Q)
+            eQ = Prequantale.e Q
+            step₁ : ConPreorder._⊑_ (Prequantale.CP Q) (Prequantale._·_ Q (val x) (j N eQ)) (val x)
             step₁ =
               trans
-                (Quantale.·-mono Q (infl N (val x)) refl)
+                (Prequantale.·-mono Q (infl N (val x)) (ConPreorder.refl (Prequantale.CP Q)))
                 (trans
                   (snd (mul-pres N (val x) eQ))
                   (trans
-                    (mono N (fst (Quantale.·-idr Q (val x))))
+                    (mono N (fst (Prequantale.·-idr Q (val x))))
                     (fixed x)))
-            step₂ : ConPreorder._⊑_ (Quantale.CP Q) (val x) (Quantale._·_ Q (val x) (j N eQ))
+            step₂ : ConPreorder._⊑_ (Prequantale.CP Q) (val x) (Prequantale._·_ Q (val x) (j N eQ))
             step₂ =
               trans
                 (infl N (val x))
                 (trans
-                  (mono N (snd (Quantale.·-idr Q (val x))))
+                  (mono N (snd (Prequantale.·-idr Q (val x))))
                   (trans
                     (fst (mul-pres N (val x) eQ))
-                    (Quantale.·-mono Q (fixed x) refl)))
+                    (Prequantale.·-mono Q (fixed x) (ConPreorder.refl (Prequantale.CP Q)))))
         in step₁ , step₂
-    ; ·-distl-⊔ = λ x y z → Quantale.·-distl-⊔ Q (val x) (val y) (val z)
-    ; ·-distr-⊔ = λ x y z → Quantale.·-distr-⊔ Q (val x) (val y) (val z)
+    ; ·-distl-⊔ = λ x y z → Prequantale.·-distl-⊔ Q (val x) (val y) (val z)
+    ; ·-distr-⊔ = λ x y z → Prequantale.·-distr-⊔ Q (val x) (val y) (val z)
     }
 
 factorise
-  : ∀ {ℓ ℓA} {Q : Quantale {ℓ}} (N : Nucleus Q)
+  : ∀ {ℓ ℓA} {Q : Prequantale {ℓ}} (N : Nucleus Q)
     {A : Set ℓA}
-    (f : Quantale.Con Q → A)
+    (f : Prequantale.Con Q → A)
     (stable : ∀ x → f (j N x) ≡ f x)
   → Σ (Fixed N → A) (λ g → ∀ x → g (quotient N x) ≡ f x)
 factorise N f stable =
@@ -158,95 +158,95 @@ factorise N f stable =
 
 StableUnderNucleus
   : ∀ {ℓ₁ ℓ₂ : Level}
-    {Q : Quantale {ℓ₁}} (N : Nucleus Q)
-    {R : Quantale {ℓ₂}}
-  → QuantaleMor Q R → Set (ℓ₁ ⊔ℓ ℓ₂)
+    {Q : Prequantale {ℓ₁}} (N : Nucleus Q)
+    {R : Prequantale {ℓ₂}}
+  → PrequantaleMor Q R → Set (ℓ₁ ⊔ℓ ℓ₂)
 StableUnderNucleus N {R = R} f =
-  ∀ x → Quantale._≈_ R (map f (j N x)) (map f x)
+  ∀ x → Prequantale._≈_ R (map f (j N x)) (map f x)
 
 quotientMor
-  : ∀ {ℓ} {Q : Quantale {ℓ}} (N : Nucleus Q)
-  → QuantaleMor Q (fixedQuantale N)
+  : ∀ {ℓ} {Q : Prequantale {ℓ}} (N : Nucleus Q)
+  → PrequantaleMor Q (fixedPrequantale N)
 quotientMor {Q = Q} N =
   record
     { map = quotient N
     ; mono = λ {a} {b} a≤b → mono N a≤b
-    ; ⊥-pres = ≈-refl {Q = fixedQuantale N} {a = quotient N (Quantale.⊥ Q)}
+    ; ⊥-pres = ≈-refl {Q = fixedPrequantale N} {a = quotient N (Prequantale.⊥ Q)}
     ; ⊔-pres = λ a b →
         -- Values are definitionally the same (`j (a ⊔ b)` on both sides).
         fst (join-pres N a b) , snd (join-pres N a b)
-    ; e-pres = ≈-refl {Q = fixedQuantale N} {a = quotient N (Quantale.e Q)}
+    ; e-pres = ≈-refl {Q = fixedPrequantale N} {a = quotient N (Prequantale.e Q)}
     ; ·-pres = λ a b →
         fst (mul-pres N a b) , snd (mul-pres N a b)
     }
 
 factoriseMor
   : ∀ {ℓ₁ ℓ₂ : Level}
-    {Q : Quantale {ℓ₁}} (N : Nucleus Q)
-    {R : Quantale {ℓ₂}}
-    (f : QuantaleMor Q R)
+    {Q : Prequantale {ℓ₁}} (N : Nucleus Q)
+    {R : Prequantale {ℓ₂}}
+    (f : PrequantaleMor Q R)
     (stable : StableUnderNucleus N f)
-  → Σ (QuantaleMor (fixedQuantale N) R)
-      (λ g → ∀ x → Quantale._≈_ R (map g (quotient N x)) (map f x))
+  → Σ (PrequantaleMor (fixedPrequantale N) R)
+      (λ g → ∀ x → Prequantale._≈_ R (map g (quotient N x)) (map f x))
 factoriseMor {Q = Q} N {R = R} f stable =
   g , comm
   where
-    module Qr = Quantale R
+    module Rr = Prequantale R
 
-    g : QuantaleMor (fixedQuantale N) R
+    g : PrequantaleMor (fixedPrequantale N) R
     g =
       record
         { map = λ x → map f (val x)
         ; mono = λ {x} {y} x≤y → mono f x≤y
         ; ⊥-pres =
-            -- ⊥ in `fixedQuantale` is `quotient N ⊥` (val = j ⊥).
+            -- ⊥ in `fixedPrequantale` is `quotient N ⊥` (val = j ⊥).
             let
-              step₁ = stable (Quantale.⊥ Q)
+              step₁ = stable (Prequantale.⊥ Q)
               step₂ = ⊥-pres f
             in ≈-trans {Q = R} step₁ step₂
         ; ⊔-pres = λ x y → ⊔-pres f (val x) (val y)
         ; e-pres =
             let
-              step₁ = stable (Quantale.e Q)
+              step₁ = stable (Prequantale.e Q)
               step₂ = e-pres f
             in ≈-trans {Q = R} step₁ step₂
         ; ·-pres = λ x y → ·-pres f (val x) (val y)
         }
 
-    comm : ∀ x → Quantale._≈_ R (map g (quotient N x)) (map f x)
+    comm : ∀ x → Prequantale._≈_ R (map g (quotient N x)) (map f x)
     comm x = stable x
 
 factoriseMor-unique
   : ∀ {ℓ₁ ℓ₂ : Level}
-    {Q : Quantale {ℓ₁}} (N : Nucleus Q)
-    {R : Quantale {ℓ₂}}
-    (f : QuantaleMor Q R)
+    {Q : Prequantale {ℓ₁}} (N : Nucleus Q)
+    {R : Prequantale {ℓ₂}}
+    (f : PrequantaleMor Q R)
     (stable : StableUnderNucleus N f)
-    (g : QuantaleMor (fixedQuantale N) R)
-  → (∀ x → Quantale._≈_ R (map g (quotient N x)) (map f x))
+    (g : PrequantaleMor (fixedPrequantale N) R)
+  → (∀ x → Prequantale._≈_ R (map g (quotient N x)) (map f x))
   → g ≈Mor proj₁ (factoriseMor N f stable)
 factoriseMor-unique {Q = Q} N {R = R} f stable g g∘q≈f x =
   let
-    module Qr = Quantale R
+    module Rr = Prequantale R
 
     -- `x` is equivalent (in the fixed-point preorder) to `quotient (val x)`.
-    x≤q : Quantale._⊑_ (fixedQuantale N) x (quotient N (val x))
+    x≤q : Prequantale._⊑_ (fixedPrequantale N) x (quotient N (val x))
     x≤q = infl N (val x)
 
-    q≤x : Quantale._⊑_ (fixedQuantale N) (quotient N (val x)) x
+    q≤x : Prequantale._⊑_ (fixedPrequantale N) (quotient N (val x)) x
     q≤x = fixed x
 
-    gx≤ : Qr._⊑_ (map g x) (map g (quotient N (val x)))
+    gx≤ : Rr._⊑_ (map g x) (map g (quotient N (val x)))
     gx≤ = mono g x≤q
 
-    gx≥ : Qr._⊑_ (map g (quotient N (val x))) (map g x)
+    gx≥ : Rr._⊑_ (map g (quotient N (val x))) (map g x)
     gx≥ = mono g q≤x
 
     -- Rewrite `g (quotient (val x))` to `f (val x)`.
-    gq≈f : Quantale._≈_ R (map g (quotient N (val x))) (map f (val x))
+    gq≈f : Prequantale._≈_ R (map g (quotient N (val x))) (map f (val x))
     gq≈f = g∘q≈f (val x)
 
   in
-  (ConPreorder.trans (Qr.CP) gx≤ (fst gq≈f))
+  (ConPreorder.trans (Rr.CP) gx≤ (≈CP⇒ {CP = Rr.CP} gq≈f))
   ,
-  (ConPreorder.trans (Qr.CP) (snd gq≈f) gx≥)
+  (ConPreorder.trans (Rr.CP) (≈CP⇐ {CP = Rr.CP} gq≈f) gx≥)

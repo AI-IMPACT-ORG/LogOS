@@ -1,5 +1,5 @@
 {- 
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,10 +19,10 @@ open import LogOS.ObjectLogic.FOL.ND using (Deriv)
 import LogOS.ObjectLogic.FOL.Semantics as FOLSem
 import LogOS.ObjectLogic.FOL.Soundness as FOLSound
 
-open import LogOS.Domain.UniversalIR.While.Language as WhileLang using (Stmt; skip)
-open import LogOS.Domain.UniversalIR.While.Semantics as WhileSem using (Exec; Store)
-import LogOS.Domain.UniversalIR.While.Typing as WhileTyping
-import LogOS.Domain.UniversalIR.While.SmallStep as WhileStep
+open import LogOS.UniversalIR.While.Language as WhileLang using (Stmt; skip)
+open import LogOS.UniversalIR.While.Semantics as WhileSem using (Exec; Store)
+import LogOS.UniversalIR.While.Typing as WhileTyping
+import LogOS.UniversalIR.While.SmallStep as WhileStep
 
 module FOL
   {ℓΣ ℓ : Level}

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,12 +12,13 @@ module LogOS.Packs.Complexity.Experimental.PhysicsOfInformation where
 -- Goal: stable names for the Second-Law/Landauer storyline, without requiring
 -- readers to chase deep module paths.
 
-open import LogOS.Packs.Trust using (PackTrust; experimental)
+open import LogOS.Packs.Trust using (PackTrust)
+import LogOS.Packs.Complexity.Experimental.Core as PackCore
 
 packTrust : PackTrust
-packTrust = record { level = experimental }
+packTrust = PackCore.packTrust
 
-open import LogOS.Domain.Complexity.SecondLaw public
+open import LogOS.Complexity.SecondLaw public
   using (SecondLawAssumptions; SecondLawGuards; merge→entropy+; nonvacuous-entropy+; landauerFromLCU)
 
 open import LogOS.Theorems.Meta.Landauer public

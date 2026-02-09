@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,12 +9,13 @@ module LogOS.Theorems.Meta.LimitPublicisation where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con using (ConPreorder; _≈CP_)
 open import LogOS.Kernel
+open import LogOS.Kernel.Eq using (module ForKernel)
 
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
 import LogOS.Theorems.Meta.BudgetedCommunicableTruth as BComm
@@ -147,7 +148,7 @@ TruthK→Pr {ℓ = ℓ} {ℓT = ℓT} K TruthK ext stable {γ} tγ =
 -- Variant: many narratives phrase “stability” in terms of the kernel’s closure
 -- modality (`Box`) rather than the computational step (`FlowCode`).
 --
--- Since `FlowCode γ` and `Box (Body γ)` coincide on decoded meaning, any
+-- Since `FlowCode γ` and `BoxAt step (Body γ)` coincide on decoded meaning, any
 -- decode-extensional predicate can translate between the two.
 
 TruthK→Pr-BoxBody
@@ -156,7 +157,7 @@ TruthK→Pr-BoxBody
     (K : Kernel Sig Q)
     (TruthK : Kernel.Code K → Set ℓT)
   → Comm.DecodeExtensional′ K TruthK
-  → (∀ γ → TruthK γ ↔ TruthK (Box K (Kernel.Body K γ)))
+  → (∀ γ → TruthK γ ↔ TruthK (BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K γ)))
   → ∀ {γ} → TruthK γ → Comm.Pr {ℓC = ℓT} K TruthK γ
 TruthK→Pr-BoxBody {ℓ = ℓ} {ℓT = ℓT} K TruthK ext stableBoxBody {γ} tγ =
   TruthK→Pr {ℓ = ℓ} {ℓT = ℓT} K TruthK ext stableFlow {γ} tγ
@@ -228,7 +229,9 @@ DecodePreserving
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     (K : Kernel Sig Q)
   → (Kernel.Code K → Kernel.Code K) → Set ℓ
-DecodePreserving K f = ∀ γ → Kernel.decode K (f γ) ≡ Kernel.decode K γ
+DecodePreserving K f =
+  let open ForKernel K in
+  ∀ γ → f γ ≃K γ
 
 Pr-naturality
   : ∀ {ℓ ℓT ℓC}
@@ -239,12 +242,8 @@ Pr-naturality
   → DecodePreserving K f
   → ∀ {γ} → Comm.Pr {ℓC = ℓC} K TruthK γ ↔ Comm.Pr {ℓC = ℓC} K TruthK (f γ)
 Pr-naturality {ℓC = ℓC} K TruthK f pres {γ} =
+  let open ForKernel K in
   record
-    { to   = λ p → Comm.comm⋆-ext {ℓC = ℓC} K TruthK γ (f γ) (eq→≈ (sym (pres γ))) p
-    ; from = λ p → Comm.comm⋆-ext {ℓC = ℓC} K TruthK (f γ) γ (eq→≈ (pres γ)) p
+    { to   = λ p → Comm.comm⋆-ext {ℓC = ℓC} K TruthK γ (f γ) (≃K→≈K (sym (pres γ))) p
+    ; from = λ p → Comm.comm⋆-ext {ℓC = ℓC} K TruthK (f γ) γ (≃K→≈K (pres γ)) p
     }
-  where
-    CP = Comm.CodeCP K
-
-    eq→≈ : ∀ {c c' : ConPreorder.Con CP} → c ≡ c' → _≈CP_ CP c c'
-    eq→≈ eq rewrite eq = (ConPreorder.refl CP , ConPreorder.refl CP)

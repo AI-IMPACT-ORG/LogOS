@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,9 +13,9 @@ open import LogOS.Syntax.Prop using (_↔_)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
+open import LogOS.Minimal.World
 open import LogOS.Kernel
 open import LogOS.Kernel.Hom using (KernelHom)
-open import LogOS.Kernel.Initial using (InitialKernel)
 
 import LogOS.Theorems.CategoryTheory.Yoneda as Yoneda
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
@@ -30,13 +30,18 @@ open import LogOS.Domain.Opacity.NumberTheory.LFunction.ZerosPack using (GRH_Wit
 -- Canonical “Hasse-style” regulator generators live in the initial kernel’s code.
 -- They can then be interpreted in any kernel via the canonical fold map.
 
+WorldH
+  : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
+  → Set (lsuc ℓ)
+WorldH Sig Q = Worlds.WorldH Sig Q
+
 record HasseGenerator {ℓ : Level}
                       {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-                      (IK : InitialKernel Sig Q)
+                      (HWorld : WorldH Sig Q)
                       : Set (lsuc (lsuc ℓ)) where
   field
     Reg     : Set ℓ
-    mkTest₀ : Reg → Kernel.Code (InitialKernel.FreeK IK)
+    mkTest₀ : Reg → Kernel.Code (Yoneda.FreeK HWorld)
 
 open HasseGenerator public
 
@@ -44,16 +49,24 @@ open HasseGenerator public
 
 mkTest
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {IK : InitialKernel Sig Q}
+    {HWorld : WorldH Sig Q}
     (K : Kernel Sig Q)
-    (G : HasseGenerator IK)
+    (G : HasseGenerator HWorld)
   → Reg G → Kernel.Code K
-mkTest {IK = IK} K G r =
-  KernelHom.mapCode (InitialKernel.foldK IK K) (mkTest₀ G r)
+mkTest {HWorld = HWorld} K G r =
+  KernelHom.mapCode (Yoneda.foldK HWorld K) (mkTest₀ G r)
 
 -- Code relation: decoded mutual refinement (in the target kernel).
 
 infix 4 _≈decode_
+infix 4 _⊑decode_
+
+_⊑decode_
+  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+    (K : Kernel Sig Q)
+  → Kernel.Code K → Kernel.Code K → Set ℓ
+_⊑decode_ K γ₁ γ₂ =
+  ConPreorder._⊑_ (Comm.CodeCP K) (Kernel.decode K γ₁) (Kernel.decode K γ₂)
 
 _≈decode_
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -67,15 +80,15 @@ _≈decode_ K γ₁ γ₂ =
 
 mkTest-canonical
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : WorldH Sig Q)
     (K  : Kernel Sig Q)
-    (G  : HasseGenerator IK)
-    (h  : KernelHom (InitialKernel.FreeK IK) K)
+    (G  : HasseGenerator HWorld)
+    (h  : KernelHom (Yoneda.FreeK HWorld) K)
   → ∀ r →
-      _≈decode_ K (mkTest {IK = IK} K G r)
+      _≈decode_ K (mkTest {HWorld = HWorld} K G r)
                  (KernelHom.mapCode h (mkTest₀ G r))
-mkTest-canonical IK K G h r =
-  let eq = Yoneda.yoneda-morphism-decode IK K h
+mkTest-canonical HWorld K G h r =
+  let eq = Yoneda.yoneda-morphism-decode HWorld K h
   in ≡→≈CP {CP = Comm.CodeCP K} (eq (mkTest₀ G r))
 
 -- Practical corollary: any decode-extensional property on `K` holds of the
@@ -84,19 +97,19 @@ mkTest-canonical IK K G h r =
 
 mkTest-canonical-prop
   : ∀ {ℓ ℓP} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : WorldH Sig Q)
     (K  : Kernel Sig Q)
-    (G  : HasseGenerator IK)
-    (h  : KernelHom (InitialKernel.FreeK IK) K)
+    (G  : HasseGenerator HWorld)
+    (h  : KernelHom (Yoneda.FreeK HWorld) K)
     (P  : Kernel.Code K → Set ℓP)
   → Comm.DecodeExtensional′ K P
-  → ∀ r → P (mkTest {IK = IK} K G r) ↔ P (KernelHom.mapCode h (mkTest₀ G r))
-mkTest-canonical-prop IK K G h P extP r =
+  → ∀ r → P (mkTest {HWorld = HWorld} K G r) ↔ P (KernelHom.mapCode h (mkTest₀ G r))
+mkTest-canonical-prop HWorld K G h P extP r =
   record
-    { to   = λ pr → extP (mkTest {IK = IK} K G r) (KernelHom.mapCode h (mkTest₀ G r))
-                          (mkTest-canonical IK K G h r) pr
-    ; from = λ pr → extP (KernelHom.mapCode h (mkTest₀ G r)) (mkTest {IK = IK} K G r)
-                          (≈CP-sym {CP = Comm.CodeCP K} (mkTest-canonical IK K G h r)) pr
+    { to   = λ pr → extP (mkTest {HWorld = HWorld} K G r) (KernelHom.mapCode h (mkTest₀ G r))
+                          (mkTest-canonical HWorld K G h r) pr
+    ; from = λ pr → extP (KernelHom.mapCode h (mkTest₀ G r)) (mkTest {HWorld = HWorld} K G r)
+                          (≈CP-sym {CP = Comm.CodeCP K} (mkTest-canonical HWorld K G h r)) pr
     }
 
 -- Build a HasseObservableClass for the standard Pr-based observability semantics:
@@ -115,7 +128,7 @@ hasseObservableClass-fromPr
   → HOC.HasseObservableClass {ℓT = ℓ} {ℓW = ℓW} {ℓObs = (ℓ ⊔ ℓW ⊔ lsuc ℓC)} {ℓ≈ = ℓ}
       (MT.TruthPositivity-fromPr {ℓC = ℓC} K W-pos)
 hasseObservableClass-fromPr {ℓC = ℓC} K W-pos Reg mkT mkT-observable = record
-  { _≈_ = _≈decode_ K
+  { _⊑_ = _⊑decode_ K
   ; obs-resp = λ {t} {u} decEq obs →
       Comm.comm⋆-ext {ℓC = ℓC} K W-pos t u decEq obs
   ; Reg = Reg
@@ -128,17 +141,17 @@ hasseObservableClass-fromPr {ℓC = ℓC} K W-pos Reg mkT mkT-observable = recor
 
 factorise-via-fold
   : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : WorldH Sig Q)
     (K  : Kernel Sig Q)
-    (G  : HasseGenerator IK)
+    (G  : HasseGenerator HWorld)
     {S : Set ℓ}
     (probe : S → Kernel.Code K)
     (sel   : ∀ s → Reg G)
-    (h     : KernelHom (InitialKernel.FreeK IK) K)
+    (h     : KernelHom (Yoneda.FreeK HWorld) K)
   → (∀ s → _≈decode_ K (KernelHom.mapCode h (mkTest₀ G (sel s))) (probe s))
-  → ∀ s → _≈decode_ K (mkTest {IK = IK} K G (sel s)) (probe s)
-factorise-via-fold IK K G probe sel h fact s =
-  ≈CP-trans {CP = Comm.CodeCP K} (mkTest-canonical IK K G h (sel s)) (fact s)
+  → ∀ s → _≈decode_ K (mkTest {HWorld = HWorld} K G (sel s)) (probe s)
+factorise-via-fold HWorld K G probe sel h fact s =
+  ≈CP-trans {CP = Comm.CodeCP K} (mkTest-canonical HWorld K G h (sel s)) (fact s)
 
 -- If observability is defined as `Pr W-pos`, then observability of transported
 -- regulator tests is independent (up to decode) of the chosen morphism out of FreeK.
@@ -146,18 +159,18 @@ factorise-via-fold IK K G probe sel h fact s =
 mkTest-observable-viaHom
   : ∀ {ℓ ℓW ℓC}
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : WorldH Sig Q)
     (K  : Kernel Sig Q)
     (W-pos : Kernel.Code K → Set ℓW)
-    (G  : HasseGenerator IK)
-    (h  : KernelHom (InitialKernel.FreeK IK) K)
+    (G  : HasseGenerator HWorld)
+    (h  : KernelHom (Yoneda.FreeK HWorld) K)
   → (∀ r → Comm.Pr {ℓC = ℓC} K W-pos (KernelHom.mapCode h (mkTest₀ G r)))
-  → (∀ r → Comm.Pr {ℓC = ℓC} K W-pos (mkTest {IK = IK} K G r))
-mkTest-observable-viaHom {ℓC = ℓC} IK K W-pos G h obs r =
+  → (∀ r → Comm.Pr {ℓC = ℓC} K W-pos (mkTest {HWorld = HWorld} K G r))
+mkTest-observable-viaHom {ℓC = ℓC} HWorld K W-pos G h obs r =
   Comm.comm⋆-ext {ℓC = ℓC} K W-pos
     (KernelHom.mapCode h (mkTest₀ G r))
-    (mkTest {IK = IK} K G r)
-    (≈CP-sym {CP = Comm.CodeCP K} (mkTest-canonical IK K G h r))
+    (mkTest {HWorld = HWorld} K G r)
+    (≈CP-sym {CP = Comm.CodeCP K} (mkTest-canonical HWorld K G h r))
     (obs r)
 
 -- One-shot GRH_Without_Vacuity_Guards lemma: weak Weil criterion + Pr-based observability + Hasse-generator
@@ -166,25 +179,25 @@ mkTest-observable-viaHom {ℓC = ℓC} IK K W-pos G h obs r =
 GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator
   : ∀ {ℓ ℓW ℓC}
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : WorldH Sig Q)
     (K  : Kernel Sig Q)
     (RS : RiemannSpectral)
     (W-pos : Kernel.Code K → Set ℓW)
     (WC : WCL.WeilCriterionWeak RS (MT.TruthPositivity-fromPr {ℓC = ℓC} K W-pos))
-    (G  : HasseGenerator IK)
-    (mkTest-observable : ∀ r → Comm.Pr {ℓC = ℓC} K W-pos (mkTest {IK = IK} K G r))
+    (G  : HasseGenerator HWorld)
+    (mkTest-observable : ∀ r → Comm.Pr {ℓC = ℓC} K W-pos (mkTest {HWorld = HWorld} K G r))
     (sel : ∀ s → RiemannSpectral.NontrivialZero RS s → Reg G)
     (mkTest∘sel≈probe
       : ∀ s (nz : RiemannSpectral.NontrivialZero RS s)
-        → _≈decode_ K (mkTest {IK = IK} K G (sel s nz))
+        → _≈decode_ K (mkTest {HWorld = HWorld} K G (sel s nz))
                      (WCL.WeilCriterionWeak.probe WC s))
   → GRH_Without_Vacuity_Guards RS
-GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator {ℓ = ℓ} {ℓW = ℓW} {ℓC = ℓC} IK K RS W-pos WC G mkTest-observable sel mkTest∘sel≈probe =
+GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator {ℓ = ℓ} {ℓW = ℓW} {ℓC = ℓC} HWorld K RS W-pos WC G mkTest-observable sel mkTest∘sel≈probe =
   let
     TPo = MT.TruthPositivity-fromPr {ℓC = ℓC} K W-pos
     H : HOC.HasseObservableClass {ℓT = ℓ} {ℓW = ℓW} {ℓObs = (ℓ ⊔ ℓW ⊔ lsuc ℓC)} {ℓ≈ = ℓ}
           TPo
-    H = hasseObservableClass-fromPr {ℓC = ℓC} K W-pos (Reg G) (mkTest {IK = IK} K G) mkTest-observable
+    H = hasseObservableClass-fromPr {ℓC = ℓC} K W-pos (Reg G) (mkTest {HWorld = HWorld} K G) mkTest-observable
 
     probe-in-class
       : ∀ s → RiemannSpectral.NontrivialZero RS s
@@ -195,7 +208,7 @@ GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator {ℓ = ℓ} {ℓW 
   HOC.GRH_Without_Vacuity_Guards-from-weak-criterion+Hasse RS TPo WC H probe-in-class
 
 -- Specialization: if W-pos is itself decode-extensional and kernel-stable
--- (stable under `Box ∘ Body`),
+-- (stable under `BoxAt step ∘ Body`),
 -- then `mkTest-observable` can be replaced by plain truth on generated tests.
 -- 
 -- This packages the “stable truth is observable” step via `LP.TruthK→Pr-BoxBody`
@@ -204,24 +217,25 @@ GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator {ℓ = ℓ} {ℓW 
 GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator-stableTruth
   : ∀ {ℓ ℓW}
     {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (IK : InitialKernel Sig Q)
+    (HWorld : WorldH Sig Q)
     (K  : Kernel Sig Q)
     (RS : RiemannSpectral)
     (W-pos : Kernel.Code K → Set ℓW)
     (WC : WCL.WeilCriterionWeak RS (MT.TruthPositivity-fromPr {ℓC = ℓW} K W-pos))
-    (G  : HasseGenerator IK)
+    (G  : HasseGenerator HWorld)
     (W-ext : Comm.DecodeExtensional′ K W-pos)
-    (W-stableBoxBody : ∀ γ → W-pos γ ↔ W-pos (Box K (Kernel.Body K γ)))
-    (mkTest-true : ∀ r → W-pos (mkTest {IK = IK} K G r))
+    (W-stableBoxBody
+      : ∀ γ → W-pos γ ↔ W-pos (BoxAt K (GTier.step (Kernel.G K)) (Kernel.Body K γ)))
+    (mkTest-true : ∀ r → W-pos (mkTest {HWorld = HWorld} K G r))
     (sel : ∀ s → RiemannSpectral.NontrivialZero RS s → Reg G)
     (mkTest∘sel≈probe
       : ∀ s (nz : RiemannSpectral.NontrivialZero RS s)
-        → _≈decode_ K (mkTest {IK = IK} K G (sel s nz))
+        → _≈decode_ K (mkTest {HWorld = HWorld} K G (sel s nz))
                      (WCL.WeilCriterionWeak.probe WC s))
   → GRH_Without_Vacuity_Guards RS
-GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator-stableTruth {ℓW = ℓW} IK K RS W-pos WC G W-ext W-stableBoxBody mkTest-true sel mkTest∘sel≈probe =
-  GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator {ℓC = ℓW} IK K RS W-pos WC G mkTest-observable sel mkTest∘sel≈probe
+GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator-stableTruth {ℓW = ℓW} HWorld K RS W-pos WC G W-ext W-stableBoxBody mkTest-true sel mkTest∘sel≈probe =
+  GRH_Without_Vacuity_Guards-from-weak-criterion+HasseGenerator {ℓC = ℓW} HWorld K RS W-pos WC G mkTest-observable sel mkTest∘sel≈probe
   where
-    mkTest-observable : ∀ r → Comm.Pr {ℓC = ℓW} K W-pos (mkTest {IK = IK} K G r)
+    mkTest-observable : ∀ r → Comm.Pr {ℓC = ℓW} K W-pos (mkTest {HWorld = HWorld} K G r)
     mkTest-observable r =
       LP.TruthK→Pr-BoxBody K W-pos W-ext W-stableBoxBody (mkTest-true r)

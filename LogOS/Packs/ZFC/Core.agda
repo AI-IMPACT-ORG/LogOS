@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -20,17 +20,17 @@ packTrust : PackTrust
 packTrust = record { level = stable }
 
 -- Domain-level set theory (kernel-facing) surfaces.
-import LogOS.Domain.ZFC.SetTheory.DefinablePack         as DefinablePackₜ
-import LogOS.Domain.ZFC.SetTheory.Dsl                   as Dslₜ
-import LogOS.Domain.ZFC.SetTheory.ForcingInvariant      as ForcingInvariantₜ
-import LogOS.Domain.ZFC.SetTheory.FormulaPack           as FormulaPackₜ
-import LogOS.Domain.ZFC.SetTheory.FormulaFromDefinable  as FormulaFromDefinableₜ
-import LogOS.Domain.ZFC.SetTheory.FormulaDerived        as FormulaDerivedₜ
-import LogOS.Domain.ZFC.SetTheory.FullUpgradeFromDefinable as FullUpgradeFromDefinableₜ
-import LogOS.Domain.ZFC.SetTheory.Pack                  as Packₜ
-import LogOS.Domain.ZFC.SetTheory.LimitPack             as LimitPackₜ
-import LogOS.Domain.ZFC.SetTheory.Cumulative            as Cumulativeₜ
-import LogOS.Domain.ZFC.SetTheory.SchemaTheorems        as SchemaTheoremsₜ
+import LogOS.ZFC.SetTheory.DefinablePack         as DefinablePackₜ
+import LogOS.ZFC.SetTheory.Dsl                   as Dslₜ
+import LogOS.ZFC.SetTheory.ForcingInvariant      as ForcingInvariantₜ
+import LogOS.ZFC.SetTheory.FormulaPack           as FormulaPackₜ
+import LogOS.ZFC.SetTheory.FormulaFromDefinable  as FormulaFromDefinableₜ
+import LogOS.ZFC.SetTheory.FormulaDerived        as FormulaDerivedₜ
+import LogOS.ZFC.SetTheory.FullUpgradeFromDefinable as FullUpgradeFromDefinableₜ
+import LogOS.ZFC.SetTheory.Pack                  as Packₜ
+import LogOS.ZFC.SetTheory.LimitPack             as LimitPackₜ
+import LogOS.ZFC.SetTheory.Cumulative            as Cumulativeₜ
+import LogOS.ZFC.SetTheory.SchemaTheorems        as SchemaTheoremsₜ
 
 module SetTheory where
   module DefinablePack = DefinablePackₜ

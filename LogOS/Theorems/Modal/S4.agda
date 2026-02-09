@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,9 +19,8 @@ open import LogOS.Minimal.Closure using (ClosureOp)
 import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel using (Kernel; BoxClosure)
-open import LogOS.Kernel.Core as KCore hiding (FlowCode)
+open import LogOS.Kernel.Shape as KCore hiding (FlowCode)
 open import LogOS.Kernel.Graded using (GradedKernel) renaming (BoxClosure to BoxClosureG)
-open import LogOS.Kernel.LogicKernel using (LogicKernel) renaming (BoxClosure to BoxClosureLK)
 
 open import LogOS.Theorems.Reflection.Projector using (Projector; ProjectorMono; projectorMonoOfClosureOp)
 
@@ -170,12 +169,6 @@ fromGradedKernelBox
     (K : GradedKernel Sig Q)
   → S4Modality (KCore.CodePreorder (GradedKernel.shape K))
 fromGradedKernelBox K = fromClosureOp (BoxClosureG K)
-
-fromLogicKernelBox
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    (K : LogicKernel Sig Q)
-  → S4Modality (KCore.CodePreorder (LogicKernel.shape K))
-fromLogicKernelBox K = fromClosureOp (BoxClosureLK K)
 
 -- Round-trip simp lemmas ------------------------------------------------------
 

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
-open import LogOS.Kernel.LogicKernel using (LogicKernel)
+open import LogOS.Kernel using (Kernel)
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 import LogOS.Packs.Agents.Learning.Core as LearningCore
@@ -32,7 +32,7 @@ module For
   open L using (Policy; LearningStep; learnStep; learnStep-infl)
 
   private
-    CP = BulkBoundary.bnd (LogicKernel.BB LK)
+    CP = BulkBoundary.bnd (Kernel.BB LK)
 
   preservesLowerBound
     : ∀ {c p}

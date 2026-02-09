@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -14,6 +14,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 cd "${LIB_ROOT}"
+
+# This check relies on ripgrep’s stable regex + glob semantics.
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+
+# shellcheck source=lib/docs_agda_blocks.sh
+source "${SCRIPT_DIR}/lib/docs_agda_blocks.sh"
 
 # Policy:
 # - `LogOS/Host/**` is the host-wrapper layer.
@@ -37,33 +43,18 @@ filter_allowed() {
 scan_imports() {
   local pattern="$1"
 
-  if command -v rg >/dev/null 2>&1; then
-    local out status
-    set +e
-    out="$(rg -n --glob '*.agda' --glob '!_build/**' -- "${pattern}" . 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'rg error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
-  else
-    local out status
-    set +e
-    out="$(grep -RIn --include='*.agda' --exclude-dir='_build' -E -- "${pattern}" . 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'grep error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
+  local out status
+  set +e
+  out="$(rg -n --glob '*.agda' --glob '!_build/**' -- "${pattern}" . 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
 }
 
 HOST_IMPORT_PATTERN='^[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+LogOS\\.Host\\.'
@@ -71,6 +62,12 @@ HOST_IMPORT_PATTERN='^[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+Log
 bad_imports="$(scan_imports "${HOST_IMPORT_PATTERN}" | filter_allowed)"
 if [[ -n "${bad_imports}" ]]; then
   die $'found direct `LogOS.Host.*` imports outside the Prelude bridge:\n'"${bad_imports}"$'\n\n'"Allowed locations: LogOS/Host/** and LogOS/Prelude(.agda|/**)."
+fi
+
+# Docs parity: forbid direct Host imports inside docs/*.lagda.md Agda code blocks.
+docs_bad_imports="$(docs_scan_agda_blocks | grep -E '^[^:]+:[0-9]+:[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+LogOS\\.Host\\.' || true)"
+if [[ -n "${docs_bad_imports}" ]]; then
+  die $'found direct `LogOS.Host.*` imports in docs (Agda code blocks):\n'"${docs_bad_imports}"$'\n\nDocs should import `LogOS.Prelude` / API surfaces, not Host shims directly.'
 fi
 
 echo "host-import-check: OK"

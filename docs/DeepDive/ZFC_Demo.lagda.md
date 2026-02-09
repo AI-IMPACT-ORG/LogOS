@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -12,10 +12,10 @@ module docs.DeepDive.ZFC_Demo where
 
 open import LogOS.Prelude
 
-open import LogOS.Domain.ZFC.SetTheory.FormulaPack using (ZFAxiomsᶠ)
-import LogOS.Domain.ZFC.SetTheory.FormulaDerived as FormulaDerived
-import LogOS.Domain.ZFC.SetTheory.Dsl
-import LogOS.Domain.ZFC.SetTheory.StageToCHFromHierarchy
+open import LogOS.ZFC.SetTheory.FormulaPack using (ZFAxiomsᶠ)
+import LogOS.ZFC.SetTheory.FormulaDerived as FormulaDerived
+import LogOS.ZFC.SetTheory.Dsl
+import LogOS.ZFC.SetTheory.StageToCHFromHierarchy
 import LogOS.Packs.ZFC.WFGraph as ZFCPack
 ```
 
@@ -25,7 +25,7 @@ recognisable ZF reasoning (singleton, binary union, membership ↔-laws)
 All `↔`-laws here live inside that formula-pack satisfaction interface (`ZFAxiomsᶠ`); they are not a claim of a single global satisfaction relation over sets.
 
 For the forcing-like boundary closure (Flow/μFlow) that ties ZF back to the kernel,
-see `LogOS/Domain/ZFC/SetTheory/Dsl.agda` and `LogOS/Domain/ZFC/SetTheory/StageToCHFromHierarchy.agda`.
+see `LogOS/ZFC/SetTheory/Dsl.agda` and `LogOS/ZFC/SetTheory/StageToCHFromHierarchy.agda`.
 This demo stays strictly inside the formula-pack surface.
 
 ## Minimal derived constructions (formula-pack ZF)

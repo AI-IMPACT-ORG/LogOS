@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.Assumptions.ZFC where
 
--- Math bundle: ZF/ZFC interfaces over the shared LogicKernel core.
+-- Math bundle: ZF/ZFC interfaces over the shared Kernel core.
 --
 -- Notes:
 -- - The ZF/ZFC packs depend only on the kernel *shape* (code/decode), so we
@@ -18,7 +18,7 @@ module LogOS.Packs.Assumptions.ZFC where
 open import LogOS.Prelude
 
 open import LogOS.API.Assumptions.Core
-open import LogOS.Domain.ZFC.SetTheory.Pack as SetTheory using (ZFAxioms; ZFCAxioms)
+open import LogOS.ZFC.SetTheory.Pack as SetTheory using (ZFAxioms; ZFCAxioms)
 
 record ZFBundle {ℓ : Level} (C : LogicCore {ℓ}) : Set (lsuc (lsuc ℓ)) where
   field

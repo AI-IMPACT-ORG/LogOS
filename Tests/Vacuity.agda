@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,9 +11,9 @@ module Tests.Vacuity where
 
 import LogOS.Domain.Opacity.Meaningfulness
 import LogOS.Domain.Opacity.GRH_Vacuity_Guards
-import LogOS.Domain.Complexity.ProofSearchOpacitySpine
+import LogOS.Complexity.ProofSearchOpacitySpine
 import LogOS.Packs.Agents.Safety.Meaningfulness
-import LogOS.Kernel.LogicKernel.VacuityGuards
+import LogOS.Boundary.KernelVacuityGuards
 import LogOS.QAdapters.Guards
 import LogOS.Theorems.Meta.ObserverCore
 import LogOS.Ports.Semantic.VacuityGuards

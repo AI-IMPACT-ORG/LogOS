@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -44,6 +44,18 @@ refinement discipline) centralized in shared anchors.
 - **Micro-example/diagram:** one worked mini-pattern (commuting square, inference
   rule, closure transport, etc.) that makes the view “feel real” without
   duplicating proofs.
+
+Residual-boundary sharpening heuristic
+--------------------------------------
+When a view uses “presentation independence”, prefer stating it as:
+
+1. choose a boundary residual map `ρ`,
+2. define predicates/theorems on `ρ (decode γ)` (not raw representations),
+3. prove transport along residual equality,
+4. list the residual that is *not* quotienting away (the intended boundary cut).
+
+This keeps claims strong enough to be useful while avoiding accidental
+architecture-specific commitments.
 
 Some views are intentionally ultra-compact (e.g. Meredith sentences): the goal
 is still the same—an expert-facing adapter note with checkable anchors—just

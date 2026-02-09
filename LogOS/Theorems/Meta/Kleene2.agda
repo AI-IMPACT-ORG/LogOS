@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -21,15 +21,16 @@ module LogOS.Theorems.Meta.Kleene2 where
 -- diagonalisation and Löb. Here we re-expose it under the Kleene-2 name, with
 -- two variants:
 -- - preorder/lax form: mutual refinement (⊑ both ways)
--- - partial-order form: decode-level equality (≡)
+-- - partial-order form: strict decoded meaning (`≃K`)
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (Σ; _,_; _×_)
+open import LogOS.Prelude using (Σ; _,_; _×_)
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary; BulkBoundaryPO)
 open import LogOS.Kernel using (Kernel)
+open import LogOS.Kernel.Eq using (module ForKernel)
 
 open import LogOS.Theorems.Meta.Assumptions.Diagonal as Diag
   using
@@ -79,13 +80,12 @@ module For
     : BulkBoundaryPO BB
     → InternalHomWitness K
     → (f : Code → Code)
-    → Σ Code (λ s → decode s ≡ decode (f s))
+    → Σ Code (λ s → ForKernel._≃K_ K s (f s))
   Kleene2-≡ = lawvereFix≡ {K = K}
 
   diag-≡
     : BulkBoundaryPO BB
     → (IH : InternalHomWitness K)
     → (f : Code → Code)
-    → decode (diag IH f) ≡ decode (f (diag IH f))
+    → ForKernel._≃K_ K (diag IH f) (f (diag IH f))
   diag-≡ po = lawvereDiag≡ {K = K} po
-

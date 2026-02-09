@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,47 +8,48 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.API.Assumptions.Core where
 
 -- Shared “logic core” for domain assumption bundles:
--- a single `LogicKernel` instance (Curry–Howard–Lambek view), plus the derived
+-- a single `Kernel` instance (Curry–Howard–Lambek view), plus the derived
 -- kernel *shape* (`KernelLike`) for components that only talk about code/decode.
 
 open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Kernel.LogicKernel using (LogicKernel)
-open import LogOS.Kernel using (Kernel; KernelLike; kernelLike-fromLogicKernel)
-open import LogOS.Kernel.Graded using (GradedKernel)
-import LogOS.Kernel.LogicKernel.FromKernel as LKFromKernel
-import LogOS.Kernel.LogicKernel.FromGradedKernel as LKFromGraded
+
+open import LogOS.Kernel using (Kernel; KernelLike; kernelLike-fromKernel)
+import LogOS.Kernel.UngradedKernel as UK
+import LogOS.Kernel.Graded as GK
+import LogOS.Kernel.FromUngradedKernel as FromU
+import LogOS.Kernel.FromGradedKernel as FromG
 
 record LogicCore {ℓ : Level} : Set (lsuc (lsuc ℓ)) where
   field
     Sig : LogOSSignature ℓ
     Q   : QAdapter ℓ
-    K   : LogicKernel Sig Q
+    K   : Kernel Sig Q
 
   KLike : KernelLike Sig Q
-  KLike = kernelLike-fromLogicKernel K
+  KLike = kernelLike-fromKernel K
 
 open LogicCore public
-
-coreFromLogicKernel
-  : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-  → LogicKernel Sig Q
-  → LogicCore {ℓ}
-coreFromLogicKernel {Sig = Sig} {Q = Q} K =
-  record { Sig = Sig ; Q = Q ; K = K }
 
 coreFromKernel
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
   → Kernel Sig Q
   → LogicCore {ℓ}
 coreFromKernel {Sig = Sig} {Q = Q} K =
-  record { Sig = Sig ; Q = Q ; K = LKFromKernel.asLogicKernel K }
+  record { Sig = Sig ; Q = Q ; K = K }
+
+coreFromUngradedKernel
+  : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
+  → UK.UngradedKernel Sig Q
+  → LogicCore {ℓ}
+coreFromUngradedKernel {Sig = Sig} {Q = Q} K =
+  record { Sig = Sig ; Q = Q ; K = FromU.asKernel K }
 
 coreFromGradedKernel
   : ∀ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-  → GradedKernel Sig Q
+  → GK.GradedKernel Sig Q
   → LogicCore {ℓ}
 coreFromGradedKernel {Sig = Sig} {Q = Q} K =
-  record { Sig = Sig ; Q = Q ; K = LKFromGraded.asLogicKernel K }
+  record { Sig = Sig ; Q = Q ; K = FromG.asKernel K }

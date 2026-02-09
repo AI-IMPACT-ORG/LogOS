@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -23,23 +23,45 @@ module LogOS.Theorems.Meta.CQM where
 --   (c) a kernel-level endomap DSL.
 --
 -- Design choice (LogOS-aligned):
--- - morphism equality is pointwise logical equivalence (`↔`) to avoid
---   function extensionality and keep “observational equality” explicit.
+-- - morphism equality is mutual refinement (two-way implication) in a preorder,
+--   with pointwise logical equivalence (`↔`) kept as a presentation layer.
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_; intro)
 
-open import LogOS.Prelude.Product using (_×_; Σ; _,_)
+open import LogOS.Prelude using (_×_; Σ; _,_)
 
--- Relations (Set-valued) and observational equality.
+-- Relations (Set-valued) and relational refinement/equivalence.
 
 Rel : ∀ {ℓA ℓB ℓR : Level} → Set ℓA → Set ℓB → Set (ℓA ⊔ ℓB ⊔ lsuc ℓR)
 Rel {ℓR = ℓR} A B = A → B → Set ℓR
 
-infix 3 _≈Rel_
+infix 4 _⊑Rel_ _≈Rel_ ObsEqRel
+
+_⊑Rel_ : ∀ {ℓA ℓB ℓR} {A : Set ℓA} {B : Set ℓB}
+       → Rel {ℓR = ℓR} A B → Rel {ℓR = ℓR} A B → Set (ℓA ⊔ ℓB ⊔ ℓR)
+R ⊑Rel S = ∀ a b → R a b → S a b
+
 _≈Rel_ : ∀ {ℓA ℓB ℓR} {A : Set ℓA} {B : Set ℓB}
        → Rel {ℓR = ℓR} A B → Rel {ℓR = ℓR} A B → Set (ℓA ⊔ ℓB ⊔ ℓR)
-R ≈Rel S = ∀ a b → R a b ↔ S a b
+R ≈Rel S = (R ⊑Rel S) × (S ⊑Rel R)
+
+-- Presentation alias: pointwise equivalence (`↔`) of relation fibers.
+ObsEqRel : ∀ {ℓA ℓB ℓR} {A : Set ℓA} {B : Set ℓB}
+         → Rel {ℓR = ℓR} A B → Rel {ℓR = ℓR} A B → Set (ℓA ⊔ ℓB ⊔ ℓR)
+ObsEqRel R S = ∀ a b → R a b ↔ S a b
+
+ObsEqRel↔≈Rel
+  : ∀ {ℓA ℓB ℓR} {A : Set ℓA} {B : Set ℓB}
+    {R S : Rel {ℓR = ℓR} A B}
+  → ObsEqRel R S ↔ (R ≈Rel S)
+ObsEqRel↔≈Rel {R = R} {S = S} =
+  intro
+    (λ eq →
+      ( (λ a b r → _↔_.to (eq a b) r)
+      , (λ a b s → _↔_.from (eq a b) s)
+      ))
+    (λ (rs , sr) a b → intro (rs a b) (sr a b))
 
 -- A dagger symmetric monoidal category interface (explicit associator/unitors).
 -- This is a minimal “CQM core” that can be instantiated by several LogOS layers.
@@ -50,8 +72,30 @@ record DaggerSMC
   : Set (lsuc (ℓO ⊔ ℓH ⊔ ℓEq)) where
   field
     Hom : Obj → Obj → Set ℓH
-    _≈_ : ∀ {A B} → Hom A B → Hom A B → Set ℓEq
 
+    -- Primitive notion: refinement (a preorder on each hom-set).
+    _⊑_    : ∀ {A B} → Hom A B → Hom A B → Set ℓEq
+    refl⊑  : ∀ {A B} (f : Hom A B) → f ⊑ f
+    trans⊑ : ∀ {A B} {f g h : Hom A B} → f ⊑ g → g ⊑ h → f ⊑ h
+
+  -- Derived: mutual refinement.
+  infix 3 _≈_
+  _≈_ : ∀ {A B} → Hom A B → Hom A B → Set ℓEq
+  f ≈ g = (f ⊑ g) × (g ⊑ f)
+
+  refl≈ : ∀ {A B} (f : Hom A B) → f ≈ f
+  refl≈ f = refl⊑ f , refl⊑ f
+
+  sym≈ : ∀ {A B} {f g : Hom A B} → f ≈ g → g ≈ f
+  sym≈ (fg , gf) = gf , fg
+
+  trans≈ : ∀ {A B} {f g h : Hom A B} → f ≈ g → g ≈ h → f ≈ h
+  trans≈ {f = f} {g = g} {h = h} (fg , gf) (gh , hg) =
+    trans⊑ {f = f} {g = g} {h = h} fg gh
+    ,
+    trans⊑ {f = h} {g = g} {h = f} hg gf
+
+  field
     id  : ∀ {A} → Hom A A
     _∘_ : ∀ {A B C} → Hom B C → Hom A B → Hom A C
 
@@ -101,7 +145,7 @@ record DaggerSMC
   infixr 9 _∘_
   infixl 7 _⊗₀_
   infixl 7 _⊗₁_
-  infix  3 _≈_
+  infix  4 _⊑_
   infixl 10 _†
 
 open DaggerSMC public
@@ -153,7 +197,9 @@ RelDaggerSMC {ℓ} =
   in
   record
     { Hom = λ A B → Rel {ℓR = ℓ} A B
-    ; _≈_ = λ {A} {B} R S → R ≈Rel S
+    ; _⊑_ = λ {A} {B} R S → R ⊑Rel S
+    ; refl⊑ = λ {A} {B} R a b rab → rab
+    ; trans⊑ = λ {A} {B} {R} {S} {T} rs st a b rab → st a b (rs a b rab)
     ; id  = λ a b → a ≡ b
     ; _∘_ = λ {A} {B} {C} S R a c → Σ B (λ b → R a b × S b c)
 
@@ -170,77 +216,107 @@ RelDaggerSMC {ℓ} =
 
     ; _† = λ {A} {B} R b a → R a b
 
-    ; assoc = λ {A} {B} {C} {D} h g f a d →
-        intro
-          (λ { (c , ((b , (fab , gbc)) , hcd)) → (b , (fab , (c , (gbc , hcd)))) })
-          (λ { (b , (fab , (c , (gbc , hcd)))) → (c , ((b , (fab , gbc)) , hcd)) })
-    ; idl = λ {A} {B} f a b →
-        intro
-          (λ { (m , (fab , m≡b)) → subst (λ x → f a x) m≡b fab })
-          (λ fab → (b , (fab , refl)))
-    ; idr = λ {A} {B} f a b →
-        intro
-          (λ { (m , (a≡m , fmb)) → subst (λ x → f x b) (sym a≡m) fmb })
-          (λ fab → (a , (refl , fab)))
+    ; assoc = λ {A} {B} {C} {D} h g f →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ a d →
+            intro
+              (λ { (c , ((b , (fab , gbc)) , hcd)) → (b , (fab , (c , (gbc , hcd)))) })
+              (λ { (b , (fab , (c , (gbc , hcd)))) → (c , ((b , (fab , gbc)) , hcd)) }))
+    ; idl = λ {A} {B} f →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ a b →
+            intro
+              (λ { (m , (fab , m≡b)) → subst (λ x → f a x) m≡b fab })
+              (λ fab → (b , (fab , refl))))
+    ; idr = λ {A} {B} f →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ a b →
+            intro
+              (λ { (m , (a≡m , fmb)) → subst (λ x → f x b) (sym a≡m) fmb })
+              (λ fab → (a , (refl , fab))))
 
-    ; ⊗-id = λ {A} {B} (a₁ , b₁) (a₂ , b₂) →
-        intro
-          (λ { (aa , bb) → cong₂ _,_ aa bb })
-          (λ eq → (cong fst eq , cong snd eq))
-    ; interchange = λ {A} {B} {C} {D} {E} {F} f₁ f₂ g₁ g₂ (a , c) (e , f) →
-        intro
-          (λ { ((b , (f₁ab , g₁be)) , (d , (f₂cd , g₂df))) → ((b , d) , ((f₁ab , f₂cd) , (g₁be , g₂df))) })
-          (λ { ((b , d) , ((f₁ab , f₂cd) , (g₁be , g₂df))) → ((b , (f₁ab , g₁be)) , (d , (f₂cd , g₂df))) })
+    ; ⊗-id = λ {A} {B} →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ (a₁ , b₁) (a₂ , b₂) →
+            intro
+              (λ { (aa , bb) → cong₂ _,_ aa bb })
+              (λ eq → (cong fst eq , cong snd eq)))
+    ; interchange = λ {A} {B} {C} {D} {E} {F} f₁ f₂ g₁ g₂ →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ (a , c) (e , f) →
+            intro
+              (λ { ((b , (f₁ab , g₁be)) , (d , (f₂cd , g₂df))) →
+                    ((b , d) , ((f₁ab , f₂cd) , (g₁be , g₂df))) })
+              (λ { ((b , d) , ((f₁ab , f₂cd) , (g₁be , g₂df))) →
+                    ((b , (f₁ab , g₁be)) , (d , (f₂cd , g₂df))) }))
 
-    ; α-isoL = λ {A} {B} {C} x y →
-        intro
-          (λ { (m , (mEq , yEq)) →
-                let
-                  assocm≡x : assoc× m ≡ x
-                  assocm≡x = trans (cong assoc× mEq) (assoc-unassoc x)
-                in
-                trans (sym assocm≡x) (sym yEq)
-            })
-          (λ eq → (unassoc× x , (refl , trans (sym eq) (sym (assoc-unassoc x)))))
-    ; α-isoR = λ {A} {B} {C} x y →
-        intro
-          (λ { (m , (mEq , yEq)) →
-                let
-                  unassocm≡x : unassoc× m ≡ x
-                  unassocm≡x = trans (cong unassoc× mEq) (unassoc-assoc x)
-                in
-                trans (sym unassocm≡x) (sym yEq)
-            })
-          (λ eq → (assoc× x , (refl , trans (sym eq) (sym (unassoc-assoc x)))))
-    ; λ-isoL = λ {A} a a' →
-        intro
-          (λ { (m , (mEq , eq)) → sym (trans eq (cong unitorL mEq)) })
-          (λ eq → (unitorL⁻¹ a , (refl , sym eq)))
-    ; λ-isoR = λ {A} x y →
-        intro
-          (λ { (m , (mEq , eq)) →
-                sym (trans (trans eq (cong unitorL⁻¹ mEq)) (unitorL-iso' x))
-            })
-          (λ eq → (unitorL x , (refl , trans (sym eq) (sym (unitorL-iso' x)))))
-    ; ρ-isoL = λ {A} a a' →
-        intro
-          (λ { (m , (mEq , eq)) → sym (trans eq (cong unitorR mEq)) })
-          (λ eq → (unitorR⁻¹ a , (refl , sym eq)))
-    ; ρ-isoR = λ {A} x y →
-        intro
-          (λ { (m , (mEq , eq)) →
-                sym (trans (trans eq (cong unitorR⁻¹ mEq)) (unitorR-iso' x))
-            })
-          (λ eq → (unitorR x , (refl , trans (sym eq) (sym (unitorR-iso' x)))))
+    ; α-isoL = λ {A} {B} {C} →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ x y →
+            intro
+              (λ { (m , (mEq , yEq)) →
+                    let
+                      assocm≡x : assoc× m ≡ x
+                      assocm≡x = trans (cong assoc× mEq) (assoc-unassoc x)
+                    in
+                    trans (sym assocm≡x) (sym yEq)
+                })
+              (λ eq → (unassoc× x , (refl , trans (sym eq) (sym (assoc-unassoc x)))) ))
+    ; α-isoR = λ {A} {B} {C} →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ x y →
+            intro
+              (λ { (m , (mEq , yEq)) →
+                    let
+                      unassocm≡x : unassoc× m ≡ x
+                      unassocm≡x = trans (cong unassoc× mEq) (unassoc-assoc x)
+                    in
+                    trans (sym unassocm≡x) (sym yEq)
+                })
+              (λ eq → (assoc× x , (refl , trans (sym eq) (sym (unassoc-assoc x)))) ))
+    ; λ-isoL = λ {A} →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ a a' →
+            intro
+              (λ { (m , (mEq , eq)) → sym (trans eq (cong unitorL mEq)) })
+              (λ eq → (unitorL⁻¹ a , (refl , sym eq))) )
+    ; λ-isoR = λ {A} →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ x y →
+            intro
+              (λ { (m , (mEq , eq)) →
+                    sym (trans (trans eq (cong unitorL⁻¹ mEq)) (unitorL-iso' x))
+                })
+              (λ eq → (unitorL x , (refl , trans (sym eq) (sym (unitorL-iso' x)))) ))
+    ; ρ-isoL = λ {A} →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ a a' →
+            intro
+              (λ { (m , (mEq , eq)) → sym (trans eq (cong unitorR mEq)) })
+              (λ eq → (unitorR⁻¹ a , (refl , sym eq))) )
+    ; ρ-isoR = λ {A} →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ x y →
+            intro
+              (λ { (m , (mEq , eq)) →
+                    sym (trans (trans eq (cong unitorR⁻¹ mEq)) (unitorR-iso' x))
+                })
+              (λ eq → (unitorR x , (refl , trans (sym eq) (sym (unitorR-iso' x)))) ))
 
-    ; †-invol = λ {A} {B} R a b → intro (λ x → x) (λ x → x)
-    ; †-comp = λ {A} {B} {C} g f a c →
-        intro
-          (λ { (b , (fab , gbc)) → (b , (gbc , fab)) })
-          (λ { (b , (gbc , fab)) → (b , (fab , gbc)) })
-    ; †-id = λ {A} a b → intro sym sym
-    ; †-⊗ = λ {A} {B} {C} {D} f g (b , d) (a , c) →
-        intro
-          (λ { (fba , gdc) → (fba , gdc) })
-          (λ { (fba , gdc) → (fba , gdc) })
+    ; †-invol = λ {A} {B} R →
+        _↔_.to ObsEqRel↔≈Rel (λ _ _ → intro (λ x → x) (λ x → x))
+    ; †-comp = λ {A} {B} {C} g f →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ a c →
+            intro
+              (λ { (b , (fab , gbc)) → (b , (gbc , fab)) })
+              (λ { (b , (gbc , fab)) → (b , (fab , gbc)) }))
+    ; †-id = λ {A} →
+        _↔_.to ObsEqRel↔≈Rel (λ _ _ → intro sym sym)
+    ; †-⊗ = λ {A} {B} {C} {D} f g →
+        _↔_.to ObsEqRel↔≈Rel
+          (λ (b , d) (a , c) →
+            intro
+              (λ { (fba , gdc) → (fba , gdc) })
+              (λ { (fba , gdc) → (fba , gdc) }))
     }

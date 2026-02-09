@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,8 +11,8 @@ module LogOS.Theorems.Laws.FiniteKernel.H where
 -- Proven from the initial/free construction with no additional postulates.
 
 open import LogOS.Prelude
-open import LogOS.Algebra.ConAlg
-open import LogOS.Free.Constraints
+open import LogOS.Minimal.ConAlg
+open import LogOS.Minimal.Constraints
 
 -- Fold from the free constraint algebra preserves generated preorders.
 

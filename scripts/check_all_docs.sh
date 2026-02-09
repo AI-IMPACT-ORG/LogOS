@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -19,6 +19,8 @@ AGDA="${AGDA:-agda}"
 AGDA_FLAGS="${AGDA_FLAGS:---no-libraries -i . --safe}"
 AGDA_WARN_FLAGS="${AGDA_WARN_FLAGS:--W all -W error}"
 
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+
 BUILD_DIR="_build/CheckAll"
 MODULE_FILE="${BUILD_DIR}/AllDocs.agda"
 MODULE_LIST="${BUILD_DIR}/AllDocs.modules"
@@ -26,21 +28,18 @@ MODULE_LIST="${BUILD_DIR}/AllDocs.modules"
 mkdir -p "${BUILD_DIR}"
 : > "${MODULE_LIST}"
 
-if command -v rg >/dev/null 2>&1; then
-  while IFS= read -r -d '' f; do
-    f="${f#./}"
-    mod="${f%.lagda.md}"
-    mod="${mod//\//.}"
-    printf '%s\n' "${mod}" >> "${MODULE_LIST}"
-  done < <(rg --files -0 -g '*.lagda.md' -g '!_build/**')
-else
-  while IFS= read -r -d '' f; do
-    f="${f#./}"
-    mod="${f%.lagda.md}"
-    mod="${mod//\//.}"
-    printf '%s\n' "${mod}" >> "${MODULE_LIST}"
-  done < <(find . -type f -name '*.lagda.md' -not -path './_build/*' -print0)
-fi
+while IFS= read -r -d '' f; do
+  f="${f#./}"
+  mod="${f%.lagda.md}"
+  mod="${mod//\//.}"
+  printf '%s\n' "${mod}" >> "${MODULE_LIST}"
+done < <(
+  rg --files -0 --hidden \
+    --glob '*.lagda.md' \
+    --glob '!_build/**' \
+    --glob '!.git/**' \
+    --glob '!.agda/**'
+)
 
 if [[ ! -s "${MODULE_LIST}" ]]; then
   die "no .lagda.md files found"

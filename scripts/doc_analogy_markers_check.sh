@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -21,6 +21,28 @@ DOC_ROOTS=("docs" "LogOS")
 TOKENS_REGEX='(\\bRG\\b|\\bCFT\\b|thermo|renormal|regulari[sz]e|holograph|Maxwell|black[[:space:]]+hole|physics|neural|transformer|LLM\\b)'
 MARKER_REGEX='(Interpretation[[:space:]]*\\(analogy\\)|Analogy[[:space:]]*/[[:space:]]*interpretation|Interpretation[^\\n]*analogy)'
 
+die() {
+  echo "doc-analogy-markers-check: $*" >&2
+  exit 1
+}
+
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+
+rg_capture() {
+  local out status
+  set +e
+  out="$(rg "$@" 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
+  fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
+}
+
 has_root=0
 for root in "${DOC_ROOTS[@]}"; do
   if [ -d "$root" ]; then
@@ -37,17 +59,25 @@ fi
 bad=""
 
 while IFS= read -r file; do
-  if grep -Eiq "$TOKENS_REGEX" "$file" 2>/dev/null; then
-    if ! grep -Eiq "$MARKER_REGEX" "$file" 2>/dev/null; then
-      bad="${bad}${file}"$'\n'
-    fi
+  [[ -z "$file" ]] && continue
+  out=""
+  status=0
+  set +e
+  out="$(rg -iq -- "$MARKER_REGEX" "$file" 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
+  fi
+  if [[ "$status" -eq 1 ]]; then
+    bad="${bad}${file}"$'\n'
   fi
 done < <(
-  for root in "${DOC_ROOTS[@]}"; do
-    if [ -d "$root" ]; then
-      find "$root" -type f \( -name '*.md' -o -name '*.lagda.md' \) -print 2>/dev/null
-    fi
-  done | sort
+  rg_capture -l -i \
+    --glob '*.md' \
+    --glob '*.lagda.md' \
+    --glob '!**/_build/**' \
+    -- "$TOKENS_REGEX" "${DOC_ROOTS[@]}" | sort -u
 )
 
 if [ -n "$bad" ]; then

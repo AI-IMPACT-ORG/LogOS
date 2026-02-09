@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,7 +15,7 @@ open import LogOS.Boundary.Port using (BoundaryPort)
 open import LogOS.Syntax.Prop as Prop
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
-import LogOS.Kernel.LogicKernel.Endo as LKEndo
+import LogOS.Kernel.Endo as LKEndo
 import LogOS.Packs.Agents.EndoSurface as EndoSurface
 import LogOS.Ports.Semantic.Interoperability as Interop
 

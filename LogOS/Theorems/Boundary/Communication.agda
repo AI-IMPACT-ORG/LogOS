@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,7 +19,7 @@ open import LogOS.Minimal.Truth as Truth
 open import LogOS.Syntax.Prop as Prop
 
 open import LogOS.Kernel
-open import LogOS.Kernel.Boundary
+open import LogOS.Boundary.FromKernel
 open import LogOS.Boundary.IO
 open import LogOS.Boundary.Semantics
 
@@ -39,10 +39,8 @@ module ForKernel
     B : _
     B = boundaryIO K
 
-    module GT₀ = Truth.GuardedTruth Sig Q
-
     Flow∂ : _
-    Flow∂ = GT₀.GuardedClosure.Flow GTruth
+    Flow∂ = GTier.Flow G (GTier.step G)
 
   -- One-shot “operationalisation”: strict truth transports to an external
   -- boundary form through the kernel’s translation/coherence and the supplied
@@ -132,7 +130,7 @@ Code→Form-FlowCode
     (γ : Kernel.Code K)
   → Code→Form K S (FlowCode K γ)
     ≡ BoundarySemantics.Interp S
-        ((let module GT = Truth.GuardedTruth Sig Q in GT.GuardedClosure.Flow (Kernel.GTruth K))
+        (GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K))
           (Kernel.Body∂ K (Kernel.decode K γ)))
 Code→Form-FlowCode K S γ = ForKernel.Code→Form-FlowCode K S γ
 
@@ -148,7 +146,7 @@ Code→Form-FlowCode-Sat
       (BoundarySemantics.SatF S p (Code→Form K S (FlowCode K γ)))
       (BoundarySemantics.SatF S p
         (BoundarySemantics.Interp S
-          ((let module GT = Truth.GuardedTruth Sig Q in GT.GuardedClosure.Flow (Kernel.GTruth K))
+          (GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K))
             (Kernel.Body∂ K (Kernel.decode K γ)))))
 Code→Form-FlowCode-Sat K S p γ = ForKernel.Code→Form-FlowCode-Sat K S p γ
 
@@ -178,7 +176,7 @@ code-channel-commutes
     (γ : Kernel.Code K)
   → Code→Form K S (FlowCode K γ)
     ≡ BoundarySemantics.Interp S
-        ((let module GT = Truth.GuardedTruth Sig Q in GT.GuardedClosure.Flow (Kernel.GTruth K))
+        (GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K))
           (Kernel.Body∂ K (Kernel.decode K γ)))
 code-channel-commutes = Code→Form-FlowCode
 

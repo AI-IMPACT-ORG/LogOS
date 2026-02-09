@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,7 +13,6 @@ import LogOS.Domain.Opacity.Applications.GRH.DiagonalNTemplate as DiagonalNTempl
 import LogOS.Domain.Opacity.Applications.GRH.DiagonalToHPBridge as DiagonalToHPBridgeₜ
 import LogOS.Domain.Opacity.Applications.GRH.HPGRHPack as HPGRHPackₜ
 import LogOS.Domain.Opacity.Applications.GRH.HPGRHLimit as HPGRHLimitₜ
-import LogOS.Domain.Opacity.Applications.GRH.HPGRHLimitOmegaSup as HPGRHLimitOmegaSupₜ
 import LogOS.Domain.Opacity.Applications.GRH.ZetaBridge as ZetaBridgeₜ
 import LogOS.Domain.Opacity.Applications.GRH.ZetaHPIdentification as ZetaHPIdentificationₜ
 import LogOS.Domain.Opacity.Applications.GRH.ZFCBridge as ZFCBridgeₜ
@@ -24,8 +23,6 @@ module DiagonalNTemplate = DiagonalNTemplateₜ
 module DiagonalToHPBridge = DiagonalToHPBridgeₜ
 module HPGRHPack = HPGRHPackₜ
 module HPGRHLimit = HPGRHLimitₜ
-module HPGRHLimitOmegaSup = HPGRHLimitOmegaSupₜ
 module ZetaBridge = ZetaBridgeₜ
 module ZetaHPIdentification = ZetaHPIdentificationₜ
 module ZFCBridge = ZFCBridgeₜ
-

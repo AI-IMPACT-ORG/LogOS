@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -17,9 +17,9 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Boundary.IO using (BoundaryIO)
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
-import LogOS.Kernel.Core as Core
-open import LogOS.Kernel.LogicKernel using (LogicKernel)
-import LogOS.Kernel.LogicKernel.Endo as LKEndo
+import LogOS.Kernel.Shape as Core
+open import LogOS.Kernel using (Kernel)
+import LogOS.Kernel.Endo as LKEndo
 
 module For
   {ℓ ℓTask : Level}
@@ -78,7 +78,7 @@ module For
     → SatMonotone
   satMonotone-from-kernel ctx ctx-to∂ {c} {d} c≤d p sat =
     let
-      S = LogicKernel.shape LK
+      S = Kernel.shape LK
 
       sat' : Core.KernelShape.Sat_H_bnd S (to∂ (ctx p)) d
       sat' =

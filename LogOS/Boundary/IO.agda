@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,7 +15,7 @@ open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Syntax.Prop as Prop
-open import LogOS.Kernel.Core as Core
+open import LogOS.Kernel.Shape as Core
 
 -- Swappable Boundary I/O interface.
 --

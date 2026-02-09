@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,10 @@ module LogOS.Theorems.Meta.ObserverCore where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_; intro; to; from; ¬_)
-open import LogOS.Prelude.Product using (Σ; _,_; _×_)
+open import LogOS.Prelude using (Σ; _,_; _×_)
 open import LogOS.Minimal.Con using (ConPreorder; _≈CP_)
+open import LogOS.Minimal.RelPreorder as RP using (EqRelPreorder)
+import LogOS.Minimal.View as View
 
 -- Generic “observer semantics” core:
 -- - a code language `Code`,
@@ -27,8 +29,12 @@ DecodeExtensional
     (decode : Code → Dec)
     (P : Code → Set ℓP)
   → Set (ℓCode ⊔ ℓDec ⊔ ℓP)
-DecodeExtensional decode P =
-  ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → P γ₁ → P γ₂
+DecodeExtensional {Code = Code} {Dec = Dec} decode P =
+  let
+    decodeView : View.View Code (EqRelPreorder Dec)
+    decodeView = record { μ = decode }
+  in
+  View.Extensional≃ decodeView P
 
 -- Decode-extensionality, but phrased relative to an *observational* equality
 -- relation on decoded semantics (typically mutual refinement `≈` in a preorder).
@@ -44,8 +50,12 @@ DecodeExtensional≈
     (decode : Code → ConPreorder.Con CP)
     (P : Code → Set ℓP)
   → Set (ℓCode ⊔ ℓDec ⊔ ℓP)
-DecodeExtensional≈ CP decode P =
-  ∀ γ₁ γ₂ → _≈CP_ CP (decode γ₁) (decode γ₂) → P γ₁ → P γ₂
+DecodeExtensional≈ {Code = Code} CP decode P =
+  let
+    decodeView : View.View Code (View.ConPreorder→RelPreorder CP)
+    decodeView = record { μ = decode }
+  in
+  View.Extensional≈ decodeView P
 
 DecodeExtensional≈-cong
   : ∀ {ℓCode ℓDec ℓP : Level}
@@ -61,18 +71,6 @@ DecodeExtensional≈-cong extP eq =
     (λ p →
       let (xy , yx) = eq in
       extP _ _ (yx , xy) p)
-
-DecodeExtensional-cong
-  : ∀ {ℓCode ℓDec ℓP : Level}
-    {Code : Set ℓCode} {Dec : Set ℓDec}
-    {decode : Code → Dec}
-    {P : Code → Set ℓP}
-  → DecodeExtensional decode P
-  → ∀ {γ₁ γ₂} → decode γ₁ ≡ decode γ₂ → P γ₁ ↔ P γ₂
-DecodeExtensional-cong extP eq =
-  intro
-    (λ p → extP _ _ eq p)
-    (λ p → extP _ _ (sym eq) p)
 
 StableUnder
   : ∀ {ℓCode ℓP : Level}
@@ -151,7 +149,12 @@ record NonVacuousObserver
   field
     trueWitness  : Σ Code (λ γ → TruthK γ)
     falseWitness : Σ Code (λ γ → ¬ TruthK γ)
-    decodeDistinct : Σ Code (λ γ₁ → Σ Code (λ γ₂ → ¬ (decode γ₁ ≡ decode γ₂)))
+    decodeDistinct : Σ Code (λ γ₁ → Σ Code (λ γ₂ →
+      let
+        decodeView : View.View Code (EqRelPreorder Dec)
+        decodeView = record { μ = decode }
+      in
+      ¬ (View._≃[_]_ γ₁ decodeView γ₂)))
 
 -- “Largest admissible predicate” (a la Comm⋆ / Obs⋆): P⋆ γ holds iff there
 -- exists some admissible predicate P that contains γ.
@@ -282,31 +285,8 @@ Pred⋆≈-stable CP decode step TruthK γ =
     (λ (P , (AP , p)) → P , (AP , from (Admissible≈.stable AP γ) p))
 
 -- Step invariance (up to decoded meaning): if two step functions agree after
--- decoding, they induce the same largest admissible predicate.
-
-Admissible-cong-step
-  : ∀ {ℓCode ℓDec ℓT ℓP : Level}
-    {Code : Set ℓCode} {Dec : Set ℓDec}
-    (decode : Code → Dec)
-    (step step′ : Code → Code)
-    (TruthK : Code → Set ℓT)
-    (P : Code → Set ℓP)
-  → (∀ γ → decode (step γ) ≡ decode (step′ γ))
-  → Admissible Code Dec decode step TruthK P
-  → Admissible Code Dec decode step′ TruthK P
-Admissible-cong-step decode step step′ TruthK P eqStep AP =
-  record
-    { ext    = ext AP
-    ; sound  = sound AP
-    ; stable = stable′
-    }
-  where
-    stable′ : ∀ γ → P γ ↔ P (step′ γ)
-    stable′ γ =
-      let st = stable AP γ in
-      intro
-        (λ pγ → to (DecodeExtensional-cong (ext AP) (eqStep γ)) (to st pγ))
-        (λ pγ′ → from st (from (DecodeExtensional-cong (ext AP) (eqStep γ)) pγ′))
+-- decoding (up to mutual refinement `≈`), they induce the same largest admissible
+-- predicate.
 
 -- Same transport, but where the step agreement is only up to decoded `≈`.
 
@@ -339,44 +319,6 @@ Admissible≈-cong-step CP decode step step′ TruthK P eqStep AP =
           from st
             (from (DecodeExtensional≈-cong {CP = CP} {decode = decode} {P = P} (Admissible≈.ext≈ AP) (eqStep γ))
               pγ′))
-
-StableUnder-cong-step
-  : ∀ {ℓCode ℓDec ℓP : Level}
-    {Code : Set ℓCode} {Dec : Set ℓDec}
-    (decode : Code → Dec)
-    (step step′ : Code → Code)
-    (P : Code → Set ℓP)
-  → (∀ γ → decode (step γ) ≡ decode (step′ γ))
-  → DecodeExtensional decode P
-  → StableUnder step P
-  → StableUnder step′ P
-StableUnder-cong-step decode step step′ P eqStep extP stableP γ =
-  let
-    st = stableP γ
-    eq = DecodeExtensional-cong extP (eqStep γ)
-  in
-  intro
-    (λ pγ → to eq (to st pγ))
-    (λ pγ′ → from st (from eq pγ′))
-
-Pred⋆-cong-step
-  : ∀ {ℓCode ℓDec ℓT ℓP : Level}
-    {Code : Set ℓCode} {Dec : Set ℓDec}
-    (decode : Code → Dec)
-    (step step′ : Code → Code)
-    (TruthK : Code → Set ℓT)
-  → (∀ γ → decode (step γ) ≡ decode (step′ γ))
-  → ∀ {γ} → Pred⋆ {ℓP = ℓP} decode step TruthK γ ↔ Pred⋆ {ℓP = ℓP} decode step′ TruthK γ
-Pred⋆-cong-step {ℓP = ℓP} decode step step′ TruthK eqStep =
-  intro to′ from′
-  where
-    to′ : ∀ {γ} → Pred⋆ {ℓP = ℓP} decode step TruthK γ → Pred⋆ {ℓP = ℓP} decode step′ TruthK γ
-    to′ (P , (AP , pγ)) =
-      P , (Admissible-cong-step decode step step′ TruthK P eqStep AP , pγ)
-
-    from′ : ∀ {γ} → Pred⋆ {ℓP = ℓP} decode step′ TruthK γ → Pred⋆ {ℓP = ℓP} decode step TruthK γ
-    from′ (P , (AP , pγ)) =
-      P , (Admissible-cong-step decode step′ step TruthK P (λ γ → sym (eqStep γ)) AP , pγ)
 
 Pred⋆≈-cong-step
   : ∀ {ℓCode ℓDec ℓT ℓP : Level}
@@ -411,43 +353,6 @@ Pred⋆≈-cong-step {ℓP = ℓP} CP decode step step′ TruthK eqStep =
         symEqStep γ =
           let (xy , yx) = eqStep γ in
           (yx , xy)
-
-module StepTransport
-  {ℓCode ℓDec : Level}
-  {Code : Set ℓCode} {Dec : Set ℓDec}
-  (decode : Code → Dec)
-  (step step′ : Code → Code)
-  (eqStep : ∀ γ → decode (step γ) ≡ decode (step′ γ))
-  where
-
-  stableUnder
-    : ∀ {ℓP : Level}
-      (P : Code → Set ℓP)
-    → DecodeExtensional decode P
-    → StableUnder step P
-    → StableUnder step′ P
-  stableUnder P extP stableP =
-    StableUnder-cong-step decode step step′ P eqStep extP stableP
-
-  admissible
-    : ∀ {ℓT ℓP : Level}
-      (TruthK : Code → Set ℓT)
-      (P : Code → Set ℓP)
-    → Admissible Code Dec decode step TruthK P
-    → Admissible Code Dec decode step′ TruthK P
-  admissible TruthK P =
-    Admissible-cong-step decode step step′ TruthK P eqStep
-
-  Pred⋆↔
-    : ∀ {ℓT ℓP : Level}
-      (TruthK : Code → Set ℓT)
-    → ∀ {γ}
-    → Pred⋆ {ℓP = ℓP} decode step TruthK γ
-      ↔
-      Pred⋆ {ℓP = ℓP} decode step′ TruthK γ
-  Pred⋆↔ TruthK {γ} =
-    Pred⋆-cong-step decode step step′ TruthK eqStep {γ = γ}
-
 module StepTransport≈
   {ℓCode ℓDec : Level}
   {Code : Set ℓCode}
@@ -542,16 +447,10 @@ Pred⋆≈-largest CP decode step TruthK P AP γ p =
 -- Safe reflection aliases (generic, semantically polymorphic in TruthK).
 -- In the reflection literature, "soundness" is the reflection principle
 -- (safe predicates imply truth), and "stability" is the modal safety guard.
-
-SafeAdmissible = Admissible
-
-Safe⋆ = Pred⋆
-
-safe⋆-sound = Pred⋆-sound
-safe⋆-ext = Pred⋆-ext
-safe⋆-stable = Pred⋆-stable
-safe⋆-admissible = Pred⋆-admissible
-safe⋆-largest = Pred⋆-largest
+--
+-- Canonical surface: preorder-safe (`≈`) variant only. The definitional-equality
+-- variant is intentionally not exported under “Safe⋆” names to avoid accidental
+-- misuse in quotient-y / antisymmetry-free models.
 
 SafeAdmissible≈ = Admissible≈
 

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,8 +12,8 @@ open import LogOS.Syntax.Prop as Prop using (_↔_; intro; ⊥; ⊥-elim)
 
 open import LogOS.Prelude.Fin using (Fin)
 open import LogOS.Prelude.List using (_∷_)
-open import LogOS.Prelude.Product using (_×_; Σ; _,_)
-open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude using (_×_; Σ; _,_)
+open import LogOS.Prelude using (_⊎_; inj₁; inj₂)
 
 open import LogOS.ObjectLogic.FOL.Syntax
 open import LogOS.ObjectLogic.FOL.Subst

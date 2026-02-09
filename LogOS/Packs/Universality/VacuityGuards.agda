@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ module LogOS.Packs.Universality.VacuityGuards where
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (¬_)
 
-open import LogOS.Domain.Universality.Core using (CoreUCode; stepCoreU)
+open import LogOS.Universality.Core using (CoreUCode; stepCoreU)
 
 record CoreStepperNontrivial : Set where
   field

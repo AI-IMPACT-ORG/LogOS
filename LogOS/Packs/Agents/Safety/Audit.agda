@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,6 +11,8 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Minimal.RelPreorder as RP using (EqRelPreorder)
+open import LogOS.Minimal.View using (View; _≃[_]_)
 
 import LogOS.Computation.SchemeCategory as Cat
 import LogOS.Theorems.Meta.SpectralSeparationOutput as SSO
@@ -33,6 +35,9 @@ module ForProcess
   open Cat.Process P using (Con; decode)
 
   module G = SSO.Generic Con Output decode
+  private
+    decodeView : View Con (EqRelPreorder Output)
+    decodeView = record { μ = decode }
 
   record Auditor : Set (lsuc (ℓO ⊔ ℓC)) where
     field
@@ -44,7 +49,7 @@ module ForProcess
   record Oracle (Witness : Set ℓC) : Set (lsuc (ℓO ⊔ ℓC)) where
     field
       infer : Con → Witness ⊎ ⊤ {ℓ = lzero}
-      ext   : ∀ s₁ s₂ → decode s₁ ≡ decode s₂ → infer s₁ ≡ infer s₂
+      ext   : ∀ s₁ s₂ → s₁ ≃[ decodeView ] s₂ → infer s₁ ≡ infer s₂
 
     toAuditor : Auditor
     toAuditor =

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -24,7 +24,7 @@ open import LogOS.Minimal.Truth as Truth
 open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 
 open import LogOS.Kernel
-open import LogOS.Kernel.LogicKernel as LK
+open import LogOS.Kernel as LK
 
 module KernelTruthLemma
   {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
@@ -60,20 +60,15 @@ module KernelTruthLemma
       ; from = λ sat∂ → Prop._↔_.from (S↔H w φ) (Prop._↔_.from (H↔∂ w (Kernel.TransH K φ)) sat∂)
       }
 
-module LogicKernelTruthLemma
-  {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-  (K : LK.LogicKernel Sig Q)
-  where
-
-  open LK.LogicKernel K
-
   -- Operational step semantics matches boundary flow at the decoded level.
   Guard↔Step
-    : ∀ (γ : Code)
-    → decode (Guard γ) ≡ LK.GTier.Flow G (LK.GTier.step G) (decode γ)
-  Guard↔Step = LK.LogicKernel.guard-decode K
+    : ∀ (γ : Kernel.Code K)
+    → Kernel.decode K (Kernel.Guard K γ)
+        ≡ LK.GTier.Flow (Kernel.G K) (LK.GTier.step (Kernel.G K))
+            (Kernel.decode K γ)
+  Guard↔Step = Kernel.guard-decode K
 
   -- Distinguished code witness is exactly the G-tier fixed point at decode level.
   γ*↔Th*
-    : decode γ* ≡ LK.GTier.Th* G
-  γ*↔Th* = LK.LogicKernel.decode-γ* K
+    : Kernel.decode K (Kernel.γ* K) ≡ LK.GTier.Th* (Kernel.G K)
+  γ*↔Th* = Kernel.decode-γ* K

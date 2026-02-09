@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -27,7 +27,7 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (MonoOn)
 
 open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
-open import LogOS.Kernel.Core as KCore hiding (FlowCode)
+open import LogOS.Kernel.Shape as KCore hiding (FlowCode)
 import LogOS.Theorems.Meta.CHL.Core as CHL
 
 record ThinCat (ℓ : Level) : Set (lsuc ℓ) where

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -13,30 +13,13 @@ die() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+# shellcheck source=scripts/lib/header_policy.sh
+source "${SCRIPT_DIR}/lib/header_policy.sh"
+
 cd "${LIB_ROOT}"
 
-TITLE_LINE="LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning"
-COPY_LINE="Copyright (C) 2026 AI.IMPACT GmbH"
-SPDX_LINE="SPDX-License-Identifier: GPL-3.0-only"
-
-scan_files() {
-  if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    # Scan both tracked files and untracked-but-not-ignored files so new sources
-    # cannot silently bypass the header policy.
-    git ls-files -z --cached --others --exclude-standard
-    return 0
-  fi
-
-  find . \
-    -type f \
-    -not -path './_build/*' \
-    -not -path './.git/*' \
-    -not -path './.agda/*' \
-    -print0
-}
-
 bad=""
-while IFS= read -r -d '' f; do
+while IFS= read -r f; do
   # Dedicated license file is checked separately in `scripts/check_gplv3_notice.sh`.
   [[ "$f" == "LICENSE" ]] && continue
 
@@ -50,10 +33,10 @@ while IFS= read -r -d '' f; do
   fi
 
   head="$(sed -n '1,40p' "$f")"
-  grep -Fq "$TITLE_LINE" <<<"$head" || bad+="${f}: missing title header"$'\n'
-  grep -Fq "$COPY_LINE" <<<"$head" || bad+="${f}: missing copyright header"$'\n'
-  grep -Fq "$SPDX_LINE" <<<"$head" || bad+="${f}: missing SPDX identifier"$'\n'
-done < <(scan_files)
+  grep -Fq "$HEADER_TITLE_LINE" <<<"$head" || bad+="${f}: missing title header"$'\n'
+  grep -Fq "$HEADER_COPY_LINE" <<<"$head" || bad+="${f}: missing copyright header"$'\n'
+  grep -Fq "$HEADER_SPDX_LINE" <<<"$head" || bad+="${f}: missing SPDX identifier"$'\n'
+done < <(header_list_allowlisted_files)
 
 if [[ -n "$bad" ]]; then
   die $'missing required per-file license header:\n'"${bad}"

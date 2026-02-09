@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Boundary.MultiIO using (MultiBoundaryIO)
-open import LogOS.Kernel.LogicKernel using (LogicKernel)
+open import LogOS.Kernel using (Kernel)
 import LogOS.Kernel.Graded as GK
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
@@ -39,12 +39,12 @@ module For
 
   module WithMu
     (ωCPO : (let module GT = Truth.GuardedCore in GT.OmegaCPO)
-              (BulkBoundary.bnd (LogicKernel.BB LK)))
+              (BulkBoundary.bnd (Kernel.BB LK)))
     where
     module Mu = LearningMu.For Sock ωCPO
 
   module Network (Role : Set ℓ) where
-    M : MultiBoundaryIO Role Sig Q (LogicKernel.HWorld LK) (LogicKernel.BB LK) (LogicKernel.HTruth LK)
+    M : MultiBoundaryIO Role Sig Q (Kernel.HWorld LK) (Kernel.BB LK) (Kernel.HTruth LK)
     M = multiBoundaryIO Role
 
     module Obs = Roles.For M

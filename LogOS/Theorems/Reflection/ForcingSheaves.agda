@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -112,19 +112,46 @@ module CoverageEq {ℓ : Level} {CP : ConPreorder ℓ}
   Sheaf₂ : (Con → Set ℓ) → Set ℓ
   Sheaf₂ U = ∀ p cs → Cover₂ p cs → All U cs → U p
 
+  Cover≤ : Set ℓ
+  Cover≤ = ∀ p cs → Cover₁ p cs → Cover₂ p cs
+
+  Cover≥ : Set ℓ
+  Cover≥ = ∀ p cs → Cover₂ p cs → Cover₁ p cs
+
   Cover≈ : Set ℓ
-  Cover≈ = ∀ p cs → Cover₁ p cs ↔ Cover₂ p cs
+  Cover≈ = Cover≤ × Cover≥
+
+  -- Directional projections (canonical names): mutual cover refinement splits
+  -- into its two entailment directions.
+  Cover≈⇒ : Cover≈ → Cover≤
+  Cover≈⇒ (cov₁₂ , _) = cov₁₂
+
+  Cover≈⇐ : Cover≈ → Cover≥
+  Cover≈⇐ (_ , cov₂₁) = cov₂₁
+
+  -- Presentation alias: pointwise cover equivalence (`↔`).
+  CoverObsEq : Set ℓ
+  CoverObsEq = ∀ p cs → Cover₁ p cs ↔ Cover₂ p cs
+
+  CoverObsEq↔Cover≈ : CoverObsEq ↔ Cover≈
+  CoverObsEq↔Cover≈ =
+    intro
+      (λ eq →
+        ( (λ p cs cov → Prop._↔_.to (eq p cs) cov)
+        , (λ p cs cov → Prop._↔_.from (eq p cs) cov)
+        ))
+      (λ (cov₁₂ , cov₂₁) p cs → intro (cov₁₂ p cs) (cov₂₁ p cs))
 
   localOp-≈ : Cover≈ → ∀ {U} {p} → localOp₁ U p ↔ localOp₂ U p
   localOp-≈ cov≈ {U} {p} =
     intro
       (λ (cs , (cov , allU)) →
-        cs , (Prop._↔_.to (cov≈ p cs) cov , allU))
+        cs , (Cover≈⇒ cov≈ p cs cov , allU))
       (λ (cs , (cov , allU)) →
-        cs , (Prop._↔_.from (cov≈ p cs) cov , allU))
+        cs , (Cover≈⇐ cov≈ p cs cov , allU))
 
   sheaf-≈ : Cover≈ → ∀ {U} → Sheaf₁ U ↔ Sheaf₂ U
   sheaf-≈ cov≈ =
     intro
-      (λ sh p cs cov allU → sh p cs (Prop._↔_.from (cov≈ p cs) cov) allU)
-      (λ sh p cs cov allU → sh p cs (Prop._↔_.to (cov≈ p cs) cov) allU)
+      (λ sh p cs cov allU → sh p cs (Cover≈⇐ cov≈ p cs cov) allU)
+      (λ sh p cs cov allU → sh p cs (Cover≈⇒ cov≈ p cs cov) allU)

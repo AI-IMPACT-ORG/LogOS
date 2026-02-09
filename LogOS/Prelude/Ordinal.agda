@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,16 +8,16 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Prelude.Ordinal where
 
 open import LogOS.Prelude
-open import LogOS.Syntax.Prop using (⊥; ¬_)
+open import LogOS.Prelude.Empty using (⊥)
 
 open import LogOS.Prelude.NatOrder public
   using (_≤ℕ_; z≤n; s≤s; ¬suc≤self)
   renaming (≤ℕ-refl to ≤ℕ-reflᶦ; trans≤ℕ to ≤ℕ-transᶦ)
 
+open import LogOS.Prelude.NatExtra as NatExtra using (_⊔ℕ_; max-left; max-right; ≤ℕ-suc)
+
 maxℕ : ℕ → ℕ → ℕ
-maxℕ zero n = n
-maxℕ (suc m) zero = suc m
-maxℕ (suc m) (suc n) = suc (maxℕ m n)
+maxℕ = _⊔ℕ_
 
 -- Simple bounded ordinals: either a finite level (ℕ) or a designated top ω.
 -- Note: ω is a cap, so `succ ω = ω` (bounded successor).
@@ -51,10 +51,6 @@ isLimit (fin zero) = ⊥
 isLimit (fin (suc _)) = ⊥
 isLimit ω = ⊤
 
-≤ℕ-suc : ∀ n → n ≤ℕ suc n
-≤ℕ-suc zero = z≤n
-≤ℕ-suc (suc n) = s≤s (≤ℕ-suc n)
-
 -- Bounded successor facts.
 
 succ-ω-fixed : succ ω ≡ ω
@@ -70,11 +66,7 @@ succ-fin-strict n = ≤ℕ-suc n , ¬suc≤self
 ≤ℕ-trans = ≤ℕ-transᶦ
 
 ≤ℕ-max-left : ∀ m n → m ≤ℕ maxℕ m n
-≤ℕ-max-left zero _ = z≤n
-≤ℕ-max-left (suc m) zero = s≤s (≤ℕ-refl m)
-≤ℕ-max-left (suc m) (suc n) = s≤s (≤ℕ-max-left m n)
+≤ℕ-max-left = max-left
 
 ≤ℕ-max-right : ∀ m n → n ≤ℕ maxℕ m n
-≤ℕ-max-right zero n = ≤ℕ-refl n
-≤ℕ-max-right (suc _) zero = z≤n
-≤ℕ-max-right (suc m) (suc n) = s≤s (≤ℕ-max-right m n)
+≤ℕ-max-right = max-right

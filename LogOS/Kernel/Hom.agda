@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,15 +9,15 @@ module LogOS.Kernel.Hom where
 
 open import LogOS.Prelude
 
-open import LogOS.Kernel
-open import LogOS.Kernel.Core as Core hiding (FlowCode)
-open import LogOS.Kernel.ConAlgOf public using (conAlgOf)
-open import LogOS.Kernel.HomCore as HomCore
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
-open import LogOS.Algebra.ConAlg
+open import LogOS.Minimal.ConAlg
+open import LogOS.Kernel
+open import LogOS.Kernel.ConAlgOf public using (conAlgOf)
+open import LogOS.Kernel.HomCore as HomCore
 open import LogOS.Minimal.Truth as Truth
+import LogOS.Kernel.GuardedTier as GuardedTier
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   private
@@ -38,196 +38,121 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
 
   open HomCore.WithOps ops public
     renaming
-      ( Hom            to KernelHom
-      ; idHom          to idKernelHom
-      ; composeHom     to composeKernelHom
+      ( Hom              to KernelHom
+      ; idHom            to idKernelHom
+      ; composeHom       to composeKernelHom
+      ; map∂-id          to map∂-id
+      ; map∂-compose     to map∂-compose
+      ; mapCode-id       to mapCode-id
+      ; mapCode-compose  to mapCode-compose
       ; map-reify-decode to map-reify-decode
       ; map-body-decode  to map-body-decode
       )
 
-  map∂-id
-    : ∀ {K} (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
-    → ConAlgHom≡.map∂ (KernelHom.con-hom (idKernelHom K)) c ≡ c
-  map∂-id _ = refl
+  -- Optional strengthening: preservation of the saturation flow on boundary
+  -- constraints (lax). This is the ungraded “flow homomorphism” interface,
+  -- instantiated at `GTier.sat`.
 
-  map∂-compose
-    : ∀ {K₁ K₂ K₃}
-      (h₁ : KernelHom K₁ K₂)
-      (h₂ : KernelHom K₂ K₃)
-      (c : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁)))
-    → ConAlgHom≡.map∂ (KernelHom.con-hom (composeKernelHom h₁ h₂)) c
-      ≡ ConAlgHom≡.map∂ (KernelHom.con-hom h₂) (ConAlgHom≡.map∂ (KernelHom.con-hom h₁) c)
-  map∂-compose _ _ _ = refl
+  private
+    module GT = Truth.GuardedCore {ℓ = ℓ}
 
-  mapCode-id
-    : ∀ {K} (γ : Kernel.Code K)
-    → KernelHom.mapCode (idKernelHom K) γ ≡ γ
-  mapCode-id _ = refl
+    satClosure : (K : Kernel Sig Q) → GT.GuardedClosure (BulkBoundary.bnd (Kernel.BB K))
+    satClosure K = GuardedTier.toGuardedClosure (Kernel.G K)
 
-  mapCode-compose
-    : ∀ {K₁ K₂ K₃}
-      (h₁ : KernelHom K₁ K₂)
-      (h₂ : KernelHom K₂ K₃)
-      (γ : Kernel.Code K₁)
-    → KernelHom.mapCode (composeKernelHom h₁ h₂) γ
-      ≡ KernelHom.mapCode h₂ (KernelHom.mapCode h₁ γ)
-  mapCode-compose _ _ _ = refl
-
--- Optional strengthening: preservation of Flow on boundary constraints.
-
-record KernelHomFlow {ℓ : Level}
-                     {Sig : LogOSSignature ℓ}
-                     {Q : QAdapter ℓ}
-                     (K₁ K₂ : Kernel Sig Q)
-                     (h : KernelHom K₁ K₂)
-                     : Set (lsuc (lsuc ℓ)) where
-  open Kernel K₁ renaming (BB to BB₁; GTruth to G₁)
-  open Kernel K₂ renaming (BB to BB₂; GTruth to G₂)
-  open KernelHom h
-  field
-    flow-hom
-      : Truth.GuardedCore.FlowHom
-          (BulkBoundary.bnd BB₁)
-          (BulkBoundary.bnd BB₂)
-          G₁ G₂
-          (ConAlgHom≡.map∂ con-hom)
-
--- Optional strengthening: Flow preservation + transport of `Th*`.
-
-record KernelHomFlowStable {ℓ : Level}
-                           {Sig : LogOSSignature ℓ}
-                           {Q : QAdapter ℓ}
-                           (K₁ K₂ : Kernel Sig Q)
-                           (h : KernelHom K₁ K₂)
-                           : Set (lsuc (lsuc ℓ)) where
-  open Kernel K₁ renaming (BB to BB₁; GTruth to G₁)
-  open Kernel K₂ renaming (BB to BB₂; GTruth to G₂)
-  open KernelHom h
-  field
-    stable-hom
-      : Truth.GuardedCore.FlowHomStable
-          (BulkBoundary.bnd BB₁)
-          (BulkBoundary.bnd BB₂)
-          G₁ G₂
-          (ConAlgHom≡.map∂ con-hom)
-
-  open Truth.GuardedCore.FlowHomStable stable-hom public
-
-kernelHomFlowOfStable
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {K₁ K₂ : Kernel Sig Q}
-    {h : KernelHom K₁ K₂}
-  → KernelHomFlowStable K₁ K₂ h
-  → KernelHomFlow K₁ K₂ h
-kernelHomFlowOfStable {h = h} hf =
-  let open KernelHomFlowStable hf in
-  record { flow-hom = Truth.GuardedCore.FlowHomStable.flow-hom stable-hom }
-
--- Decode-level transport for Guard/FlowCode under Flow-preserving homs (lax).
-
-map-guard-decode≤
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {K₁ K₂ : Kernel Sig Q}
-    {h : KernelHom K₁ K₂}
-    (hf : KernelHomFlow K₁ K₂ h)
-    (γ : Kernel.Code K₁)
-  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
-      (Kernel.decode K₂ (KernelHom.mapCode h (Kernel.Guard K₁ γ)))
-      (Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K₂)
-        (Kernel.decode K₂ (KernelHom.mapCode h γ)))
-map-guard-decode≤ {Sig = Sig} {Q = Q} {K₁ = K₁} {K₂ = K₂} {h = h} hf γ =
-  let open KernelHom h
-      open Truth.GuardedCore.FlowHom (KernelHomFlow.flow-hom hf) using (preserves-F)
-      CP₂ = BulkBoundary.bnd (Kernel.BB K₂)
-      Flow₁ = Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K₁)
-      Flow₂ = Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K₂)
-      eqL = trans (map-decode (Kernel.Guard K₁ γ))
-                  (cong (ConAlgHom≡.map∂ con-hom) (Kernel.guard-decode K₁ γ))
-      eqR = map-decode γ
-      step = subst
-               (λ x → ConPreorder._⊑_ CP₂
-                        (ConAlgHom≡.map∂ con-hom (Flow₁ (Kernel.decode K₁ γ)))
-                        (Flow₂ x))
-               (sym eqR)
-               (preserves-F (Kernel.decode K₁ γ))
-  in subst
-       (λ x → ConPreorder._⊑_ CP₂ x (Flow₂ (Kernel.decode K₂ (mapCode γ))))
-       (sym eqL)
-       step
-
-map-flowcode-decode≤
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {K₁ K₂ : Kernel Sig Q}
-    {h : KernelHom K₁ K₂}
-    (hf : KernelHomFlow K₁ K₂ h)
-    (γ : Kernel.Code K₁)
-  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
-      (Kernel.decode K₂ (KernelHom.mapCode h (FlowCode K₁ γ)))
-      (Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K₂)
-        (Kernel.decode K₂ (KernelHom.mapCode h (Kernel.Body K₁ γ))))
-map-flowcode-decode≤ {K₁ = K₁} {K₂ = K₂} {h = h} hf γ =
-  map-guard-decode≤ {K₁ = K₁} {K₂ = K₂} {h = h} hf (Kernel.Body K₁ γ)
-
-map-box-decode≤
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {K₁ K₂ : Kernel Sig Q}
-    {h : KernelHom K₁ K₂}
-    (hf : KernelHomFlow K₁ K₂ h)
-    (γ : Kernel.Code K₁)
-  → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
-      (Kernel.decode K₂ (KernelHom.mapCode h (Box K₁ γ)))
-      (Kernel.decode K₂ (Box K₂ (KernelHom.mapCode h γ)))
-map-box-decode≤ {K₁ = K₁} {K₂ = K₂} {h = h} hf γ =
-  let
+  record KernelHomFlow
+    (K₁ K₂ : Kernel Sig Q)
+    (h : KernelHom K₁ K₂)
+    : Set (lsuc (lsuc ℓ)) where
+    open Kernel K₁ renaming (BB to BB₁)
+    open Kernel K₂ renaming (BB to BB₂)
     open KernelHom h
-    open Truth.GuardedCore.FlowHom (KernelHomFlow.flow-hom hf) using (preserves-F)
-    CP₂ = BulkBoundary.bnd (Kernel.BB K₂)
-    Flow₁ = Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K₁)
-    Flow₂ = Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K₂)
-    map∂  = ConAlgHom≡.map∂ con-hom
+    field
+      flow-hom
+        : GT.FlowHom
+            (BulkBoundary.bnd BB₁)
+            (BulkBoundary.bnd BB₂)
+            (satClosure K₁)
+            (satClosure K₂)
+            (ConAlgHom≡.map∂ con-hom)
 
-    eqL : Kernel.decode K₂ (KernelHom.mapCode h (Box K₁ γ))
-          ≡ map∂ (Flow₁ (Kernel.decode K₁ γ))
-    eqL =
-      trans
-        (map-decode (Box K₁ γ))
-        (cong map∂ (decode-Box K₁ γ))
+  record KernelHomFlowStable
+    (K₁ K₂ : Kernel Sig Q)
+    (h : KernelHom K₁ K₂)
+    : Set (lsuc (lsuc ℓ)) where
+    open Kernel K₁ renaming (BB to BB₁)
+    open Kernel K₂ renaming (BB to BB₂)
+    open KernelHom h
+    field
+      stable-hom
+        : GT.FlowHomStable
+            (BulkBoundary.bnd BB₁)
+            (BulkBoundary.bnd BB₂)
+            (satClosure K₁)
+            (satClosure K₂)
+            (ConAlgHom≡.map∂ con-hom)
 
-    eqR : Kernel.decode K₂ (KernelHom.mapCode h γ) ≡ map∂ (Kernel.decode K₁ γ)
-    eqR = map-decode γ
+    open GT.FlowHomStable stable-hom public
 
-    step : ConPreorder._⊑_ CP₂
-             (map∂ (Flow₁ (Kernel.decode K₁ γ)))
-             (Flow₂ (Kernel.decode K₂ (KernelHom.mapCode h γ)))
-    step =
-      subst
-        (λ x → ConPreorder._⊑_ CP₂
-                 (map∂ (Flow₁ (Kernel.decode K₁ γ)))
-                 (Flow₂ x))
-        (sym eqR)
-        (preserves-F (Kernel.decode K₁ γ))
+  kernelHomFlowOfStable
+    : ∀ {K₁ K₂ : Kernel Sig Q} {h : KernelHom K₁ K₂}
+    → KernelHomFlowStable K₁ K₂ h
+    → KernelHomFlow K₁ K₂ h
+  kernelHomFlowOfStable hf =
+    record { flow-hom = KernelHomFlowStable.flow-hom hf }
 
-    eqBox : Kernel.decode K₂ (Box K₂ (KernelHom.mapCode h γ))
-            ≡ Flow₂ (Kernel.decode K₂ (KernelHom.mapCode h γ))
-    eqBox = decode-Box K₂ (KernelHom.mapCode h γ)
-  in
-  subst
-    (λ x → ConPreorder._⊑_ CP₂ x (Kernel.decode K₂ (Box K₂ (KernelHom.mapCode h γ))))
-    (sym eqL)
-    (subst
-      (λ x → ConPreorder._⊑_ CP₂
+  -- Decode-level transport for the saturation modality on code (`Box`).
+
+  map-box-decode≤
+    : ∀ {K₁ K₂ : Kernel Sig Q}
+      {h : KernelHom K₁ K₂}
+      (hf : KernelHomFlow K₁ K₂ h)
+      (γ : Kernel.Code K₁)
+    → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K₂))
+        (Kernel.decode K₂ (KernelHom.mapCode h (Box K₁ γ)))
+        (Kernel.decode K₂ (Box K₂ (KernelHom.mapCode h γ)))
+  map-box-decode≤ {K₁ = K₁} {K₂ = K₂} {h = h} hf γ =
+    let
+      CP₂ = BulkBoundary.bnd (Kernel.BB K₂)
+
+      open KernelHom h
+      open GT.FlowHom (KernelHomFlow.flow-hom hf) using (preserves-F)
+
+      Flow₁ = GTier.Flow (Kernel.G K₁) (GTier.sat (Kernel.G K₁))
+      Flow₂ = GTier.Flow (Kernel.G K₂) (GTier.sat (Kernel.G K₂))
+      map∂  = ConAlgHom≡.map∂ con-hom
+
+      eqL : Kernel.decode K₂ (mapCode (Box K₁ γ))
+            ≡ map∂ (Flow₁ (Kernel.decode K₁ γ))
+      eqL =
+        trans
+          (map-decode (Box K₁ γ))
+          (cong map∂ (decode-Box K₁ γ))
+
+      eqR : Kernel.decode K₂ (mapCode γ)
+            ≡ map∂ (Kernel.decode K₁ γ)
+      eqR = map-decode γ
+
+      step : ConPreorder._⊑_ CP₂
                (map∂ (Flow₁ (Kernel.decode K₁ γ)))
-               x)
-      (sym eqBox)
-      step)
-
-map-box≤
-  : ∀ {ℓ} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
-    {K₁ K₂ : Kernel Sig Q}
-    {h : KernelHom K₁ K₂}
-    (hf : KernelHomFlow K₁ K₂ h)
-    (γ : Kernel.Code K₁)
-  → Core.Code≤ (Kernel.shape K₂)
-      (KernelHom.mapCode h (Box K₁ γ))
-      (Box K₂ (KernelHom.mapCode h γ))
-map-box≤ hf γ = map-box-decode≤ hf γ
+               (Flow₂ (Kernel.decode K₂ (mapCode γ)))
+      step =
+        subst
+          (λ y →
+            ConPreorder._⊑_ CP₂
+              (map∂ (Flow₁ (Kernel.decode K₁ γ)))
+              (Flow₂ y))
+          (sym eqR)
+          (preserves-F (Kernel.decode K₁ γ))
+    in
+    subst
+      (λ x →
+        ConPreorder._⊑_ CP₂ x
+          (Kernel.decode K₂ (Box K₂ (mapCode γ))))
+      (sym eqL)
+      (subst
+        (λ y →
+          ConPreorder._⊑_ CP₂
+            (map∂ (Flow₁ (Kernel.decode K₁ γ)))
+            y)
+        (sym (decode-Box K₂ (mapCode γ)))
+        step)

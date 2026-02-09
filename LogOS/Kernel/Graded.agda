@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
 import LogOS.Minimal.Closure as Cl
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Kernel.Core as Core hiding (FlowCode)
+open import LogOS.Kernel.Shape as Core hiding (FlowCode)
 
 open Truth.GuardedCore public using
   ( GradedClosure
@@ -431,7 +431,7 @@ reflectBox-least
 reflectBox-least K {γ} δ γ≤δ =
   let
     CP = Core.CodePreorder (GradedKernel.shape K)
-    boxδ≤δ = snd (proj₂ δ)
+    boxδ≤δ = ≈CP⇐ {CP = CP} (proj₂ δ)
   in
   ConPreorder.trans CP (box-mono K γ≤δ) boxδ≤δ
 

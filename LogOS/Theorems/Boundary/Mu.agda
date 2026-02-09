@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,7 +18,7 @@ module LogOS.Theorems.Boundary.Mu where
 open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude using (_×_; _,_; fst; snd)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Minimal.Con
 open import LogOS.Kernel
@@ -34,7 +34,7 @@ open import LogOS.Kernel.Endo
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : Kernel Sig Q)
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (Kernel.BB K)))
-    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
     (c    : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
   → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
                  (Endo.fn (Flow-Endo K) c)
@@ -44,7 +44,7 @@ open import LogOS.Kernel.Endo
                  c
 μ-induction-K Sig Q K ωCPO FF c pre =
   let module GT = Truth.GuardedTruth Sig Q in
-  GT.μ-induction {CP = BulkBoundary.bnd (Kernel.BB K)} (Kernel.GTruth K) ωCPO FF c pre
+  GT.μ-induction {CP = BulkBoundary.bnd (Kernel.BB K)} (GTruth K) ωCPO FF c pre
 
 -- Classic aliases (textbook names).
 
@@ -52,7 +52,7 @@ park-induction-K
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : Kernel Sig Q)
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (Kernel.BB K)))
-    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
     (c    : ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
   → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
                  (Endo.fn (Flow-Endo K) c)

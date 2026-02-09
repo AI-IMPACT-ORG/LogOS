@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,13 +16,14 @@ open import LogOS.Minimal.Con using (BulkBoundary; ConPreorder)
 open import LogOS.Minimal.Truth as Truth
 
 open import LogOS.Kernel.Graded using (GradedKernel)
-open import LogOS.Kernel.Graded.ToKernel as ToKernel
+open import LogOS.Kernel.Eq using (module ForGradedKernel)
+import LogOS.Kernel.FromGradedKernel as ToKernel
 open import LogOS.Kernel as Kernel
-open import LogOS.Kernel.Core as KCore
 
 import LogOS.Packs.Agents.Experimental.Learning.RGFlow as RGFlow
 import LogOS.Theorems.Meta.CommunicableTruth as Comm
 import LogOS.Theorems.Meta.LimitPublicisation as LP
+import LogOS.Packs.Agents.Experimental.Arguments.Context as Ctx
 
 -- Tight, reflection-closed scaling-law surface for RG learning steps.
 
@@ -40,6 +41,7 @@ module For
 
   open QAdapter Q using (_≤s_)
   open GradedKernel K renaming (Code to Codeₖ; decode to decodeₖ; reify to reifyₖ)
+  open ForGradedKernel K using (_≃K_)
 
   CP : ConPreorder ℓ
   CP = BulkBoundary.bnd (GradedKernel.BB K)
@@ -81,7 +83,7 @@ module For
 
   scalingBound-ext
     : ∀ {g} {s : RGStep g} {D : ScalingDimension s} γ δ
-    → decodeₖ γ ≡ decodeₖ δ
+    → γ ≃K δ
     → ScalingBound s D γ
     → ScalingBound s D δ
   scalingBound-ext {s = s} {D = D} γ δ eq bound =
@@ -113,12 +115,10 @@ module For
 
   -- Optional: when step-grade = sat, publicise ScalingBound via Pr.
   module Public
-    {stepSat : ToKernel.StepIsSat K}
-    {bm : KCore.BodyMonotoneShape (GradedKernel.shape K)}
     where
 
     K₀ : Kernel Sig Q
-    K₀ = ToKernel.asKernel K stepSat bm
+    K₀ = ToKernel.asKernel K
 
     ScalingBoundK
       : ∀ {g} (s : RGStep g) (D : ScalingDimension s)
@@ -134,11 +134,14 @@ module For
     scalingBound-public
       : ∀ {g} (s : RGStep g) (D : ScalingDimension s)
       → (stableBoxBody : ∀ γ →
-          ScalingBoundK s D γ ↔ ScalingBoundK s D (Kernel.Box K₀ (Kernel.Body K₀ γ)))
+          ScalingBoundK s D γ
+            ↔ ScalingBoundK s D
+                (BoxAt K₀ (GTier.step (Kernel.G K₀)) (Kernel.Body K₀ γ)))
       → ∀ {γ} → ScalingBoundK s D γ
       → LP.LimitPublicisation K₀ (ScalingBoundK s D) γ
     scalingBound-public s D stableBoxBody bound =
-      LP.TruthK→Pr-BoxBody K₀ (ScalingBoundK s D) (scalingBound-extK {s = s} {D = D}) stableBoxBody bound
+      LP.TruthK→Pr-BoxBody K₀ (ScalingBoundK s D)
+        (scalingBound-extK {s = s} {D = D}) stableBoxBody bound
 
     scalingBound-public-reify
       : ∀ {ℓC} {g} (s : RGStep g) (D : ScalingDimension s)
@@ -148,3 +151,12 @@ module For
     scalingBound-public-reify {ℓC = ℓC} s D {γ} =
       LP.Pr-naturality {ℓC = ℓC} K₀ (ScalingBoundK s D) (Kernel.reify K₀)
         (Kernel.reify-decode K₀)
+
+-- Context-bundled entrypoint (convenience).
+module ForCtx
+  {ℓ : Level}
+  {Sig : LogOSSignature ℓ}
+  {Q : QAdapter ℓ}
+  (C : Ctx.Context Sig Q)
+  where
+  open For (Ctx.Context.K C) (Ctx.Context.ωCPO C) public

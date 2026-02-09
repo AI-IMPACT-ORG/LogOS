@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -31,10 +31,10 @@ import LogOS.Minimal.Truth as Truth
 open import LogOS.QAdapters.QNatMul using (QNatMul)
 import LogOS.QAdapters.Guards as QGuards
 
-open import LogOS.Kernel.Core as Core
-import LogOS.Kernel.LogicKernel as LK
-import LogOS.Kernel.LogicKernel.Boundary as LKBoundary
-import LogOS.Kernel.LogicKernel.VacuityGuards as LKVac
+open import LogOS.Kernel.Shape as Core
+import LogOS.Kernel as LK
+import LogOS.Boundary.FromKernel as LKBoundary
+import LogOS.Boundary.KernelVacuityGuards as LKVac
 
 open import LogOS.Boundary.IO using (BoundaryIO)
 open import LogOS.Boundary.Semantics using (BoundarySemantics)
@@ -272,8 +272,8 @@ GTier₀ =
         (tt , tt)
     }
 
-LogicKernel₀ : LK.LogicKernel Sig₀ QNatMul
-LogicKernel₀ =
+Kernel₀ : LK.Kernel Sig₀ QNatMul
+Kernel₀ =
   record
     { shape      = Shape₀
     ; shapeLaws  = ShapeLaws₀
@@ -295,25 +295,26 @@ suc0≢0 ()
 qGuards₀ : QGuards.QAdapterVacuityGuards QNatMul
 qGuards₀ =
   record
-    { a              = suc zero
-    ; a-not-bottom   = suc0≢0
-    ; unit-not-bottom = suc0≢0
+    { unit-not-bottom = suc0≢0
     }
 
-kernelGuards₀ : LKVac.KernelVacuityGuards LogicKernel₀
+kernelGuards₀ : LKVac.KernelVacuityGuards Kernel₀
 kernelGuards₀ =
   record
-    { c₀    = true
-    ; c₁    = false
-    ; w     = tt
-    ; sat₀  = tt
-    ; unsat₁ = λ ()
+    { nonVacuousHTruth =
+        record
+          { w = tt
+          ; c₀ = true
+          ; c₁ = false
+          ; sat₀ = tt
+          ; unsat₁ = λ ()
+          }
     }
 
-B₀ : BoundaryIO Sig₀ QNatMul (LK.LogicKernel.HWorld LogicKernel₀) (LK.LogicKernel.BB LogicKernel₀) (LK.LogicKernel.HTruth LogicKernel₀)
-B₀ = LKBoundary.boundaryIO LogicKernel₀
+B₀ : BoundaryIO Sig₀ QNatMul (LK.Kernel.HWorld Kernel₀) (LK.Kernel.BB Kernel₀) (LK.Kernel.HTruth Kernel₀)
+B₀ = LKBoundary.boundaryIO Kernel₀
 
-Sem₀ : BoundarySemantics Sig₀ QNatMul (LK.LogicKernel.HWorld LogicKernel₀) (LK.LogicKernel.BB LogicKernel₀) (LK.LogicKernel.HTruth LogicKernel₀) B₀
+Sem₀ : BoundarySemantics Sig₀ QNatMul (LK.Kernel.HWorld Kernel₀) (LK.Kernel.BB Kernel₀) (LK.Kernel.HTruth Kernel₀) B₀
 Sem₀ =
   record
     { Form    = Bool
@@ -322,7 +323,7 @@ Sem₀ =
     ; Sat∂≈F  = λ _ _ → intro (λ x → x) (λ x → x)
     }
 
-Port₀ : BoundaryPort Sig₀ QNatMul (LK.LogicKernel.HWorld LogicKernel₀) (LK.LogicKernel.BB LogicKernel₀) (LK.LogicKernel.HTruth LogicKernel₀) B₀
+Port₀ : BoundaryPort Sig₀ QNatMul (LK.Kernel.HWorld Kernel₀) (LK.Kernel.BB Kernel₀) (LK.Kernel.HTruth Kernel₀) B₀
 Port₀ =
   record
     { Sem     = Sem₀

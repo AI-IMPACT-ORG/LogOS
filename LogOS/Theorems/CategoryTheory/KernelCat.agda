@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,13 +11,17 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
+open import LogOS.Minimal.ConAlg
 open import LogOS.Kernel
 open import LogOS.Kernel.Hom
-open import LogOS.Kernel.Initial
+open import LogOS.Kernel.Eq using (module ForKernel)
+import LogOS.Kernel.FromUngradedKernel as LKFromUngraded
+open import LogOS.Kernel.UngradedKernel.Initial
+open import LogOS.Minimal.Constraints using (fold≡; initialConAlg; module InitialConAlg)
 open import LogOS.Minimal.World
-open import LogOS.Theorems.Meta.DecodeTransportKit using (decode-mapCode-cong)
+open import LogOS.Theorems.Meta.DecodeTransportKit using (mapCode≃K)
 
--- Category of Kernels for fixed Sig, Q, with hom-equality up to strict decode equality (`≡`).
+-- Category of Kernels for fixed Sig, Q, with hom-equality up to strict decoded meaning (`≃K`).
 
 record KernelCat {ℓ}
                  (Sig : LogOSSignature ℓ)
@@ -28,7 +32,7 @@ record KernelCat {ℓ}
     Hom   : (A B : Kernel Sig Q) → Set (lsuc (lsuc ℓ))
     _∘_   : ∀ {A B C} → Hom B C → Hom A B → Hom A C
     id    : ∀ {A} → Hom A A
-    -- Equality up to strict decode equality (`≡`) on code maps at the target kernel
+    -- Equality up to strict decoded meaning (`≃K`) on code maps at the target kernel
     eqHom : ∀ {A B} → Hom A B → Hom A B → Set ℓ
     reflH : ∀ {A B} {h : Hom A B} → eqHom h h
     symH  : ∀ {A B} {h k : Hom A B} → eqHom h k → eqHom k h
@@ -45,12 +49,14 @@ KernelCat-instance Sig Q = record
   { Hom   = KernelHom
   ; _∘_   = λ {A} {B} {C} g f → composeKernelHom f g
   ; id    = λ {A} → idKernelHom A
-  ; eqHom = λ {A} {B} h k → ∀ γ → Kernel.decode B (KernelHom.mapCode h γ) ≡ Kernel.decode B (KernelHom.mapCode k γ)
+  ; eqHom = λ {A} {B} h k →
+      let open ForKernel B in
+      ∀ γ → KernelHom.mapCode h γ ≃K KernelHom.mapCode k γ
   ; reflH = λ γ → refl
   ; symH  = λ e γ → sym (e γ)
   ; transH = λ e₁ e₂ γ → trans (e₁ γ) (e₂ γ)
   ; congL = λ {A} {B} {C} {h₁} {h₂} g e γ →
-              decode-mapCode-cong g (e γ)
+              mapCode≃K g (e γ)
   ; congR = λ {A} {B} {C} {h₁} {h₂} g e γ → e (KernelHom.mapCode g γ)
   }
 
@@ -80,7 +86,7 @@ module Laws {ℓ : Level} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ) where
     → eqHom ((h ∘ g) ∘ f) (h ∘ (g ∘ f))
   assoc h g f γ = refl
 
--- Initiality up to strict decode equality (`≡`) packaged as a theorem from InitialKernel
+-- Initiality up to strict decoded meaning (`≃K`) packaged as a theorem from InitialKernel
 
 record InitialUpToDecode {ℓ}
                          (Sig : LogOSSignature ℓ)
@@ -99,11 +105,40 @@ initial-from-build
   → InitialUpToDecode Sig Q
 initial-from-build Sig Q H = record
   { C    = KernelCat-instance Sig Q
-  ; I    = InitialKernel.FreeK IK
-  ; fold = InitialKernel.foldK IK
-  ; init = λ K h γ →
-            -- Use unique≃ from InitialKernel
-            let _ , _ , eqγ = InitialKernel.unique≃ IK K h in eqγ γ
+  ; I    = I
+  ; fold = fold
+  ; init = init
   }
   where
     IK = build Sig Q H
+    I : Kernel Sig Q
+    I = LKFromUngraded.asKernel (InitialKernel.FreeK IK)
+
+    fold : ∀ (K : Kernel Sig Q) → KernelHom I K
+    fold K =
+      record
+        { con-hom   = fold≡ (conAlgOf K)
+        ; mapCode   = λ γ →
+            Kernel.encode K
+              (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) (Kernel.decode I γ))
+        ; map-encode = λ c →
+            cong
+              (λ x → Kernel.encode K (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) x))
+              (Kernel.decode∘encode I c)
+        ; map-decode = λ γ →
+            Kernel.decode∘encode K
+              (ConAlgHom≡.map∂ (fold≡ (conAlgOf K)) (Kernel.decode I γ))
+        }
+
+    init
+      : ∀ (K : Kernel Sig Q) (h : KernelHom I K)
+      → KernelCat.eqHom (KernelCat-instance Sig Q) (fold K) h
+    init K h γ =
+      let
+        eq∂ , _ = InitialConAlg.unique initialConAlg (conAlgOf K) (KernelHom.con-hom h)
+      in
+      trans
+        (KernelHom.map-decode (fold K) γ)
+        (trans
+          (eq∂ (Kernel.decode I γ))
+          (sym (KernelHom.map-decode h γ)))

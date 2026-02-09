@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -20,6 +20,7 @@ import LogOS.Minimal.Con
 import LogOS.Minimal.Adjunction
 import LogOS.Minimal.Truth
 import LogOS.Kernel
+import LogOS.Kernel.TierCategorical
 import LogOS.Kernel.Endo
 import LogOS.Kernel.TensorEndo
 import LogOS.Kernel.TensorDSL
@@ -30,15 +31,15 @@ import LogOS.Kernel.Graded.All
 import LogOS.Theorems.Boundary.Graded.All
 import LogOS.Theorems.Boundary.ContinuityCore
 import LogOS.Theorems.Boundary.Stabilisation
-import LogOS.Kernel.Boundary
+import LogOS.Boundary.FromKernel
 import LogOS.Boundary.IO
 import LogOS.Boundary.Semantics
-import LogOS.Free.Constraints
-import LogOS.Free.ConstraintsIndexed
-import LogOS.Free.ConstraintsOverSig
-import LogOS.Free.All
-import LogOS.Kernel.Initial
-import LogOS.Kernel.Infinite.Initial
+import LogOS.System
+import LogOS.Minimal.Constraints
+import LogOS.Minimal.ConstraintsIndexed
+import LogOS.Minimal.ConstraintsOverSig
+import LogOS.Kernel.UngradedKernel.Initial
+import LogOS.Kernel.UngradedKernel.Infinite.Initial
 import LogOS.Theorems.Projective
 import LogOS.Theorems.Reflection.QuanticNucleus
 import LogOS.Theorems.Reflection.NucleusMu
@@ -50,6 +51,9 @@ For a newcomer-friendly architecture overview, see `docs/LogOS_Overview.lagda.md
 
 Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`.
 
+Relation/equality discipline (views + pullbacks): `docs/Kernel/RelationDiscipline.lagda.md`.
+Canonical view registry (named views + induced relations): `docs/Kernel/ViewRegistry.lagda.md`.
+
 Overview
 --------
 This file is a compact, code‑accurate summary of the LogOS core. All axioms are
@@ -60,7 +64,7 @@ Audit invariant: every module/path referenced below is a sync-guard import above
 Conventions and Notation
 ------------------------
 - Levels: records are level‑polymorphic; higher universes appear only when fields range over `Set`.
-- Equality: propositional `_≡_` only; decoded mutual refinement is `_≈K_` (preferred) and strict decoded equality is `_≃K_` (both from `LogOS/Syntax/Eq.agda`, module `ForKernel`).
+- Equality: propositional `_≡_` only; decoded mutual refinement is `_≈K_` (preferred) and strict decoded equality is `_≃K_` (both from `LogOS/Kernel/Eq.agda`, module `ForKernel`).
 - Orders: preorders by default; antisymmetry is optional (`PartialOrder` in `LogOS/Minimal/Con.agda`).
 - Coherence: use `_↔_` (pairs of maps), not judgmental equality.
 - Bottom/negation: `⊥` and `¬_` from `LogOS.Syntax.Prop`.
@@ -95,7 +99,7 @@ from∂-sig Sig = LogOSSignature.from∂ Sig
 
 Adapter and Worlds (S/H/G)
 --------------------------
-`QAdapter` packages a unital quantale in the finite‑join sense (a preorder with binary join/bottom
+`QAdapter` packages a unital prequantale in the finite‑join sense (a preorder with binary join/bottom
 and a monoid multiplication distributing over joins) plus a time monoid homomorphism `τ : Time → Scale`;
 ω‑sup / infinite-join completeness is *not* assumed on `Scale` (ω‑sup interfaces live separately via
 `OmegaCPO`/`FiniteFirst`).
@@ -122,7 +126,27 @@ exposes an ω‑supremum presentation (`Th⋆-as-sup`) of the same fixed‑point
 `LogOS/Theorems/Boundary/ContinuityCore.agda` packages this as `Th*≈μFlow` (Kleene `μ Flow`)
 under the same assumptions (`MuData` bundles `OmegaCPO` + `FiniteFirst`).
 Note: some endomap DSL modules use the conventional name `Th⋆K` for the
-distinguished witness `Th*` (not an ω‑supremum); see `LogOS/Kernel/LogicKernel/Endo.agda`.
+distinguished witness `Th*` (not an ω‑supremum); see `LogOS/Kernel/Endo.agda`.
+
+Categorical Tier Object (S/H/G/R)
+---------------------------------
+<!-- CLAIM-STAMP: LITERAL | anchor=LogOS/Kernel/TierCategorical.agda#TierForKernel.diagram -->
+The canonical mathematical packaging of tiers is:
+- `LogOS/Kernel/TierCategorical.agda`:
+  - `TierDiagram` (family of tier carriers/relations + designated H target),
+  - `TierForKernel K` (derived from any `Kernel K` with no extra axioms),
+  - `TierForKernel.diagram` (the concrete S/H/G/R diagram object).
+
+Concretely, `TierForKernel` defines:
+- S-tier semantic preorder on formulas (`_⊑S_`),
+- H-tier boundary preorder (`CPᴴ`),
+- G-tier step action on boundary constraints (`FlowStep`, `FlowSat`),
+- R-tier decode-induced preorder on code.
+
+The canonical bridges are exported as:
+- `H-tier↔bnd` (H pullback relation = boundary preorder),
+- `R-tier↔Code≤` (R pullback relation = decode preorder `Code≤`).
+These are the preferred anchors when stating tier-level coherence theorems.
 
 Kernel (Integrated Model)
 -------------------------
@@ -135,9 +159,8 @@ Kernel (Integrated Model)
 - Code/reflection: `Code`, `encode/decode`, `Guard/Body`, `FlowCode`, `guard-decode`,
   `γ*`/`decode-γ*`, `reify`, `Body∂` and `body-decode`.
   Stable closure on code is exposed as `Box` (and graded `BoxAt g`), defined as
-  `encode (Flow g (decode γ))` (`LogOS/Kernel.agda`, `LogOS/Kernel/Graded.agda`,
-  `LogOS/Kernel/LogicKernel.agda`).
-- R‑tier monotonicity (derived): `Sat_R-mono`, `Sat_R-mono-ctx` in `LogOS/Kernel/LogicKernel/Tiers.agda`.
+  `encode (Flow g (decode γ))` (`LogOS/Kernel.agda`, `LogOS/Kernel/Graded.agda`).
+- R‑tier monotonicity (derived): `Sat_R-mono`, `Sat_R-mono-ctx` in `LogOS/Kernel/Tiers.agda`.
 
 Reflection (Cross‑Cutting Structure)
 ------------------------------------
@@ -149,6 +172,7 @@ Reflection is an axis across S/H/G and the bulk↔boundary interface:
   monotonicity is supplied as an extra assumption; bundle: `HomotypicalTruth.InvarianceMono`).
 - Holo: once `ext`/`bnd` are monotone (bundle: `LaxAdjunctionMono` / `LaxMonoidalAdjunctionMono`),
   the lax unit/counit induce projectors (`LogOS/Theorems/CategoryTheory/AdjunctionMonads.agda`).
+<!-- CLAIM-STAMP: REPRESENTATIONAL | anchor=LogOS/Theorems/Meta/Bootstrapping.agda#bootstrap-iso -->
 - Port reflection: `CodePort` and the canonical boundary port are `Adapter≈`-equivalent **as ports**
   (canonical adapters that are quasi-inverses up to satisfaction equivalence (↔)),
   so the bootstrapping map is the canonical interlingua translation
@@ -159,11 +183,12 @@ Reflection is an axis across S/H/G and the bulk↔boundary interface:
   layers unless explicitly imported). See
   `docs/Meta_Safety.lagda.md` and `LogOS/Theorems/Meta/Safety/*`.
 - Kernel-level nucleus theorems: `LogOS/Theorems/Reflection/QuanticNucleus.agda`
-  (nucleus-stable elements (pre-fixed points, hence fixed up to `≈`) form a quantale + quotient factorisation, given a nucleus that
+  (nucleus-stable elements (pre-fixed points, hence fixed up to `≈`) form a prequantale + quotient factorisation, given a nucleus that
   preserves join/multiplication up to `≈`), `LogOS/Theorems/Reflection/NucleusMu.agda`
   (finite/list coverage → closure operator via Kleene μ; `OmegaCPO` required, and
   idempotence uses a Scott‑continuity witness), and `LogOS/Theorems/Reflection/ForcingSheaves.agda`
   (preorder-site coverage: forcing/sheaves = pre-fixed points (hence fixed up to `≈`) of a local operator).
+<!-- CLAIM-STAMP: LITERAL | anchor=LogOS/Theorems/Reflection/All.agda#surface -->
 No judgmental identifications are assumed; see `LogOS/Theorems/Reflection/All.agda`.
 
 Optional graded kernel
@@ -201,14 +226,24 @@ Graded kernels get the same DSL with grades (`LogOS.Kernel.Graded.Endo`):
 Boundary I/O and Bridge
 -----------------------
 `LogOS.Boundary.IO` defines the swappable boundary view (`to∂`, `from∂`, `Sat∂`, `sat-coh`).
-`boundaryIO` in `LogOS/Kernel/Boundary.agda` derives this from any kernel (graded variant in
-`LogOS.Kernel.Graded.Boundary`). `LogOS.Boundary.Semantics` bridges boundary constraints
+`boundaryIO` in `LogOS/Boundary/FromKernel.agda` derives this from any kernel (graded variant in
+`LogOS.Boundary.FromGradedKernel`). `LogOS.Boundary.Semantics` bridges boundary constraints
 to external formulas via `Interp` and `Sat∂≈F`.
+
+Open systems (boundary-first packaging)
+---------------------------------------
+`LogOS.System` packages an “open system” as a boundary I/O together with its ambient
+signature/world/truth data:
+
+- `System` (`LogOS/System.agda`) has a core field `B : BoundaryIO …` and re-exports the induced boundary satisfaction system (`System.boundarySatSystem`) and canonical boundary port/presentation (`System.boundaryPort∂`, `System.boundaryPresentation`).
+- Any kernel induces boundary I/O (`LogOS/Boundary/FromKernel.agda`), hence an open system via `LogOS.System.fromBoundaryIO`.
+
+This makes the boundary-first reading (systems with interfaces) a first-class interface without changing the kernel semantics.
 
 Free/Initial Constructions
 --------------------------
-- Free constraint algebra (and indexed variants): `LogOS.Free.All` (`Constraints`, `ConstraintsIndexed`, `ConstraintsOverSig`).
-- Initial kernels: `LogOS.Kernel.Initial`, `LogOS.Kernel.Infinite.Initial` (`InitialKernel`, `build`, `build∞`).
+- Free constraint algebra (and indexed variants): `LogOS.Minimal.{Constraints,ConstraintsIndexed,ConstraintsOverSig}`.
+- Initial kernels: `LogOS.Kernel.UngradedKernel.Initial`, `LogOS.Kernel.UngradedKernel.Infinite.Initial` (`InitialKernel`, `build`, `build∞`).
 
 Theorems and Meta
 -----------------
@@ -257,7 +292,7 @@ semantic stories without changing the foundational definitions.
   - Claim: WF‑graph semantics yield definable ZF (+Infinity), with optional upgrades.
   - Boundary: Choice and full Replacement/Separation are explicit add‑ons.
   - Interest: shows set‑theoretic semantics without baking classical axioms into the kernel.
-  - Route: `LogOS/Domain/ZFC/WFGraph/Surface.agda` (WF graphs) and `LogOS/Domain/ZFC/SetTheory/LimitPack.agda` (cumulative hierarchy adapters).
+  - Route: `LogOS/ZFC/WFGraph/Surface.agda` (WF graphs) and `LogOS/ZFC/SetTheory/LimitPack.agda` (cumulative hierarchy adapters).
 
 - Universality pack (`LogOS/Packs/Universality/Surface.agda`; umbrella: `LogOS/Packs/Universality/All.agda`)
   - Claim: universal computation + transport theorems + information/physics bounds.
@@ -287,9 +322,13 @@ semantic stories without changing the foundational definitions.
   - Boundary: safety/audit conclusions rely on explicit opacity assumptions.
   - Interest: the kernel already *is* an agent‑like system, so the pack is lightweight.
 
-Reusable libraries live under `LogOS/Domain/*` and `LogOS/Algebra/*`
-(HP interface, braiding helpers, ZF/ZFC adapters). Tests: `Tests/All.agda`.
-Examples live under `LogOS/Domain/*/Examples/*`.
+Reusable topic libraries live under:
+- `LogOS/{ZFC,UniversalIR,Universality,Complexity,InfoTheory}/*` (mature domain developments), and
+- `LogOS/Domain/*` (quarantined experimental domains; currently Opacity),
+plus the small algebraic surfaces in `LogOS/Algebra/*`.
+
+Tests: `Tests/All.agda`. Examples live under the corresponding topic namespaces
+(e.g. `LogOS/UniversalIR/Examples/*`).
 
 Kernel Polymorphicity: Four Semantic Views (+ CHL)
 --------------------------------------------------
@@ -299,7 +338,7 @@ The kernel admits multiple semantic readings without altering its definitions:
 The Curry–Howard–Lambek capstone is a *theorem bundle* over the same interface
 (proof/model/category/observer packaging), not a different kernel:
 `docs/Views/CurryHowardLambek.lagda.md`.
-For an ultra-compact “equations-only” presentation of the LogicKernel/CHL core,
+For an ultra-compact “equations-only” presentation of the Kernel/CHL core,
 see `docs/Views/MeredithSentences.lagda.md`.
 
 Honesty and Scope
@@ -352,13 +391,13 @@ Module References (Source Paths)
 - Lax Adjunction: `LogOS/Minimal/Adjunction.agda`
 - Truth (S/H/G): `LogOS/Minimal/Truth.agda`
 - Kernel: `LogOS/Kernel.agda`
-- Boundary I/O: `LogOS/Boundary/IO.agda`, `LogOS/Boundary/Semantics.agda`, `LogOS/Kernel/Boundary.agda`
+- Boundary I/O: `LogOS/Boundary/IO.agda`, `LogOS/Boundary/Semantics.agda`, `LogOS/Boundary/FromKernel.agda`
 - Kernel Hom: `LogOS/Kernel/Hom.agda`
-- Free constraints: `LogOS/Free/Constraints.agda`
-- Initial kernel: `LogOS/Kernel/Initial.agda`
+- Free constraints: `LogOS/Minimal/Constraints.agda`
+- Initial kernel: `LogOS/Kernel/UngradedKernel/Initial.agda`
 - Proven theorems: `LogOS/Theorems/Laws/FiniteKernel/S.agda`, `LogOS/Theorems/Laws/FiniteKernel/H.agda`, `LogOS/Theorems/Boundary/Mu.agda`, `LogOS/Theorems/Boundary/ContinuityCore.agda`, `LogOS/Theorems/Boundary/Continuity.agda`, `LogOS/Theorems/Boundary/MuFusion.agda`, `LogOS/Theorems/Code/Core.agda`, `LogOS/Theorems/Boundary/Guarded.agda`
-- Aggregators: `LogOS/Ports/All.agda`, `LogOS/Adapters/All.agda`
-- Meta (conditional): `LogOS/Theorems/Meta/Assumptions/Core.agda`, `LogOS/Theorems/Meta/Assumptions/Diagonal.agda` (umbrella: `LogOS/Theorems/Meta/Assumptions.agda`), `LogOS/Theorems/Meta/Full.agda`, `LogOS/Theorems/Meta/Rice.agda`, `LogOS/Theorems/Meta/Tarski.agda`, `LogOS/Theorems/Meta/Lob.agda`, `LogOS/Theorems/Meta/Godel.agda`
+- Aggregators: `LogOS/Kernel/All.agda`, `LogOS/Ports/Surface.agda` / `LogOS/Ports/All.agda`, `LogOS/Adapters/Surface.agda` / `LogOS/Adapters/All.agda`, `LogOS/Theorems/Surface.agda` / `LogOS/Theorems/All.agda`
+- Meta (conditional): `LogOS/Theorems/Meta/ConditionalPacks.agda`, `LogOS/Theorems/Meta/Assumptions/Core.agda`, `LogOS/Theorems/Meta/Assumptions/Diagonal.agda` (umbrella: `LogOS/Theorems/Meta/Assumptions.agda`), `LogOS/Theorems/Meta/Full.agda`, `LogOS/Theorems/Meta/Rice.agda`, `LogOS/Theorems/Meta/Tarski.agda`, `LogOS/Theorems/Meta/Lob.agda`, `LogOS/Theorems/Meta/Godel.agda`
 - Helpers (continuity): `Tests/ContinuityOne.agda`
 
 Conditional applications (brief, honest)

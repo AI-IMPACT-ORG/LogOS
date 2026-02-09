@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -46,6 +46,54 @@ record Complete {ℓI ℓP ℓW : Level}
                 : Set (lsuc (lsuc (ℓI ⊔ ℓP ⊔ ℓW))) where
   field
     complete : ∀ x → P x → Prov PS x
+
+-- Decidable equality pack used by generic key-validated checkers.
+record DecEq {ℓ : Level} (A : Set ℓ) : Set (lsuc ℓ) where
+  field
+    decEq : ∀ (x y : A) → x ≡ y ⊎ ¬ (x ≡ y)
+
+open DecEq public
+
+-- Generic key-validated checker:
+-- proofs carry a key + witness, checker validates key consistency.
+keyValidated
+  : ∀ {ℓI ℓP ℓW}
+    {Input : Set ℓI}
+    {P : Input → Set ℓP}
+  → (Key : Set ℓP)
+  → DecEq Key
+  → (inputKey : Input → Key)
+  → (Witness  : Input → Set ℓW)
+  → (witnessSound : ∀ x → Witness x → P x)
+  → ProofSystem
+      {ℓI = ℓI}
+      {ℓP = ℓP}
+      {ℓW = ℓP ⊔ ℓW}
+      Input
+      P
+keyValidated Key dEq inputKey Witness witnessSound =
+  record
+    { Proof    = λ x → Key × Witness x
+    ; Check    = λ x pr → fst pr ≡ inputKey x
+    ; decCheck = λ x pr → decEq dEq (fst pr) (inputKey x)
+    ; sound    = λ x pr _ → witnessSound x (snd pr)
+    }
+
+keyValidated-complete
+  : ∀ {ℓI ℓP ℓW}
+    {Input : Set ℓI}
+    {P : Input → Set ℓP}
+    (Key : Set ℓP)
+    (dEq : DecEq Key)
+    (inputKey : Input → Key)
+    (Witness  : Input → Set ℓW)
+    (witnessSound : ∀ x → Witness x → P x)
+  → (witnessComplete : ∀ x → P x → Witness x)
+  → Complete (keyValidated Key dEq inputKey Witness witnessSound)
+keyValidated-complete Key dEq inputKey Witness witnessSound witnessComplete =
+  record
+    { complete = λ x px → (inputKey x , witnessComplete x px) , refl
+    }
 
 -- ---------------------------------------------------------------------------
 -- Small generic transports for proof-carrying tool interfaces.

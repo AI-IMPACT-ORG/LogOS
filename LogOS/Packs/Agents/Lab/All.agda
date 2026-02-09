@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -51,20 +51,14 @@ module Safety where
     open import LogOS.Packs.Agents.Safety.Meaningfulness public
   module Monitor where
     open import LogOS.Packs.Agents.Safety.Monitor public
-  module Audit where
-    open import LogOS.Packs.Agents.Safety.Audit public
-  module NoTotalAuditor where
-    open import LogOS.Packs.Agents.Safety.NoTotalAuditor public
 
 module Telemetry where
   open import LogOS.Packs.Agents.Telemetry public
 
 module Frameworks where
   open import LogOS.Packs.Agents.Frameworks.Core public
-  open import LogOS.Packs.Agents.Frameworks.GodelMachine public
   open import LogOS.Packs.Agents.Frameworks.AIXI_Bounded public
   open import LogOS.Packs.Agents.Frameworks.OOPS public
-  open import LogOS.Packs.Agents.Frameworks.MetaReasoning public
   open import LogOS.Packs.Agents.Frameworks.UniversalIR public
   open import LogOS.Packs.Agents.Frameworks.PATask public
   open import LogOS.Packs.Agents.Frameworks.PATaskAgreement public
@@ -91,7 +85,6 @@ module Networks where
 module Comparisons where
   open import LogOS.Packs.Agents.Comparisons.Refinement public
   open import LogOS.Packs.Agents.Comparisons.Cost public
-  open import LogOS.Packs.Agents.Comparisons.Limitations public
 
 module Emit where
   module PythonSyntax where
@@ -113,7 +106,5 @@ module Examples where
     open import LogOS.Packs.Agents.Examples.HelloSocket public
   module HelloNetwork where
     open import LogOS.Packs.Agents.Examples.HelloNetwork public
-  module ReindexedNetwork where
-    open import LogOS.Packs.Agents.Examples.ReindexedNetwork public
   module NeuralSymbolicBlend where
     open import LogOS.Packs.Agents.Examples.NeuralSymbolicBlend public

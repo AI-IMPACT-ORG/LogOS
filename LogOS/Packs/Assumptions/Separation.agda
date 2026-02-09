@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -24,7 +24,7 @@ open import LogOS.Packs.Assumptions.Physics
 open import LogOS.Base.Signature using (module LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
-open import LogOS.Kernel.LogicKernel using (GTier; LogicKernel)
+open import LogOS.Kernel using (GTier; Kernel)
 
 open import LogOS.Theorems.Meta.Guards using (NontrivialSet)
 
@@ -33,7 +33,7 @@ open import LogOS.Theorems.Meta.Guards using (NontrivialSet)
 
 record SaturationStrict {ℓ : Level} (C : LogicCore {ℓ}) : Set (lsuc (lsuc ℓ)) where
   open LogicCore C renaming (K to LK)
-  open LogicKernel LK
+  open Kernel LK
   open BulkBoundary BB using (Con_bnd)
 
   private
@@ -75,7 +75,7 @@ private
 module Examples where
   -- A computation/irreversibility model with strict saturation at the boundary
   -- (but a trivial cost/energy scale, so physics-of-information is vacuous).
-  import LogOS.Domain.UniversalIR.Examples.KernelSaturationLaxTasksNontrivial as U
+  import LogOS.UniversalIR.Examples.KernelSaturationLaxTasksNontrivial as U
 
   coreUni : LogicCore {lzero}
   coreUni = coreFromKernel U.Kℕ
@@ -95,9 +95,9 @@ module Examples where
   -- A “physics-of-information compatible” core (nontrivial grade/energy carrier),
   -- but with identity Flow (so saturation is not strict: irreversible closure
   -- does not show up at the boundary level).
-  import LogOS.Domain.UniversalIR.ObservedKernel as OK
-  import LogOS.Domain.Complexity.LCUToLandauer as LCU
-  import LogOS.Domain.Complexity.SecondLaw as SL
+  import LogOS.UniversalIR.ObservedKernel as OK
+  import LogOS.Complexity.LCUToLandauer as LCU
+  import LogOS.Complexity.SecondLaw as SL
 
   module Obs = OK.ForObsKit OK.CodeObsKit
 
@@ -112,7 +112,7 @@ module Examples where
       ; a₀≠a₁ = λ ()
       }
 
-  -- A tiny (toy) Second-Law/Landauer instance on this signature+adapter.
+  -- A tiny Second-Law/Landauer instance on this signature+adapter.
   --
   -- This is deliberately minimal: it only serves as a *model existence witness*
   -- for the “physics” bundle, not as an intended semantics for UniversalIR.
@@ -172,7 +172,7 @@ module Examples where
   noStrict-phys (record { c = c ; sat≰raw = sat≰raw }) =
     let
       open LogicCore corePhys renaming (K to LK)
-      open LogicKernel LK
+      open Kernel LK
       CP∂ : ConPreorder lzero
       CP∂ = BulkBoundary.bnd BB
       module CP∂ = ConPreorder CP∂

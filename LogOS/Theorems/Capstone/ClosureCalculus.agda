@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,8 +12,8 @@ open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Kernel.Endo
-open import LogOS.Kernel.Infinite
-import LogOS.Kernel.Infinite.Lemmas as IKL
+open import LogOS.Kernel.UngradedKernel.Infinite
+import LogOS.Kernel.UngradedKernel.Infinite.Lemmas as IKL
 
 -- Capstone: closure steps form a compositional “calculus” and all fix `Th⋆`.
 -- A closure step is any endomap f with `id ≤ f ≤ Flow`.

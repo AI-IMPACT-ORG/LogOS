@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,7 +14,7 @@ module LogOS.Theorems.Boundary.Graded.Mu where
 open import LogOS.Prelude
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Prelude.Product using (_×_; _,_; fst; snd)
+open import LogOS.Prelude using (_×_; _,_; fst; snd)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Minimal.Con
 open import LogOS.Kernel.Graded
@@ -73,7 +73,7 @@ least-prefixed-point-K = park-induction-K
                  (GradedClosure.Th* (GradedKernel.GTruth K))
                  (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K))
                    (GradedClosure.Th* (GradedKernel.GTruth K)))
-μ-unfold-left Sig Q K = fst (GradedClosure.Th*-fixed (GradedKernel.GTruth K))
+μ-unfold-left Sig Q K = GradedClosure.Th*-fixed⇒ (GradedKernel.GTruth K)
 
 μ-unfold-right
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
@@ -82,7 +82,7 @@ least-prefixed-point-K = park-induction-K
                  (GradedClosure.Flow (GradedKernel.GTruth K) (GradedClosure.sat (GradedKernel.GTruth K))
                    (GradedClosure.Th* (GradedKernel.GTruth K)))
                  (GradedClosure.Th* (GradedKernel.GTruth K))
-μ-unfold-right Sig Q K = snd (GradedClosure.Th*-fixed (GradedKernel.GTruth K))
+μ-unfold-right Sig Q K = GradedClosure.Th*-fixed⇐ (GradedKernel.GTruth K)
 
 -- ============================================================================
 -- Generic Kleene μ on a boundary ωCPO (independent of `Th*`)

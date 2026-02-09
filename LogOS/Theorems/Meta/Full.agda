@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -8,20 +8,26 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Theorems.Meta.Full where
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (Σ; _,_)
+open import LogOS.Prelude using (Σ; _,_)
 open import LogOS.Syntax.Prop using (¬_)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.World
 open import LogOS.Minimal.Con
+open import LogOS.Minimal.ConAlg using (ConAlgHom≡)
 open import LogOS.Kernel
 open import LogOS.Kernel.Hom
-import LogOS.Theorems.Meta.Assumptions.Core as A
-open import LogOS.Theorems.Meta.DecodeTransportKit using (decode-mapCode-cong)
-open import LogOS.Kernel.Initial
+open import LogOS.Minimal.Constraints using (fold≡)
+import LogOS.Kernel.FromUngradedKernel as FromUngradedKernel
+import LogOS.Theorems.Meta.ConditionalPacks as A
+open import LogOS.Theorems.Meta.DecodeTransportKit using (mapCode≃K)
+open import LogOS.Kernel.UngradedKernel.Initial
 open import LogOS.Theorems.Meta.Base using (NonTrivialC; DeciderC; mkDeciderC)
 -- Use shared assumption packs
+
+-- Assumption ledger: this module depends on the shared meta-theorem assumption pack.
+module Assumptions = A
 
 -- Canonical (initial) kernel helper interface
 
@@ -34,13 +40,29 @@ WorldH Sig Q = Worlds.WorldH Sig Q
 FreeKernel
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     → WorldH Sig Q → Kernel Sig Q
-FreeKernel Sig Q HW = InitialKernel.FreeK (build Sig Q HW)
+FreeKernel Sig Q HW =
+  FromUngradedKernel.asKernel (InitialKernel.FreeK (build Sig Q HW))
 
 foldTo
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     → (HW : WorldH Sig Q)
     → (K : Kernel Sig Q) → KernelHom (FreeKernel Sig Q HW) K
-foldTo Sig Q HW K = InitialKernel.foldK (build Sig Q HW) K
+foldTo Sig Q HW K =
+  let
+    K₀ = FreeKernel Sig Q HW
+    fold = fold≡ (conAlgOf K)
+  in
+  record
+    { con-hom    = fold
+    ; mapCode    = λ γ → Kernel.encode K (ConAlgHom≡.map∂ fold (Kernel.decode K₀ γ))
+    ; map-encode =
+        λ c →
+          cong
+            (λ x → Kernel.encode K (ConAlgHom≡.map∂ fold x))
+            (Kernel.decode∘encode K₀ c)
+    ; map-decode =
+        λ γ → Kernel.decode∘encode K (ConAlgHom≡.map∂ fold (Kernel.decode K₀ γ))
+    }
 
 -- Pullback of decidability along a Kernel hom (textbook: reductions preserve decidability).
 
@@ -80,10 +102,10 @@ decodeExt-pull
     (HW : WorldH Sig Q)
     (K : Kernel Sig Q)
     (P : Kernel.Code K → Set ℓ)
-    → A.DecodeExtensional K P
-    → A.DecodeExtensional (FreeKernel Sig Q HW) (λ γ → P (KernelHom.mapCode (foldTo Sig Q HW K) γ))
+    → Assumptions.DecodeExtensional K P
+    → Assumptions.DecodeExtensional (FreeKernel Sig Q HW) (λ γ → P (KernelHom.mapCode (foldTo Sig Q HW K) γ))
 decodeExt-pull HW K P ext γ₁ γ₂ pr p =
-  ext _ _ (decode-mapCode-cong (foldTo _ _ HW K) pr) p
+  ext _ _ (mapCode≃K (foldTo _ _ HW K) pr) p
 
 -- Transport undecidability from the canonical FreeKernel to any target kernel via fold.
 -- (Textbook contrapositive: if P is decidable on K, then its pullback along fold is

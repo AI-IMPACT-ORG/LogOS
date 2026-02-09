@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ import LogOS.Syntax.Prop as Prop
 
 open import LogOS.Prelude.Fin using (fzero; fsuc)
 open import LogOS.Prelude.List using (List; []; _∷_)
-open import LogOS.Domain.ZFC.SetTheory.FormulaPack using (ZFAxiomsᶠ; ZFCAxiomsᶠ)
+open import LogOS.ZFC.SetTheory.FormulaPack using (ZFAxiomsᶠ; ZFCAxiomsᶠ)
 open import LogOS.ObjectLogic.FOL.All as FOL
 open import LogOS.ObjectLogic.FOL.ND using (Deriv; hyp; ⊥E; ⇒I; ⇒E; ∧I; ∧E₁; ∧E₂; ∀I; ∀E)
 import LogOS.ObjectLogic.FOL.NDTheory as NDTheory
@@ -21,7 +21,7 @@ import LogOS.ObjectLogic.ZFC.Axioms as ZFCAxioms
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
-open import LogOS.Kernel
+open import LogOS.API.Kernel
 
 -- A small “theory façade”:
 -- - packages the ZF axiom sentences into a FOL context

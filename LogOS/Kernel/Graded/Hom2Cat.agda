@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,54 +10,56 @@ module LogOS.Kernel.Graded.Hom2Cat where
 -- 2-categorical “refinement” view on graded-kernel morphisms.
 --
 -- Implementation note: the 2-cell calculus is defined once for the CHL-facing
--- `LogicKernel` interface (`LogOS.Kernel.LogicKernel.Hom2Cat`). This module is
+-- `Kernel` interface (`LogOS.Kernel.Hom2Cat`). This module is
 -- a lightweight wrapper that:
--- - embeds graded kernels via `FromGradedKernel.asLogicKernel`;
--- - reuses the `LogicKernel` 2-cell calculus by translating 1-cells.
+-- - embeds graded kernels via `FromGradedKernel.asKernel`;
+-- - reuses the `Kernel` 2-cell calculus by translating 1-cells.
 
 open import LogOS.Prelude
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
+open import LogOS.Minimal.RelPreorder as RP using (RelPreorder)
 open import LogOS.Minimal.Truth as Truth
-open import LogOS.Algebra.ConAlg using (ConAlgHom≡)
+open import LogOS.Minimal.ConAlg using (ConAlgHom≡)
 open import LogOS.Minimal.Thin2Cat using (Thin2Cat; Thin2CatLaws)
+open import LogOS.Minimal.RelThin2Cat using (RelThin2Cat; RelThin2CatLaws)
 
 open import LogOS.Kernel.Graded
-open import LogOS.Kernel.LogicKernel
-open import LogOS.Kernel.LogicKernel.FromGradedKernel as LKFrom
+open import LogOS.Kernel
+import LogOS.Kernel.FromGradedKernel as FromGraded
 open import LogOS.Kernel.Hom2Cat.FlowSub2Cat as FlowSub
 import LogOS.Kernel.Graded.Hom as KH
-import LogOS.Kernel.LogicKernel.Hom as LKH
-import LogOS.Kernel.LogicKernel.Hom2Cat as LK2
+import LogOS.Kernel.Hom as LKH
+import LogOS.Kernel.Hom2Cat as LK2
 
 private
   module GC = Truth.GuardedCore
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   private
-    asLK : GradedKernel Sig Q → LogicKernel Sig Q
-    asLK = LKFrom.asLogicKernel
+    asKernel : GradedKernel Sig Q → Kernel Sig Q
+    asKernel = FromGraded.asKernel
 
-    toLKHom
+    toKernelHom
       : ∀ {K₁ K₂ : GradedKernel Sig Q}
-      → KH.GradedKernelHom K₁ K₂ → LKH.LogicKernelHom (asLK K₁) (asLK K₂)
-    toLKHom h = record
+      → KH.GradedKernelHom K₁ K₂ → LKH.KernelHom (asKernel K₁) (asKernel K₂)
+    toKernelHom h = record
       { con-hom    = KH.GradedKernelHom.con-hom h
       ; mapCode    = KH.GradedKernelHom.mapCode h
       ; map-encode = KH.GradedKernelHom.map-encode h
       ; map-decode = KH.GradedKernelHom.map-decode h
       }
 
-    fromLKHom
+    fromKernelHom
       : ∀ {K₁ K₂ : GradedKernel Sig Q}
-      → LKH.LogicKernelHom (asLK K₁) (asLK K₂) → KH.GradedKernelHom K₁ K₂
-    fromLKHom h = record
-      { con-hom    = LKH.LogicKernelHom.con-hom h
-      ; mapCode    = LKH.LogicKernelHom.mapCode h
-      ; map-encode = LKH.LogicKernelHom.map-encode h
-      ; map-decode = LKH.LogicKernelHom.map-decode h
+      → LKH.KernelHom (asKernel K₁) (asKernel K₂) → KH.GradedKernelHom K₁ K₂
+    fromKernelHom h = record
+      { con-hom    = LKH.KernelHom.con-hom h
+      ; mapCode    = LKH.KernelHom.mapCode h
+      ; map-encode = LKH.KernelHom.map-encode h
+      ; map-decode = LKH.KernelHom.map-decode h
       }
 
   record GradedKernelHom₁ (K₁ K₂ : GradedKernel Sig Q) : Set (lsuc (lsuc ℓ)) where
@@ -83,32 +85,32 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
 
   open GradedKernelHom₁ public
 
-  toLKHom₁
+  toKernelHom₁
     : ∀ {K₁ K₂ : GradedKernel Sig Q}
-    → GradedKernelHom₁ K₁ K₂ → LK2.LogicKernelHom₁ (asLK K₁) (asLK K₂)
-  toLKHom₁ h =
+    → GradedKernelHom₁ K₁ K₂ → LK2.KernelHom₁ (asKernel K₁) (asKernel K₂)
+  toKernelHom₁ h =
     record
-      { hom   = toLKHom (GradedKernelHom₁.hom h)
+      { hom   = toKernelHom (GradedKernelHom₁.hom h)
       ; mono∂ = GradedKernelHom₁.mono∂ h
       }
 
-  fromLKHom₁
+  fromKernelHom₁
     : ∀ {K₁ K₂ : GradedKernel Sig Q}
-    → LK2.LogicKernelHom₁ (asLK K₁) (asLK K₂) → GradedKernelHom₁ K₁ K₂
-  fromLKHom₁ h =
+    → LK2.KernelHom₁ (asKernel K₁) (asKernel K₂) → GradedKernelHom₁ K₁ K₂
+  fromKernelHom₁ h =
     record
-      { hom   = fromLKHom (LK2.LogicKernelHom₁.hom h)
-      ; mono∂ = LK2.LogicKernelHom₁.mono∂ h
+      { hom   = fromKernelHom (LK2.KernelHom₁.hom h)
+      ; mono∂ = LK2.KernelHom₁.mono∂ h
       }
 
   idGradedKernelHom₁ : ∀ (K : GradedKernel Sig Q) → GradedKernelHom₁ K K
-  idGradedKernelHom₁ K = fromLKHom₁ (LK2.idLogicKernelHom₁ (asLK K))
+  idGradedKernelHom₁ K = fromKernelHom₁ (LK2.idKernelHom₁ (asKernel K))
 
   composeGradedKernelHom₁
     : ∀ {K₁ K₂ K₃ : GradedKernel Sig Q}
     → GradedKernelHom₁ K₁ K₂ → GradedKernelHom₁ K₂ K₃ → GradedKernelHom₁ K₁ K₃
   composeGradedKernelHom₁ f g =
-    fromLKHom₁ (LK2.composeLogicKernelHom₁ (toLKHom₁ f) (toLKHom₁ g))
+    fromKernelHom₁ (LK2.composeKernelHom₁ (toKernelHom₁ f) (toKernelHom₁ g))
 
   infixr 9 _∘₁_
   _∘₁_
@@ -116,22 +118,44 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     → GradedKernelHom₁ K₂ K₃ → GradedKernelHom₁ K₁ K₂ → GradedKernelHom₁ K₁ K₃
   g ∘₁ f = composeGradedKernelHom₁ f g
 
-  -- 2-cells: reuse the `LogicKernel` calculus after translating 1-cells.
+  -- 2-cells: reuse the `Kernel` calculus after translating 1-cells.
 
   infix 4 _⇒_
   _⇒_
     : ∀ {K₁ K₂ : GradedKernel Sig Q}
     → GradedKernelHom₁ K₁ K₂ → GradedKernelHom₁ K₁ K₂ → Set ℓ
-  f ⇒ g = LK2._⇒_ (toLKHom₁ f) (toLKHom₁ g)
+  f ⇒ g = LK2._⇒_ (toKernelHom₁ f) (toKernelHom₁ g)
+
+  -- Named alias: decode-quotiented refinement (2-cells).
+  --
+  -- This is the default notion used by the 2-cell calculus: it compares 1-cells
+  -- only on the decoded image of code.
+  RefinesDecode
+    : ∀ {K₁ K₂ : GradedKernel Sig Q}
+    → GradedKernelHom₁ K₁ K₂ → GradedKernelHom₁ K₁ K₂ → Set ℓ
+  RefinesDecode = _⇒_
+
+  -- Stronger (non-quotiented) refinement: pointwise on all boundary constraints.
+  Refines∂
+    : ∀ {K₁ K₂ : GradedKernel Sig Q}
+    → GradedKernelHom₁ K₁ K₂ → GradedKernelHom₁ K₁ K₂ → Set ℓ
+  Refines∂ f g = LK2.Refines∂ (toKernelHom₁ f) (toKernelHom₁ g)
+
+  Refines∂→RefinesDecode
+    : ∀ {K₁ K₂ : GradedKernel Sig Q} {f g : GradedKernelHom₁ K₁ K₂}
+    → Refines∂ f g
+    → RefinesDecode f g
+  Refines∂→RefinesDecode {f = f} {g = g} le =
+    LK2.Refines∂→RefinesDecode {f = toKernelHom₁ f} {g = toKernelHom₁ g} le
 
   refl⇒ : ∀ {K₁ K₂ : GradedKernel Sig Q} (f : GradedKernelHom₁ K₁ K₂) → f ⇒ f
-  refl⇒ f = LK2.refl⇒ (toLKHom₁ f)
+  refl⇒ f = LK2.refl⇒ (toKernelHom₁ f)
 
   trans⇒
     : ∀ {K₁ K₂ : GradedKernel Sig Q} {f g h : GradedKernelHom₁ K₁ K₂}
     → f ⇒ g → g ⇒ h → f ⇒ h
   trans⇒ {f = f} {g = g} {h = h} fg gh =
-    LK2.trans⇒ {f = toLKHom₁ f} {g = toLKHom₁ g} {h = toLKHom₁ h} fg gh
+    LK2.trans⇒ {f = toKernelHom₁ f} {g = toKernelHom₁ g} {h = toKernelHom₁ h} fg gh
 
   whiskerR
     : ∀ {K₁ K₂ K₃ : GradedKernel Sig Q}
@@ -140,9 +164,9 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     → g ⇒ g' → (g ∘₁ f) ⇒ (g' ∘₁ f)
   whiskerR {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {g = g} {g' = g'} f gg' =
     LK2.whiskerR
-      {K₁ = asLK K₁} {K₂ = asLK K₂} {K₃ = asLK K₃}
-      {g = toLKHom₁ g} {g' = toLKHom₁ g'}
-      (toLKHom₁ f)
+      {K₁ = asKernel K₁} {K₂ = asKernel K₂} {K₃ = asKernel K₃}
+      {g = toKernelHom₁ g} {g' = toKernelHom₁ g'}
+      (toKernelHom₁ f)
       gg'
 
   whiskerL
@@ -152,9 +176,9 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     → f ⇒ f' → (g ∘₁ f) ⇒ (g ∘₁ f')
   whiskerL {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} g {f = f} {f' = f'} ff' =
     LK2.whiskerL
-      {K₁ = asLK K₁} {K₂ = asLK K₂} {K₃ = asLK K₃}
-      (toLKHom₁ g)
-      {f = toLKHom₁ f} {f' = toLKHom₁ f'}
+      {K₁ = asKernel K₁} {K₂ = asKernel K₂} {K₃ = asKernel K₃}
+      (toKernelHom₁ g)
+      {f = toKernelHom₁ f} {f' = toKernelHom₁ f'}
       ff'
 
   -- Naming alignment with Thin2Cat: left/right refers to the varying 1-cell.
@@ -202,18 +226,62 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   GradedKernelThin2CatLaws =
     record
       { id-left = λ {A} {B} f →
-          ( lift (LK2.id-left⇒ {K₁ = asLK A} {K₂ = asLK B} (toLKHom₁ f))
-          , lift (LK2.id-left⇐ {K₁ = asLK A} {K₂ = asLK B} (toLKHom₁ f))
+          ( lift (LK2.id-left⇒ {K₁ = asKernel A} {K₂ = asKernel B} (toKernelHom₁ f))
+          , lift (LK2.id-left⇐ {K₁ = asKernel A} {K₂ = asKernel B} (toKernelHom₁ f))
           )
       ; id-right = λ {A} {B} f →
-          ( lift (LK2.id-right⇒ {K₁ = asLK A} {K₂ = asLK B} (toLKHom₁ f))
-          , lift (LK2.id-right⇐ {K₁ = asLK A} {K₂ = asLK B} (toLKHom₁ f))
+          ( lift (LK2.id-right⇒ {K₁ = asKernel A} {K₂ = asKernel B} (toKernelHom₁ f))
+          , lift (LK2.id-right⇐ {K₁ = asKernel A} {K₂ = asKernel B} (toKernelHom₁ f))
           )
       ; assoc = λ {A} {B} {C} {D} f g h →
-          ( lift (LK2.assoc⇒ {K₁ = asLK A} {K₂ = asLK B} {K₃ = asLK C} {K₄ = asLK D}
-                    (toLKHom₁ h) (toLKHom₁ g) (toLKHom₁ f))
-          , lift (LK2.assoc⇐ {K₁ = asLK A} {K₂ = asLK B} {K₃ = asLK C} {K₄ = asLK D}
-                    (toLKHom₁ h) (toLKHom₁ g) (toLKHom₁ f))
+          ( lift (LK2.assoc⇒ {K₁ = asKernel A} {K₂ = asKernel B} {K₃ = asKernel C} {K₄ = asKernel D}
+                    (toKernelHom₁ h) (toKernelHom₁ g) (toKernelHom₁ f))
+          , lift (LK2.assoc⇐ {K₁ = asKernel A} {K₂ = asKernel B} {K₃ = asKernel C} {K₄ = asKernel D}
+                    (toKernelHom₁ h) (toKernelHom₁ g) (toKernelHom₁ f))
+          )
+      }
+
+  -- RelPreorder-enriched 2-category view (no `Lift` needed).
+
+  GradedKernelHomRelPreorder
+    : GradedKernel Sig Q → GradedKernel Sig Q → RelPreorder (lsuc (lsuc ℓ)) ℓ
+  GradedKernelHomRelPreorder K₁ K₂ =
+    record
+      { Con = GradedKernelHom₁ K₁ K₂
+      ; _⊑_ = λ f g → f ⇒ g
+      ; refl = λ {f} → refl⇒ f
+      ; trans = λ {f} {g} {h} fg gh → trans⇒ {f = f} {g = g} {h = h} fg gh
+      }
+
+  GradedKernelRelThin2Cat : RelThin2Cat (lsuc (lsuc ℓ)) (lsuc (lsuc ℓ)) ℓ
+  GradedKernelRelThin2Cat =
+    record
+      { Obj = GradedKernel Sig Q
+      ; Hom = GradedKernelHomRelPreorder
+      ; id  = λ {A} → idGradedKernelHom₁ A
+      ; _∘_ = _∘₁_
+      ; comp-mono-l = λ {A} {B} {C} {f} {f'} {g} le →
+          whisker-left {K₁ = A} {K₂ = B} {K₃ = C} {g = f} {g' = f'} g le
+      ; comp-mono-r = λ {A} {B} {C} {f} {g} {g'} le →
+          whisker-right {K₁ = A} {K₂ = B} {K₃ = C} f {f = g} {f' = g'} le
+      }
+
+  GradedKernelRelThin2CatLaws : RelThin2CatLaws GradedKernelRelThin2Cat
+  GradedKernelRelThin2CatLaws =
+    record
+      { id-left = λ {A} {B} f →
+          ( LK2.id-left⇒ {K₁ = asKernel A} {K₂ = asKernel B} (toKernelHom₁ f)
+          , LK2.id-left⇐ {K₁ = asKernel A} {K₂ = asKernel B} (toKernelHom₁ f)
+          )
+      ; id-right = λ {A} {B} f →
+          ( LK2.id-right⇒ {K₁ = asKernel A} {K₂ = asKernel B} (toKernelHom₁ f)
+          , LK2.id-right⇐ {K₁ = asKernel A} {K₂ = asKernel B} (toKernelHom₁ f)
+          )
+      ; assoc = λ {A} {B} {C} {D} f g h →
+          ( LK2.assoc⇒ {K₁ = asKernel A} {K₂ = asKernel B} {K₃ = asKernel C} {K₄ = asKernel D}
+              (toKernelHom₁ h) (toKernelHom₁ g) (toKernelHom₁ f)
+          , LK2.assoc⇐ {K₁ = asKernel A} {K₂ = asKernel B} {K₃ = asKernel C} {K₄ = asKernel D}
+              (toKernelHom₁ h) (toKernelHom₁ g) (toKernelHom₁ f)
           )
       }
 
@@ -225,8 +293,8 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     → f ⇒ f' → g ⇒ g' → (g ∘₁ f) ⇒ (g' ∘₁ f')
   _⊙_ {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {f = f} {f' = f'} {g = g} {g' = g'} ff' gg' =
     LK2._⊙_
-      {K₁ = asLK K₁} {K₂ = asLK K₂} {K₃ = asLK K₃}
-      {f = toLKHom₁ f} {f' = toLKHom₁ f'} {g = toLKHom₁ g} {g' = toLKHom₁ g'}
+      {K₁ = asKernel K₁} {K₂ = asKernel K₂} {K₃ = asKernel K₃}
+      {f = toKernelHom₁ f} {f' = toKernelHom₁ f'} {g = toKernelHom₁ g} {g' = toKernelHom₁ g'}
       ff'
       gg'
 
@@ -236,20 +304,20 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
   _≈_
     : ∀ {K₁ K₂ : GradedKernel Sig Q}
     → GradedKernelHom₁ K₁ K₂ → GradedKernelHom₁ K₁ K₂ → Set ℓ
-  f ≈ g = LK2._≈_ (toLKHom₁ f) (toLKHom₁ g)
+  f ≈ g = LK2._≈_ (toKernelHom₁ f) (toKernelHom₁ g)
 
   refl≈ : ∀ {K₁ K₂ : GradedKernel Sig Q} (f : GradedKernelHom₁ K₁ K₂) → f ≈ f
-  refl≈ f = LK2.refl≈ (toLKHom₁ f)
+  refl≈ f = LK2.refl≈ (toKernelHom₁ f)
 
   sym≈ : ∀ {K₁ K₂ : GradedKernel Sig Q} {f g : GradedKernelHom₁ K₁ K₂} → f ≈ g → g ≈ f
   sym≈ {K₁ = K₁} {K₂ = K₂} {f = f} {g = g} fg =
-    LK2.sym≈ {K₁ = asLK K₁} {K₂ = asLK K₂} {f = toLKHom₁ f} {g = toLKHom₁ g} fg
+    LK2.sym≈ {K₁ = asKernel K₁} {K₂ = asKernel K₂} {f = toKernelHom₁ f} {g = toKernelHom₁ g} fg
 
   trans≈
     : ∀ {K₁ K₂ : GradedKernel Sig Q} {f g h : GradedKernelHom₁ K₁ K₂}
     → f ≈ g → g ≈ h → f ≈ h
   trans≈ {K₁ = K₁} {K₂ = K₂} {f = f} {g = g} {h = h} fg gh =
-    LK2.trans≈ {K₁ = asLK K₁} {K₂ = asLK K₂} {f = toLKHom₁ f} {g = toLKHom₁ g} {h = toLKHom₁ h} fg gh
+    LK2.trans≈ {K₁ = asKernel K₁} {K₂ = asKernel K₂} {f = toKernelHom₁ f} {g = toKernelHom₁ g} {h = toKernelHom₁ h} fg gh
 
   cong-∘₁-≈
     : ∀ {K₁ K₂ K₃ : GradedKernel Sig Q}
@@ -260,8 +328,8 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
     → (g ∘₁ f) ≈ (g' ∘₁ f')
   cong-∘₁-≈ {K₁ = K₁} {K₂ = K₂} {K₃ = K₃} {f = f} {f' = f'} {g = g} {g' = g'} ff gg =
     LK2.cong-∘₁-≈
-      {K₁ = asLK K₁} {K₂ = asLK K₂} {K₃ = asLK K₃}
-      {f = toLKHom₁ f} {f' = toLKHom₁ f'} {g = toLKHom₁ g} {g' = toLKHom₁ g'}
+      {K₁ = asKernel K₁} {K₂ = asKernel K₂} {K₃ = asKernel K₃}
+      {f = toKernelHom₁ f} {f' = toKernelHom₁ f'} {g = toKernelHom₁ g} {g' = toKernelHom₁ g'}
       ff gg
 
   -- Step-grade flow preservation, in a composable form (once a 1-cell supplies `mono∂`).

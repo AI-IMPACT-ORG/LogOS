@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -67,4 +67,4 @@ defaultMultiBoundaryIO
 defaultMultiBoundaryIO {Sig = Sig} Role K =
   defaultMultiBoundaryIOFromBoundaryIO {Role = Role} (boundaryIO K)
   where
-  open import LogOS.Kernel.Boundary using (boundaryIO)
+  open import LogOS.Boundary.FromKernel using (boundaryIO)

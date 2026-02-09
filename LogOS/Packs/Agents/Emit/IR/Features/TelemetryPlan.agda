@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Packs.Agents.Emit.IR.Features.TelemetryPlan where
 
 open import LogOS.Prelude.Bool using (Bool; true; false)
 open import LogOS.Prelude.List using (List; []; _∷_)
-open import LogOS.Prelude.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude using (ℕ; zero; suc)
 
 import LogOS.Packs.Agents.Emit.IR.Intent as Intent
 

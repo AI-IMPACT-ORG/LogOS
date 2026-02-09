@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -25,7 +25,8 @@ module Worlds {ℓ : Level} (Sig : LogOSSignature ℓ) where
     infix 4 _≤ctx_
     open QAdapter Q renaming (Scale to Scl; _≤s_ to _≤Scl_; _·_ to _∙_; e to ε)
     field
-      -- Context preorder (Kripke-style)
+      -- Context relation (Kripke-style). Optional preorder laws are provided
+      -- separately via `LogOS.Minimal.WorldLaws.For.CtxPreorder`.
       _≤ctx_ : Cosp → Cosp → Set ℓ
 
       -- Q-weighted world-flow between worlds (Q-category shape)

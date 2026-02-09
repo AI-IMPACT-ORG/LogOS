@@ -1,5 +1,5 @@
 <!--
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
@@ -54,31 +54,33 @@ Two distinct layers are used throughout the library:
 ## Where the construction lives
 
 - Set-theory interfaces (schemata over formulas/codes):
-  - `LogOS/Domain/ZFC/SetTheory/FormulaPack.agda`
+  - `LogOS/ZFC/SetTheory/FormulaPack.agda`
   - Definable → formula-pack bridge (makes the code-based interface operational):
-    `LogOS/Domain/ZFC/SetTheory/FormulaFromDefinable.agda`
+    `LogOS/ZFC/SetTheory/FormulaFromDefinable.agda`
   - Small derived conveniences for the formula-pack surface:
-    `LogOS/Domain/ZFC/SetTheory/FormulaDerived.agda`
+    `LogOS/ZFC/SetTheory/FormulaDerived.agda`
   - Canonical schema name aliases (Extensionality/Separation/Replacement/etc.):
-    `LogOS/Domain/ZFC/SetTheory/SchemaTheorems.agda`
-  - `LogOS/Domain/ZFC/SetTheory/Pack.agda`
+    `LogOS/ZFC/SetTheory/SchemaTheorems.agda`
+  - `LogOS/ZFC/SetTheory/Pack.agda`
   - Optional “full meta-level schema” upgrade (representability assumption):
-    `LogOS/Domain/ZFC/SetTheory/FullUpgradeFromDefinable.agda`
+    `LogOS/ZFC/SetTheory/FullUpgradeFromDefinable.agda`
 - Forcing-like closure surface (boundary Flow as a nucleus):
-  - `LogOS/Domain/ZFC/SetTheory/Dsl.agda` (ZFDsl; membership respects the boundary `Flow`)
-  - `LogOS/Domain/ZFC/SetTheory/StageToCHFromHierarchy.agda` (uses `μFlow` when `OmegaCPO` + `FiniteFirst` are supplied)
+  - `LogOS/ZFC/SetTheory/Dsl.agda` (ZFDsl; membership respects the boundary `Flow`)
+  - `LogOS/ZFC/SetTheory/StageToCHFromHierarchy.agda` (uses `μFlow` when `OmegaCPO` + `FiniteFirst` are supplied)
 - Concrete model route (one worked semantics path):
-  - `LogOS/Domain/ZFC/WFGraph/`
+  - `LogOS/ZFC/WFGraph/`
   - ZF(+Infinity) semantics, with ZFC = ZF + explicit AC witness
   - Mostowski-style collapse (fold ∘ unfold transport of membership):
-    `LogOS/Domain/ZFC/WFGraph/Mostowski.agda`
+    `LogOS/ZFC/WFGraph/Mostowski.agda`
   - Formula-coded variant (codes are genuine first-order formulas, `decode` = extension):
-    - `LogOS/Domain/ZFC/WFGraph/FormulaCode.agda`
-    - `LogOS/Domain/ZFC/WFGraph/FormulaKernel.agda`
-    - `LogOS/Domain/ZFC/WFGraph/FormulaPack.agda` (surface: `LogOS/Domain/ZFC/WFGraph/Surface.agda` → `FormulaCoded W`)
+    - `LogOS/ZFC/WFGraph/FormulaCode.agda`
+    - `LogOS/ZFC/WFGraph/FormulaKernel.agda`
+    - `LogOS/ZFC/WFGraph/FormulaPack.agda` (surface: `LogOS/ZFC/WFGraph/Surface.agda` → `FormulaCoded W`)
 - Curated pack entrypoint:
   - `LogOS/Packs/ZFC/Surface.agda` (umbrella: `LogOS/Packs/ZFC/All.agda`)
   - WFGraph pack quartets: `LogOS/Packs/ZFC/WFGraph.agda`
+  - Packaged textbook-ZFC instance object (explicit AC witness carried in assumptions):
+    `LogOS/Packs/ZFC/Examples.agda` (`TextbookWithChoiceInstance`)
   - Minimal typechecked demo: `docs/DeepDive/ZFC_Demo.lagda.md`
 
 ## Relation to literature
@@ -110,9 +112,9 @@ open import LogOS.Packs.ZFC.Surface as ZFC
 
 ## Reading guide (practical)
 
-1. Start at `LogOS/Domain/ZFC/ARCHITECTURE.md` for the “hexagonal” module map.
+1. Start at `LogOS/ZFC/ARCHITECTURE.md` for the “hexagonal” module map.
 2. The safe core only provides the kernel + closure machinery; all set-theoretic
-   strength comes from explicit adapters/packs in `LogOS/Domain/ZFC/SetTheory/`.
+   strength comes from explicit adapters/packs in `LogOS/ZFC/SetTheory/`.
 3. If you want a ZFC instance, look for the **single AC witness** and where it
    is threaded into the ZF pack (no hidden axioms).
 

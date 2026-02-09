@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -13,6 +13,8 @@ die() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 REPO_ROOT="$(cd "${LIB_ROOT}/.." && pwd)"
+
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
 
 check_gplv3_notice() {
   local file="$1"
@@ -37,13 +39,16 @@ fi
 
 # Library declares SPDX tag in README (keep it simple/robust: accept either form).
 if [[ -f "${LIB_ROOT}/README.md" ]]; then
-  if command -v rg >/dev/null 2>&1; then
-    readme_ok="$(rg -q "GPL-3\\.0-only|GPLv3" "${LIB_ROOT}/README.md" && echo yes || echo no)"
-  else
-    readme_ok="$(grep -Eq "GPL-3\\.0-only|GPLv3" "${LIB_ROOT}/README.md" && echo yes || echo no)"
+  out=""
+  status=0
+  set +e
+  out="$(rg -q "GPL-3\\.0-only|GPLv3" "${LIB_ROOT}/README.md" 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
-
-  if [[ "$readme_ok" != "yes" ]]; then
+  if [[ "$status" -ne 0 ]]; then
     die "missing GPL notice in ${LIB_ROOT}/README.md (expected GPL-3.0-only or GPLv3)"
   fi
 fi

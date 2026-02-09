@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -16,6 +16,8 @@ open import LogOS.Minimal.Con using
   ; PartialOrder
   ; MonoMap
   ; _≈CP_
+  ; ≈CP⇒
+  ; ≈CP⇐
   ; ≈CP→≡
   )
 
@@ -36,18 +38,18 @@ record PreorderIso {ℓ₁ ℓ₂ : Level}
   to-reflects : ∀ {x y} → _⊑₂_ (to x) (to y) → _⊑₁_ x y
   to-reflects {x} {y} toxy =
     let
-      x≤fromtox = snd (from∘to≈id x)
-      fromtox≤fromtoy = from-mono toxy
-      fromtoy≤y = fst (from∘to≈id y)
+      x≤fromtox = ≈CP⇐ {CP = CP₁} (from∘to≈id x)
+      fromToX≤fromToY = from-mono toxy
+      fromToY≤y = ≈CP⇒ {CP = CP₁} (from∘to≈id y)
     in
-    ConPreorder.trans CP₁ x≤fromtox (ConPreorder.trans CP₁ fromtox≤fromtoy fromtoy≤y)
+    ConPreorder.trans CP₁ x≤fromtox (ConPreorder.trans CP₁ fromToX≤fromToY fromToY≤y)
 
   from-reflects : ∀ {x y} → _⊑₁_ (from x) (from y) → _⊑₂_ x y
   from-reflects {x} {y} fromxy =
     let
-      x≤tofromx = snd (to∘from≈id x)
+      x≤tofromx = ≈CP⇐ {CP = CP₂} (to∘from≈id x)
       tofromx≤tofromy = to-mono fromxy
-      tofromy≤y = fst (to∘from≈id y)
+      tofromy≤y = ≈CP⇒ {CP = CP₂} (to∘from≈id y)
     in
     ConPreorder.trans CP₂ x≤tofromx (ConPreorder.trans CP₂ tofromx≤tofromy tofromy≤y)
 

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -19,12 +19,12 @@ open import LogOS.Syntax.Prop using (⊥; ⊥-elim; ↔-refl)
 open import LogOS.Minimal.Con using (ConPreorder)
 open import LogOS.Minimal.Truth as Truth
 
-open import LogOS.Ports.Semantic.PresentationCore using (PresentationC)
+open import LogOS.Ports.Semantic.PresentationCore using (SatSystem; satSystem; PresentationC)
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
 import LogOS.Ports.Semantic.Interoperability as Interop
 import LogOS.Theorems.Boundary.OmegaCPOMapKit as OmegaKit
 
-open import LogOS.Prelude.Nat using (ℕ; zero; suc)
+open import LogOS.Prelude using (ℕ; zero; suc)
 
 -- Context is irrelevant here.
 Ctx : Set lzero
@@ -65,7 +65,13 @@ Sat₁ _ P = P (suc zero)
 Sat₂ : Ctx → Con → Set lzero
 Sat₂ _ P = P zero
 
-m : SatMor Ctx Con Sat₁ Ctx Con Sat₂
+S₁ : SatSystem {ℓCtx = lzero} {ℓCon = lsuc lzero} {ℓSat = lzero}
+S₁ = satSystem Ctx Con Sat₁
+
+S₂ : SatSystem {ℓCtx = lzero} {ℓCon = lsuc lzero} {ℓSat = lzero}
+S₂ = satSystem Ctx Con Sat₂
+
+m : SatMor S₁ S₂
 m =
   record
     { mapCtx = λ p → p
@@ -74,7 +80,7 @@ m =
     }
 
 -- Identity presentation (Form = Con).
-P₁ : PresentationC {ℓCtx = lzero} {ℓCon = lsuc lzero} {ℓForm = lsuc lzero} {ℓSat = lzero} Ctx Con Sat₁
+P₁ : PresentationC {ℓForm = lsuc lzero} S₁
 P₁ =
   record
     { Form = Con
@@ -85,7 +91,7 @@ P₁ =
     ; SatF≈C = λ _ _ → ↔-refl
     }
 
-P₂ : PresentationC {ℓCtx = lzero} {ℓCon = lsuc lzero} {ℓForm = lsuc lzero} {ℓSat = lzero} Ctx Con Sat₂
+P₂ : PresentationC {ℓForm = lsuc lzero} S₂
 P₂ =
   record
     { Form = Con

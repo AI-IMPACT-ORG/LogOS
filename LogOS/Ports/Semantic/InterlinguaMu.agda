@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,11 +22,11 @@ open import LogOS.Syntax.Prop as Prop
 open import LogOS.Minimal.Con using (ConPreorder; MonoOn)
 open import LogOS.Minimal.Truth as Truth
 
-open import LogOS.Ports.Semantic.PresentationCore using (PresentationC)
+open import LogOS.Ports.Semantic.PresentationCore using (SatSystem; satSystem; PresentationC)
 open import LogOS.Ports.Semantic.SatMor using (SatMor)
 import LogOS.Ports.Semantic.HeteroInterlinguaCore as Hetero
 
-import LogOS.Theorems.Boundary.MuFusion as MuFusion
+import LogOS.Minimal.MuFusion as MuFusion
 
 module For
   {ℓCtx₁ ℓCon₁ ℓForm₁ ℓSat₁ : Level}
@@ -37,9 +37,13 @@ module For
   {Ctx₂ : Set ℓCtx₂}
   (CP₂ : ConPreorder ℓCon₂)
   {Sat₂ : Ctx₂ → ConPreorder.Con CP₂ → Set ℓSat₂}
-  (m  : SatMor Ctx₁ (ConPreorder.Con CP₁) Sat₁ Ctx₂ (ConPreorder.Con CP₂) Sat₂)
-  (P₁ : PresentationC {ℓForm = ℓForm₁} Ctx₁ (ConPreorder.Con CP₁) Sat₁)
-  (P₂ : PresentationC {ℓForm = ℓForm₂} Ctx₂ (ConPreorder.Con CP₂) Sat₂)
+  (m  : SatMor
+          (satSystem Ctx₁ (ConPreorder.Con CP₁) Sat₁)
+          (satSystem Ctx₂ (ConPreorder.Con CP₂) Sat₂))
+  (P₁ : PresentationC {ℓForm = ℓForm₁}
+          (satSystem Ctx₁ (ConPreorder.Con CP₁) Sat₁))
+  (P₂ : PresentationC {ℓForm = ℓForm₂}
+          (satSystem Ctx₂ (ConPreorder.Con CP₂) Sat₂))
   where
 
   private

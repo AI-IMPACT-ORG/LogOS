@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,8 +14,8 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (BulkBoundary)
 open import LogOS.Minimal.Truth as Truth
 
-open import LogOS.Kernel.LogicKernel using (LogicKernel)
-import LogOS.Kernel.LogicKernel.Endo as LKEndo
+open import LogOS.Kernel using (Kernel)
+import LogOS.Kernel.Endo as LKEndo
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 import LogOS.Packs.Agents.Learning.Core as LearningCore
@@ -30,14 +30,14 @@ module For
   {Task : Set ℓTask}
   (Sock : AgentSocket Sig Q Task)
   (ωCPO : (let module GT = Truth.GuardedCore in GT.OmegaCPO)
-            (BulkBoundary.bnd (LogicKernel.BB (AgentSocket.LK Sock))))
+            (BulkBoundary.bnd (Kernel.BB (AgentSocket.LK Sock))))
   where
 
   open AgentSocket Sock
   open LearningCore.For Sock using (Policy; Update; apply; LearningStep)
 
   open LKEndo
-  module FP = EndoFP.LogicKernel.For LK ωCPO
+  module FP = EndoFP.Kernel.For LK ωCPO
   open FP using (_⊑_; iterEndo; muEndo; muEndo-unfold-left; muEndo-induction;
                  ScottContinuous; muEndo-unfold-right; iterEndo-mono-chain-infl;
                  muEndo-unfold-right-infl)

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -22,11 +22,11 @@ open import LogOS.Packs.Trust using (PackTrust; scaffold)
 packTrust : PackTrust
 packTrust = record { level = scaffold }
 
-open import LogOS.Domain.UniversalIR.KernelRichG public using
+open import LogOS.UniversalIR.KernelRichG public using
   (Sig; Q; GUKR; topOrderU; vacuousHTruth)
-open import LogOS.Domain.UniversalIR.ObservedKernel public
+open import LogOS.UniversalIR.ObservedKernel public
 open import LogOS.Kernel.Graded using (GradedKernel)
-import LogOS.Kernel.Graded.Boundary as GB
+import LogOS.Boundary.FromGradedKernel as GB
 open import LogOS.Boundary.IO using (BoundaryIO)
 open import LogOS.Boundary.MultiIO using (MultiBoundaryIO; defaultMultiBoundaryIOFromBoundaryIO)
 

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,16 +15,16 @@ open import LogOS.Syntax.Prop as Prop using (_↔_)
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Base.Signature.Hom using (SigHom)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary; ≡→≈CP)
+open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary; ≡→≈CP; ≈CP⇒; ≈CP⇐)
 open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel hiding (Box; decode-Box; box-mono)
 
-import LogOS.Algebra.Quantale as Quantale
-import LogOS.Algebra.ConAlg as ConAlg
-import LogOS.Free.ConstraintsOverSig as ConOverSig
-import LogOS.Kernel.Boundary as KBoundary
-import LogOS.Kernel.Core as KCore
-import LogOS.Kernel.LogicKernel as LK
+import LogOS.Minimal.Prequantale as Prequantale
+import LogOS.Minimal.ConAlg as ConAlg
+import LogOS.Minimal.ConstraintsOverSig as ConOverSig
+import LogOS.Boundary.FromKernel as KBoundary
+import LogOS.Kernel.Shape as KCore
+import LogOS.Kernel as LK
 import LogOS.Theorems.Meta.CHL.Core as Core
 import LogOS.Theorems.Meta.CHL.Category as Category
 import LogOS.Theorems.Meta.CHL.Completeness as Complete
@@ -34,6 +34,12 @@ import LogOS.Theorems.Meta.CHL.2Cat as Cat2
 import LogOS.Theorems.Meta.CHL.Indexed as Indexed
 import LogOS.Theorems.Meta.CHL.Guarded as Guarded
 import LogOS.Theorems.CategoryTheory.KernelCat as KernelCat
+import LogOS.Theorems.Modal.S4 as ModalS4
+import LogOS.Theorems.Boundary.ContinuityCore as ContinuityCore
+import LogOS.Theorems.Boundary.Guarded as GuardedBoundary
+import LogOS.Theorems.CategoryTheory.AdjunctionMonads as AdjMonads
+import LogOS.Theorems.CategoryTheory.BeckChevalley as BeckChevalleyₜ
+import LogOS.Kernel.Hom as KH
 import LogOS.Boundary.Budget as Budget
 import LogOS.Boundary.Telemetry as Telemetry
 import LogOS.Theorems.Meta.Views as MetaViews
@@ -81,9 +87,9 @@ module ReindexingSatisfactionWithFml
 module ReindexingSatisfactionWithFmlLogic
   {ℓ : Level} {Sig₁ Sig₂ : LogOSSignature ℓ} {Q : QAdapter ℓ}
   (σ : SigHom Sig₁ Sig₂)
-  (K₂ : LK.LogicKernel Sig₂ Q)
+  (K₂ : LK.Kernel Sig₂ Q)
   {Fml₁ : Set ℓ}
-  (mapFml : Fml₁ → LK.LogicKernel.Fml K₂)
+  (mapFml : Fml₁ → LK.Kernel.Fml K₂)
   where
   open MetaViews.ReindexingSatisfactionWithFmlLogic σ K₂ mapFml public
 
@@ -99,12 +105,30 @@ module For
   module Cap = Capstone.For K
   module K2  = Cat2.For {Sig = Sig} {Q = Q}
 
+  -- Shared “stabilisation kit” for this kernel (used by several views).
+  module Stabilisation where
+    CP : ConPreorder ℓ
+    CP = BulkBoundary.bnd (Kernel.BB K)
+
+    -- Box as a (lax) S4 modality on code.
+    BoxModality : ModalS4.S4Modality (KCore.CodePreorder (Kernel.shape K))
+    BoxModality = ModalS4.fromKernelBox K
+
+    -- Flow as a (lax) S4 modality on boundary constraints.
+    FlowModality : ModalS4.S4Modality CP
+    FlowModality = ModalS4.fromGuardedClosure (GTruth K)
+
+    module CC = ContinuityCore.For CP (GTruth K)
+    open CC public using (MuData; μFlow; Th*≈μFlow; Th*≤μFlow; μFlow≤Th*)
+
   -- CHL capstone view (kernel-native proof/model/category/observer bundle).
   module CHL where
     open C public using
       ( Ty; Refines; Equiv; Box; truth
       ; proofs-as-refinement; truth-fixed; truth≤Box; box≤truth
       )
+
+    open Stabilisation public using (BoxModality)
 
     capstone : Cap.Capstone
     capstone = Cap.capstone
@@ -172,6 +196,7 @@ module For
     guarded-fixed = C.truth-fixed
     module G = Guarded.For K
     open G public using (Stable; stable-truth)
+    open Stabilisation public using (FlowModality; MuData; μFlow; Th*≈μFlow)
 
   -- Commuting square: strict semantics ↔ boundary semantics of encoded formulas.
   module Commuting where
@@ -196,8 +221,12 @@ module For
                    (C.denote (Def.FormulaType φ)))
         rew =
           Prop.intro
-            (λ sat → KCore.Sat_H_bnd-mono (Kernel.shape K) (snd eq≈) sat)
-            (λ sat → KCore.Sat_H_bnd-mono (Kernel.shape K) (fst eq≈) sat)
+            (λ sat →
+              KCore.Sat_H_bnd-mono (Kernel.shape K)
+                (≈CP⇐ {CP = BulkBoundary.bnd (Kernel.BB K)} eq≈) sat)
+            (λ sat →
+              KCore.Sat_H_bnd-mono (Kernel.shape K)
+                (≈CP⇒ {CP = BulkBoundary.bnd (Kernel.BB K)} eq≈) sat)
       in
       Prop.↔-trans coh₁ (Prop.↔-trans coh₂ rew)
 
@@ -218,6 +247,30 @@ module For
     codeCat-laws = Cat.codeCat-laws
     boxFunctor-laws = Cat.boxFunctor-laws
 
+    open Stabilisation public using (BoxModality; FlowModality; MuData; μFlow; Th*≈μFlow)
+
+    -- Quantifier-like coherence (cheap): Frobenius reciprocity for the kernel’s
+    -- bulk↔boundary adjunction (one-way inequality).
+    open AdjMonads.ForKernelFrobenius K public using (frobenius-ext≤)
+
+    -- Quantifier-like coherence (lax): Beck–Chevalley squares induced by a kernel hom.
+    --
+    -- These express “reindexing commutes with ∃/∀-shaped structure” up to refinement,
+    -- without importing stronger categorical semantics.
+    module BeckChevalley
+      {K₂ : Kernel Sig Q}
+      (h : KH.KernelHom K K₂)
+      where
+      open BeckChevalleyₜ.FromKernelHom h public using (squares; map∂-T-lax; mapb-S-lax)
+
+    -- Stabilised truth is functorial under Flow-preserving kernel homs once the
+    -- ωCPO/FiniteFirst hypotheses are supplied (μ-fusion).
+    module TruthTransport
+      {K₂ : Kernel Sig Q}
+      (h : KH.KernelHom K K₂)
+      where
+      open GuardedBoundary.ForHom K K₂ h public using (decode-mapCode-γ*≤Th*-fromFlow)
+
     Port2Cat
       : ∀ {ℓForm}
       → Port2Catₜ.Port2Cat {ℓ = ℓ} {ℓForm = ℓForm} (KBoundary.boundaryIO K)
@@ -228,8 +281,8 @@ module For
     KernelCategory : KernelCat.KernelCat Sig Q
     KernelCategory = KernelCat.KernelCat-instance Sig Q
 
-    quantale : Quantale.Quantale {ℓ}
-    quantale = Quantale.quantaleFromQAdapter Q
+    prequantale : Prequantale.Prequantale {ℓ}
+    prequantale = Prequantale.prequantaleFromQAdapter Q
 
     conAlg : ConAlg.ConAlg {ℓ}
     conAlg =
@@ -269,16 +322,9 @@ module For
       -- (“Safe reflection (literature-aligned)” section).
       -- Semantically polymorphic safety (generic observer core).
       open ObsCore public
-        using (SafeAdmissible; SafeAdmissible≈)
+        using (SafeAdmissible≈)
         renaming
-          ( Safe⋆            to Safe⋆≡-generic
-          ; safe⋆-sound      to safe⋆≡-sound-generic
-          ; safe⋆-ext        to safe⋆≡-ext-generic
-          ; safe⋆-stable     to safe⋆≡-stable-generic
-          ; safe⋆-admissible to safe⋆≡-admissible-generic
-          ; safe⋆-largest    to safe⋆≡-largest-generic
-
-          ; Safe⋆≈           to Safe⋆-generic
+          ( Safe⋆≈           to Safe⋆-generic
           ; safe⋆≈-sound     to safe⋆-sound-generic
           ; safe⋆≈-ext       to safe⋆-ext-generic
           ; safe⋆≈-stable    to safe⋆-stable-generic

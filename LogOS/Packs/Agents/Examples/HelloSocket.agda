@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -15,7 +15,7 @@ open import LogOS.Minimal.Con using (BulkBoundary)
 open import LogOS.Kernel using (Kernel; module Kernel)
 
 import LogOS.Computation.SchemeCategory as Cat
-import LogOS.Kernel.LogicKernel.Endo as LKEndo
+import LogOS.Kernel.Endo as LKEndo
 
 open import LogOS.Packs.Agents.Socket.Ports using (AgentPorts)
 open import LogOS.Packs.Agents.Socket.Contracts using (AgentContracts)
@@ -39,13 +39,13 @@ module For
   open BulkBoundary BB using (Con_bnd)
   open LogOSSignature Sig using (Iface)
 
-  module SK = FromKernel.For K Task
+  module SK = FromKernel.For K (QAdapter.e Q) Task
 
   mkSocket
     : AgentPorts Sig
     → (Iface → Con_bnd)
     → AgentContracts Sig
-    → Cat.Choice Task SK.KP.CodeProcess
+    → Cat.Interface Task SK.KP.CodeProcess
     → AgentSocket Sig Q Task
   mkSocket = SK.mkCodeSocket
 
@@ -53,11 +53,11 @@ module For
     (ports : AgentPorts Sig)
     (val∂  : Iface → Con_bnd)
     (C     : AgentContracts Sig)
-    (choice : Cat.Choice Task SK.KP.CodeProcess)
+    (interface : Cat.Interface Task SK.KP.CodeProcess)
     where
 
     socket : AgentSocket Sig Q Task
-    socket = mkSocket ports val∂ C choice
+    socket = mkSocket ports val∂ C interface
 
     module Mon = Monitor.For socket
 

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -20,23 +20,23 @@ open import LogOS.Syntax.Prop as Prop
 open import LogOS.Minimal.Con using (ConPreorder)
 open import LogOS.Minimal.Truth as Truth
 
-open import LogOS.Ports.Semantic.PresentationCore using (PresentationC)
-open import LogOS.Ports.Semantic.SatMor using (idSatMor)
+open import LogOS.Ports.Semantic.PresentationCore using (SatSystem; PresentationC)
+open import LogOS.Ports.Semantic.SatMor using (idSatMorS)
 import LogOS.Ports.Semantic.Interoperability as Interop
 
 import LogOS.Theorems.Boundary.OmegaCPOMapKit as OmegaKit
 
-Ctx : Set lzero
-Ctx = ⊤ {ℓ = lzero}
+Ctx₀ : Set lzero
+Ctx₀ = ⊤ {ℓ = lzero}
 
-Con : Set lzero
-Con = ⊤ {ℓ = lzero}
+Con₀ : Set lzero
+Con₀ = ⊤ {ℓ = lzero}
 
 -- Trivial preorder on ⊤.
 CP⊤ : ConPreorder lzero
 CP⊤ =
   record
-    { Con = Con
+    { Con = Con₀
     ; _⊑_ = λ _ _ → ⊤ {ℓ = lzero}
     ; refl = tt
     ; trans = λ _ _ → tt
@@ -52,23 +52,26 @@ CP⊤ =
     ; least = λ _ _ _ → tt
     }
 
-Sat : Ctx → Con → Set lzero
-Sat _ _ = ⊤ {ℓ = lzero}
+Sat₀ : Ctx₀ → Con₀ → Set lzero
+Sat₀ _ _ = ⊤ {ℓ = lzero}
 
-P : PresentationC {ℓCtx = lzero} {ℓCon = lzero} {ℓForm = lzero} {ℓSat = lzero} Ctx Con Sat
+S : SatSystem
+S = record { Ctx = Ctx₀ ; Con = Con₀ ; Sat = Sat₀ }
+
+P : PresentationC {ℓCtx = lzero} {ℓCon = lzero} {ℓForm = lzero} {ℓSat = lzero} S
 P =
   record
-    { Form = Con
-    ; SatF = Sat
+    { Form = Con₀
+    ; SatF = Sat₀
     ; Export = λ c → c
     ; SatC≈F = λ _ _ → Prop.↔-refl
     ; Import = λ φ → φ
     ; SatF≈C = λ _ _ → Prop.↔-refl
     }
 
-module L = Interop.Limit CP⊤ CP⊤ (idSatMor Sat) P P
+module L = Interop.Limit CP⊤ CP⊤ idSatMorS P P
 
-F : Con → Con
+F : Con₀ → Con₀
 F x = x
 
 inflF : ∀ c → ConPreorder._⊑_ CP⊤ c (F c)

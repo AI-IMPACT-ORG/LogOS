@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -10,4 +10,4 @@ module LogOS.Packs.Complexity.Experimental.ProofSearchOpacitySpine where
 -- Curated, experimental surface for the proof-search opacity spine
 -- (shared machinery with the GRH/opacity stack, but living in the Complexity domain).
 
-open import LogOS.Domain.Complexity.ProofSearchOpacitySpine public
+open import LogOS.Complexity.ProofSearchOpacitySpine public

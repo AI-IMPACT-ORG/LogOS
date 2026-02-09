@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -80,6 +80,17 @@ def is_core_path(path: pathlib.Path) -> bool:
 
 
 def main() -> int:
+  # Narrow allowlist for intentionally optional modules that are not part of
+  # curated default roots. Keep this list short and explicit.
+  allowed_unreachable_core: set[str] = {
+    "LogOS.Packs.Agents.Experimental.Learning.RGFlow.Info",
+    "LogOS.Packs.Agents.Experimental.Learning.RGFlow.Physics",
+    "LogOS.Packs.Agents.Experimental.Arguments.TransformerScalingPipeline.Calibration",
+    "LogOS.Packs.Agents.Experimental.Arguments.TransformerScalingPipeline.Examples",
+    "LogOS.Packs.Agents.Experimental.Arguments.TransformerScalingPipeline.ExperimentalCompute",
+    "LogOS.Packs.Agents.Experimental.Arguments.TransformerScalingPipeline.Full",
+  }
+
   agda_files: list[pathlib.Path] = []
   for base in ("LogOS", "Tests", "Examples", "docs"):
     base_path = ROOT / base
@@ -149,6 +160,8 @@ def main() -> int:
     if rel.startswith("LogOS/Domain/"):
       unreachable_domain.append(mod)
     elif is_core_path(path):
+      if mod in allowed_unreachable_core:
+        continue
       unreachable_core.append(mod)
 
   if unreachable_core:

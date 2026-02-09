@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -11,12 +11,12 @@ open import LogOS.Prelude
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
-open import LogOS.Kernel.LogicKernel using (LogicKernel)
+open import LogOS.Kernel using (Kernel)
 open import LogOS.Boundary.Telemetry using (TelemetryTrace; ProgramTelemetryPort)
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
 import LogOS.Packs.Complexity.Experimental.PhysicsOfInformation as POI
-open import LogOS.Domain.Complexity.MeasurementCapacity as MC
+open import LogOS.Complexity.MeasurementCapacity as MC
 
 -- Maxwell agent surface: an agent socket plus physics-of-information primitives.
 
@@ -32,8 +32,8 @@ module For
 
   LandauerForSocket : Set (lsuc (lsuc ℓ))
   LandauerForSocket =
-    POI.LandauerIOAssumptions Sig Q (LogicKernel.HWorld LK) (LogicKernel.BB LK)
-      (LogicKernel.HTruth LK) boundaryIO
+    POI.LandauerIOAssumptions Sig Q (Kernel.HWorld LK) (Kernel.BB LK)
+      (Kernel.HTruth LK) boundaryIO
 
   record MaxwellAgent (ℓT : Level) : Set (lsuc (lsuc (ℓ ⊔ ℓT))) where
     field
@@ -42,7 +42,7 @@ module For
       telemetry : TelemetryTrace ℓT
       programTelemetry
         : ProgramTelemetryPort
-            Sig Q (LogicKernel.HWorld LK) (LogicKernel.BB LK) (LogicKernel.HTruth LK)
+            Sig Q (Kernel.HWorld LK) (Kernel.BB LK) (Kernel.HTruth LK)
             boundaryIO telemetry
       capacityBridge
         : MC.TelemetryCapacityBridge

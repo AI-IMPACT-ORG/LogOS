@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,7 +12,7 @@ module LogOS.Theorems.Boundary.Continuity where
 -- once those structures are supplied.
 
 open import LogOS.Prelude
-open import LogOS.Prelude.Product using (_×_; _,_)
+open import LogOS.Prelude using (_×_; _,_)
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Truth as Truth
@@ -26,16 +26,16 @@ Flow-continuity-K
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : Kernel Sig Q)
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (Kernel.BB K)))
-    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
     (f    : ℕ → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K)))
   → (mono-chain : ∀ n → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K)) (f n) (f (suc n)))
   → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
-                 (Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K)
+                 (Truth.GuardedCore.GuardedClosure.Flow (GTruth K)
                    (Truth.GuardedCore.OmegaCPO.supω ωCPO f))
                  (Truth.GuardedCore.OmegaCPO.supω ωCPO
-                   (λ n → Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K) (f n)))
+                   (λ n → Truth.GuardedCore.GuardedClosure.Flow (GTruth K) (f n)))
 Flow-continuity-K Sig Q K ωCPO FF f mono =
-  let module C = Core.For (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K)
+  let module C = Core.For (BulkBoundary.bnd (Kernel.BB K)) (GTruth K)
   in C.Flow-continuity ωCPO FF f mono
 
 -- Textbook aliases.
@@ -49,16 +49,16 @@ Th*-as-sup-K
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : Kernel Sig Q)
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (Kernel.BB K)))
-    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
   → (ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
-        (Truth.GuardedCore.GuardedClosure.Th* (Kernel.GTruth K))
+        (Truth.GuardedCore.GuardedClosure.Th* (GTruth K))
         (Truth.GuardedCore.OmegaCPO.supω ωCPO (Truth.GuardedCore.FiniteFirst.approxS FF)))
     ×
     (ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
         (Truth.GuardedCore.OmegaCPO.supω ωCPO (Truth.GuardedCore.FiniteFirst.approxS FF))
-        (Truth.GuardedCore.GuardedClosure.Th* (Kernel.GTruth K)))
+        (Truth.GuardedCore.GuardedClosure.Th* (GTruth K)))
 Th*-as-sup-K Sig Q K ωCPO FF =
-  let module C = Core.For (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K)
+  let module C = Core.For (BulkBoundary.bnd (Kernel.BB K)) (GTruth K)
   in C.Th*-as-sup ωCPO FF
 
 -- Textbook aliases (Kleene approximation theorem).
@@ -76,16 +76,16 @@ Th*-as-μFlow-K
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : Kernel Sig Q)
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (Kernel.BB K)))
-    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
   → (ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
-        (Truth.GuardedCore.GuardedClosure.Th* (Kernel.GTruth K))
-        (Truth.GuardedCore.Kleene.μ ωCPO (Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K))))
+        (Truth.GuardedCore.GuardedClosure.Th* (GTruth K))
+        (Truth.GuardedCore.Kleene.μ ωCPO (Truth.GuardedCore.GuardedClosure.Flow (GTruth K))))
     ×
     (ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
-        (Truth.GuardedCore.Kleene.μ ωCPO (Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K)))
-        (Truth.GuardedCore.GuardedClosure.Th* (Kernel.GTruth K)))
+        (Truth.GuardedCore.Kleene.μ ωCPO (Truth.GuardedCore.GuardedClosure.Flow (GTruth K)))
+        (Truth.GuardedCore.GuardedClosure.Th* (GTruth K)))
 Th*-as-μFlow-K Sig Q K ωCPO FF =
-  let module C = Core.For (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K)
+  let module C = Core.For (BulkBoundary.bnd (Kernel.BB K)) (GTruth K)
   in C.Th*-as-μFlow ωCPO FF
 
 kleene-μ-K = Th*-as-μFlow-K
@@ -98,18 +98,18 @@ Th*≤μFlow-K
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : Kernel Sig Q)
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (Kernel.BB K)))
-    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
   → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
-      (Truth.GuardedCore.GuardedClosure.Th* (Kernel.GTruth K))
-      (Truth.GuardedCore.Kleene.μ ωCPO (Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K)))
+      (Truth.GuardedCore.GuardedClosure.Th* (GTruth K))
+      (Truth.GuardedCore.Kleene.μ ωCPO (Truth.GuardedCore.GuardedClosure.Flow (GTruth K)))
 Th*≤μFlow-K Sig Q K ωCPO FF = fst (Th*-as-μFlow-K Sig Q K ωCPO FF)
 
 μFlow≤Th*-K
   : ∀ {ℓ} (Sig : LogOSSignature ℓ) (Q : QAdapter ℓ)
     (K : Kernel Sig Q)
     (ωCPO : (let module GT = Truth.GuardedTruth Sig Q in GT.OmegaCPO) (BulkBoundary.bnd (Kernel.BB K)))
-    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (Kernel.GTruth K) ωCPO)
+    (FF   : (let module GT = Truth.GuardedTruth Sig Q in GT.FiniteFirst) (BulkBoundary.bnd (Kernel.BB K)) (GTruth K) ωCPO)
   → ConPreorder._⊑_ (BulkBoundary.bnd (Kernel.BB K))
-      (Truth.GuardedCore.Kleene.μ ωCPO (Truth.GuardedCore.GuardedClosure.Flow (Kernel.GTruth K)))
-      (Truth.GuardedCore.GuardedClosure.Th* (Kernel.GTruth K))
+      (Truth.GuardedCore.Kleene.μ ωCPO (Truth.GuardedCore.GuardedClosure.Flow (GTruth K)))
+      (Truth.GuardedCore.GuardedClosure.Th* (GTruth K))
 μFlow≤Th*-K Sig Q K ωCPO FF = snd (Th*-as-μFlow-K Sig Q K ωCPO FF)

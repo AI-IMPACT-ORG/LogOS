@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -26,7 +26,8 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 import LogOS.Minimal.Truth as Truth
 
-open import LogOS.Kernel using (Kernel)
+open import LogOS.Kernel using (Kernel; GTruth)
+import LogOS.Kernel.Shape as Core
 import LogOS.Computation.Scheme as Sch
 import LogOS.Computation.SchemeCategory as Cat
 
@@ -37,9 +38,11 @@ module ForKernel
   {Sig : LogOSSignature ℓ}
   {Q : QAdapter ℓ}
   (K : Kernel Sig Q)
+  (bm : Core.BodyMonotoneShape (Kernel.shape K))
   where
 
   open Kernel K
+  open Core.BodyMonotoneShape bm
 
   private
     CP∂ : ConPreorder ℓ
@@ -48,7 +51,7 @@ module ForKernel
     module CP∂ = ConPreorder CP∂
 
     Flow : CP∂.Con → CP∂.Con
-    Flow = Truth.GuardedCore.GuardedClosure.Flow GTruth
+    Flow = Truth.GuardedCore.GuardedClosure.Flow (GTruth K)
 
     idClosure∂ : Sch.Closure CP∂
     idClosure∂ =
@@ -84,14 +87,16 @@ module ForKernel
       }
 
   satStepMono : Cat.StepMono SatBoundaryProcess
-  satStepMono le = mono-Flow (mono-Body∂ le)
+  satStepMono le =
+    Truth.GuardedCore.GuardedClosure.mono (GTruth K)
+      (mono-Body∂ le)
 
   raw→sat : Cat.ProcessHomLax RawBoundaryProcess SatBoundaryProcess
   raw→sat =
     record
       { map        = λ c → c
       ; mono       = λ le → le
-      ; step-comm≤ = λ c → Truth.GuardedCore.GuardedClosure.infl GTruth (Body∂ c)
+      ; step-comm≤ = λ c → Truth.GuardedCore.GuardedClosure.infl (GTruth K) (Body∂ c)
       ; norm-comm≤ = λ _ → CP∂.refl
       ; decode-comm = λ _ → refl
       }

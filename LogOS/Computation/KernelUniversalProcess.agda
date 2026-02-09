@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,12 +13,10 @@ open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con using (ConPreorder; BulkBoundary)
 
-open import LogOS.Kernel using (Kernel)
 open import LogOS.Kernel.Graded using (GradedKernel)
-import LogOS.Kernel.Core as Core
-open import LogOS.Kernel.LogicKernel using (LogicKernel; GTier; BoxAt; BoxClosure; SatClosure; decode-Box; decode-BoxAt)
-import LogOS.Kernel.LogicKernel.FromKernel as LKFromKernel
-import LogOS.Kernel.LogicKernel.FromGradedKernel as LKFromGraded
+import LogOS.Kernel.Shape as Core
+open import LogOS.Kernel using (Kernel; GTier; BoxAt; BoxClosure; SatClosure; decode-Box; decode-BoxAt)
+import LogOS.Kernel.FromGradedKernel as LKFromGraded
 
 import LogOS.Computation.Scheme as Sch
 import LogOS.Computation.SchemeCategory as Cat
@@ -34,15 +32,15 @@ import LogOS.Computation.SchemeCategory as Cat
 -- The key link is definitional/explicit: `decode` transports the code step into
 -- the boundary step via `decode-BoxAt` + `body-decode`.
 
-module ForLogicKernel
+module ForKernel
   {ℓ : Level}
   {Sig : LogOSSignature ℓ}
   {Q : QAdapter ℓ}
-  (K : LogicKernel Sig Q)
+  (K : Kernel Sig Q)
   (stepGrade : QAdapter.Scale Q)
   where
 
-  open LogicKernel K
+  open Kernel K
 
   private
     CP∂ : ConPreorder ℓ
@@ -51,11 +49,11 @@ module ForLogicKernel
     module CP∂ = ConPreorder CP∂
 
     step∂ : CP∂.Con → CP∂.Con
-    step∂ c = GTier.Flow (LogicKernel.G K) (GTier.step (LogicKernel.G K)) (Body∂ c)
+    step∂ c = GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K)) (Body∂ c)
 
     -- Code carrier with the kernel refinement preorder (decode into boundary constraints).
     CPCode : ConPreorder ℓ
-    CPCode = Core.CodePreorder (LogicKernel.shape K)
+    CPCode = Core.CodePreorder (Kernel.shape K)
 
   BoundaryProcess : Cat.Process CP∂.Con
   BoundaryProcess =
@@ -72,7 +70,7 @@ module ForLogicKernel
   CodeProcess =
     record
       { CP       = CPCode
-      ; Step     = λ γ → BoxAt K (GTier.step (LogicKernel.G K)) (Body γ)
+      ; Step     = λ γ → BoxAt K (GTier.step (Kernel.G K)) (Body γ)
       ; Close     = BoxClosure K
       ; decode   = decode
       ; Q        = Q
@@ -87,10 +85,10 @@ module ForLogicKernel
       ; step-comm = λ γ →
           let
             FlowStep : CP∂.Con → CP∂.Con
-            FlowStep = GTier.Flow (LogicKernel.G K) (GTier.step (LogicKernel.G K))
+            FlowStep = GTier.Flow (Kernel.G K) (GTier.step (Kernel.G K))
 
-            step₁ : decode (BoxAt K (GTier.step (LogicKernel.G K)) (Body γ)) ≡ FlowStep (decode (Body γ))
-            step₁ = decode-BoxAt K (GTier.step (LogicKernel.G K)) (Body γ)
+            step₁ : decode (BoxAt K (GTier.step (Kernel.G K)) (Body γ)) ≡ FlowStep (decode (Body γ))
+            step₁ = decode-BoxAt K (GTier.step (Kernel.G K)) (Body γ)
 
             step₂ : decode (Body γ) ≡ Body∂ (decode γ)
             step₂ = body-decode γ
@@ -103,11 +101,6 @@ module ForLogicKernel
   decodeHomLax : Cat.ProcessHomLax CodeProcess BoundaryProcess
   decodeHomLax = Cat.ProcessHom→Lax decodeHom
 
-module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) where
-
-  module LK = ForLogicKernel (LKFromKernel.asLogicKernel K) (QAdapter.e Q)
-  open LK public
-
 -- Graded kernel-as-process: same story as `ForKernel`, but boundary evolution is
 -- driven by the graded flow at the kernel’s chosen step grade (not necessarily
 -- saturation). This makes “budgeted/graded computation” explicit at the process
@@ -115,5 +108,5 @@ module ForKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K 
 
 module ForGradedKernel {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : GradedKernel Sig Q) where
 
-  module LK = ForLogicKernel (LKFromGraded.asLogicKernel K) (GradedKernel.step-grade K)
+  module LK = ForKernel (LKFromGraded.asKernel K) (GradedKernel.step-grade K)
   open LK public

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -13,10 +13,10 @@ open import LogOS.Prelude.Bool using (Bool; true; false)
 open import LogOS.Base.Signature
 open import LogOS.Base.Signature.Hom using (SigHom)
 
-open import LogOS.Domain.Universality.Core using (CoreUCode; CoreC; mkC)
-import LogOS.Domain.Universality.KernelRich as KR
+open import LogOS.Universality.Core using (CoreUCode; CoreC; mkC)
+import LogOS.Universality.KernelRich as KR
 
-open import LogOS.Free.ConstraintsOverSig using (Con∂; I∂; atom∂; rename∂)
+open import LogOS.Minimal.ConstraintsOverSig using (Con∂; I∂; atom∂; rename∂)
 import LogOS.Computation.SchemeCategory as Cat
 open import LogOS.Minimal.Adapter using (QAdapter)
 
@@ -126,13 +126,13 @@ contractsUnit : AgentContracts KR.Sig
 contractsUnit = record { Objective = I∂ ; Safety = I∂ ; Assumes = I∂ }
 
 K₂ = KR.UKR
-module SockUnit = FromKernel.For K₂ Task
+module SockUnit = FromKernel.For K₂ (QAdapter.e KR.Q) Task
 
-choiceUnit : Cat.Choice Task SockUnit.KP.BoundaryProcess
-choiceUnit = record { compile = λ _ → defaultCon ; fuel = λ _ → zero }
+interfaceUnit : Cat.Interface Task SockUnit.KP.BoundaryProcess
+interfaceUnit = record { compile = λ _ → defaultCon ; fuel = λ _ → zero }
 
 socketUnit : AgentSocket KR.Sig KR.Q Task
-socketUnit = SockUnit.mkBoundarySocket portsUnit val∂Unit contractsUnit choiceUnit
+socketUnit = SockUnit.mkBoundarySocket portsUnit val∂Unit contractsUnit interfaceUnit
 
 socketBool : AgentSocket SigBool KR.Q Task
 socketBool = SockReindex.reindexSocket σ socketUnit portsBool contractsBool

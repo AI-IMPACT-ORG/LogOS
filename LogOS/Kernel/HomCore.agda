@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,7 +9,7 @@ module LogOS.Kernel.HomCore where
 
 open import LogOS.Prelude
 
-open import LogOS.Algebra.ConAlg
+open import LogOS.Minimal.ConAlg
 
 -- Shared “structural hom” core for kernel-like objects:
 -- strict constraint-algebra map + code map + encode/decode coherence.
@@ -45,10 +45,10 @@ module WithOps {ℓ : Level} (ops : Ops {ℓ}) where
       map-encode : ∀ c → mapCode (encode K₁ c) ≡ encode K₂ (ConAlgHom≡.map∂ con-hom c)
       map-decode : ∀ γ → decode K₂ (mapCode γ) ≡ ConAlgHom≡.map∂ con-hom (decode K₁ γ)
 
-    -- Up-to-strict decode equality (`≡`) on code maps (helpful for quotiented initiality).
-    infix 4 _≈Code_
-    _≈Code_ : Code K₁ → Code K₁ → Set ℓ
-    _≈Code_ γ δ = decode K₁ γ ≡ decode K₁ δ
+    -- Strict decode equality (`≡`) on code maps (helpful for quotiented initiality).
+    infix 4 _≃Code_
+    _≃Code_ : Code K₁ → Code K₁ → Set ℓ
+    _≃Code_ γ δ = decode K₁ γ ≡ decode K₁ δ
 
   -- Identity and composition.
 
@@ -75,6 +75,35 @@ module WithOps {ℓ : Level} (ops : Ops {ℓ}) where
           (Hom.map-decode h₂ (Hom.mapCode h₁ γ))
           (cong (ConAlgHom≡.map∂ (Hom.con-hom h₂)) (Hom.map-decode h₁ γ))
     }
+
+  map∂-id
+    : ∀ {K} (c : ConAlg.Con_bnd (conAlgOf K))
+    → ConAlgHom≡.map∂ (Hom.con-hom (idHom K)) c ≡ c
+  map∂-id _ = refl
+
+  map∂-compose
+    : ∀ {K₁ K₂ K₃}
+      (h₁ : Hom K₁ K₂)
+      (h₂ : Hom K₂ K₃)
+      (c : ConAlg.Con_bnd (conAlgOf K₁))
+    → ConAlgHom≡.map∂ (Hom.con-hom (composeHom h₁ h₂)) c
+      ≡ ConAlgHom≡.map∂ (Hom.con-hom h₂)
+          (ConAlgHom≡.map∂ (Hom.con-hom h₁) c)
+  map∂-compose _ _ _ = refl
+
+  mapCode-id
+    : ∀ {K} (γ : Code K)
+    → Hom.mapCode (idHom K) γ ≡ γ
+  mapCode-id _ = refl
+
+  mapCode-compose
+    : ∀ {K₁ K₂ K₃}
+      (h₁ : Hom K₁ K₂)
+      (h₂ : Hom K₂ K₃)
+      (γ : Code K₁)
+    → Hom.mapCode (composeHom h₁ h₂) γ
+      ≡ Hom.mapCode h₂ (Hom.mapCode h₁ γ)
+  mapCode-compose _ _ _ = refl
 
   -- Shared derived coherence (decode-level) for `reify` and `Body`.
 

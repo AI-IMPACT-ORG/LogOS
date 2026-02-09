@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -14,12 +14,15 @@ open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Minimal.Con using (BulkBoundary; ConPreorder; MonoMap)
 open import LogOS.Minimal.Adjunction using (MonoidalOps)
 open import LogOS.Boundary.IO using (BoundaryIO)
+open import LogOS.Ports.Semantic.PresentationCore using (SatSystem; satSystem)
 open import LogOS.Ports.Semantic.SatMor using (SatMor; SatHom)
-open import LogOS.Algebra.ConAlg using (ConAlg)
+open import LogOS.Minimal.ConAlg using (ConAlg)
 import LogOS.Minimal.Thin2Cat as Thin2Cat
+import LogOS.Minimal.RelPreorder as RP
+import LogOS.Minimal.RelThin2Cat as RelThin2Cat
 
 open import LogOS.Packs.Agents.Socket.Core using (AgentSocket)
-import LogOS.Kernel.LogicKernel as LK
+import LogOS.Kernel as LK
 
 -- Heterogeneous agent networks: each role may carry its own signature/kernel.
 -- Wiring is expressed via satisfaction morphisms between boundary interfaces.
@@ -67,6 +70,12 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   Sat : (r : Role) → Ctx r → Con r → Set ℓ
   Sat r = BoundaryIO.Sat∂ (AgentSocket.boundaryIO (Sock r))
 
+  -- Boundary-facing system per role (Ctx/Con/Sat).
+
+  BoundarySystemAt : Role → SatSystem {ℓCtx = ℓ} {ℓCon = ℓ} {ℓSat = ℓ}
+  BoundarySystemAt r =
+    satSystem (Ctx r) (Con r) (Sat r)
+
   conAlg : (r : Role) → ConAlg {ℓ}
   conAlg r = AgentSocket.conAlg (Sock r)
 
@@ -75,7 +84,7 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
 
   -- Boundary preorder per role.
   ConPreorderAt : Role → ConPreorder ℓ
-  ConPreorderAt r = BulkBoundary.bnd (LK.LogicKernel.BB (AgentSocket.LK (Sock r)))
+  ConPreorderAt r = BulkBoundary.bnd (LK.Kernel.BB (AgentSocket.LK (Sock r)))
 
   -- A policy is a role-indexed assignment of boundary constraints.
   Policy : Set (ℓ ⊔ ℓRole)
@@ -108,8 +117,7 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   -- Edge wiring: a conservative translation between boundary satisfactions.
   record Edge (r s : Role) : Set (lsuc (ℓ ⊔ ℓRole)) where
     field
-      satMor : SatMor (Ctx r) (Con r) (Sat r)
-                       (Ctx s) (Con s) (Sat s)
+      satMor : SatMor (BoundarySystemAt r) (BoundarySystemAt s)
 
     translateCon : Con r → Con s
     translateCon = SatMor.mapCon satMor
@@ -117,8 +125,7 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
   -- Sound-only edge wiring (no reflection assumption).
   record EdgeSound (r s : Role) : Set (lsuc (ℓ ⊔ ℓRole)) where
     field
-      satHom : SatHom (Ctx r) (Con r) (Sat r)
-                       (Ctx s) (Con s) (Sat s)
+      satHom : SatHom (BoundarySystemAt r) (BoundarySystemAt s)
 
     translateCon : Con r → Con s
     translateCon = SatHom.mapCon satHom
@@ -129,17 +136,37 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
       fn   : Con r → Con s
       mono : MonoMap (ConPreorderAt r) (ConPreorderAt s) fn
 
+  -- Pointwise refinement between monotone maps.
+  --
+  -- This is the primitive 2-cell notion; mutual refinement (`≈`) is derived.
+  infix 4 _⊑MH_
+  _⊑MH_ : ∀ {r s} → MonoHom r s → MonoHom r s → Set ℓ
+  _⊑MH_ {s = s} f g =
+    ∀ c → ConPreorder._⊑_ (ConPreorderAt s) (MonoHom.fn f c) (MonoHom.fn g c)
+
   MonoHomPreorder : Role → Role → ConPreorder (lsuc (ℓ ⊔ ℓRole))
   MonoHomPreorder r s =
     record
       { Con = MonoHom r s
       ; _⊑_ = λ f g →
           Lift (lsuc (ℓ ⊔ ℓRole))
-            (∀ c → ConPreorder._⊑_ (ConPreorderAt s) (MonoHom.fn f c) (MonoHom.fn g c))
+            (f ⊑MH g)
       ; refl = λ {f} →
           lift (λ c → ConPreorder.refl (ConPreorderAt s))
       ; trans = λ {f} {g} {h} fg gh →
           lift (λ c → ConPreorder.trans (ConPreorderAt s) (Lift.lower fg c) (Lift.lower gh c))
+      }
+
+  -- RelPreorder-enriched 2-category of monotone maps (no `Lift` needed).
+
+  MonoHomRelPreorder : Role → Role → RP.RelPreorder (lsuc (ℓ ⊔ ℓRole)) ℓ
+  MonoHomRelPreorder r s =
+    record
+      { Con = MonoHom r s
+      ; _⊑_ = _⊑MH_
+      ; refl = λ {f} c → ConPreorder.refl (ConPreorderAt s)
+      ; trans = λ {f} {g} {h} fg gh c →
+          ConPreorder.trans (ConPreorderAt s) (fg c) (gh c)
       }
 
   monoComp : ∀ {r s t} → MonoHom s t → MonoHom r s → MonoHom r t
@@ -164,6 +191,23 @@ record AgentNetwork {ℓ ℓTask ℓRole : Level} (Role : Set ℓRole)
           lift (λ c → Lift.lower fg (MonoHom.fn g c))
       ; comp-mono-r = λ {r} {s} {t} {f} {g} {g'} gg' →
           lift (λ c → MonoHom.mono f (Lift.lower gg' c))
+      }
+
+  MonoRelThin2Cat : RelThin2Cat.RelThin2Cat ℓRole (lsuc (ℓ ⊔ ℓRole)) ℓ
+  MonoRelThin2Cat =
+    record
+      { Obj = Role
+      ; Hom = MonoHomRelPreorder
+      ; id  = λ {r} →
+          record
+            { fn = λ c → c
+            ; mono = λ p → p
+            }
+      ; _∘_ = λ {r} {s} {t} g f → monoComp g f
+      ; comp-mono-l = λ {r} {s} {t} {f} {f'} {g} fg →
+          (λ c → fg (MonoHom.fn g c))
+      ; comp-mono-r = λ {r} {s} {t} {f} {g} {g'} gg' →
+          (λ c → MonoHom.mono f (gg' c))
       }
 
   edgeTensor : ∀ {r s} → Edge r s → Con s → Con r → Con s

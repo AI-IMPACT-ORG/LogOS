@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,16 +9,18 @@ module LogOS.Theorems.Meta.SpectralSeparationOutput where
 
 open import LogOS.Prelude
 open import LogOS.Syntax.Prop using (_↔_; ¬_; ⊥; ⊥-elim; to)
-open import LogOS.Prelude.Product using (Σ; _,_; proj₁; proj₂)
-open import LogOS.Prelude.Sum using (_⊎_; inj₁; inj₂)
+open import LogOS.Prelude using (Σ; _,_; proj₁; proj₂)
+open import LogOS.Prelude using (_⊎_; inj₁; inj₂)
 
 open import LogOS.Base.Signature
 open import LogOS.Minimal.Adapter
 open import LogOS.Minimal.Con
+open import LogOS.Minimal.RelPreorder as RP using (EqRelPreorder)
+open import LogOS.Minimal.View using (View; _≃[_]_; _≈[_]_; ConPreorder→RelPreorder)
 open import LogOS.Kernel
 open import LogOS.Theorems.Meta.Assumptions.Diagonal using
   (TruthDiagonal; TruthDiagonalC; TruthDiagonal→TruthDiagonalC; liar-witnessC; no-totalC; liar-witness; no-total)
-open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn≈)
+open import LogOS.Theorems.Meta.ConditionalPacks using (DecodeExtensionalFn≈)
 
 -- A partial “spectral separation output” surface: for each code, either produce
 -- some witness W (inj₁ w) or explicitly leave the input undefined (inj₂ tt).
@@ -27,11 +29,15 @@ open import LogOS.Theorems.Meta.Assumptions.Core using (DecodeExtensionalFn≈)
 
 module Generic {ℓCode ℓDec : Level} (Code : Set ℓCode) (Dec : Set ℓDec) (decode : Code → Dec) where
 
+  private
+    decodeView : View Code (EqRelPreorder Dec)
+    decodeView = record { μ = decode }
+
   record SpectralSeparationOutputC : Set (lsuc (ℓCode ⊔ ℓDec)) where
     field
       Witness : Set ℓCode
       infer   : Code → Witness ⊎ ⊤ {ℓ = lzero}
-      ext     : ∀ γ₁ γ₂ → decode γ₁ ≡ decode γ₂ → infer γ₁ ≡ infer γ₂
+      ext     : ∀ γ₁ γ₂ → γ₁ ≃[ decodeView ] γ₂ → infer γ₁ ≡ infer γ₂
 
     HasSeparation : Code → Set ℓCode
     HasSeparation γ = Σ Witness (λ w → infer γ ≡ inj₁ w)
@@ -83,11 +89,15 @@ module Generic≈ {ℓCode ℓDec : Level}
                (decode : Code → ConPreorder.Con CP)
                where
 
+  private
+    decodeView : View Code (ConPreorder→RelPreorder CP)
+    decodeView = record { μ = decode }
+
   record SpectralSeparationOutputC : Set (lsuc (ℓCode ⊔ ℓDec)) where
     field
       Witness : Set ℓCode
       infer   : Code → Witness ⊎ ⊤ {ℓ = lzero}
-      ext     : ∀ γ₁ γ₂ → _≈CP_ CP (decode γ₁) (decode γ₂) → infer γ₁ ≡ infer γ₂
+      ext     : ∀ γ₁ γ₂ → γ₁ ≈[ decodeView ] γ₂ → infer γ₁ ≡ infer γ₂
 
     HasSeparation : Code → Set ℓCode
     HasSeparation γ = Σ Witness (λ w → infer γ ≡ inj₁ w)
@@ -186,7 +196,7 @@ record SeparationTotalityClaim {ℓ}
   open G.SeparationTotalityClaimC core public
 
 -- ============================================================================
--- General budget interface (graded/quantale friendly)
+-- General budget interface (graded/prequantale friendly)
 --
 -- This variant does not build a filtered `infer≤` (which would require a
 -- decidable order on budgets). Instead it states “totality-within-budget” as a

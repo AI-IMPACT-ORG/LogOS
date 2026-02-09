@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -18,45 +18,30 @@ cd "${LIB_ROOT}"
 scan_imports() {
   local pattern="$1"
 
-  if command -v rg >/dev/null 2>&1; then
-    local out status
-    set +e
-    out="$(rg -n \
+  command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+
+  local out status
+  set +e
+  out="$(
+    rg -n --hidden \
       --glob '*.agda' \
       --glob '*.lagda.md' \
       --glob '!_build/**' \
+      --glob '!.git/**' \
+      --glob '!.agda/**' \
       --glob '!**/Demo/**' \
       --glob '!**/Demos/**' \
-      -- "${pattern}" . 2>&1)"
-    status="$?"
-    set -e
-    if [[ "$status" -eq 2 ]]; then
-      die $'rg error:\n'"${out}"
-    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
-	  else
-	    local out status
-	    set +e
-	    out="$(grep -RIn \
-	      --include='*.agda' \
-	      --include='*.lagda.md' \
-	      --exclude-dir='_build' \
-	      --exclude-dir='Demo' \
-	      --exclude-dir='Demos' \
-	      -E -- "${pattern}" . 2>&1)"
-	    status="$?"
-	    set -e
-	    if [[ "$status" -eq 2 ]]; then
-	      die $'grep error:\n'"${out}"
-	    fi
-    if [[ "$status" -eq 1 ]]; then
-      out=""
-    fi
-    printf "%s" "${out}"
+      -- "${pattern}" . 2>&1
+  )"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
 }
 
 # Match only actual import lines to avoid comments/documentation.

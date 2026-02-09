@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 # Copyright (C) 2026 AI.IMPACT GmbH
 # SPDX-License-Identifier: GPL-3.0-only
 
@@ -15,17 +15,26 @@ LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 cd "${LIB_ROOT}"
 
+command -v rg >/dev/null 2>&1 || die "rg is required for this check"
+
 scan_agda() {
   local dir="$1"
   local pattern="$2"
 
   [[ -d "${dir}" ]] || return 0
 
-  if command -v rg >/dev/null 2>&1; then
-    rg -n --glob '*.agda' --glob '!_build/**' -- "${pattern}" "${dir}" || true
-  else
-    grep -RIn --include='*.agda' --exclude-dir='_build' -E -- "${pattern}" "${dir}" 2>/dev/null || true
+  local out status
+  set +e
+  out="$(rg -n --glob '*.agda' --glob '!**/_build/**' -- "${pattern}" "${dir}" 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
 }
 
 scan_docs() {
@@ -33,11 +42,18 @@ scan_docs() {
 
   [[ -d "docs" ]] || return 0
 
-  if command -v rg >/dev/null 2>&1; then
-    rg -n --glob '*.lagda.md' --glob '!_build/**' -- "${pattern}" docs || true
-  else
-    grep -RIn --include='*.lagda.md' --exclude-dir='_build' -E -- "${pattern}" docs 2>/dev/null || true
+  local out status
+  set +e
+  out="$(rg -n --glob '*.lagda.md' --glob '!**/_build/**' -- "${pattern}" docs 2>&1)"
+  status="$?"
+  set -e
+  if [[ "$status" -eq 2 ]]; then
+    die $'rg error:\n'"${out}"
   fi
+  if [[ "$status" -eq 1 ]]; then
+    out=""
+  fi
+  printf "%s" "${out}"
 }
 
 # Match only actual import lines to avoid prose references.
@@ -54,4 +70,3 @@ if [[ -n "${bad}" ]]; then
 fi
 
 echo "stable-surface-no-internal-mu-imports-check: OK"
-

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -18,7 +18,7 @@ module Boundary where
   open import LogOS.Boundary.MultiIO public
 
 module TensorDSL where
-  open import LogOS.Kernel.LogicKernel.TensorDSL public
+  open import LogOS.Kernel.TensorDSL public
 
 module Hetero where
   open import LogOS.Packs.Agents.Networks.Hetero public

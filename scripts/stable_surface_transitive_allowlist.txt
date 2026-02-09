@@ -1,0 +1,15 @@
+# LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+# stable-surface-no-banned-transitive-imports-check allowlist
+#
+# Each non-empty line is either:
+#   RootModule BannedRule  # JUSTIFICATION: ...
+#
+# Example:
+#   LogOS.Packs.Foo.Surface LogOS.Theorems.Meta.Assumptions.  # JUSTIFICATION: temporary stable theorem surface exception during migration
+#   LogOS.Packs.Foo.Surface .Experimental.                    # JUSTIFICATION: stable pack depends on an experimental proof artifact (temporary)
+#   LogOS.Packs.Foo.Surface POSTULATE                          # JUSTIFICATION: stable surface temporarily reaches a postulate-bearing module (avoid if possible)
+#
+# Keep this empty for releases if possible.

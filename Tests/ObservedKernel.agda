@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -9,8 +9,8 @@ module Tests.ObservedKernel where
 
 open import LogOS.Prelude
 
-open import LogOS.Domain.UniversalIR.ObservedKernel
-open import LogOS.Domain.UniversalIR.Core using (UCode; UM; UL; UE; UQ; UQC; stepU)
+open import LogOS.UniversalIR.ObservedKernel
+open import LogOS.UniversalIR.Core using (UCode; UM; UL; UE; UQ; UQC; stepU)
 import LogOS.Computation.SchemeCategory as Cat
 
 module Code = ObsKit CodeObsKit

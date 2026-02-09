@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,78 +12,79 @@ open import LogOS.Prelude
 import LogOS.Packs.Agents.Frameworks.Core as Core
 import LogOS.Packs.Agents.Frameworks.UniversalIR as U
 import LogOS.Computation.SchemeCategory as Cat
-import LogOS.Domain.UniversalIR.Schemes as US
-import LogOS.Domain.UniversalIR.Languages.Minsky as Minsky
-import LogOS.Domain.UniversalIR.Languages.Lambda as Lambda
-import LogOS.Domain.UniversalIR.Languages.Ethereum as Ethereum
-import LogOS.Domain.UniversalIR.Languages.QuantumOracle as QuantumOracle
-import LogOS.Domain.UniversalIR.Languages.QuantumCircuit as QuantumCircuit
+import LogOS.UniversalIR.Schemes as US
+import LogOS.UniversalIR.Languages.Minsky as Minsky
+import LogOS.UniversalIR.Languages.Lambda as Lambda
+import LogOS.UniversalIR.Languages.Ethereum as Ethereum
+import LogOS.UniversalIR.Languages.QuantumOracle as QuantumOracle
+import LogOS.UniversalIR.Languages.QuantumCircuit as QuantumCircuit
 
 -- Concrete PATask frameworks: each is a Choice into the shared UProcess.
+-- Concrete PATask frameworks: each is an Interface into the shared UProcess.
 
 minskyFramework : Core.Framework U.PATask ℕ U.UProcess
-minskyFramework = record { choice = U.minskyChoice }
+minskyFramework = record { interface = U.minskyInterface }
 
 lambdaFramework : Core.Framework U.PATask ℕ U.UProcess
-lambdaFramework = record { choice = U.lambdaChoice }
+lambdaFramework = record { interface = U.lambdaInterface }
 
 ethereumFramework : Core.Framework U.PATask ℕ U.UProcess
-ethereumFramework = record { choice = U.ethereumChoice }
+ethereumFramework = record { interface = U.ethereumInterface }
 
 oracleFramework : Core.Framework U.PATask ℕ U.UProcess
-oracleFramework = record { choice = U.oracleChoice }
+oracleFramework = record { interface = U.oracleInterface }
 
 quantumCircuitFramework : Core.Framework U.PATask ℕ U.UProcess
-quantumCircuitFramework = record { choice = U.quantumCircuitChoice }
+quantumCircuitFramework = record { interface = U.quantumCircuitInterface }
 
 -- --------------------------------------------------------------------------
 -- Budgeted PATask frameworks
 -- --------------------------------------------------------------------------
 
 -- Use the shared bounded-task type from the UniversalIR scheme layer.
-open US using (Bounded; steps; input; mkChoice)
+open US using (Bounded; steps; input; mkInterface)
 
-boundedMinskyChoice : Cat.Choice (Bounded U.PATask) U.UProcess
-boundedMinskyChoice =
-  mkChoice U.UProcess
+boundedMinskyInterface : Cat.Interface (Bounded U.PATask) U.UProcess
+boundedMinskyInterface =
+  mkInterface U.UProcess
     (λ bt → Minsky.compile (input bt))
     steps
 
-boundedLambdaChoice : Cat.Choice (Bounded U.PATask) U.UProcess
-boundedLambdaChoice =
-  mkChoice U.UProcess
+boundedLambdaInterface : Cat.Interface (Bounded U.PATask) U.UProcess
+boundedLambdaInterface =
+  mkInterface U.UProcess
     (λ bt → Lambda.compile (input bt))
     steps
 
-boundedEthereumChoice : Cat.Choice (Bounded U.PATask) U.UProcess
-boundedEthereumChoice =
-  mkChoice U.UProcess
+boundedEthereumInterface : Cat.Interface (Bounded U.PATask) U.UProcess
+boundedEthereumInterface =
+  mkInterface U.UProcess
     (λ bt → Ethereum.compile (input bt))
     steps
 
-boundedOracleChoice : Cat.Choice (Bounded U.PATask) U.UProcess
-boundedOracleChoice =
-  mkChoice U.UProcess
+boundedOracleInterface : Cat.Interface (Bounded U.PATask) U.UProcess
+boundedOracleInterface =
+  mkInterface U.UProcess
     (λ bt → QuantumOracle.compile (input bt))
     steps
 
-boundedQuantumCircuitChoice : Cat.Choice (Bounded U.PATask) U.UProcess
-boundedQuantumCircuitChoice =
-  mkChoice U.UProcess
+boundedQuantumCircuitInterface : Cat.Interface (Bounded U.PATask) U.UProcess
+boundedQuantumCircuitInterface =
+  mkInterface U.UProcess
     (λ bt → QuantumCircuit.compile (input bt))
     steps
 
 boundedMinskyFramework : Core.Framework (Bounded U.PATask) ℕ U.UProcess
-boundedMinskyFramework = record { choice = boundedMinskyChoice }
+boundedMinskyFramework = record { interface = boundedMinskyInterface }
 
 boundedLambdaFramework : Core.Framework (Bounded U.PATask) ℕ U.UProcess
-boundedLambdaFramework = record { choice = boundedLambdaChoice }
+boundedLambdaFramework = record { interface = boundedLambdaInterface }
 
 boundedEthereumFramework : Core.Framework (Bounded U.PATask) ℕ U.UProcess
-boundedEthereumFramework = record { choice = boundedEthereumChoice }
+boundedEthereumFramework = record { interface = boundedEthereumInterface }
 
 boundedOracleFramework : Core.Framework (Bounded U.PATask) ℕ U.UProcess
-boundedOracleFramework = record { choice = boundedOracleChoice }
+boundedOracleFramework = record { interface = boundedOracleInterface }
 
 boundedQuantumCircuitFramework : Core.Framework (Bounded U.PATask) ℕ U.UProcess
-boundedQuantumCircuitFramework = record { choice = boundedQuantumCircuitChoice }
+boundedQuantumCircuitFramework = record { interface = boundedQuantumCircuitInterface }

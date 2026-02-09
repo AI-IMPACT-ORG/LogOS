@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,10 +12,10 @@ module LogOS.Packs.UniversalIR.RefinementInitiality where
 
 open import LogOS.Prelude
 
-open import LogOS.Domain.UniversalIR.KernelRichG using (Sig; Q; GUKR)
+open import LogOS.UniversalIR.KernelRichG using (Sig; Q; GUKR)
 open import LogOS.Minimal.World
 open import LogOS.Kernel.Graded using (GradedKernel)
-open import LogOS.Kernel.Initial using (build)
+open import LogOS.Kernel.UngradedKernel.Initial using (build)
 import LogOS.Theorems.CategoryTheory.Kernel2CatInitial as K2Init
 
 HWorld : Worlds.WorldH Sig Q

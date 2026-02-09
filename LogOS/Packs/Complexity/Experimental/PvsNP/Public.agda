@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -12,17 +12,17 @@ module LogOS.Packs.Complexity.Experimental.PvsNP.Public where
 -- This module intentionally re-exports the literature-aligned interface, the
 -- uniform grade-only route, the minimal info-hardness route, and the SAT target.
 
-import LogOS.Domain.Complexity.PvsNPLedger as PvsNPLedger
+import LogOS.Complexity.PvsNPLedger as PvsNPLedger
 
-import LogOS.Domain.Complexity.PvsNPFromInfo_Grade_Only as PvsNPFromInfo_Grade_Only
+import LogOS.Complexity.PvsNPFromInfo_Grade_Only as PvsNPFromInfo_Grade_Only
 
 -- Grade-only route (kernel-native surface).
-import LogOS.Domain.Complexity.PvsNP_Grade_Only as PvsNP_Grade_Only
+import LogOS.Complexity.PvsNP_Grade_Only as PvsNP_Grade_Only
 
 -- Proof-search opacity spine (shared machinery with the GRH/opacity stack).
-import LogOS.Domain.Complexity.ProofSearchOpacitySpine as ProofSearchOpacitySpine
+import LogOS.Complexity.ProofSearchOpacitySpine as ProofSearchOpacitySpine
 
 -- SAT targets (canonical NP-complete front door).
-import LogOS.Domain.Complexity.Targets.SAT as SAT
+import LogOS.Complexity.Targets.SAT as SAT
 
-import LogOS.Domain.Complexity.Targets.SATProofSearch as SATProofSearch
+import LogOS.Complexity.Targets.SATProofSearch as SATProofSearch

@@ -1,5 +1,5 @@
 {-
-LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning
+LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI
 Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -}
@@ -25,7 +25,7 @@ module KernelAsProcess where
   open import LogOS.Computation.KernelUniversalProcess public
 
 module FunctorialContracts where
-  open import LogOS.Free.ConstraintsOverSig public
+  open import LogOS.Minimal.ConstraintsOverSig public
 
 module OpenSystems where
   open import LogOS.Base.Signature public
