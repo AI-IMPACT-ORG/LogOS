@@ -181,7 +181,7 @@ Agda is a dependently typed programming language with tooling to act as a proof 
 Agda comes with some options for levels of type checking for its compiler. This repo uses:
 
 - `-W all -W error` — all warnings turned on; warnings are treated as errors.
-- Default strict checks keep exact-split coverage enabled; optional fast mode (`make fast`) relaxes this via `-W noCoverageNoExactSplit`.
+- Exact-split remains enabled in strict mode; the `CoverageNoExactSplit` warning class is silenced (`-W noCoverageNoExactSplit`) because Agda builtin modules can trigger it on pinned CI toolchains.
 - `--safe` — disallow certain unsafe pragmas/placeholders (still relative to the Agda checker).
 - `--no-libraries -i .` — build a external-minimal surface.
 

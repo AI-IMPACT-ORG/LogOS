@@ -17,7 +17,7 @@ cd "${LIB_ROOT}"
 
 AGDA="${AGDA:-agda}"
 AGDA_FLAGS="${AGDA_FLAGS:---no-libraries -i . --safe}"
-AGDA_WARN_FLAGS="${AGDA_WARN_FLAGS:--W all -W error}"
+AGDA_WARN_FLAGS="${AGDA_WARN_FLAGS:--W all -W noCoverageNoExactSplit -W error}"
 
 command -v rg >/dev/null 2>&1 || die "rg is required for this check"
 

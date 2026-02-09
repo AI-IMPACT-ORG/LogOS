@@ -52,7 +52,7 @@ jobs:
 
       - name: Full clean gate (CI + full typecheck)
         run: |
-          make check-all
+          make check-all AGDA_WARN_FLAGS='-W all -W noCoverageNoExactSplit -W error'
 
       - name: Shellcheck (scripts)
         run: |

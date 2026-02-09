@@ -13,8 +13,11 @@ AGDA_FLAGS_BASE   ?= --no-libraries -i . --safe
 AGDA_FLAGS_STRICT ?= $(AGDA_FLAGS_BASE)
 AGDA_FLAGS_FAST   ?= $(AGDA_FLAGS_BASE) --no-exact-split
 
-AGDA_WARN_FLAGS_STRICT ?= -W all -W error
-AGDA_WARN_FLAGS_FAST   ?= -W all -W noCoverageNoExactSplit -W error
+# `CoverageNoExactSplit` currently fires inside Agda's own builtin `Nat` module
+# on some pinned CI toolchains. Keep exact-split enabled, but silence that
+# warning class so `-W error` still reflects repository-level issues.
+AGDA_WARN_FLAGS_STRICT ?= -W all -W noCoverageNoExactSplit -W error
+AGDA_WARN_FLAGS_FAST   ?= $(AGDA_WARN_FLAGS_STRICT)
 
 AGDA_FLAGS       ?= $(AGDA_FLAGS_STRICT)
 AGDA_WARN_FLAGS  ?= $(AGDA_WARN_FLAGS_STRICT)

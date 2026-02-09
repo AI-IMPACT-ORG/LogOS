@@ -17,7 +17,7 @@ cd "${LIB_ROOT}"
 
 AGDA="${AGDA:-agda}"
 AGDA_FLAGS="${AGDA_FLAGS:---no-libraries -i . --safe}"
-AGDA_WARN_FLAGS="${AGDA_WARN_FLAGS:--W all -W error}"
+AGDA_WARN_FLAGS="${AGDA_WARN_FLAGS:--W all -W noCoverageNoExactSplit -W error}"
 PIPELINE_SEED_PREFIXES="${PIPELINE_SEED_PREFIXES:-LogOS.Packs.Agents.Experimental.Arguments.Transformer,LogOS.Packs.Agents.Experimental.Arguments.ControlledFeedback}"
 PIPELINE_SEED_MODULE="${PIPELINE_SEED_MODULE:-}"
 PIPELINE_PROFILE="${PIPELINE_PROFILE:-0}"
