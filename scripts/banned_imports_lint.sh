@@ -17,7 +17,7 @@ cd "${LIB_ROOT}"
 
 command -v rg >/dev/null 2>&1 || die "rg is required for this check"
 
-# shellcheck source=lib/docs_agda_blocks.sh
+# shellcheck source=scripts/lib/docs_agda_blocks.sh
 source "${SCRIPT_DIR}/lib/docs_agda_blocks.sh"
 
 # Policy: import host/builtin primitives only via LogOS.Prelude (or other dedicated shims).

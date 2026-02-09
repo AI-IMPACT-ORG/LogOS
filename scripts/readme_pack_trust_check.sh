@@ -56,6 +56,7 @@ while IFS= read -r hit; do
   level="$(printf '%s' "$line" | sed -nE 's/^.*\((stable|experimental|scaffold|deprecated)\):.*$/\1/p')"
   [[ -n "$level" ]] || die "${file}:${lineno}: cannot parse trust label level"
 
+  # shellcheck disable=SC2016
   path="$(printf '%s' "$line" | sed -nE 's/^.*\):[[:space:]]*`([^`]+)`.*$/\1/p')"
   if [[ -z "$path" ]]; then
     bad+="${file}:${lineno}: missing backticked pack entrypoint path after trust label"$'\n'
@@ -64,7 +65,6 @@ while IFS= read -r hit; do
 
   case "$path" in
     LogOS/Packs/*/All.agda|LogOS/Packs/*/Core.agda|LogOS/Packs/*/Kernel.agda) ;;
-    LogOS/Packs/*/Experimental/All.agda|LogOS/Packs/*/Experimental/Core.agda|LogOS/Packs/*/Experimental/Kernel.agda) ;;
     *)
       bad+="${file}:${lineno}: unexpected pack entrypoint path (expected All/Core/Kernel): \`${path}\`"$'\n'
       continue

@@ -13,7 +13,7 @@ die() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-# shellcheck source=lib/docs_agda_blocks.sh
+# shellcheck source=scripts/lib/docs_agda_blocks.sh
 source "${SCRIPT_DIR}/lib/docs_agda_blocks.sh"
 
 cd "${LIB_ROOT}"

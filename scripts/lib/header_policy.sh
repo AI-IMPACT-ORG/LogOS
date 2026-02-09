@@ -6,11 +6,15 @@ set -euo pipefail
 # SPDX-License-Identifier: GPL-3.0-only
 
 # Canonical per-file header lines.
+# shellcheck disable=SC2034
 HEADER_TITLE_LINE="LogOS: a prototype Agda library for modular dynamic logic systems synthesized by AI"
+# shellcheck disable=SC2034
 HEADER_COPY_LINE="Copyright (C) 2026 AI.IMPACT GmbH"
+# shellcheck disable=SC2034
 HEADER_SPDX_LINE="SPDX-License-Identifier: GPL-3.0-only"
 
 # Legacy title lines we may still find in old frontmatter.
+# shellcheck disable=SC2034
 HEADER_LEGACY_TITLE_LINES=(
   "LogOS: models for AI-driven, human-on-the-loop, machine-checked formal reasoning"
 )

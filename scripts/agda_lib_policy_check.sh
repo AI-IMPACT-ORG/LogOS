@@ -60,7 +60,7 @@ if [[ "$(printf "%s\n" "${flags_lines}" | wc -l | tr -d ' ')" != "1" ]]; then
   die "${LIB}: expected exactly one flags line, found:\n${flags_lines}"
 fi
 if ! rg_capture -q -- '^[[:space:]]*flags:[[:space:]]*--safe[[:space:]]*$' "${LIB}" >/dev/null; then
-  die "${LIB}: flags must be exactly `--safe`"
+  die "${LIB}: flags must be exactly '--safe'"
 fi
 
 echo "agda-lib-policy-check: OK"

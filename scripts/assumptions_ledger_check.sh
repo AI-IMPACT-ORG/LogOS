@@ -76,11 +76,11 @@ while IFS= read -r file; do
 done < <(find_assumption_importers)
 
 if ((${#bad[@]})); then
-  printf "assumptions-ledger-check: missing `Assumptions` ledger in modules importing assumption packs:\n" >&2
+  printf "assumptions-ledger-check: missing 'Assumptions' ledger in modules importing assumption packs:\n" >&2
   for f in "${bad[@]}"; do
     printf "  - %s\n" "$f" >&2
   done
-  printf "\nRule: if a theorem module imports `LogOS.Theorems.Meta.Assumptions.*`, it must define either:\n  - `record Assumptions ...`  OR\n  - `module Assumptions where ...` / `module Assumptions = ...`\n" >&2
+  printf "\nRule: if a theorem module imports 'LogOS.Theorems.Meta.Assumptions.*', it must define either:\n  - 'record Assumptions ...'  OR\n  - 'module Assumptions where ...' / 'module Assumptions = ...'\n" >&2
   exit 1
 fi
 

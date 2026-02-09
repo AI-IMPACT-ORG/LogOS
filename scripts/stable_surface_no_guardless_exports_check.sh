@@ -24,7 +24,7 @@ cd "$ROOT"
 
 command -v rg >/dev/null 2>&1 || die "rg is required for this check"
 
-# shellcheck source=lib/stable_packs.sh
+# shellcheck source=scripts/lib/stable_packs.sh
 source "${SCRIPT_DIR}/lib/stable_packs.sh"
 
 PATTERN='Without_Vacuity_Guards|module[[:space:]]+Guardless\b|\.Guardless\b'
@@ -34,7 +34,7 @@ stable_roots_text=""
 if ! stable_roots_text="$(stable_pack_roots)"; then
   rc="$?"
   if [[ "$rc" -eq 1 ]]; then
-    die "no stable packs found (expected `packTrust = record { level = stable }` in LogOS/Packs/**/All.agda)"
+    die "no stable packs found (expected 'packTrust = record { level = stable }' in LogOS/Packs/**/All.agda)"
   fi
   die "failed to discover stable pack roots"
 fi
@@ -43,7 +43,7 @@ while IFS= read -r root; do
   stable_roots+=("${root}")
 done <<< "${stable_roots_text}"
 if [ "${#stable_roots[@]}" -eq 0 ]; then
-  die "no stable packs found (expected `packTrust = record { level = stable }` in LogOS/Packs/**/All.agda)"
+  die "no stable packs found (expected 'packTrust = record { level = stable }' in LogOS/Packs/**/All.agda)"
 fi
 
 bad=""

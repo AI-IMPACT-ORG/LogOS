@@ -49,7 +49,7 @@ done
 ASSUMPTION_DECL_RE='^[[:space:]]*(record[[:space:]]+.*Assumptions\\b|module[[:space:]]+.*Assumptions\\b)'
 core_assumption_decls="$(scan "${ASSUMPTION_DECL_RE}" "${core_roots[@]}")"
 if [[ -n "${core_assumption_decls}" ]]; then
-  printf "Assumption boundary lint: `Assumptions` declarations must live outside core layers:\n" >&2
+  printf "Assumption boundary lint: 'Assumptions' declarations must live outside core layers:\n" >&2
   printf "%s\n" "${core_assumption_decls}" >&2
   fail=1
 fi

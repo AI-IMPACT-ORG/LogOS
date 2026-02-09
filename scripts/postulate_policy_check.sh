@@ -18,7 +18,7 @@ cd "${LIB_ROOT}"
 
 command -v rg >/dev/null 2>&1 || die "rg is required for this check"
 
-# shellcheck source=lib/docs_agda_blocks.sh
+# shellcheck source=scripts/lib/docs_agda_blocks.sh
 source "${SCRIPT_DIR}/lib/docs_agda_blocks.sh"
 
 scan() {
@@ -110,10 +110,10 @@ if [[ -n "${postulate_files}" ]]; then
     f="${f#./}"
     # Enforce that every postulate-bearing file is explicitly whitelisted.
     if ! read_allowlist | grep -Fxq "${f}"; then
-      die "file contains `postulate` but is not in allowlist: ${f}"
+      die "file contains 'postulate' but is not in allowlist: ${f}"
     fi
     if ! reason="$(justification_ok "${f}")"; then
-      die "file contains `postulate` but lacks required justification block: ${f} (${reason})"
+      die "file contains 'postulate' but lacks required justification block: ${f} (${reason})"
     fi
   done <<< "${postulate_files}"
 fi

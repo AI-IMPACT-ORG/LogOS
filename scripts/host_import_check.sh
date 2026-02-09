@@ -18,7 +18,7 @@ cd "${LIB_ROOT}"
 # This check relies on ripgrep’s stable regex + glob semantics.
 command -v rg >/dev/null 2>&1 || die "rg is required for this check"
 
-# shellcheck source=lib/docs_agda_blocks.sh
+# shellcheck source=scripts/lib/docs_agda_blocks.sh
 source "${SCRIPT_DIR}/lib/docs_agda_blocks.sh"
 
 # Policy:

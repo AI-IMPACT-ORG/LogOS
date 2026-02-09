@@ -124,10 +124,10 @@ while IFS= read -r f; do
   if ! out="$(check_lagda_safe "$f")"; then
     code="$?"
     case "$code" in
-      2) missing+="${f#./}: missing ```agda fenced block"$'\n' ;;
-      3) missing+="${f#./}: missing \`${SAFE_PRAGMA_LINE}\` in first ```agda block"$'\n' ;;
-      4) missing+="${f#./}: missing module header in first ```agda block"$'\n' ;;
-      5) missing+="${f#./}: safe pragma must appear before module header in first ```agda block"$'\n' ;;
+      2) missing+="${f#./}: missing fenced agda block marker"$'\n' ;;
+      3) missing+="${f#./}: missing '${SAFE_PRAGMA_LINE}' in first fenced agda block"$'\n' ;;
+      4) missing+="${f#./}: missing module header in first fenced agda block"$'\n' ;;
+      5) missing+="${f#./}: safe pragma must appear before module header in first fenced agda block"$'\n' ;;
       6) missing+="${out}"$'\n' ;;
       *) missing+="${f#./}: invalid safe pragma placement"$'\n' ;;
     esac
