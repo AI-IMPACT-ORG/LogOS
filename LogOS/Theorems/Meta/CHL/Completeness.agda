@@ -59,6 +59,16 @@ module For
 
   open BoundaryAdequacy public
 
+  mkBoundaryAdequacy
+    : (∀ {c d}
+       → (∀ (w : LogOSSignature.Cosp Sig)
+           → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
+           → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) d)
+       → ConPreorder._⊑_ CP c d)
+    → BoundaryAdequacy
+  mkBoundaryAdequacy reflect∂ =
+    record { reflect = reflect∂ }
+
   -- Completeness is conditional on BoundaryAdequacy.
   complete∂
     : BoundaryAdequacy
@@ -81,6 +91,9 @@ module For
   Budget : Set (lsuc ℓ)
   Budget = LogOSSignature.Cosp Sig → Set ℓ
 
+  fullBudget : Budget
+  fullBudget _ = Topℓ
+
   Entails∂-budget
     : (B : Budget)
     → Kernel.Code K → Kernel.Code K → Set ℓ
@@ -100,6 +113,18 @@ module For
             → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
             → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) d)
         → ConPreorder._⊑_ CP c d
+
+  mkBudgetedAdequacy
+    : ∀ {B : Budget}
+    → (∀ {c d}
+       → (∀ (w : LogOSSignature.Cosp Sig)
+           → B w
+           → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) c
+           → Kernel.Sat_H_bnd K (LogOSSignature.to∂ Sig w) d)
+       → ConPreorder._⊑_ CP c d)
+    → BudgetedAdequacy B
+  mkBudgetedAdequacy reflect∂ =
+    record { reflect = reflect∂ }
 
   sound∂-budget
     : ∀ {B γ δ}
@@ -123,6 +148,18 @@ module For
     Prop.intro (sound∂-budget) (complete∂-budget BA)
 
   sound-complete∂-budget-under = sound-complete∂-budget
+
+  boundary→budget-full
+    : BoundaryAdequacy
+    → BudgetedAdequacy fullBudget
+  boundary→budget-full BA =
+    mkBudgetedAdequacy (λ ent → BoundaryAdequacy.reflect BA (λ w satB → ent w ttℓ satB))
+
+  budget-full→boundary
+    : BudgetedAdequacy fullBudget
+    → BoundaryAdequacy
+  budget-full→boundary BA =
+    mkBoundaryAdequacy (λ ent → BudgetedAdequacy.reflect BA (λ w _ satB → ent w satB))
 
   -- Observational adequacy on the full boundary index (stronger).
   --

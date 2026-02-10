@@ -28,7 +28,7 @@ Human-readable literate documentation is in the /docs folder. For logicians, the
 
 The guardrails detailed below have been designed to help a human-AI collaboration to incrementally but systematically increase information coherence and consistency inside the repository. Note that the operator of the agents is included in this list - this repository is more a cybernetic skeleton for long-term use than an AGI-golem. 
 
-To set expectations: this repository is the result of several months worth of COTS inference compute, mostly spent in dialog and mostly spent on understanding, correcting and improving previous results. Do not expect instant magic, even if the results occassionally feel like it. 
+To set expectations: this repository is the result of several months worth of COTS inference compute, mostly spent in dialog and mostly spent on understanding, correcting and improving previous results. Do not expect instant magic, even if the results occasionally feel like it.
 
 
 
@@ -149,9 +149,9 @@ If you are looking for the “fractal” story (the same pattern repeated: **pre
 
 ## High level motivation and overview of results
 
-Science provides formal tooling to distill information in formal models. As AI is among the most powerful technologies for information processing invented, it has the potential to change parts of scientific modelling workflows, for instance by leveraging the cross-domain insights encoded in its training data. We show it is possible to operationalise core formal model building by using COTS AI coding agents in a carefully designed environment grounded in Agda, a programming language for mathematical proofs. This environment and its meta-rules allow carefull extension of logic coherence to large-scale systems.
+Science provides formal tooling to distill information in formal models. As AI is among the most powerful technologies for information processing invented, it has the potential to change parts of scientific modelling workflows, for instance by leveraging the cross-domain insights encoded in its training data. We show it is possible to operationalise core formal model building by using COTS AI coding agents in a carefully designed environment grounded in Agda, a programming language for mathematical proofs. This environment and its meta-rules allow careful extension of logic coherence to large-scale systems.
 
-The main advance is an architecture for partially-reflective logic systems, grounded in simple mathematical primitives (preorders/refinement (read as thin categories under proof-irrelevance), lax operators and prequantale-valued parameters), with a [3-tiered truth system](docs/Kernel/ClaimRegister.lagda.md). Novel is a truth notion as "stability under resource-constrained communication" in an [observer semantics](docs/Views/ObserverSemantics.lagda.md). The environment allows current generation AI agents to build, evaluate and refactor axiomatic dependencies of theories and theorems under human guidance. 
+The main advance is an architecture for partially-reflective logic systems, grounded in simple mathematical primitives (preorders/refinement (read as thin categories under proof-irrelevance), lax operators and prequantale-valued parameters), with a tiered S/H/G/R kernel interface and explicit claim discipline (see `docs/LogOS_Core_Spec.lagda.md` and `docs/Kernel/ClaimRegister.lagda.md`). Novel is a truth notion as "stability under resource-constrained communication" in an [observer semantics](docs/Views/ObserverSemantics.lagda.md). The environment allows current generation AI agents to build, evaluate and refactor axiomatic dependencies of theories and theorems under human guidance.
 
 The kernel symbols and their relations support multiple, mutually consistent interpretations aligned with different logic traditions and abstractions: `docs/Views/MultiInstitution.lagda.md`, `docs/Views/HomotopyTypeTheory.lagda.md`, `docs/Views/CategoricalLogic.lagda.md`, `docs/Views/Topos.lagda.md`, `docs/Views/ObserverSemantics.lagda.md`, `docs/Views/CurryHowardLambek.lagda.md`, `docs/Views/MeredithSentences.lagda.md`.
 
@@ -185,10 +185,10 @@ Agda comes with some options for levels of type checking for its compiler. This 
 - `--safe` — disallow certain unsafe pragmas/placeholders (still relative to the Agda checker).
 - `--no-libraries -i .` — build a external-minimal surface.
 
-These flags show intent - they are however not a garuantee. 
+These flags show intent - they are however not a guarantee.
 
 ### Continuous Integration
-Continous integration is a development praxis where each new feature is immediately checked in a testing harness. Here the coding agents run CI after each bigger refactoring project. Currently, CI runs `make check-all` (cold full gate: `clean` + policy checks + full typecheck of all `*.agda` and
+Continuous integration is a development praxis where each new feature is immediately checked in a testing harness. Here the coding agents run CI after each bigger refactoring project. Currently, CI runs `make check-all` (cold full gate: `clean` + policy checks + full typecheck of all `*.agda` and
 `*.lagda.md`, including the transformer scaling pipeline modules) plus a library-file smoke test (`make agda-lib-check`). See `.github/workflows/ci.yml`.
 For development loops, use `make check-quick` (policy + full `*.agda` check + library smoke test; docs are skipped for speed).
 Use `make check-quick-no-transformer` when iterating outside transformer work.
@@ -238,7 +238,7 @@ The operator of a coding agent has in this framework the role as the ultimate ar
 
 No guardrailing on a software system of this level of complexity is perfect. The current speed of safe development bottleneck seems to be the ability of an operator to learn about this system and guide through the resulting refinement options. 
 
-The biggest risk remaining is that of semantic divergence: the code not doing what the documentation says that its doing. By compartmentalising concerns through architecture this is mitigated - agents can check module-by-module. The loose coupling through ports and adapters also greatly reduces blast radii. AI-driven reviews have diminishing returns in their current state - the meaning of the system is largely approaching stability. Ultimately this remaining risk can only be fixed fully by external semantic peer-review. 
+The biggest risk remaining is that of semantic divergence: the code not doing what the documentation says that it is doing. By compartmentalising concerns through architecture this is mitigated - agents can check module-by-module. The loose coupling through ports and adapters also greatly reduces blast radii. AI-driven reviews have diminishing returns in their current state - the meaning of the system is largely approaching stability. Ultimately this remaining risk can only be fixed fully by external semantic peer-review.
 
 A final risk is the Agda compiler itself - although this is not a green-fields development, soundness and consistency proofs in Agda code are only relative to the Agda compiler. Exploratory implementations in Rocq and in Redex (not part of this release) indicate the core math is consistent.
 
@@ -295,7 +295,7 @@ Start here (literate Agda):
 - Kernel claim register (what “truth” words mean): `docs/Kernel/ClaimRegister.lagda.md`
 - Research-grade spec: `docs/LogOS_Core_Spec.lagda.md`
 
-Kernel views (polymorphicity): 
+Kernel views (semantic polymorphism):
 - Views index: `docs/Views/All.lagda.md`
 - Terminology (literature ↔ LogOS): `docs/Terminology.lagda.md`
 - Multi-institution: `docs/Views/MultiInstitution.lagda.md`
@@ -323,6 +323,7 @@ HTML docs (Agda HTML backend):
 Recommended import surfaces:
 - Minimal API: `LogOS/API/Minimal.agda`
 - Kernel API (canonical interface): `LogOS/API/Kernel.agda`
+- Bridge connectors (tier/repr/flow/limit): `LogOS/API/Bridges.agda`
 - Architecture map (ports/adapters spine): `LogOS/API/Architecture.agda` (see also [`docs/DeepDive/Architecture_PortsAdapters.lagda.md`](docs/DeepDive/Architecture_PortsAdapters.lagda.md))
 - One-page architecture diagram: [`docs/Architecture_Diagram.md`](docs/Architecture_Diagram.md)
 - QAdapter instances: `LogOS/QAdapters/All.agda`

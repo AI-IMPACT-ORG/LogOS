@@ -7,4 +7,6 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.FirstProof.Experimental.Surface where
 
+-- Sketch/scaffold surface: intended for exploratory wiring, not stable claims.
+
 open import LogOS.Packs.FirstProof.Experimental.All public

@@ -50,6 +50,12 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ; map-body-decode  to map-body-decode
       )
 
+  map∂Of : ∀ {K₁ K₂ : Kernel Sig Q}
+         → KernelHom K₁ K₂
+         → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁))
+         → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₂))
+  map∂Of h = ConAlgHom≡.map∂ (KernelHom.con-hom h)
+
   -- Optional strengthening: preservation of the saturation flow on boundary
   -- constraints (lax). This is the ungraded “flow homomorphism” interface,
   -- instantiated at `GTier.sat`.
@@ -59,12 +65,6 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
 
     satClosure : (K : Kernel Sig Q) → GT.GuardedClosure (BulkBoundary.bnd (Kernel.BB K))
     satClosure K = GuardedTier.toGuardedClosure (Kernel.G K)
-
-    map∂Of : ∀ {K₁ K₂ : Kernel Sig Q}
-           → KernelHom K₁ K₂
-           → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₁))
-           → ConPreorder.Con (BulkBoundary.bnd (Kernel.BB K₂))
-    map∂Of h = ConAlgHom≡.map∂ (KernelHom.con-hom h)
 
     module FlowCore = FlowShared.With
       (Kernel Sig Q)

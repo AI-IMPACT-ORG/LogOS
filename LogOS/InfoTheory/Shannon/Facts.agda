@@ -82,10 +82,16 @@ record KLTerm (C : Carrier) {O : Order C} (P : Positivity C O) : Set₁ where
   open Order O
   open Positivity P
   field
-    -- Total “KL term” with a 0-extension convention.
+    -- Total “KL term” with explicit nonnegative 0-extension.
     klTerm : ℝ → ℝ → ℝ
     klTerm0≤ : ∀ {b} → 0# ≤ b → klTerm 0# b ≡ 0#
     klTerm11≡0 : klTerm 1# 1# ≡ 0#
+
+  klTerm0Pos : ∀ {b} → Pos b → klTerm 0# b ≡ 0#
+  klTerm0Pos posb = klTerm0≤ (Pos→≤0 posb)
+
+  klTerm00≡0 : klTerm 0# 0# ≡ 0#
+  klTerm00≡0 = klTerm0≤ ≤-refl
 
 record LogSumIneq
   (C : Carrier)

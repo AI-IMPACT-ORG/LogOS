@@ -4,7 +4,7 @@ Copyright (C) 2026 AI.IMPACT GmbH
 SPDX-License-Identifier: GPL-3.0-only
 -->
 
-% Kernel Claim Register (Literal vs Stabilisation vs Representational)
+% Kernel Claim Register (Literal vs Stabilised vs Representational vs Analogy)
 
 ```agda
 {-# OPTIONS --safe #-}
@@ -39,9 +39,8 @@ import LogOS.Minimal.RelThin2Cat as RelThin2Cat
 import LogOS.Theorems.CategoryTheory.WrapperCore as WrapperCore
 import LogOS.Ports.Semantic.Presentation2Cat as Presentation2Cat
 import LogOS.Computation.Process2Cat as Process2Cat
-import LogOS.Computation.ProcessLimit as ProcessLimit
-import LogOS.Computation.ProcessLimitSub2Cat as ProcessLimitSub2Cat
 import LogOS.Theorems.Boundary.OmegaCPOMap2Cat as OmegaCPOMap2Cat
+import LogOS.API.Bridges as Bridges
 
 private
   thin2cat-comp-mono-exists : _
@@ -75,13 +74,13 @@ private
   omegaCPORelThin2Cat-exists = OmegaCPOMap2Cat.For.OmegaCPORelThin2Cat
 
   run∞-exists : _
-  run∞-exists = ProcessLimit.For.run∞
+  run∞-exists = Bridges.Limit.Process.For.run∞
 
   run∞-map≤-exists : _
-  run∞-map≤-exists = ProcessLimit.TransportLax.run∞-map≤
+  run∞-map≤-exists = Bridges.Limit.Process.TransportLax.run∞-map≤
 
   preserves-run∞-exists : _
-  preserves-run∞-exists = ProcessLimitSub2Cat.For.preserves-run∞
+  preserves-run∞-exists = Bridges.Limit.Sub2Cat.For.preserves-run∞
 
 module _ {ℓ₁ ℓ₂ : Level} (CP₁ : ConPreorder ℓ₁) (CP₂ : ConPreorder ℓ₂) where
   module MF = Stabilisation.MuFusion.For CP₁ CP₂
@@ -166,6 +165,7 @@ They are machine-checked by `make claim-stamp-check`.
 
 Relation/equality governance (views + pullbacks): `docs/Kernel/RelationDiscipline.lagda.md`.
 Canonical view registry (what relations are induced by what maps): `docs/Kernel/ViewRegistry.lagda.md`.
+Canonical bridge registry (tier/repr/flow/limit vocabulary): `docs/Kernel/BridgeConcepts.lagda.md`.
 
 This page is a compact “claim register”: it points to the **exact code surfaces**
 that define what each phrase means.

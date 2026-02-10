@@ -285,6 +285,20 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
           )
       }
 
+  -- Canonical default: rel-enriched 2-category (no Lift on 2-cells).
+  GradedKernel2Cat : RelThin2Cat (lsuc (lsuc ℓ)) (lsuc (lsuc ℓ)) ℓ
+  GradedKernel2Cat = GradedKernelRelThin2Cat
+
+  GradedKernel2CatLaws : RelThin2CatLaws GradedKernel2Cat
+  GradedKernel2CatLaws = GradedKernelRelThin2CatLaws
+
+  -- Compatibility aliases for the lifted-thin surface.
+  GradedKernel2CatLifted : Thin2Cat (lsuc (lsuc ℓ)) (lsuc (lsuc ℓ))
+  GradedKernel2CatLifted = GradedKernelThin2Cat
+
+  GradedKernel2CatLiftedLaws : Thin2CatLaws GradedKernel2CatLifted
+  GradedKernel2CatLiftedLaws = GradedKernelThin2CatLaws
+
   infixl 7 _⊙_
   _⊙_
     : ∀ {K₁ K₂ K₃ : GradedKernel Sig Q}

@@ -143,6 +143,20 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ; assoc = λ f g h → (assoc⇒ h g f , assoc⇐ h g f)
       }
 
+  -- Canonical default: rel-enriched 2-category (no Lift on 2-cells).
+  Kernel2Cat : RelThin2Cat (lsuc (lsuc ℓ)) (lsuc (lsuc ℓ)) ℓ
+  Kernel2Cat = KernelRelThin2Cat
+
+  Kernel2CatLaws : RelThin2CatLaws Kernel2Cat
+  Kernel2CatLaws = KernelRelThin2CatLaws
+
+  -- Compatibility aliases for the lifted-thin surface.
+  Kernel2CatLifted : Thin2Cat (lsuc (lsuc ℓ)) (lsuc (lsuc ℓ))
+  Kernel2CatLifted = KernelThin2Cat
+
+  Kernel2CatLiftedLaws : Thin2CatLaws Kernel2CatLifted
+  Kernel2CatLiftedLaws = KernelThin2CatLaws
+
   -- Step-grade flow preservation (logic-kernel level).
   --
   -- This is the direct analogue of:

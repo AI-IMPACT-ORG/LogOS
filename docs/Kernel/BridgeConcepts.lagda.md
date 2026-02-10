@@ -11,39 +11,30 @@ SPDX-License-Identifier: GPL-3.0-only
 module docs.Kernel.BridgeConcepts where
 
 open import LogOS.Prelude
-open import LogOS.API.Bridges
+import LogOS.API.Bridges as Bridges
 
 open import LogOS.Base.Signature using (LogOSSignature)
 open import LogOS.Minimal.Adapter using (QAdapter)
 open import LogOS.Kernel using (Kernel)
-open import LogOS.Kernel.UngradedKernel using (UngradedKernel)
-open import LogOS.Kernel.Graded using (GradedKernel)
-open import LogOS.Kernel.FromUngradedKernel using () renaming (asKernel to asKernelUngraded')
-open import LogOS.Kernel.FromGradedKernel using () renaming (asKernel to asKernelGraded')
-
-import LogOS.Kernel.Tiers as Tiers
-import LogOS.Kernel.Hom2Cat.FlowSub2Cat as FlowSub
-import LogOS.Computation.ProcessLimit as ProcessLimit
-import LogOS.Computation.ProcessLimitSub2Cat as ProcessLimitSub2Cat
 
 private
   asKernelUngraded-exists : _
-  asKernelUngraded-exists = asKernelUngraded'
+  asKernelUngraded-exists = Bridges.Repr.asKernelUngraded
 
   asKernelGraded-exists : _
-  asKernelGraded-exists = asKernelGraded'
+  asKernelGraded-exists = Bridges.Repr.asKernelGraded
 
   flowSub-wrapper-exists : _
-  flowSub-wrapper-exists = FlowSub.With.Hom₁ᶠ
+  flowSub-wrapper-exists = Bridges.Flow.FlowSub2Cat.With.Hom₁ᶠ
 
   run∞-exists : _
-  run∞-exists = ProcessLimit.For.run∞
+  run∞-exists = Bridges.Limit.Process.For.run∞
 
   preserves-run∞-exists : _
-  preserves-run∞-exists = ProcessLimitSub2Cat.For.preserves-run∞
+  preserves-run∞-exists = Bridges.Limit.Sub2Cat.For.preserves-run∞
 
 module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} (K : Kernel Sig Q) where
-  module T = Tiers.For K
+  module T = Bridges.Tier.Tiers.For K
 
   decodeView-exists : _
   decodeView-exists = T.decodeView
@@ -59,10 +50,10 @@ Bridge concept (working definition)
 A bridge is a typed connector that transports structure across layers without
 adding axioms. In this repository, bridges are usually one of:
 
-- Representation bridge: map one kernel representation into another (`asKernelUngraded`, `asKernelGraded`).
-- Tier bridge: expose S/H/G/R relations as derived views (`Tiers.For`).
-- Flow bridge: package a property-preserving 1-cell as a sub-2-category (`FlowSub2Cat.With`).
-- Limit bridge: transport `run∞` under continuity-marked lax morphisms (`ProcessLimit.TransportLax.run∞-map≤`).
+- Representation bridge: map one kernel representation into another (`Bridges.Repr.asKernelUngraded`, `Bridges.Repr.asKernelGraded`).
+- Tier bridge: expose S/H/G/R relations as derived views (`Bridges.Tier.Tiers.For`).
+- Flow bridge: package a property-preserving 1-cell as a sub-2-category (`Bridges.Flow.FlowSub2Cat.With`).
+- Limit bridge: transport `run∞` under continuity-marked lax morphisms (`Bridges.Limit.Process.TransportLax.run∞-map≤`).
 
 Why this sidecar exists
 -----------------------

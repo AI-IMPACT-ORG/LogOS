@@ -12,10 +12,10 @@ module LogOS.Packs.FirstProof.Experimental.Core where
 -- This surface is intentionally assumption-first: each question exposes
 -- conditionals and typed reasoning traces that can be strengthened iteratively.
 
-open import LogOS.Packs.Trust using (PackTrust; experimental)
+open import LogOS.Packs.Trust using (PackTrust; scaffold)
 
 packTrust : PackTrust
-packTrust = record { level = experimental }
+packTrust = record { level = scaffold }
 
 import LogOS.Packs.FirstProof.Experimental.QuestionScaffold as QuestionScaffoldₜ
 module QuestionScaffold = QuestionScaffoldₜ

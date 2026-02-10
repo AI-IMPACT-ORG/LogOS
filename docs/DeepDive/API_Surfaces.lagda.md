@@ -18,6 +18,7 @@ import LogOS.API.Kernel
 import LogOS.API.PortsAdapters
 import LogOS.API.Architecture
 import LogOS.API.Minimal
+import LogOS.API.Bridges
 import LogOS.API.Assumptions
 import LogOS.API.Strengthenings
 import LogOS.API.Axioms
@@ -75,6 +76,14 @@ If you want the shared S/H/code shape together with the parameterised guarded ti
 
 ```agda
 open import LogOS.API.Kernel
+```
+
+### Canonical bridge connectors (tier/repr/flow/limit)
+
+If you want the canonical bridge namespaces without pulling broader internals:
+
+```agda
+open import LogOS.API.Bridges
 ```
 
 ### Optional strengthenings (upgrades, not the default)

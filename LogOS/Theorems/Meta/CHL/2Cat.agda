@@ -29,6 +29,10 @@ module For
       ; KernelThin2CatLaws
       ; KernelRelThin2Cat
       ; KernelRelThin2CatLaws
+      ; Kernel2Cat
+      ; Kernel2CatLaws
+      ; Kernel2CatLifted
+      ; Kernel2CatLiftedLaws
       ; KernelHom₁
       ; KernelHomPreorder
       ; KernelHomRelPreorder

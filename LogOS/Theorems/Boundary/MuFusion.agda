@@ -240,7 +240,6 @@ module Compose
 module Kernel where
   open import LogOS.Base.Signature
   open import LogOS.Minimal.Adapter
-  open import LogOS.Minimal.ConAlg
   open import LogOS.Kernel
   open import LogOS.Kernel.Hom
 
@@ -248,7 +247,30 @@ module Kernel where
     private
       module GT = Truth.GuardedCore {ℓ = ℓ}
 
-    module _ {K₁ K₂ : Kernel Sig Q} {h : KernelHom K₁ K₂} where
+    -- Lax boundary-map surface used by μ-fusion transport: only the boundary map
+    -- is required here (no strict algebraic equalities on the full kernel hom).
+    record KernelBoundaryMap (K₁ K₂ : Kernel Sig Q) : Set (lsuc ℓ) where
+      private
+        CP₁ : ConPreorder ℓ
+        CP₁ = BulkBoundary.bnd (Kernel.BB K₁)
+
+        CP₂ : ConPreorder ℓ
+        CP₂ = BulkBoundary.bnd (Kernel.BB K₂)
+      field
+        map∂ : ConPreorder.Con CP₁ → ConPreorder.Con CP₂
+
+    kernelBoundaryMapOfHom
+      : ∀ {K₁ K₂ : Kernel Sig Q}
+      → KernelHom K₁ K₂
+      → KernelBoundaryMap K₁ K₂
+    kernelBoundaryMapOfHom h =
+      record
+        { map∂ = map∂Of h }
+
+    module BoundaryTransport
+      {K₁ K₂ : Kernel Sig Q}
+      (bm : KernelBoundaryMap K₁ K₂)
+      where
       private
         CP₁ : ConPreorder ℓ
         CP₁ = BulkBoundary.bnd (Kernel.BB K₁)
@@ -257,14 +279,14 @@ module Kernel where
         CP₂ = BulkBoundary.bnd (Kernel.BB K₂)
 
         map∂ : ConPreorder.Con CP₁ → ConPreorder.Con CP₂
-        map∂ = ConAlgHom≡.map∂ (KernelHom.con-hom h)
+        map∂ = KernelBoundaryMap.map∂ bm
 
         module MF = For CP₁ CP₂
 
       -- Bundle the domain-theoretic assumptions used to derive `KernelHomFlowStable`
       -- from `KernelHomFlow` via μ-fusion.
 
-      record KernelHomStabilisationAssumptions : Set (lsuc (lsuc ℓ)) where
+      record StabilisationAssumptions : Set (lsuc (lsuc ℓ)) where
         field
           ω₁ : GT.OmegaCPO CP₁
           ω₂ : GT.OmegaCPO CP₂
@@ -274,13 +296,14 @@ module Kernel where
           FF₁ : GT.FiniteFirst CP₁ (GTruth K₁) ω₁
           FF₂ : GT.FiniteFirst CP₂ (GTruth K₂) ω₂
 
-      kernelHomFlowStable-from
-        : (hf : KernelHomFlow K₁ K₂ h)
-        → KernelHomStabilisationAssumptions
-        → KernelHomFlowStable K₁ K₂ h
-      kernelHomFlowStable-from hf A =
+      preservesTh-from
+        : GT.FlowHom CP₁ CP₂ (GTruth K₁) (GTruth K₂) map∂
+        → StabilisationAssumptions
+        → ConPreorder._⊑_ CP₂
+            (map∂ (GT.GuardedClosure.Th* (GTruth K₁)))
+            (GT.GuardedClosure.Th* (GTruth K₂))
+      preservesTh-from flow-hom A =
         let
-          open KernelHomFlow hf
           module FH = GT.FlowHom flow-hom
 
           comm : ∀ c →
@@ -288,18 +311,30 @@ module Kernel where
               (map∂ (GT.GuardedClosure.Flow (GTruth K₁) c))
               (GT.GuardedClosure.Flow (GTruth K₂) (map∂ c))
           comm = FH.preserves-F
+        in
+        MF.preserves-Th*-from-Flow
+          (StabilisationAssumptions.M A)
+          (GTruth K₁)
+          (GTruth K₂)
+          (StabilisationAssumptions.FF₁ A)
+          (StabilisationAssumptions.FF₂ A)
+          comm
 
-          preservesTh : ConPreorder._⊑_ CP₂
-                          (map∂ (GT.GuardedClosure.Th* (GTruth K₁)))
-                          (GT.GuardedClosure.Th* (GTruth K₂))
-          preservesTh =
-            MF.preserves-Th*-from-Flow
-              (KernelHomStabilisationAssumptions.M A)
-              (GTruth K₁)
-              (GTruth K₂)
-              (KernelHomStabilisationAssumptions.FF₁ A)
-              (KernelHomStabilisationAssumptions.FF₂ A)
-              comm
+    module _ {K₁ K₂ : Kernel Sig Q} {h : KernelHom K₁ K₂} where
+      private
+        module BT = BoundaryTransport (kernelBoundaryMapOfHom h)
+
+      KernelHomStabilisationAssumptions : Set (lsuc (lsuc ℓ))
+      KernelHomStabilisationAssumptions = BT.StabilisationAssumptions
+
+      kernelHomFlowStable-from
+        : (hf : KernelHomFlow K₁ K₂ h)
+        → KernelHomStabilisationAssumptions
+        → KernelHomFlowStable K₁ K₂ h
+      kernelHomFlowStable-from hf A =
+        let
+          open KernelHomFlow hf
+          preservesTh = BT.preservesTh-from flow-hom A
         in
         record
           { stable-hom =
@@ -312,7 +347,6 @@ module Kernel where
 module GradedKernel where
   open import LogOS.Base.Signature
   open import LogOS.Minimal.Adapter
-  open import LogOS.Minimal.ConAlg
   open import LogOS.Kernel.Graded
   open import LogOS.Kernel.Graded.Hom
 
@@ -320,7 +354,29 @@ module GradedKernel where
     private
       module GT = Truth.GuardedCore {ℓ = ℓ}
 
-    module _ {K₁ K₂ : GradedKernel Sig Q} {h : GradedKernelHom K₁ K₂} where
+    -- Lax boundary-map surface for graded kernels (used at saturation).
+    record GradedBoundaryMap (K₁ K₂ : GradedKernel Sig Q) : Set (lsuc ℓ) where
+      private
+        CP₁ : ConPreorder ℓ
+        CP₁ = BulkBoundary.bnd (GradedKernel.BB K₁)
+
+        CP₂ : ConPreorder ℓ
+        CP₂ = BulkBoundary.bnd (GradedKernel.BB K₂)
+      field
+        map∂ : ConPreorder.Con CP₁ → ConPreorder.Con CP₂
+
+    gradedBoundaryMapOfHom
+      : ∀ {K₁ K₂ : GradedKernel Sig Q}
+      → GradedKernelHom K₁ K₂
+      → GradedBoundaryMap K₁ K₂
+    gradedBoundaryMapOfHom h =
+      record
+        { map∂ = map∂Of h }
+
+    module BoundaryTransportSat
+      {K₁ K₂ : GradedKernel Sig Q}
+      (bm : GradedBoundaryMap K₁ K₂)
+      where
       private
         CP₁ : ConPreorder ℓ
         CP₁ = BulkBoundary.bnd (GradedKernel.BB K₁)
@@ -329,7 +385,7 @@ module GradedKernel where
         CP₂ = BulkBoundary.bnd (GradedKernel.BB K₂)
 
         map∂ : ConPreorder.Con CP₁ → ConPreorder.Con CP₂
-        map∂ = ConAlgHom≡.map∂ (GradedKernelHom.con-hom h)
+        map∂ = GradedBoundaryMap.map∂ bm
 
         module MF = For CP₁ CP₂
 
@@ -343,7 +399,7 @@ module GradedKernel where
       -- `GradedKernelHomFlowStable` from `GradedKernelHomFlow` at the saturation
       -- grade via μ-fusion.
 
-      record GradedKernelHomStabilisationAssumptions : Set (lsuc (lsuc ℓ)) where
+      record StabilisationAssumptions : Set (lsuc (lsuc ℓ)) where
         field
           ω₁ : GT.OmegaCPO CP₁
           ω₂ : GT.OmegaCPO CP₂
@@ -353,6 +409,37 @@ module GradedKernel where
           FF₁ : GT.FiniteFirst CP₁ GC₁sat ω₁
           FF₂ : GT.FiniteFirst CP₂ GC₂sat ω₂
 
+      preservesTh-from
+        : GT.FlowHom CP₁ CP₂ GC₁sat GC₂sat map∂
+        → StabilisationAssumptions
+        → ConPreorder._⊑_ CP₂
+            (map∂ (GradedClosure.Th* (GradedKernel.GTruth K₁)))
+            (GradedClosure.Th* (GradedKernel.GTruth K₂))
+      preservesTh-from flowSat A =
+        let
+          module FHSat = GT.FlowHom flowSat
+
+          comm : ∀ c →
+            ConPreorder._⊑_ CP₂
+              (map∂ (GT.GuardedClosure.Flow GC₁sat c))
+              (GT.GuardedClosure.Flow GC₂sat (map∂ c))
+          comm = FHSat.preserves-F
+        in
+        MF.preserves-Th*-from-Flow
+          (StabilisationAssumptions.M A)
+          GC₁sat
+          GC₂sat
+          (StabilisationAssumptions.FF₁ A)
+          (StabilisationAssumptions.FF₂ A)
+          comm
+
+    module _ {K₁ K₂ : GradedKernel Sig Q} {h : GradedKernelHom K₁ K₂} where
+      private
+        module BT = BoundaryTransportSat (gradedBoundaryMapOfHom h)
+
+      GradedKernelHomStabilisationAssumptions : Set (lsuc (lsuc ℓ))
+      GradedKernelHomStabilisationAssumptions = BT.StabilisationAssumptions
+
       gradedKernelHomFlowStable-from
         : (hf : GradedKernelHomFlow K₁ K₂ h)
         → GradedKernelHomStabilisationAssumptions
@@ -361,27 +448,14 @@ module GradedKernel where
         let
           open GradedKernelHomFlow hf
 
-          flowSat : GT.FlowHom CP₁ CP₂ GC₁sat GC₂sat map∂
+          flowSat : GT.FlowHom
+                      (BulkBoundary.bnd (GradedKernel.BB K₁))
+                      (BulkBoundary.bnd (GradedKernel.BB K₂))
+                      (GT.forgetGradedClosure (GradedKernel.GTruth K₁))
+                      (GT.forgetGradedClosure (GradedKernel.GTruth K₂))
+                      (map∂Of h)
           flowSat = GT.forgetGradedFlowHom flow-hom
-          module FHSat = GT.FlowHom flowSat
-
-          comm : ∀ c →
-            ConPreorder._⊑_ CP₂
-              (map∂ (GT.GuardedClosure.Flow GC₁sat c))
-              (GT.GuardedClosure.Flow GC₂sat (map∂ c))
-          comm = FHSat.preserves-F
-
-          preservesTh : ConPreorder._⊑_ CP₂
-                          (map∂ (GradedClosure.Th* (GradedKernel.GTruth K₁)))
-                          (GradedClosure.Th* (GradedKernel.GTruth K₂))
-          preservesTh =
-            MF.preserves-Th*-from-Flow
-              (GradedKernelHomStabilisationAssumptions.M A)
-              GC₁sat
-              GC₂sat
-              (GradedKernelHomStabilisationAssumptions.FF₁ A)
-              (GradedKernelHomStabilisationAssumptions.FF₂ A)
-              comm
+          preservesTh = BT.preservesTh-from flowSat A
         in
         record
           { stable-hom =

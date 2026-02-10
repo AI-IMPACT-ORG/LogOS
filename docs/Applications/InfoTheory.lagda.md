@@ -90,7 +90,8 @@ with the minimum structure the finite theorems in this pack actually use:
 - An order (`_≤_`) and enough finite-sum structure (`sum`, monotonicity, swap).
 - A positivity predicate `Pos`.
 - A total “KL term” `klTerm`, together with the explicit nonnegative zero-case law
-  assumed by this library (`klTerm0≤ : 0 ≤ b → klTerm 0 b = 0`).
+  assumed by this library (`klTerm0≤ : 0 ≤ b → klTerm 0 b = 0`), plus the
+  derived special cases `klTerm0Pos` and `klTerm00≡0`.
 - The log-sum inequality `logSumIneq` as the single heavy analytic ingredient.
 <!-- CLAIM-STAMP: LITERAL | anchor=LogOS/InfoTheory/Shannon/Facts.agda#ShannonFacts -->
 

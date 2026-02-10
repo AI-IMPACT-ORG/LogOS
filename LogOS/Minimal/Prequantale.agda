@@ -25,7 +25,7 @@ module LogOS.Minimal.Prequantale where
 open import LogOS.Prelude hiding (refl; trans) renaming (_⊔_ to _⊔ℓ_)
 import LogOS.Prelude as Prelude
 
-open import LogOS.Minimal.Adapter using (QAdapter)
+open import LogOS.Minimal.Adapter using (QAdapter; QAdapterCore; QAdapterEqLaws; qAdapterCore; qAdapterEqLaws)
 open import LogOS.Minimal.Con
   using (ConPreorder; MonoOn; _≈CP_; ≈CP-refl; ≈CP-sym; ≈CP-trans)
 
@@ -96,42 +96,81 @@ open Prequantale public
 -- --------------------------------------------------------------------------
 -- Adapter: any `QAdapter` induces a prequantale (in the mutual-refinement sense).
 
-prequantaleFromQAdapter : ∀ {ℓ} → QAdapter ℓ → Prequantale {ℓ}
-prequantaleFromQAdapter {ℓ} Q =
+record ScaleLaxLaws {ℓ : Level} (C : QAdapterCore ℓ) : Set (lsuc ℓ) where
+  module QC = QAdapterCore C
+
+  infix 4 _≈s_
+  _≈s_ : QC.Scale → QC.Scale → Set ℓ
+  x ≈s y = QC._≤s_ x y × QC._≤s_ y x
+
+  field
+    ·-assoc    : ∀ a b c → QC._·_ (QC._·_ a b) c ≈s QC._·_ a (QC._·_ b c)
+    ·-idl      : ∀ a → QC._·_ QC.e a ≈s a
+    ·-idr      : ∀ a → QC._·_ a QC.e ≈s a
+    ·-distl-⊔  : ∀ a b c → QC._·_ (QC._⊔s_ a b) c ≈s QC._⊔s_ (QC._·_ a c) (QC._·_ b c)
+    ·-distr-⊔  : ∀ a b c → QC._·_ a (QC._⊔s_ b c) ≈s QC._⊔s_ (QC._·_ a b) (QC._·_ a c)
+
+scaleLaxLawsFromEq
+  : ∀ {ℓ} {C : QAdapterCore ℓ}
+  → QAdapterEqLaws C
+  → ScaleLaxLaws C
+scaleLaxLawsFromEq {C = C} E =
   record
-    { CP = CPScale
-    ; _⊔_ = QA._⊔s_
-    ; ⊥   = QA.⊥s
-    ; ⊥-least = QA.⊥s-least
-    ; ⊔-ub₁   = QA.⊔s-ub₁
-    ; ⊔-ub₂   = QA.⊔s-ub₂
-    ; ⊔-least = QA.⊔s-least
-    ; _·_ = QA._·_
-    ; e   = QA.e
-    ; ·-mono = QA.·-mono
-    ; ·-assoc    = λ a b c → eq→≈ (QA.·-assoc a b c)
-    ; ·-idl      = λ a → eq→≈ (QA.·-idl a)
-    ; ·-idr      = λ a → eq→≈ (QA.·-idr a)
-    ; ·-distl-⊔  = λ a b c → eq→≈ (QA.·-distl-⊔s a b c)
-    ; ·-distr-⊔  = λ a b c → eq→≈ (QA.·-distr-⊔s a b c)
+    { ·-assoc    = λ a b c → eq→≈ (QAdapterEqLaws.·-assoc E a b c)
+    ; ·-idl      = λ a → eq→≈ (QAdapterEqLaws.·-idl E a)
+    ; ·-idr      = λ a → eq→≈ (QAdapterEqLaws.·-idr E a)
+    ; ·-distl-⊔  = λ a b c → eq→≈ (QAdapterEqLaws.·-distl-⊔s E a b c)
+    ; ·-distr-⊔  = λ a b c → eq→≈ (QAdapterEqLaws.·-distr-⊔s E a b c)
     }
   where
-    module QA = QAdapter Q
+    module QC = QAdapterCore C
+
+    eq→≤ : ∀ {x y : QC.Scale} → x ≡ y → QC._≤s_ x y
+    eq→≤ {x = x} Prelude.refl = QC.≤s-refl {a = x}
+
+    eq→≈ : ∀ {x y : QC.Scale} → x ≡ y → (QC._≤s_ x y × QC._≤s_ y x)
+    eq→≈ eq = eq→≤ eq , eq→≤ (Prelude.sym eq)
+
+prequantaleFromCoreLax : ∀ {ℓ} → (C : QAdapterCore ℓ) → ScaleLaxLaws C → Prequantale {ℓ}
+prequantaleFromCoreLax {ℓ} C L =
+  record
+    { CP = CPScale
+    ; _⊔_ = QC._⊔s_
+    ; ⊥   = QC.⊥s
+    ; ⊥-least = QC.⊥s-least
+    ; ⊔-ub₁   = QC.⊔s-ub₁
+    ; ⊔-ub₂   = QC.⊔s-ub₂
+    ; ⊔-least = QC.⊔s-least
+    ; _·_ = QC._·_
+    ; e   = QC.e
+    ; ·-mono = QC.·-mono
+    ; ·-assoc    = ScaleLaxLaws.·-assoc L
+    ; ·-idl      = ScaleLaxLaws.·-idl L
+    ; ·-idr      = ScaleLaxLaws.·-idr L
+    ; ·-distl-⊔  = ScaleLaxLaws.·-distl-⊔ L
+    ; ·-distr-⊔  = ScaleLaxLaws.·-distr-⊔ L
+    }
+  where
+    module QC = QAdapterCore C
 
     CPScale : ConPreorder ℓ
     CPScale =
       record
-        { Con  = QA.Scale
-        ; _⊑_  = QA._≤s_
-        ; refl = QA.≤s-refl
-        ; trans = QA.≤s-trans
+        { Con  = QC.Scale
+        ; _⊑_  = QC._≤s_
+        ; refl = QC.≤s-refl
+        ; trans = QC.≤s-trans
         }
 
-    eq→≤ : ∀ {x y : QA.Scale} → x ≡ y → QA._≤s_ x y
-    eq→≤ {x = x} Prelude.refl = QA.≤s-refl {a = x}
+prequantaleFromCoreEq
+  : ∀ {ℓ}
+  → (C : QAdapterCore ℓ)
+  → QAdapterEqLaws C
+  → Prequantale {ℓ}
+prequantaleFromCoreEq C E = prequantaleFromCoreLax C (scaleLaxLawsFromEq E)
 
-    eq→≈ : ∀ {x y : QA.Scale} → x ≡ y → (QA._≤s_ x y × QA._≤s_ y x)
-    eq→≈ eq = eq→≤ eq , eq→≤ (Prelude.sym eq)
+prequantaleFromQAdapter : ∀ {ℓ} → QAdapter ℓ → Prequantale {ℓ}
+prequantaleFromQAdapter Q = prequantaleFromCoreEq (qAdapterCore Q) (qAdapterEqLaws Q)
 
 -- --------------------------------------------------------------------------
 -- Prequantale morphisms (structure-preserving maps)

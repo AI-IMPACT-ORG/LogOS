@@ -17,6 +17,7 @@ open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel.UngradedKernel
 open import LogOS.Kernel.UngradedKernel.Endo
 open import LogOS.Kernel.UngradedKernel.Infinite
+import LogOS.Kernel.InfiniteLemmasShared as SharedInf
 
 -- Downstream-friendly facts for the “infinite kernel” companion structure.
 --
@@ -38,6 +39,28 @@ module For {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
 
   Th⋆ : CP.Con
   Th⋆ = Th⋆K K
+
+  module S =
+    SharedInf.For
+      CP
+      Th⋆
+      (Endo K)
+      Endo.fn
+      (_≤₂_ K)
+      (λ le → le)
+      (λ le → le)
+      (idEndo K)
+      (λ c → refl)
+      _∘E_
+      (λ g f c → refl)
+      (Flow-Endo K)
+      (Flow-closeEndo K)
+      (f≤Flow→fTh⋆≤Th⋆ K)
+      (Flow≤f→Th⋆≤fTh⋆ K)
+      (id≤Flow-close K)
+      (Flow-close≤Flow K)
+      (Truth.GuardedCore.GuardedClosure.mono GTruth)
+      (Truth.GuardedCore.GuardedClosure.idemp-lax GTruth)
 
   -- `Th⋆` really is a fixed point (as an equality) thanks to boundary antisymmetry.
 
@@ -71,11 +94,7 @@ module For {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     → _≤₂_ K (idEndo K) f
     → _≤₂_ K f (Flow-Endo K)
     → (CP._⊑_ Th⋆ (Endo.fn f Th⋆)) × (CP._⊑_ (Endo.fn f Th⋆) Th⋆)
-  sandwich-bounds-at-Th⋆ f infl f≤tf =
-    let th≤fth = infl Th⋆
-        fth≤tfth = f≤tf Th⋆
-        tfth≤th = FlowTh⋆≤Th⋆ K
-    in th≤fth , CP.trans fth≤tfth tfth≤th
+  sandwich-bounds-at-Th⋆ = S.sandwich-bounds-at-Th⋆
 
   -- With antisymmetry (available in `InfiniteKernel.po`) you get equality at Th⋆.
 
@@ -85,10 +104,12 @@ module For {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     → _≤₂_ K f (Flow-Endo K)
     → Endo.fn f Th⋆ ≡ Th⋆
   sandwich-fixed-at-Th⋆ f infl f≤tf =
-    let open BulkBoundaryPO po using (po-bnd)
-        open PartialOrder po-bnd using (antisym)
-        p = sandwich-bounds-at-Th⋆ f infl f≤tf
-    in antisym (≈CP⇐ {CP = CP} p) (≈CP⇒ {CP = CP} p)
+    let
+      open BulkBoundaryPO po using (po-bnd)
+      open PartialOrder po-bnd using (antisym)
+      p = S.sandwich-fixed-at-Th⋆ f infl f≤tf
+    in
+    antisym (≈CP⇒ {CP = CP} p) (≈CP⇐ {CP = CP} p)
 
   -- Handy corollaries for endomaps (mostly re-exports in a convenient shape).
 
@@ -108,9 +129,12 @@ module For {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     → _≤₂_ K f (Flow-Endo K)
     → Endo.fn (Flow-closeEndo K f) Th⋆ ≡ Th⋆
   Flow-close-fixed-at-Th⋆ f infl f≤tf =
-    sandwich-fixed-at-Th⋆ (Flow-closeEndo K f)
-      (id≤Flow-close K f infl)
-      (Flow-close≤Flow K f f≤tf)
+    let
+      open BulkBoundaryPO po using (po-bnd)
+      open PartialOrder po-bnd using (antisym)
+      p = S.Flow-close-fixed-at-Th⋆ f infl f≤tf
+    in
+    antisym (≈CP⇒ {CP = CP} p) (≈CP⇐ {CP = CP} p)
 
   -- Sup monotonicity (derived from `least`): if f ≤ g pointwise then sup f ≤ sup g.
   -- (available via `LogOS.Minimal.Infinite`)
@@ -129,13 +153,12 @@ module For {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ}
     → _≤₂_ K (idEndo K) g → _≤₂_ K g (Flow-Endo K)
     → Endo.fn (g ∘E f) Th⋆ ≡ Th⋆
   sandwich-compose f g inflf f≤flow inflg g≤flow =
-    sandwich-fixed-at-Th⋆ (g ∘E f)
-      (λ c → CP.trans (inflf c) (inflg (Endo.fn f c)))
-      (λ c →
-        let step₁ = g≤flow (Endo.fn f c)           -- g(f c) ≤ Flow(f c)
-            step₂ = Truth.GuardedCore.GuardedClosure.mono GTruth (f≤flow c)
-            step₃ = Truth.GuardedCore.GuardedClosure.idemp-lax GTruth c
-        in CP.trans step₁ (CP.trans step₂ step₃))
+    let
+      open BulkBoundaryPO po using (po-bnd)
+      open PartialOrder po-bnd using (antisym)
+      p = S.sandwich-compose f g inflf f≤flow inflg g≤flow
+    in
+    antisym (≈CP⇒ {CP = CP} p) (≈CP⇐ {CP = CP} p)
 
   -- Stability-reflection schema (assumption record):
   -- if a predicate is (1) upward closed and (2) closed under ω-sups,

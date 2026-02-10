@@ -49,6 +49,12 @@ module _ {ℓ : Level} {Sig : LogOSSignature ℓ} {Q : QAdapter ℓ} where
       ; map-body-decode  to map-body-decode
       )
 
+  map∂Of : ∀ {K₁ K₂ : GradedKernel Sig Q}
+         → GradedKernelHom K₁ K₂
+         → ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K₁))
+         → ConPreorder.Con (BulkBoundary.bnd (GradedKernel.BB K₂))
+  map∂Of h = ConAlgHom≡.map∂ (GradedKernelHom.con-hom h)
+
 -- Optional strengthening: preservation of graded Flow on boundary constraints,
 -- together with step-grade alignment for guard naturality.
 

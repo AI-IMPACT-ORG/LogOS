@@ -72,7 +72,7 @@ two named results:
 
 These lemmas are generic: they are stated for an arbitrary kernel `K` and an
 arbitrary external boundary semantics/presentation `S` (i.e. a choice of `Form`, `Interp`,
-and `Sat∂≈F`). This is where “semantic polymorphicity” becomes operational:
+and `Sat∂≈F`). This is where “semantic polymorphism” becomes operational:
 you can swap `S` without changing the kernel.
 
 ## How to use this in practice

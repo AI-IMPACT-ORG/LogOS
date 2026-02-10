@@ -44,7 +44,7 @@ help:
 	@echo "  make packs-strict - same as packs (strict warnings)"
 	@echo "  make html       - build HTML docs into _build/html"
 	@echo "  make depgraph   - generate import dependency graphs into _build/depgraph"
-	@echo "  make check-quick - warm dev check (policy + all *.agda + agda-lib smoke)"
+	@echo "  make check-quick - warm strict check (policy + all *.agda incl. transformer pipeline + agda-lib smoke)"
 	@echo "  make check-quick-no-transformer - warm dev check excluding transformer pipeline"
 	@echo "  make check-all  - cold full check (clean + policy + all *.agda/*.lagda.md + agda-lib)"
 	@echo "  make clean      - remove .agdai/.agda.err and _build/"

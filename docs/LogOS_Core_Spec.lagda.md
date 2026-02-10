@@ -285,7 +285,7 @@ Packs: Structure, Claims, Boundaries
 -----------------------------------
 The curated packs are lightweight wrappers over the kernel. Each pack makes its assumptions
 explicit, states a clean claim, and avoids leaking application‑specific axioms into
-the core. The hook is kernel polymorphicity: the same kernel supports distinct
+the core. The hook is kernel polymorphism: the same kernel supports distinct
 semantic stories without changing the foundational definitions.
 
 - ZFC pack (`LogOS/Packs/ZFC/Surface.agda`; umbrella: `LogOS/Packs/ZFC/All.agda`)

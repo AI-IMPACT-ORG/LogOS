@@ -25,23 +25,17 @@ module ForObservedKit (K : ObsKit) where
 
   -- Full observation budget (all boundary observations are allowed).
   fullBudget : Co.Budget
-  fullBudget _ = Topℓ
+  fullBudget = Gen.fullBudget
 
   -- Boundary adequacy is immediate because in this kernel:
   -- Sat_H_bnd p c  ≡  p ⊑ c
   -- and to∂ is identity on observations.
   boundaryAdequacy : Co.BoundaryAdequacy
-  boundaryAdequacy =
-    record
-      { reflect = λ ent → ent _ CP.refl
-      }
+  boundaryAdequacy = Gen.boundaryAdequacy-from-reflect (λ ent → ent _ CP.refl)
 
   -- Budgeted variant (for the full budget) is equally immediate.
   fullBudgetAdequacy : Co.BudgetedAdequacy fullBudget
-  fullBudgetAdequacy =
-    record
-      { reflect = λ ent → ent _ ttℓ CP.refl
-      }
+  fullBudgetAdequacy = Gen.fullBudgetAdequacy-from-boundary boundaryAdequacy
 
   capstone-complete : Cap.CapstoneComplete boundaryAdequacy
   capstone-complete = Gen.capstone-complete boundaryAdequacy

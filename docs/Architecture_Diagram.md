@@ -95,8 +95,9 @@ Note: `LogOS/API/*` are core-only navigation/entry surfaces (no `LogOS.Domain.*`
 - Narrow API surfaces:
   - Foundations only: `LogOS/API/Foundation.agda`
   - Kernel work: `LogOS/API/Kernel.agda`
+  - Canonical bridges (tier/repr/flow/limit): `LogOS/API/Bridges.agda`
   - Port-first downstream work: `LogOS/API/PortsAdapters.agda`
-  - Batteries-included bundle: `LogOS/API/Minimal.agda`
+  - Minimal kernel-authoring bundle: `LogOS/API/Minimal.agda`
 
 ## Enforced invariants (CI/policy)
 

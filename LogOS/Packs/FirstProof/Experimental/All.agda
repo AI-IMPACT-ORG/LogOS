@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Packs.FirstProof.Experimental.All where
 
--- FirstProof challenge scaffold pack (experimental).
+-- FirstProof challenge scaffold pack (sketch territory; intentionally scaffold-level).
 
 open import LogOS.Packs.Trust using (PackTrust)
 import LogOS.Packs.FirstProof.Experimental.Core as PackCore

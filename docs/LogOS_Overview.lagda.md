@@ -172,6 +172,7 @@ Minimal entry points (recommended imports)
 -----------------------------------------
 - Minimal core: `LogOS/API/Minimal.agda`
 - Unified kernel interface: `LogOS/API/Kernel.agda` and `LogOS/Kernel.agda`
+- Canonical bridge connectors: `LogOS/API/Bridges.agda`
 - Concrete kernel interface (ungraded G-tier): `LogOS/Kernel/UngradedKernel.agda`
 - Initial/canonical kernels: `LogOS/Kernel/UngradedKernel/Initial.agda` and `LogOS/Kernel/UngradedKernel/Infinite/Initial.agda`
 - Stable lock surfaces: `LogOS/Packs/ZFC/Surface.agda`, `LogOS/Packs/Universality/Surface.agda`, `LogOS/Packs/Agents/Surface.agda`
@@ -196,6 +197,7 @@ Navigation
 Checks
 ------
 - Policy/lint: `make ci-policy`
-- Full typecheck surface: `make ci`
+- Warm strict development loop: `make check-quick` (or `make check-quick-no-transformer` outside transformer work)
+- Cold full publication/CI gate: `make check-all`
 - Docs typecheck: `bash scripts/check_all_docs.sh`
 - View/meta-theory regression: `Tests/ViewsMetaTheory.agda`

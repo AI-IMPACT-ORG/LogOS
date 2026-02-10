@@ -17,6 +17,7 @@ open import LogOS.Minimal.Truth as Truth
 open import LogOS.Kernel.Graded
 open import LogOS.Kernel.Graded.Endo
 open import LogOS.Kernel.Graded.Infinite
+import LogOS.Kernel.InfiniteLemmasShared as SharedInf
 
 -- Downstream-friendly facts for the “infinite graded kernel” companion structure,
 -- instantiated at the saturation grade.
@@ -38,6 +39,47 @@ module For
 
   Th⋆ : CP.Con
   Th⋆ = Th⋆K K
+
+  id≤Flow-close-sat
+    : (f : Endo K)
+    → _≤₂_ K (idEndo K) f
+    → _≤₂_ K (idEndo K) (Flow-closeEndo K f)
+  id≤Flow-close-sat f infl =
+    id≤Flow-closeAt K (GradedClosure.sat GTruth) (id≤Flow K) f infl
+
+  Flow-close≤Flow-sat
+    : (f : Endo K)
+    → _≤₂_ K f (Flow-Endo K)
+    → _≤₂_ K (Flow-closeEndo K f) (Flow-Endo K)
+  Flow-close≤Flow-sat f f≤tf = λ c →
+    let
+      monoFlow = GradedClosure.mono GTruth {g = GradedClosure.sat GTruth}
+      step₁ = monoFlow (f≤tf c)
+      step₂ = GradedClosure.idemp-sat GTruth c
+    in
+    CP.trans step₁ step₂
+
+  module S =
+    SharedInf.For
+      CP
+      Th⋆
+      (Endo K)
+      Endo.fn
+      (_≤₂_ K)
+      (λ le → le)
+      (λ le → le)
+      (idEndo K)
+      (λ c → refl)
+      _∘E_
+      (λ g f c → refl)
+      (Flow-Endo K)
+      (Flow-closeEndo K)
+      (f≤Flow→fTh⋆≤Th⋆ K)
+      (Flow≤f→Th⋆≤fTh⋆ K)
+      id≤Flow-close-sat
+      Flow-close≤Flow-sat
+      (Truth.GuardedCore.GuardedClosure.mono GC)
+      (Truth.GuardedCore.GuardedClosure.idemp-lax GC)
 
   -- `Th⋆` really is a fixed point (as an equality) thanks to boundary antisymmetry.
 
@@ -71,11 +113,7 @@ module For
     → _≤₂_ K (idEndo K) f
     → _≤₂_ K f (Flow-Endo K)
     → (CP._⊑_ Th⋆ (Endo.fn f Th⋆)) × (CP._⊑_ (Endo.fn f Th⋆) Th⋆)
-  sandwich-bounds-at-Th⋆ f infl f≤tf =
-    let th≤fth = infl Th⋆
-        fth≤tfth = f≤tf Th⋆
-        tfth≤th = FlowTh⋆≤Th⋆ K
-    in th≤fth , CP.trans fth≤tfth tfth≤th
+  sandwich-bounds-at-Th⋆ = S.sandwich-bounds-at-Th⋆
 
   -- With antisymmetry (available in `InfiniteGradedKernel.po`) you get equality at Th⋆.
 
@@ -85,10 +123,12 @@ module For
     → _≤₂_ K f (Flow-Endo K)
     → Endo.fn f Th⋆ ≡ Th⋆
   sandwich-fixed-at-Th⋆ f infl f≤tf =
-    let open BulkBoundaryPO po using (po-bnd)
-        open PartialOrder po-bnd using (antisym)
-        p = sandwich-bounds-at-Th⋆ f infl f≤tf
-    in antisym (≈CP⇐ {CP = CP} p) (≈CP⇒ {CP = CP} p)
+    let
+      open BulkBoundaryPO po using (po-bnd)
+      open PartialOrder po-bnd using (antisym)
+      p = S.sandwich-fixed-at-Th⋆ f infl f≤tf
+    in
+    antisym (≈CP⇒ {CP = CP} p) (≈CP⇐ {CP = CP} p)
 
   -- Handy corollaries for endomaps (mostly re-exports in a convenient shape).
 
@@ -108,14 +148,12 @@ module For
     → _≤₂_ K f (Flow-Endo K)
     → Endo.fn (Flow-closeEndo K f) Th⋆ ≡ Th⋆
   Flow-close-fixed-at-Th⋆ f infl f≤tf =
-    sandwich-fixed-at-Th⋆ (Flow-closeEndo K f)
-      (id≤Flow-closeAt K (GradedClosure.sat GTruth) (id≤Flow K) f infl)
-      (λ c →
-        let
-          monoFlow = GradedClosure.mono GTruth {g = GradedClosure.sat GTruth}
-          step₁ = monoFlow (f≤tf c)                 -- Flow sat (f c) ≤ Flow sat (Flow sat c)
-          step₂ = GradedClosure.idemp-sat GTruth c  -- Flow sat (Flow sat c) ≤ Flow sat c
-        in CP.trans step₁ step₂)
+    let
+      open BulkBoundaryPO po using (po-bnd)
+      open PartialOrder po-bnd using (antisym)
+      p = S.Flow-close-fixed-at-Th⋆ f infl f≤tf
+    in
+    antisym (≈CP⇒ {CP = CP} p) (≈CP⇐ {CP = CP} p)
 
   -- Closure-step fixed point at Th⋆ (for the generic `ClosureStep` API in Endo).
 
@@ -131,10 +169,9 @@ module For
     → _≤₂_ K (idEndo K) g → _≤₂_ K g (Flow-Endo K)
     → Endo.fn (g ∘E f) Th⋆ ≡ Th⋆
   sandwich-compose f g inflf f≤flow inflg g≤flow =
-    sandwich-fixed-at-Th⋆ (g ∘E f)
-      (λ c → CP.trans (inflf c) (inflg (Endo.fn f c)))
-      (λ c →
-        let step₁ = g≤flow (Endo.fn f c)           -- g(f c) ≤ Flow(f c)
-            step₂ = Truth.GuardedCore.GuardedClosure.mono GC (f≤flow c)
-            step₃ = Truth.GuardedCore.GuardedClosure.idemp-lax GC c
-        in CP.trans step₁ (CP.trans step₂ step₃))
+    let
+      open BulkBoundaryPO po using (po-bnd)
+      open PartialOrder po-bnd using (antisym)
+      p = S.sandwich-compose f g inflf f≤flow inflg g≤flow
+    in
+    antisym (≈CP⇒ {CP = CP} p) (≈CP⇐ {CP = CP} p)
