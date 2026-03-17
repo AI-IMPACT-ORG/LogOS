@@ -1,0 +1,13 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Floors for `scripts/check/law_surface_check.sh`.
+# This is a heuristic partitioned trend metric for explicit law surfaces.
+#
+# <metric><TAB><minimum>
+refinement_law_modules	77
+refinement_law_module_pct	14.23
+refinement_law_declarations	165
+strict_default_lane_modules	0
+strict_default_lane_declarations	0

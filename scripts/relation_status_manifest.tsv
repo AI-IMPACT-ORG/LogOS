@@ -1,0 +1,45 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Format:
+#   <module><TAB><symbol><TAB><relation><TAB><status>
+#
+# relation ∈ {approx, under, strict}
+# status   ∈ {canonical, legacy-compatible}
+
+LogOS.LT.Flow	Flow-idemp≈	approx	canonical
+LogOS.LT.Flow	Stable-fixpoint≈	approx	canonical
+LogOS.LT.Reflection	evalm∘quot⊑Flow	under	legacy-compatible
+LogOS.LT.Reflection	Flow⊑evalm∘quot	under	legacy-compatible
+LogOS.LT.Reflection	evalm∘quot≈Flow	approx	legacy-compatible
+LogOS.LT.Reflection	quot⊣evalm	under	legacy-compatible
+LogOS.Ports.BoundaryTransparency	decode-mapCode-transparent≈	approx	canonical
+LogOS.Ports.BoundaryTransparency	transportCon≈	approx	canonical
+LogOS.Ports.BoundaryTransparency	untransportCon≈	approx	canonical
+LogOS.Ports.BoundaryTransparency	untransport-map∂-transparent≈	approx	canonical
+LogOS.Ports.BoundaryTransparency	untransport-decode-mapCode-transparent≈	approx	canonical
+LogOS.Ports.BoundaryTransparency	untransportCon-transportCon	strict	legacy-compatible
+LogOS.Ports.BoundaryTransparency.Definitional	untransportCon-transportCon≡	strict	canonical
+LogOS.Ports.BoundaryTransparency	transportCon-untransportCon	strict	legacy-compatible
+LogOS.Ports.BoundaryTransparency.Definitional	transportCon-untransportCon≡	strict	canonical
+LogOS.Apps.TuringCategory.PartialMaps.Core	Par-id-left≈	approx	canonical
+LogOS.Apps.TuringCategory.PartialMaps.Core	Par-id-left	approx	legacy-compatible
+LogOS.Apps.TuringCategory.PartialMaps.Core	Par-id-right≈	approx	canonical
+LogOS.Apps.TuringCategory.PartialMaps.Core	Par-id-right	approx	legacy-compatible
+LogOS.Apps.TuringCategory.PartialMaps.Core	Par-assoc	approx	legacy-compatible
+LogOS.Apps.LogicArchitecture.MetaTheory.Basis.ObservationReflection.Definitional	boundaryHomPreorder-isObservedCodePreorderDef	strict	canonical
+LogOS.Apps.LogicArchitecture.MetaTheory.Basis.ObservationReflection.Definitional	boundaryHomPreorder-isCodePreorder	strict	legacy-compatible
+LogOS.Apps.LogicArchitecture.MetaTheory.Basis.ObservationReflection.Core	completePresentation↔boundaryKernelCanonical	under	legacy-compatible
+LogOS.Ports.Valuation.QAdapterBudgetTransport	assoc→	under	legacy-compatible
+LogOS.Ports.Valuation.QAdapterBudgetTransport	assoc←	under	legacy-compatible
+LogOS.Ports.Valuation.QAdapterBudgetTransport	τ-+-≈	approx	canonical
+LogOS.Ports.Valuation.QAdapterBudgetTransport	·-mono-left	under	legacy-compatible
+LogOS.Ports.Valuation.QAdapterBudgetTransport	·-mono-right	under	legacy-compatible
+LogOS.Ports.Valuation.QAdapterBudgetTransport	transportGradeCutLe	under	canonical
+LogOS.Ports.Valuation.QAdapterBudgetTransport	transportGradeSharpCutLe	under	canonical
+LogOS.Ports.Valuation.QAdapterBudgetTransport	time-grade-compose≤	under	legacy-compatible
+LogOS.Ports.Valuation.QAdapterBudgetTransport	transportTimeGradeCutLe	under	canonical
+LogOS.Ports.Valuation.QAdapterBudgetTransport	transportTimeGradeSharpCutLe	under	canonical
+LogOS.Ports.Valuation.QAdapterBudgetTransport	pow-τ-timeIter	strict	legacy-compatible
+LogOS.Ports.Valuation.QAdapterBudgetTransport	traceBudget≤	under	legacy-compatible

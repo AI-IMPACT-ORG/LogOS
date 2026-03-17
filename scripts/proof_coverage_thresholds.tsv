@@ -1,0 +1,11 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Floors for `scripts/check/proof_coverage_check.sh`.
+# Keep these at or below the current measured baseline unless the repository
+# deliberately accepts a regression in assumption-light coverage.
+#
+# <metric><TAB><minimum percent>
+assumption_light_module_pct	27.93
+assumption_light_loc_pct	28.69

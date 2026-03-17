@@ -1,0 +1,14 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Floors/ceilings for `scripts/check/coherence_law_check.sh`.
+# This tracks the preferred law architecture:
+# - more mode-indexed coherence laws in default lanes,
+# - fewer unindexed relation-split law families.
+#
+# <metric><TAB><value>
+coherence_indexed_law_modules	6
+coherence_indexed_law_declarations	12
+unindexed_relation_split_clusters	0
+unindexed_relation_split_declarations	0

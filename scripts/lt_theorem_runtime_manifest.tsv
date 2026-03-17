@@ -1,0 +1,11 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Non-theorem LT modules that intentionally import theorem modules.
+# Format:
+#   <module><TAB><justification>
+
+LogOS.LT.AbstractKZ	Operational KZ surface depends on evaluator-reflection theorems as load-bearing architecture.
+LogOS.LT.Effectivity	Effectivity surface packages theorem-derived effective kernels and stability witnesses.
+LogOS.LT.LOG.ArchitectureBulkBoundary2Cat	Architecture bulk-boundary layer uses theorem-level Galois data as part of the runtime construction.

@@ -1,0 +1,10 @@
+# module	justification
+LogOS.LT.Theorems.ArchitecturalNormalForm	The architectural normal-form theorem still depends on definitional ports-as-displayed packaging for its theorem statement.
+LogOS.LT.LOG.ArchitectureEncode2Cat	Architecture-first encode reindexing is still packaged through strict pullback helpers.
+LogOS.LT.LOG.ArchitectureQuote2Cat.Displayed	Architecture-first quote display layer still depends on strict pullback packaging.
+LogOS.LT.LOG.Boundary2Cat	Thin-2-category law witnesses still rely on pointwise strict bookkeeping in the boundary base.
+LogOS.LT.LOG.GuardedKernel2Cat	Guarded kernel thin-2-category law witnesses still rely on pointwise strict bookkeeping in the under-mode base.
+LogOS.LT.LOG.Kernel2Cat.Core	Kernel thin-2-category law witnesses still rely on pointwise strict bookkeeping in the default base.
+LogOS.LT.Stack.Extend	Canonical stack extension embeddings are still derived through strict same-boundary packaging.
+LogOS.Ports.Universality.ArchitectureBudgetBus2Cat	Architecture-first budget-bus reindexing still depends on strict pullback packaging.
+LogOS.Ports.Universality.ArchitectureFlowBudget2Cat	Architecture-first flow-budget stack reindexing still depends on strict pullback packaging.

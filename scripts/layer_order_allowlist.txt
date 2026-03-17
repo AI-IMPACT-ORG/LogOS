@@ -1,0 +1,9 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Allowlisted layer-order violations.
+#
+# Keep this list minimal. Prefer refactors to restore intended layering.
+
+# (empty)

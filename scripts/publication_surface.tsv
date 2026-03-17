@@ -1,0 +1,20 @@
+# tier	kind	path	note
+published	dir	LogOS/API	Curated public Agda entrypoints and navigators.
+published	file	docs/README.md	Top-level documentation hub for public readers.
+published	dir	docs/Core	Canonical core definitions, spec, policy, and orientation docs.
+published	dir	docs/Patterns	Public design notes and how-to material.
+published	dir	docs/Interpretations	Audience-facing paths, views, and application guidance.
+published	dir	docs/Results	Public theorem/result spine.
+published	file	LogOS/Apps/LogicArchitecture/MetaTheory/Basis/README.md	Curated metatheory app navigator kept as a public-facing reading aid.
+published	file	LogOS/Apps/Summit/README.md	Curated summit/capstone navigator.
+published	file	LogOS/Apps/ZFC/README.md	Curated ZFC pack navigator.
+published	file	LogOS/Apps/ZFC/Stack/README.md	Curated ZFC stack navigator.
+published	file	LogOS/Apps/ZFC/Stack/AsymptoticReification/README.md	Curated asymptotic-reification navigator.
+published	file	LogOS/Apps/ZFC/Models/IterativeSetTree/README.md	Curated iterative-set-tree model navigator.
+internal	dir	LogOS/LT	Mathematical implementation spine shipped in-tree but not the first public story.
+internal	dir	LogOS/Ports	Port implementations and doctrine layers shipped as internal machinery.
+internal	dir	LogOS/Checks	Executable policy and regression checks shipped for auditability.
+internal	dir	LogOS/Apps	Downstream application packs and experiments kept in-tree.
+archive	dir	Archive	Historical snapshots and out-of-contract residue.
+archive	dir	tools/metamath	Optional Metamath tooling subtree.
+archive	dir	scripts/metamath	Wrapper scripts for optional Metamath tooling.

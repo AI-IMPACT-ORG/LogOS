@@ -1,0 +1,23 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Format:
+#   <kind><TAB><module><TAB><symbol><TAB><ledger_anchor><TAB><status>
+#
+# kind   ∈ {assumption, ledger, upgrade-record, upgrade-builder, theorem-upgrade}
+# status ∈ {explicit-parameter, derived-theorem}
+
+ledger	LogOS.Apps.ZFC.Metamath.Interpretation.DB	SetMMZFLedger	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-ledgers	explicit-parameter
+assumption	LogOS.Apps.ZFC.Stack.AsymptoticReification.LateCollapseTower	BaseAssumptions	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-assumptions	explicit-parameter
+assumption	LogOS.Apps.ZFC.Stack.AsymptoticReification.LateCollapseTower	StructuralAssumptions	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-assumptions	explicit-parameter
+upgrade-record	LogOS.Apps.ZFC.Stack.FoundationUpgradeFO	EmptyOrElemUpgrade	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-packages	explicit-parameter
+upgrade-record	LogOS.Apps.ZFC.Stack.FoundationUpgradeFO	MemWellFoundedUpgrade	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-packages	explicit-parameter
+assumption	LogOS.Apps.ZFC.Stack.FoundationUpgradeFO	FoundationAssumptions	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-assumptions	explicit-parameter
+assumption	LogOS.Apps.ZFC.Stack.InfinityUpgrade	CoKleeneInfinityAssumptions	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-assumptions	explicit-parameter
+upgrade-record	LogOS.Apps.ZFC.Stack.ProfileTower.Core	FoundationUpgrade	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-packages	explicit-parameter
+upgrade-record	LogOS.Apps.ZFC.Stack.ProfileTower.Core	SeparationUpgrade	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-packages	explicit-parameter
+upgrade-record	LogOS.Apps.ZFC.Stack.ProfileTower.Core	ReplacementUpgrade	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-packages	explicit-parameter
+upgrade-record	LogOS.Apps.ZFC.Stack.ProfileTower.Core	ChoiceUpgrade	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-packages	explicit-parameter
+upgrade-record	LogOS.Apps.ZFC.Stack.ProfileTowerFO	SeparationFOUpgrade	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-packages	explicit-parameter
+upgrade-record	LogOS.Apps.ZFC.Stack.ProfileTowerFO	ReplacementFOUpgrade	docs/Core/Meta/Assumptions_Ledger.md#zfc-upgrade-packages	explicit-parameter

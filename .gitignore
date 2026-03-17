@@ -1,0 +1,24 @@
+_build/
+.DS_Store
+*.agdai
+*.agda.err
+__pycache__/
+*.pyc
+
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+_build/
+*.agdai
+*.agda.err
+__pycache__/
+*.pyc
+*.pyo
+*.o
+*.hi
+*.dyn_o
+*.dyn_hi
+.DS_Store
+__MACOSX/
+._*

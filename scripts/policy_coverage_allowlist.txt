@@ -1,0 +1,12 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Scripts allowed to exist under `scripts/*_check.sh` without being wired into
+# `make ci-policy`.
+#
+# Baseline policy (v1.1): this allowlist must be empty.
+# All script checks are expected to run in `ci-policy` unless the policy itself is changed.
+#
+# Policy: keep this list empty.
+# If a check is worth writing, it is usually worth running in CI.

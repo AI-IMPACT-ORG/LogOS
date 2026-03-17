@@ -1,0 +1,21 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Allowed repo-root entries for the live repository contract.
+# `_build` and `.git` are local working directories and are ignored separately by
+# the root hygiene check.
+
+.github
+.gitignore
+AGENTS.md
+Archive
+CITATION.cff
+LICENSE
+LogOS
+LogOS.agda-lib
+Makefile
+README.md
+docs
+scripts
+tools

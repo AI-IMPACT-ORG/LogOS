@@ -1,0 +1,10 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+cff-version: 1.2.0
+message: "If you use this software, please cite it."
+title: "LogOS (agda_library_1.1)"
+authors:
+  - name: "AI.IMPACT GmbH"
+license: "GPL-3.0-only"

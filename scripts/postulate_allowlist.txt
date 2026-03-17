@@ -1,0 +1,18 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Files allowed to contain Agda `postulate`.
+#
+# Policy: `postulate` is forbidden by default. If it is truly unavoidable, add
+# the file path (repo-relative) here *and* include a structured justification
+# block in that file containing all of:
+#
+#   POSTULATE-JUSTIFICATION
+#   Threat model: ...
+#   Why unavoidable: ...
+#   Isolation: ...
+#   Forbidden imports: ...
+#
+# Keep this list minimal. Stable surfaces must not import postulate-bearing
+# modules.

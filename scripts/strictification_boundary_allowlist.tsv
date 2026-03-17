@@ -1,0 +1,40 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Default-lane modules that intentionally import explicit strictification,
+# definitional, or raw shadowing lanes.
+# Format:
+#   <module><TAB><justification>
+
+LogOS.LT.Discipline.PortStackFolding	Port-stack folding discipline is defined over the raw stack representation.
+LogOS.LT.Discipline.SuccessorStageFolding	Successor-stage folding discipline reasons over the raw stack representation.
+LogOS.LT.LOG.Boundary2Cat	Default boundary 2-category laws are derived from strict pointwise observation equalities but only export refinement structure.
+LogOS.LT.LOG.ArchitectureEncode2Cat	Architecture encode port is obtained by explicit strict pullback along toLOG.
+LogOS.LT.LOG.ArchitectureQuote2Cat.Displayed	Architecture quote port is obtained by explicit strict pullback along toLOG.
+LogOS.LT.LOG.Discipline.PortsAsDisplayed	Displayed-port discipline works over the raw stack encoding.
+LogOS.LT.LOG.GuardedKernel2Cat	Default guarded-kernel laws are derived from strict pointwise observation equalities but only export refinement structure.
+LogOS.LT.LOG.Implementation2Cat.Core	Implementation totalisation still uses raw stacked port infrastructure internally.
+LogOS.LT.LOG.ImplementationLawStack2Cat	Implementation-plus-law route packaging still uses raw stacked port infrastructure internally.
+LogOS.LT.LOG.Kernel2Cat.Core	Default kernel 2-category laws are derived from strict pointwise observation equalities but only export refinement structure.
+LogOS.LT.LOG.QuotePort2Cat.Displayed	Displayed quote port is packaged over the raw stack representation.
+LogOS.LT.LOG.QuotePort2Cat.FlowEncodeLayer	Flow/encode quote layer is packaged over the raw stack representation.
+LogOS.LT.Ports.PortStack	The public façade intentionally depends on the raw shadowing lane while exposing only uniqueness-first names.
+LogOS.LT.Ports.PortStack.Coherence	Stack coherence laws transport refinement over the raw stacked carrier without re-exporting raw equality structure.
+LogOS.LT.Ports.PortStack.Laws	Refinement-facing forgetful laws are stated over the raw port-stack carrier without re-exporting raw equality structure.
+LogOS.LT.Ports.PortStack.Unique	The uniqueness-safe stack layer is implemented as a disciplined wrapper over the raw shadowing core.
+LogOS.LT.Ports.Template.Singleton2Cat	Singleton port template is defined over the raw stack representation.
+LogOS.LT.Ports.Template.Stack2Cat	Stack port template is defined over the raw stack representation.
+LogOS.LT.Stack.Extend	Stack extension still threads strict stack witnesses explicitly.
+LogOS.LT.Theorems.ArchitecturalNormalForm	The architectural normal-form theorem records the explicit displayed-port discipline witness while keeping its operational conclusions refinement-first.
+LogOS.LT.Theorems.ExtensionalReflection	Extensional reflection is an explicit strict theorem surface retained at its historical path.
+LogOS.Ports.Causality	Causality ports are still packaged over the raw stack representation.
+LogOS.Ports.Discipline.PortsAsDisplayed.Budget	Budget discipline witness imports the explicit definitional packaging lane and re-exports only a harmless gate witness.
+LogOS.Ports.Discipline.PortsAsDisplayed.Core	Ports-as-displayed core acts as an import-only gate index over the explicit definitional discipline modules.
+LogOS.Ports.Discipline.PortsAsDisplayed.Deutsch	Deutsch discipline witness imports the explicit definitional packaging lane and re-exports only a harmless gate witness.
+LogOS.Ports.Discipline.PortsAsDisplayed.PreQuantum	Pre-quantum discipline witness imports the explicit definitional packaging lane and re-exports only a harmless gate witness.
+LogOS.Apps.Opacity.Demo	Opacity demo intentionally imports the explicit definitional opacity equality surface.
+LogOS.Ports.PreQuantum.AbstractCausalPreQuantum2Cat	Causal prequantum packaging still uses the raw stack representation.
+LogOS.Ports.Universality.ArchitectureBudgetBus2Cat	Architecture budget bus is obtained by explicit strict pullback along toLOG.
+LogOS.Ports.Universality.ArchitectureFlowBudget2Cat	Architecture flow-budget bus uses explicit strict reindexing and raw stack packaging.
+LogOS.Ports.Valuation.QAdapterBus	Q-adapter bus still uses the raw stack representation.

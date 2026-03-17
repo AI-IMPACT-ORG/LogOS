@@ -1,0 +1,87 @@
+# LogOS: a host-minimal Agda library for modular dynamic logic systems synthesized by AI
+# Copyright (C) 2026 AI.IMPACT GmbH
+# SPDX-License-Identifier: GPL-3.0-only
+
+name: Integration
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 0"
+
+jobs:
+  check-all:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Haskell toolchain
+        uses: haskell-actions/setup@dc63c94789664bb2910876ec3dfeeaa24d23b96b # v2.10.2
+        with:
+          ghc-version: "9.6.6"
+          cabal-version: "3.12.1.0"
+          cabal-update: false
+
+      - name: System deps (Agda build)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgmp-dev zlib1g-dev ripgrep shellcheck
+
+      - name: Cache cabal store
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: |
+            ~/.cabal/store
+            ~/.cabal/packages
+          key: ${{ runner.os }}-cabal-agda-2.8.0-${{ hashFiles('.github/cabal-index-state.txt') }}
+
+      - name: Install Agda (pinned)
+        run: |
+          CABAL_INDEX_STATE="$(grep -Ev '^[[:space:]]*(#|$)' .github/cabal-index-state.txt | head -n 1)"
+          if [[ -z "${CABAL_INDEX_STATE}" ]]; then
+            echo "Missing cabal index-state in .github/cabal-index-state.txt" >&2
+            exit 1
+          fi
+          echo "Cabal index-state: ${CABAL_INDEX_STATE}"
+          cabal update --index-state="${CABAL_INDEX_STATE}"
+          cabal install Agda-2.8.0 --index-state="${CABAL_INDEX_STATE}" --installdir="$HOME/.local/bin" --install-method=copy --overwrite-policy=always
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Report Agda toolchain
+        run: |
+          set -euo pipefail
+          AGDA_BIN="$(command -v agda)"
+          echo "agda: ${AGDA_BIN}"
+          test "${AGDA_BIN}" = "$HOME/.local/bin/agda"
+          agda --version
+          test "$(agda --numeric-version)" = "2.8.0"
+          agda --print-agda-dir
+
+      - name: Full clean gate (core + integration)
+        run: |
+          make check-all
+
+      - name: Verify clean worktree
+        run: |
+          set -euo pipefail
+          git diff --exit-code
+          git diff --cached --exit-code
+          status="$(git status --porcelain)"
+          if [[ -n "${status}" ]]; then
+            echo "Unexpected changes/untracked files after CI steps:" >&2
+            printf '%s\n' "${status}" >&2
+            exit 1
+          fi
