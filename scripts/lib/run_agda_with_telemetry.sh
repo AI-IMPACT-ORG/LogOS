@@ -108,7 +108,7 @@ terminate_pipeline() {
   fi
 }
 
-# shellcheck disable=SC2329
+# shellcheck disable=SC2329,SC2317
 cleanup() {
   if [[ -n "${pipeline_pid}" ]]; then
     terminate_pipeline "${pipeline_pid}"
