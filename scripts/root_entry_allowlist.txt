@@ -9,7 +9,6 @@
 .github
 .gitignore
 AGENTS.md
-Archive
 CITATION.cff
 LICENSE
 LogOS
