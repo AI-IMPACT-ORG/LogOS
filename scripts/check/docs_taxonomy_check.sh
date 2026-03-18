@@ -5,7 +5,7 @@
 # Policy:
 # - The live repository uses the current semantic docs taxonomy.
 # - Retired audience-split or pre-migration doc path families may remain only
-#   inside `Archive/**`.
+#   in historical material kept out of the live repository.
 
 set -euo pipefail
 

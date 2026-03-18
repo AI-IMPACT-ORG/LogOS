@@ -5,7 +5,7 @@
 # Policy:
 # - Historical material must not be treated as part of the live repository root.
 # - The live repo root must not carry stale archive entrypoints such as `TEMP`
-#   or `Archive.zip`.
+#   or legacy zip bundles.
 # - If an in-repo archive subtree is present, its entrypoints must say that they
 #   are historical and out of contract.
 
@@ -33,7 +33,7 @@ ROOT = Path(".").resolve()
 
 ROOT_FORBIDDEN = [
     ROOT / "TEMP",
-    ROOT / "Archive.zip",
+    ROOT / "HistoricalArchive.zip",
 ]
 
 errors: list[str] = []

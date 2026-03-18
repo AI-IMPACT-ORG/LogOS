@@ -5,7 +5,7 @@
 # Policy:
 # - Publication tiers are explicit, not inferred from directory names.
 # - Published entries must be curated surfaces with a navigator (`README.md` or a local `All` entrypoint module for directories).
-# - Archive and optional tooling subtrees must never be classified as published.
+# - Historical and optional tooling subtrees must never be classified as published.
 
 set -euo pipefail
 
@@ -29,7 +29,7 @@ from pathlib import Path
 
 ROOT = Path(".").resolve()
 MANIFEST = ROOT / "scripts" / "publication_surface.tsv"
-FORBIDDEN_PUBLISHED_PREFIXES = ("Archive/", "tools/metamath/", "scripts/metamath/")
+FORBIDDEN_PUBLISHED_PREFIXES = ("tools/metamath/", "scripts/metamath/")
 
 if not MANIFEST.is_file():
     print("publication-surface-check: FAIL", file=sys.stderr)

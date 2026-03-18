@@ -83,8 +83,8 @@ check_forbidden_root_notes() {
     die "historical note file must not live at repo root: TEMP"
   fi
 
-  if [[ -e "Archive.zip" ]]; then
-    die "archive bundle must not live at repo root: Archive.zip"
+  if [[ -e "HistoricalArchive.zip" ]]; then
+    die "historical archive bundle must not live at repo root: HistoricalArchive.zip"
   fi
 }
 

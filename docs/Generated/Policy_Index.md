@@ -102,7 +102,7 @@ This is the human-readable index of the `make ci-policy` checks.
 
   - Historical material must not be treated as part of the live repository root.
   - The live repo root must not carry stale archive entrypoints such as `TEMP`
-  - or `Archive.zip`.
+  - or legacy zip bundles.
   - If an in-repo archive subtree is present, its entrypoints must say that they
   - are historical and out of contract.
 
@@ -253,7 +253,7 @@ This is the human-readable index of the `make ci-policy` checks.
 
   - The live repository uses the current semantic docs taxonomy.
   - Retired audience-split or pre-migration doc path families may remain only
-  - inside `Archive/**`.
+  - in historical material kept out of the live repository.
 
 ## `equality-quarantine-check`
 
@@ -586,7 +586,7 @@ This is the human-readable index of the `make ci-policy` checks.
 
   - Publication tiers are explicit, not inferred from directory names.
   - Published entries must be curated surfaces with a navigator (`README.md` or a local `All` entrypoint module for directories).
-  - Archive and optional tooling subtrees must never be classified as published.
+  - Historical and optional tooling subtrees must never be classified as published.
 
 ## `publication-wording-check`
 
