@@ -15,6 +15,5 @@ internal	dir	LogOS/LT	Mathematical implementation spine shipped in-tree but not 
 internal	dir	LogOS/Ports	Port implementations and doctrine layers shipped as internal machinery.
 internal	dir	LogOS/Checks	Executable policy and regression checks shipped for auditability.
 internal	dir	LogOS/Apps	Downstream application packs and experiments kept in-tree.
-archive	dir	Archive	Historical snapshots and out-of-contract residue.
 archive	dir	tools/metamath	Optional Metamath tooling subtree.
 archive	dir	scripts/metamath	Wrapper scripts for optional Metamath tooling.
