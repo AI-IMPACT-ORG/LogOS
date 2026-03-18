@@ -34,7 +34,6 @@ This index records which subtrees are presented as public entrypoints, which are
 
 ## Archived / Out Of Contract
 
-- `Archive` (dir) — Historical snapshots and out-of-contract residue.
 - `scripts/metamath` (dir) — Wrapper scripts for optional Metamath tooling.
 - `tools/metamath` (dir) — Optional Metamath tooling subtree.
 
