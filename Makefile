@@ -30,11 +30,7 @@ AGDA_HYGIENE_LINE_LIMIT ?= 700
 # Note: if `CoverageNoExactSplit` fires, treat it as a real signal: Agda's exact
 # split checks failed for some definition. Prefer refactoring the offending
 # definition over silencing the warning class.
-#
-# CI note (Agda 2.8.0): `Agda.Builtin.Nat` currently triggers `CoverageNoExactSplit`
-# under exact splitting. Since this is outside the repo surface, we keep strict
-# warnings-as-errors but disable this one warning class.
-AGDA_WARN_FLAGS ?= -W all -W error -W noCoverageNoExactSplit
+AGDA_WARN_FLAGS ?= -W all -W error
 
 AGDA_CI_FLAGS ?= $(AGDA_FLAGS) $(AGDA_WARN_FLAGS)
 
