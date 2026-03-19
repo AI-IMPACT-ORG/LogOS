@@ -7,8 +7,26 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Host.Nat where
 
--- Host wrapper around Agda.Builtin.Nat (ℕ).
+-- Host-minimal natural numbers.
 --
--- This keeps the `ℕ` name across the codebase while avoiding duplicate BUILTIN bindings.
+-- We intentionally avoid importing `Agda.Builtin.Nat` here. Recent Agda toolchains
+-- can emit `CoverageNoExactSplit` warnings inside that builtin module, and LogOS
+-- treats warnings as errors in CI. Keeping `ℕ` defined locally preserves the
+-- refinement-first posture and removes that upstream warning source.
 
-open import Agda.Builtin.Nat public renaming (Nat to ℕ)
+data ℕ : Set where
+  zero : ℕ
+  suc  : ℕ → ℕ
+
+{-# BUILTIN NATURAL ℕ #-}
+
+infixl 6 _+_
+_+_ : ℕ → ℕ → ℕ
+zero + n = n
+suc m + n = suc (m + n)
+
+infixl 7 _*_
+_*_ : ℕ → ℕ → ℕ
+zero * _ = zero
+suc m * n = n + (m * n)
+
