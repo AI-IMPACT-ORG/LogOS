@@ -18,6 +18,7 @@ module LogOS.LT.LOG.Implementation2Cat.Core where
 -- - law: additional displayed doctrine layers may be stacked afterwards
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con; _≈_; ≈-refl)
 open import LogOS.LT.DisplayedThin2Cat using
   ( DisplayedThin2Cat

@@ -13,6 +13,7 @@ module LogOS.Apps.Physics.MeasurementExample where
 -- - one adequacy witness relates the layer back to the boundary.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; _⊑_)
 open import LogOS.LT.Kernel using (Kernel; bnd; Code; decode; CodePreorder)
 open import LogOS.Ports.IO using

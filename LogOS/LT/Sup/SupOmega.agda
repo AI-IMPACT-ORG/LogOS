@@ -18,6 +18,7 @@ module LogOS.LT.Sup.SupOmega where
 -- supporting “iteration summaries” (e.g. `LogOS.LT.Iteration.run`).
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; refl⊑)
 open import LogOS.LT.Sup.FinSup using (FinSup)
 open import LogOS.LT.Sup.AbstractSigmaDCPO using (SigmaDCPO; Chainω; chainDirectedω)

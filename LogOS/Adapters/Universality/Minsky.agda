@@ -12,6 +12,7 @@ module LogOS.Adapters.Universality.Minsky where
 -- obvious projections/readouts that downstream packs consume.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.Kernel using (Kernel; Code)
 open import LogOS.LT.Hom using (KernelHom)
 open import LogOS.Ports.Universality.Task using (PATask; PAExprTask; taskFuel; evaluateExpressionTask)

@@ -19,6 +19,7 @@ module LogOS.LT.Iteration where
 -- computation to boundary dynamics.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; _≈_; MonoOn; refl⊑; monoMap-≈)
 open import LogOS.LT.Kernel using (Kernel; bnd; Code; decode)
 open import LogOS.LT.Hom.Core using (KernelHom; map∂; map∂-mono; mapCode; decode-mapCode)

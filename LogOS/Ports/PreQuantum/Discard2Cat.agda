@@ -22,6 +22,7 @@ module LogOS.Ports.PreQuantum.Discard2Cat where
 -- but this category also supports non-canonical (per-object) discard choices.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con; _⊑_; _≈_)
 private
   module ≤-Reasoning = LogOS.Prelude.RefinementKit.Reasoning

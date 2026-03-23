@@ -12,6 +12,7 @@ module LogOS.LT.LOG.ArchitectureBulkBoundary2Cat where
 -- Bulk-boundary law over the architectural boundary basis `LOGᴳ`.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; refl⊑)
 open import LogOS.LT.Kernel using (Kernel; bnd)
 open import LogOS.LT.Theorems.AbstractGaloisConnection as Galois using (GaloisConnection)

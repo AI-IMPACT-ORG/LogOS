@@ -10,6 +10,7 @@ module LogOS.Ports.Universality.TaskDefinitional where
 -- Definitional/bookkeeping equalities for the minimal task fragment.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (zero; suc; _+_; _*_)
 open import LogOS.Prelude.List using ([]; _∷_)
 import LogOS.Ports.Universality.Task as Task
 

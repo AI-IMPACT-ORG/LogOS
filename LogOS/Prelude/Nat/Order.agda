@@ -10,6 +10,7 @@ module LogOS.Prelude.Nat.Order where
 -- Constructive natural-number order used by multiple higher layers.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 
 infix 4 _≤ℕ_
 data _≤ℕ_ : ℕ → ℕ → Set lzero where

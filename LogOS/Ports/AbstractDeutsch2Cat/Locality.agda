@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Ports.AbstractDeutsch2Cat.Locality where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using
   ( Con
   ; MonoMap

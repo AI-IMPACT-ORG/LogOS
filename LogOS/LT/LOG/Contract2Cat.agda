@@ -18,6 +18,7 @@ module LogOS.LT.LOG.Contract2Cat where
 -- 2-cells: inherited boundary-driven observational refinements (`_⇒∂_`) on the underlying kernel morphisms
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con)
 private
   module ≤-Reasoning = LogOS.Prelude.RefinementKit.Reasoning

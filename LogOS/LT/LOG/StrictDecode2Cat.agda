@@ -16,6 +16,7 @@ module LogOS.LT.LOG.StrictDecode2Cat where
 -- decoding on-the-nose (`≡`, S-tier), rather than only up to `≈`.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Kernel using (Kernel; decode)
 open import LogOS.LT.Hom.Core as Hom using (KernelHom; mapCode; map∂; idKernelHom; _∘_)
 open import LogOS.LT.LOG.Kernel2Cat using (LOG)

@@ -10,6 +10,7 @@ module LogOS.Ports.Universality.Definitional where
 -- Definitional/bookkeeping equalities for the fuel-style universality base layer.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 import LogOS.Ports.Universality.Core as Core
 import LogOS.Ports.Universality.TaskDefinitional as TaskDefinitional
 

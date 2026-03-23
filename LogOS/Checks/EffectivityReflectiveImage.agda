@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Checks.EffectivityReflectiveImage where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (zero; suc)
 open import LogOS.Syntax.Prop using (intro)
 open import LogOS.LT.ConPreorder using (ConPreorder; refl⊑)
 open import LogOS.LT.Flow using (Stable; mkStable; elem)

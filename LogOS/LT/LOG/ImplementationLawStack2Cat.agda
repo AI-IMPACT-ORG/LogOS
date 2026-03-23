@@ -17,6 +17,7 @@ module LogOS.LT.LOG.ImplementationLawStack2Cat where
 -- totalisation over kernel morphisms.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con)
 open import LogOS.LT.DisplayedThin2Cat using
   ( DisplayedThin2Cat

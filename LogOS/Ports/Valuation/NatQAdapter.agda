@@ -16,6 +16,7 @@ module LogOS.Ports.Valuation.NatQAdapter where
 -- - sequential composition = addition
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc; _+_)
 open import LogOS.Prelude.Nat.Order using
   (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; ≤ℕ-trans)
 open import LogOS.Ports.Valuation.QAdapter using (QAdapter; QClock)

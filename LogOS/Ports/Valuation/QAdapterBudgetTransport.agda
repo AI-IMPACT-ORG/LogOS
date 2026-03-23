@@ -30,6 +30,7 @@ module LogOS.Ports.Valuation.QAdapterBudgetTransport where
 -- boundary refinement elsewhere in the library.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc; _+_)
 open import LogOS.LT.ConPreorder using (_≈_; ≡→≈)
 open import LogOS.LT.Kernel using (Kernel; Code)
 open import LogOS.LT.Hom.Core using (KernelHom; idKernelHom; _∘_; mapCode)

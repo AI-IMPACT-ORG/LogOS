@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Ports.AbstractDeutsch2Cat.Reversibility where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.FiniteFamily using (at)
 open import LogOS.LT.ConPreorder using (Con; _≈_; ≈-sym; ≡→≈; refl⊑)
 open import LogOS.LT.Thin2Functor using (mapHom)

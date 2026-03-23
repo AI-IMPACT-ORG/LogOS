@@ -19,6 +19,7 @@ module LogOS.LT.Ports.PortSig where
 -- and displayed structure carry the latter.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Thin2Cat using (Thin2Cat)
 open import LogOS.LT.DisplayedThin2Cat using (DisplayedThin2Cat)
 

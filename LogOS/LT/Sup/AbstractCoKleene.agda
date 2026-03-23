@@ -12,6 +12,7 @@ module LogOS.LT.Sup.AbstractCoKleene where
 -- Dual Kleene fixed-point spine (ν) via σ-directed completeness on `Opp`.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; _≈_; Opp)
 open import LogOS.LT.Sup.FinSup using (HasTop; HasBottom; hasBottomOppFromHasTop; FixedPoint≈; PrefixPoint; PostfixPoint)
 open import LogOS.LT.Sup.AbstractSigmaDCPO using (SigmaDCPO; SigmaContinuous)

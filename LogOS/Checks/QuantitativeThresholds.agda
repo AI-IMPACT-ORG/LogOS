@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Checks.QuantitativeThresholds where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (zero; suc)
 open import LogOS.Prelude.Fin using (Fin; fzero; fsuc; _≢_)
 open import LogOS.Prelude.Nat.Order using (_≤ℕ_; z≤n; s≤s)
 open import LogOS.Syntax.Prop using (_↔_; intro)

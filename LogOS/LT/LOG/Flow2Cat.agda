@@ -19,6 +19,7 @@ module LogOS.LT.LOG.Flow2Cat where
 -- 2-cells: inherited boundary-driven observational refinements (`_⇒∂_`) on the underlying kernel morphisms.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Kernel using (Kernel; bnd)
 open import LogOS.LT.Hom.Core using (KernelHom)
 open import LogOS.LT.Flow using (GuardedClosure)

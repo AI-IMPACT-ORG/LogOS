@@ -40,7 +40,7 @@ HOST_SURFACE_FILES=(
 # Per-wrapper host imports that are explicit and intentionally allowed.
 ALLOWED_IMPORT_PATTERNS=(
   "LogOS/Host/Level.agda:^[[:space:]]*import[[:space:]]+Agda\\.Primitive([[:space:]]|$)"
-  "LogOS/Host/Nat.agda:^[[:space:]]*open[[:space:]]+import[[:space:]]+Agda\\.Builtin\\.Nat([[:space:]]|$)"
+  "LogOS/Host/Nat.agda:^[[:space:]]*(open[[:space:]]+import|import)[[:space:]]+Agda\\.Builtin\\.Nat([[:space:]]|$)"
   "LogOS/Host/Relation/Binary/PropositionalEquality.agda:^[[:space:]]*open[[:space:]]+import[[:space:]]+Agda\\.Builtin\\.Equality([[:space:]]|$)"
 )
 

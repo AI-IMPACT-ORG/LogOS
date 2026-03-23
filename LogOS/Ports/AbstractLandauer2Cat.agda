@@ -19,6 +19,7 @@ module LogOS.Ports.AbstractLandauer2Cat where
 -- as an explicit fibre preorder (`CostBoundPreorder`).
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_)
 private
   module ≤-Reasoning = LogOS.Prelude.RefinementKit.Reasoning

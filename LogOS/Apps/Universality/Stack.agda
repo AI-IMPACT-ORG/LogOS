@@ -12,6 +12,7 @@ module LogOS.Apps.Universality.Stack where
 -- critical cutpoint rather than a pack-local side condition.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.List using (List; []; _∷_)
 open import LogOS.LT.ConPreorder using (≡→≈)
 open import LogOS.LT.View using (View)

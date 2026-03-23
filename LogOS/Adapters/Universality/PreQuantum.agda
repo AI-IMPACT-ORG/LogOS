@@ -10,6 +10,7 @@ module LogOS.Adapters.Universality.PreQuantum where
 -- Universality adapter: minimal prequantum-fuel kernel into the universal fuel kernel.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.Kernel using (Kernel; Code)
 open import LogOS.LT.Hom using (KernelHom)
 import LogOS.Ports.Universality.Fuel as Fuel

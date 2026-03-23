@@ -10,6 +10,7 @@ module LogOS.LT.LOG.EncodePort2Cat where
 -- SpecRef: v5.8 (synchronized with docs/Core/Spec/LogicalTransformers.lagda.md)
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con; _⊑_; refl⊑)
 open import LogOS.LT.Kernel using (Kernel; EncodePort; encode; CodePreorder)
 open import LogOS.LT.Hom.Core using (KernelHom; map∂; mapCode; idKernelHom; _∘_)

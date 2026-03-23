@@ -24,6 +24,7 @@ module LogOS.Ports.Valuation.EngineeringDimension where
 -- via `μ`.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using
   ( ConPreorder; Con; _⊑_; refl⊑; _≈_
   )

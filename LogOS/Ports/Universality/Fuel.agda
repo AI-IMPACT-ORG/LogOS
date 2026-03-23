@@ -11,7 +11,8 @@ module LogOS.Ports.Universality.Fuel where
 -- This keeps "step-indexed recursion over fuel" abstract while preserving a
 -- concrete default by inheriting from `ℕ` through `LogOS.Prelude`.
 
-open import LogOS.Prelude as Prelude hiding (zero ; suc)
+open import LogOS.Prelude as Prelude hiding (zero; suc)
+open import LogOS.Host.Nat renaming (zero to zeroℕ; suc to sucℕ)
 
 -- Universe note: `iter` is polymorphic in `A`, so the profile lives in `Setω`.
 record FuelProfile : Setω where
@@ -29,20 +30,20 @@ open FuelProfile public using (Fuel; zero; suc; iter; iter-zero; iter-succ)
 NatFuel : FuelProfile
 NatFuel =
   record
-    { Fuel = Prelude.ℕ
-    ; zero = Prelude.zero
-    ; suc = Prelude.suc
+    { Fuel = ℕ
+    ; zero = zeroℕ
+    ; suc = sucℕ
     ; iter = iterℕ
     ; iter-zero = iterℕ-zero
     ; iter-succ = iterℕ-succ
     }
   where
-    iterℕ : ∀ {ℓ} {A : Set ℓ} → (A → A) → Prelude.ℕ → A → A
-    iterℕ f Prelude.zero a = a
-    iterℕ f (Prelude.suc n) a = iterℕ f n (f a)
+    iterℕ : ∀ {ℓ} {A : Set ℓ} → (A → A) → ℕ → A → A
+    iterℕ f zeroℕ a = a
+    iterℕ f (sucℕ n) a = iterℕ f n (f a)
 
-    iterℕ-zero : ∀ {ℓ} {A : Set ℓ} (f : A → A) (a : A) → iterℕ f Prelude.zero a ≡ a
+    iterℕ-zero : ∀ {ℓ} {A : Set ℓ} (f : A → A) (a : A) → iterℕ f zeroℕ a ≡ a
     iterℕ-zero f a = refl
 
-    iterℕ-succ : ∀ {ℓ} {A : Set ℓ} (f : A → A) (n : Prelude.ℕ) (a : A) → iterℕ f (Prelude.suc n) a ≡ iterℕ f n (f a)
+    iterℕ-succ : ∀ {ℓ} {A : Set ℓ} (f : A → A) (n : ℕ) (a : A) → iterℕ f (sucℕ n) a ≡ iterℕ f n (f a)
     iterℕ-succ f n a = refl

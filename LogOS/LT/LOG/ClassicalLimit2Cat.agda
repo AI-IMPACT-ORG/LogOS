@@ -18,6 +18,7 @@ module LogOS.LT.LOG.ClassicalLimit2Cat where
 -- equalities (`≡`) as an explicit robustness check.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Kernel using (bnd)
 import LogOS.LT.Hom.Core as Hom
 open Hom using (KernelHom)

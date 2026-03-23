@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Ports.Universality.Core where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.Syntax.Prop using (_↔_; intro)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; ≈-refl)
 open import LogOS.LT.Kernel using (Kernel; Code; decodeView)

@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Ports.Universality.Task where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc; _+_; _*_)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 record MeasuredTask (Payload : Set) (measurePayload : Payload → ℕ) : Set where

@@ -17,6 +17,7 @@ module LogOS.Ports.Universality.NatBoundary where
 -- - refinement is ordinary ≤ (more budget/fuel is stronger, it entails less).
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder)
 open import LogOS.Prelude.Nat.Order using (_≤ℕ_; z≤n; s≤s; ≤ℕ-refl; ≤ℕ-trans)
 

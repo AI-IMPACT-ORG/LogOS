@@ -17,6 +17,7 @@ module LogOS.Ports.Valuation.QAdapterBudgetTransport2Cat where
 -- bounds and transport algebra in the non-`*2Cat` module.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Kernel using (Kernel; Code)
 open import LogOS.LT.Hom.Core using (KernelHom; idKernelHom; _∘_)
 open import LogOS.LT.LOG.Kernel2Cat using (LOG)

@@ -8,6 +8,7 @@
 module LogOS.Apps.Universality.Agreement.Universal where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (ConPreorder; _⊑_; _≈_; ≈-sym; ≡→≈; refl⊑)
 open import LogOS.Syntax.Prop using (_↔_; intro; to; from)
 open import LogOS.Ports.CriticalParameter using (CriticalCut; SharpCut)

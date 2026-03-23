@@ -17,6 +17,7 @@ module LogOS.LT.Sup.AbstractGeneratedClosure where
 -- - and recover a guarded closure / effectivity doctrine from the generated μ.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (zero; suc)
 open import LogOS.Prelude.List using (List; []; _∷_)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; MonoOn; refl⊑)
 open import LogOS.LT.Flow using (GuardedClosure)

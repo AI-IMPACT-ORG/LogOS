@@ -10,6 +10,7 @@ module LogOS.Prelude.FiniteFamily where
 -- Explicit finite presentations: an S-tier size and a bounded lookup map.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.Fin using (Fin)
 
 record FiniteFamily {ℓ : Level} (A : Set ℓ) : Set ℓ where

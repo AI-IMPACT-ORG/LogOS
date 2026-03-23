@@ -11,7 +11,7 @@ module LogOS.Apps.Irreversibility.BitReset where
 -- a bit reset collapses `zero` and `one` at the boundary without using
 -- partiality. The obstruction is purely order-theoretic.
 
-open import LogOS.Prelude
+open import LogOS.Prelude hiding (zero)
 open import LogOS.LT.ConPreorder using (ConPreorder; _≈_)
 open import LogOS.LT.Kernel using (Kernel)
 open import LogOS.LT.Hom using (KernelHom; mkKernelHomParts; map∂)

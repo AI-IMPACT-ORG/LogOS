@@ -16,6 +16,7 @@ module LogOS.LT.Sup.AbstractKleene where
 -- σ-supremum yields a least fixed point up to mutual refinement (`≈`).
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; _≈_; refl⊑)
 open import LogOS.LT.Sup.FinSup using (HasBottom; PrefixPoint; PostfixPoint; FixedPoint≈)
 open import LogOS.LT.Sup.AbstractSigmaDCPO using

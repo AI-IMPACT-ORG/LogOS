@@ -17,6 +17,7 @@ module LogOS.Ports.PreQuantum.Purification2Cat where
 -- discard witness bookkeeping.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con)
 open import LogOS.LT.Thin2Cat using (Thin2Cat)
 

@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Apps.ZFC.Models.IterativeSetTree where
 
-open import LogOS.Prelude
+open import LogOS.Prelude hiding (zero)
 
 open import LogOS.Prelude using (_⊎_; inj₁; inj₂)
 open import LogOS.Prelude using (Σ; _,_)

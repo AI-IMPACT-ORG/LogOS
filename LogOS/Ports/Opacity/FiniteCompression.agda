@@ -10,6 +10,7 @@ module LogOS.Ports.Opacity.FiniteCompression where
 -- Derived finite compression/count-loss layer for explicit examples.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc; _+_)
 open import LogOS.Prelude.Fin using (Fin; _≢_)
 open import LogOS.Prelude.Fin.Cardinality using
   ( surjective⇒size≤

@@ -11,6 +11,7 @@ module LogOS.Ports.Opacity.Distinguishability where
 -- chosen observation.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.Fin using (Fin; _≢_)
 open import LogOS.Prelude.FiniteFamily using (FiniteFamily)
 open import LogOS.LT.ConPreorder using (ConPreorder)

@@ -12,6 +12,7 @@ module LogOS.LT.FunPreorder.Pointwise where
 -- Generic pointwise lifts for function-space preorders.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con)
 open import LogOS.LT.FunPreorder using (DFunPreorder; FunPreorder)
 open import LogOS.LT.Flow using (GuardedClosure; Flow; mono; infl; idemp-lax)

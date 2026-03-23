@@ -20,6 +20,7 @@ module LogOS.Ports.AbstractLandauerObservational where
 -- consequences below with `boundProof`, rather than carried as a parallel API.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_)
 open import LogOS.LT.Thin2Cat using (Thin2Cat)
 open import LogOS.Ports.Opacity.FiniteCompression using

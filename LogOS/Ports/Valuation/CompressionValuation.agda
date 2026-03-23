@@ -17,6 +17,7 @@ module LogOS.Ports.Valuation.CompressionValuation where
 -- by Landauer bounds.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc; _+_)
 open import LogOS.Prelude.Nat.Order using (_≤ℕ_)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; _≈_)
 open import LogOS.Ports.Valuation.AbstractJoinPrequantale using (JoinPrequantale)

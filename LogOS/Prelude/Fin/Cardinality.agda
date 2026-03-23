@@ -10,6 +10,7 @@ module LogOS.Prelude.Fin.Cardinality where
 -- Constructive finite-cardinality lemmas for explicit `Fin`-indexed families.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.Prelude.Fin using
   ( Fin
   ; fzero

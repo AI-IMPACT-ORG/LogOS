@@ -18,6 +18,7 @@ module LogOS.Ports.Universality.BudgetBus2Cat where
 -- choosing the budget boundary to be its scale preorder (see `LogOS.Ports.Valuation.QAdapterBus`).
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; refl⊑)
 open import LogOS.LT.Kernel using (Kernel; Code)
 open import LogOS.LT.Hom.Core using (KernelHom; idKernelHom; _∘_; mapCode)

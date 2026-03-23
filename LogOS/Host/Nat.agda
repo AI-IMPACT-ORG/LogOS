@@ -7,30 +7,26 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Host.Nat where
 
--- Peano natural numbers (inductive), not `Agda.Builtin.Nat`.
+-- Host wrapper around Agda.Builtin.Nat.
 --
--- Rationale: under Agda 2.8.0, checking `Agda.Builtin.Nat` can emit
--- `CoverageNoExactSplit` on the builtin `_==_` with the repository's
--- `-W all -W error` policy.  We therefore bind our own `ℕ` with
--- `BUILTIN NATURAL` / `NATPLUS` / `NATTIMES` here instead of importing
--- `Agda.Builtin.Nat`, while keeping literals and `zero` / `suc` / `_+_` / `_*_`.
+-- Keep the LogOS nat seam narrow: we expose only the primitive Peano surface
+-- used throughout the repository, not the builtin Boolean comparison helpers.
+-- This preserves the customary `ℕ` name without turning builtin `_==_`/`_<_`
+-- into part of the public LogOS host API.
 
-data ℕ : Set where
-  zero : ℕ
-  suc : ℕ → ℕ
+import Agda.Builtin.Nat as BuiltinNat
 
-{-# BUILTIN NATURAL ℕ #-}
+ℕ : Set
+ℕ = BuiltinNat.Nat
 
-infixl 6 _+_ _*_
+pattern zero = BuiltinNat.zero
+pattern suc n = BuiltinNat.suc n
+
+infixl 6 _+_
+infixl 7 _*_
 
 _+_ : ℕ → ℕ → ℕ
-zero + n = n
-suc m + n = suc (m + n)
-
-{-# BUILTIN NATPLUS _+_ #-}
+_+_ = BuiltinNat._+_
 
 _*_ : ℕ → ℕ → ℕ
-zero * n = zero
-suc m * n = n + (m * n)
-
-{-# BUILTIN NATTIMES _*_ #-}
+_*_ = BuiltinNat._*_

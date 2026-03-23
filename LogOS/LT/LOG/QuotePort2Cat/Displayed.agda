@@ -10,6 +10,7 @@ module LogOS.LT.LOG.QuotePort2Cat.Displayed where
 -- SpecRef: v5.8 (synchronized with docs/Core/Spec/LogicalTransformers.lagda.md)
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Kernel using (Kernel)
 open import LogOS.LT.Hom.Core using (KernelHom; idKernelHom; _∘_)
 open import LogOS.LT.HomFlow using (KernelHomFlow; idKernelHomFlow; composeKernelHomFlow)
