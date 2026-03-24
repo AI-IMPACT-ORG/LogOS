@@ -93,9 +93,6 @@ done < "${MODULE_LIST}"
 read -r -a agda_flags <<< "${AGDA_FLAGS}"
 read -r -a agda_warn_flags <<< "${AGDA_WARN_FLAGS}"
 
-bash "${SCRIPT_DIR}/lib/warm_builtin_nat.sh" \
-  "${AGDA}" "${AGDA_FLAGS}" "${AGDA_WARN_FLAGS}" "${BUILD_DIR}" "CheckAll"
-
 if [[ "${AGDA_TELEMETRY:-}" == "1" ]]; then
   TS="$(date +%Y%m%d_%H%M%S)"
   TELE_DIR="${AGDA_TELEMETRY_DIR:-_build/telemetry}"

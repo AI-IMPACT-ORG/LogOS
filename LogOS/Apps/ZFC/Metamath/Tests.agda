@@ -12,12 +12,12 @@ module LogOS.Apps.ZFC.Metamath.Tests where
 -- should preserve quantified structure.
 
 open import LogOS.Prelude using
-  ( ℕ
-  ; _×_
+  ( _×_
   ; _≡_
   ; snd
   ; refl
   )
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Apps.ZFC.Metamath.SetMM.Sig using (Sig)

@@ -22,6 +22,7 @@ open import LogOS.LT.Thin2Cat using (Thin2Cat)
 open import LogOS.LT.Thin2Functor using (Thin2Functor; _∘F_)
 open import LogOS.LT.DisplayedThin2Cat using (DisplayedThin2Cat)
 
+import LogOS.LT.Ports.PortSig as PortSig
 import LogOS.LT.Ports.Template.LawSingleton2Cat as LawTemplate
 import LogOS.LT.Ports.Template.Singleton2Cat as Template
 
@@ -216,17 +217,13 @@ compProgImplementation {ℓ} {ℓRel} {ℓCode} {A = A} {B = B} {C = C} {f = f} 
 data ProgTag : Set lzero where
   progTag : ProgTag
 
-progTagId : ℕ
-progTagId = 27
-
 port2Cat
   : ∀ {ℓ ℓRel ℓCode : Level}
-  → Template.Singleton2Cat (ParOnKernels {ℓ} {ℓRel} {ℓCode}) progTagId ProgTag
+  → Template.Singleton2Cat (ParOnKernels {ℓ} {ℓRel} {ℓCode}) ProgTag
 port2Cat {ℓ} {ℓRel} {ℓCode} =
   LawTemplate.lawSingleton2Cat
     {C = ParOnKernels {ℓ} {ℓRel} {ℓCode}}
     {Tag = ProgTag}
-    progTagId
     ProgOb
     (λ {A} {B}
       (h : Con (Thin2Cat.Hom (ParOnKernels {ℓ} {ℓRel} {ℓCode}) A B)) →

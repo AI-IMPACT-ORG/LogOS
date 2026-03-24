@@ -18,10 +18,10 @@ module LogOS.LT.Sup.SupOmega where
 -- supporting “iteration summaries” (e.g. `LogOS.LT.Iteration.run`).
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; refl⊑)
 open import LogOS.LT.Sup.FinSup using (FinSup)
 open import LogOS.LT.Sup.AbstractSigmaDCPO using (SigmaDCPO; Chainω; chainDirectedω)
+open import LogOS.LT.Stage.SuccessorChain using (Stageω; zero; suc)
 
 module SupOmegaSection {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel} (FS : FinSup CP) (SD : SigmaDCPO CP) where
   open FinSup FS
@@ -29,7 +29,7 @@ module SupOmegaSection {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel} 
   module R = LogOS.Prelude.RefinementKit.Reasoning CP
   open R
   -- Finite prefix-joins of a sequence.
-  prefix⊔ : (ℕ → Con CP) → ℕ → Con CP
+  prefix⊔ : (Stageω → Con CP) → Stageω → Con CP
   prefix⊔ s zero    = s zero
   prefix⊔ s (suc n) = prefix⊔ s n ⊔ᶠ s (suc n)
 
@@ -45,7 +45,7 @@ module SupOmegaSection {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel} 
   s≤prefix s (suc n) = ⊔ᶠ-ub₂ (prefix⊔ s n) (s (suc n))
 
   -- The derived ω-supremum of an arbitrary sequence.
-  supω : (ℕ → Con CP) → Con CP
+  supω : (Stageω → Con CP) → Con CP
   supω s = supσ (prefix⊔ s) (prefix-directed s)
 
   ubω : ∀ s n → _⊑_ CP (s n) (supω s)
@@ -56,7 +56,7 @@ module SupOmegaSection {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel} 
       supω s ∎⊑
 
   leastω
-    : ∀ (s : ℕ → Con CP) (x : Con CP)
+    : ∀ (s : Stageω → Con CP) (x : Con CP)
     → (∀ n → _⊑_ CP (s n) x)
     → _⊑_ CP (supω s) x
   leastω s x s≤x =

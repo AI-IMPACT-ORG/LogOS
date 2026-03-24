@@ -82,12 +82,11 @@ module CausalPreQuantum2CatLocal
 
   purificationPortSig
     : (A : CausalPreQuantumAssumptions)
-    → PortSig.PortSig C Purification2Cat.purificationTagId Purification2Cat.PurificationTag
+    → PortSig.PortSig C Purification2Cat.PurificationTag
   purificationPortSig A =
     LawSingleton.lawPortSig
       {C = C}
       {Tag = Purification2Cat.PurificationTag}
-      Purification2Cat.purificationTagId
       Purification2Cat.PurificationOb
       (PurificationWitness C (SM A) (SML A) (discard A))
       (purify-id (purification A))
@@ -103,12 +102,11 @@ module CausalPreQuantum2CatLocal
 
   landauerPortSig
     : (A : CausalPreQuantumAssumptions)
-    → PortSig.PortSig C Landauer2Cat.landauerTagId Landauer2Cat.LandauerTag
+    → PortSig.PortSig C Landauer2Cat.LandauerTag
   landauerPortSig A =
     LawSingleton.lawPortSig
       {C = C}
       {Tag = Landauer2Cat.LandauerTag}
-      Landauer2Cat.landauerTagId
       Landauer2Cat.LandauerOb
       (Landauer2Cat.CostBound
         (CausalLandauer.landauer (causalLandauer A)))
@@ -137,19 +135,8 @@ module CausalPreQuantum2CatLocal
     : (A : CausalPreQuantumAssumptions)
     → PortStack.NoDupStack (CausalPreQuantumStack A)
   CausalPreQuantumStack-noDup A =
-    PortStack.mkNoDupTagsStep
-      impossible
+    PortStackUnique.noDupCons
       (PortStackUnique.noDupSingleton {p = landauerEntry A})
-    where
-      impossible
-        : PortStack.Member
-            Purification2Cat.purificationTagId
-            (landauerEntry A PortStack.∷ PortStack.[])
-        → ⊥ {lzero}
-      impossible (PortStack.there m) = impossible[] m
-        where
-          impossible[] : PortStack.Member Purification2Cat.purificationTagId PortStack.[] → ⊥ {lzero}
-          impossible[] ()
 
   CausalPreQuantumUniqueStack
     : CausalPreQuantumAssumptions

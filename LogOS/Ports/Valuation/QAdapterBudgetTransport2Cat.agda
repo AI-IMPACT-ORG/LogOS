@@ -17,7 +17,6 @@ module LogOS.Ports.Valuation.QAdapterBudgetTransport2Cat where
 -- bounds and transport algebra in the non-`*2Cat` module.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Kernel using (Kernel; Code)
 open import LogOS.LT.Hom.Core using (KernelHom; idKernelHom; _∘_)
 open import LogOS.LT.LOG.Kernel2Cat using (LOG)
@@ -34,9 +33,6 @@ import LogOS.LT.Ports.Template.Singleton2Cat as Template
 
 data TimeBudgetTag : Set where
   timeBudgetTag : TimeBudgetTag
-
-timeBudgetTagId : ℕ
-timeBudgetTagId = 17
 
 mkBudgetDisplayed
   : ∀ {ℓKernelCon ℓKernelRel ℓCode ℓQ ℓDHom : Level}
@@ -109,7 +105,6 @@ module Port
   (Q : QAdapter ℓQ)
   (T : QClock Q)
   = Template.SingletonLayer
-      timeBudgetTagId
       {Tag = TimeBudgetTag}
       (TimeBudgetDisplayed {ℓKernelCon} {ℓKernelRel} {ℓCode} Q T)
 
@@ -117,7 +112,7 @@ timeBudgetSig
   : ∀ {ℓKernelCon ℓKernelRel ℓCode ℓQ : Level}
   → (Q : QAdapter ℓQ)
   → (T : QClock Q)
-  → PortSig.PortSig (LOG {ℓKernelCon} {ℓKernelRel} {ℓCode}) timeBudgetTagId TimeBudgetTag
+  → PortSig.PortSig (LOG {ℓKernelCon} {ℓKernelRel} {ℓCode}) TimeBudgetTag
 timeBudgetSig {ℓKernelCon} {ℓKernelRel} {ℓCode} {ℓQ} Q T =
   Port.portSig {ℓKernelCon} {ℓKernelRel} {ℓCode} {ℓQ} Q T
 

@@ -10,7 +10,6 @@ module LogOS.LT.LOG.EncodePort2Cat where
 -- SpecRef: v5.8 (synchronized with docs/Core/Spec/LogicalTransformers.lagda.md)
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con; _⊑_; refl⊑)
 open import LogOS.LT.Kernel using (Kernel; EncodePort; encode; CodePreorder)
 open import LogOS.LT.Hom.Core using (KernelHom; map∂; mapCode; idKernelHom; _∘_)
@@ -23,9 +22,6 @@ import LogOS.LT.Ports.Template.Singleton2Cat as Template
 
 data EncodeTag : Set where
   encodeTag : EncodeTag
-
-encodeTagId : ℕ
-encodeTagId = 20
 
 record EncodeLaw {ℓ ℓRel ℓCode : Level} {K K' : Kernel ℓ ℓRel ℓCode}
   (h : KernelHom K K')
@@ -91,13 +87,12 @@ EncodeDisplayed =
 
 module Port {ℓ ℓRel ℓCode : Level} =
   Template.SingletonLayer
-    encodeTagId
     {Tag = EncodeTag}
     (EncodeDisplayed {ℓ} {ℓRel} {ℓCode})
 
 encodeSig
   : ∀ {ℓ ℓRel ℓCode : Level}
-  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) encodeTagId EncodeTag
+  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) EncodeTag
 encodeSig {ℓ} {ℓRel} {ℓCode} =
   Port.portSig {ℓ} {ℓRel} {ℓCode}
 

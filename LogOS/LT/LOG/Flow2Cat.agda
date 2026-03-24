@@ -19,7 +19,6 @@ module LogOS.LT.LOG.Flow2Cat where
 -- 2-cells: inherited boundary-driven observational refinements (`_⇒∂_`) on the underlying kernel morphisms.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Kernel using (Kernel; bnd)
 open import LogOS.LT.Hom.Core using (KernelHom)
 open import LogOS.LT.Flow using (GuardedClosure)
@@ -32,9 +31,6 @@ import LogOS.LT.Ports.Template.Singleton2Cat as Template
 
 data FlowTag : Set where
   flowTag : FlowTag
-
-flowTagId : ℕ
-flowTagId = 19
 
 FlowDisplayed
   : ∀ {ℓ ℓRel ℓCode : Level}
@@ -50,13 +46,12 @@ FlowDisplayed {ℓ} {ℓRel} {ℓCode} =
 
 module Port {ℓ ℓRel ℓCode : Level} =
   Template.SingletonLayer
-    flowTagId
     {Tag = FlowTag}
     (FlowDisplayed {ℓ} {ℓRel} {ℓCode})
 
 flowSig
   : ∀ {ℓ ℓRel ℓCode : Level}
-  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) flowTagId FlowTag
+  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) FlowTag
 flowSig {ℓ} {ℓRel} {ℓCode} =
   Port.portSig {ℓ} {ℓRel} {ℓCode}
 

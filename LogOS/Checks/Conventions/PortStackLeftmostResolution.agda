@@ -9,17 +9,17 @@ module LogOS.Checks.Conventions.PortStackLeftmostResolution where
 
 open import LogOS.Prelude
 open import LogOS.LT.Thin2Cat using (Thin2Cat)
-open import LogOS.LT.Ports.PortSig using (PortLabel; PortSig; PortEntry; mkPortEntry)
+open import LogOS.LT.Ports.PortSig using (PortSig; PortEntry; mkPortEntry)
 open import LogOS.LT.Ports.PortStack.Raw using (Listω; _∷_; Member; here)
 
 leftmost-duplicate-resolution
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-    {label : PortLabel}
     {ℓTag : Level}
     {Tag : Set ℓTag}
-    {sig₁ sig₂ : PortSig C label Tag}
+    {sig₁ sig₂ : PortSig C Tag}
     {rest : Listω (PortEntry C)}
-  → Member label
-      (mkPortEntry label ℓTag Tag sig₁ ∷ mkPortEntry label ℓTag Tag sig₂ ∷ rest)
+  → Member
+      (mkPortEntry ℓTag Tag sig₁)
+      (mkPortEntry ℓTag Tag sig₁ ∷ mkPortEntry ℓTag Tag sig₂ ∷ rest)
 leftmost-duplicate-resolution = here

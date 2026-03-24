@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Apps.ZFC.Metamath.SetMM.Syntax where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 
 open import LogOS.Apps.ZFC.Metamath.Core as Core using
   ( Maybe
@@ -70,4 +71,3 @@ mutual
   ... | just φ' with toFormula q
   ... | just ψ' = just (mk φ' ψ')
   ... | nothing = nothing
-

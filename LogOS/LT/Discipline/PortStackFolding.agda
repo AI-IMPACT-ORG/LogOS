@@ -66,21 +66,19 @@ private
   forgetToPort-singleton-def
     : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
       {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-      {label : PortSig.PortLabel}
       {ℓTag : Level} {Tag : Set ℓTag}
-      (sig₁ : PortSig C label Tag)
-    → forgetToPort {S = [ mkPortEntry label ℓTag Tag sig₁ ]} (mkMemberStack hereEntry)
-      ≡ idThin2Functor (DecoratedThin2Cat (StackDisplayed [ mkPortEntry label ℓTag Tag sig₁ ]))
+      (sig₁ : PortSig C Tag)
+    → forgetToPort {S = [ mkPortEntry ℓTag Tag sig₁ ]} (mkMemberStack hereEntry)
+      ≡ idThin2Functor (DecoratedThin2Cat (StackDisplayed [ mkPortEntry ℓTag Tag sig₁ ]))
   forgetToPort-singleton-def _ = refl
 
   forgetToPort-head-def
     : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
       {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-      {label : PortSig.PortLabel}
       {ℓTag : Level} {Tag : Set ℓTag}
-      (sig₁ : PortSig C label Tag)
+      (sig₁ : PortSig C Tag)
       (ps : PortStack C)
-    → forgetToPort {S = mkPortEntry label ℓTag Tag sig₁ ∷⁺ ps} (mkMemberStack hereEntry)
+    → forgetToPort {S = mkPortEntry ℓTag Tag sig₁ ∷⁺ ps} (mkMemberStack hereEntry)
       ≡
         forgetProductLeft
           (PortSig.Displayed sig₁)
@@ -90,13 +88,12 @@ private
   forgetToPort-right2-def
     : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
       {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-      {label₁ label₂ : PortSig.PortLabel}
       {ℓTag₁ : Level} {Tag₁ : Set ℓTag₁}
       {ℓTag₂ : Level} {Tag₂ : Set ℓTag₂}
-      (sig₁ : PortSig C label₁ Tag₁)
-      (sig₂ : PortSig C label₂ Tag₂)
+      (sig₁ : PortSig C Tag₁)
+      (sig₂ : PortSig C Tag₂)
     → forgetToPort
-        {S = mkPortEntry label₁ ℓTag₁ Tag₁ sig₁ ∷⁺ [ mkPortEntry label₂ ℓTag₂ Tag₂ sig₂ ]}
+        {S = mkPortEntry ℓTag₁ Tag₁ sig₁ ∷⁺ [ mkPortEntry ℓTag₂ Tag₂ sig₂ ]}
         (mkMemberStack (thereEntry hereEntry))
       ≡
         forgetProductRight
@@ -107,14 +104,13 @@ private
   forgetSubstack-dropLast2-def
     : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
       {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-      {label₁ label₂ : PortSig.PortLabel}
       {ℓTag₁ : Level} {Tag₁ : Set ℓTag₁}
       {ℓTag₂ : Level} {Tag₂ : Set ℓTag₂}
-      (sig₁ : PortSig C label₁ Tag₁)
-      (sig₂ : PortSig C label₂ Tag₂)
+      (sig₁ : PortSig C Tag₁)
+      (sig₂ : PortSig C Tag₂)
     → forgetSubstack
-        {Y = [ mkPortEntry label₂ ℓTag₂ Tag₂ sig₂ ]}
-        {X = mkPortEntry label₁ ℓTag₁ Tag₁ sig₁ ∷⁺ [ mkPortEntry label₂ ℓTag₂ Tag₂ sig₂ ]}
+        {Y = [ mkPortEntry ℓTag₂ Tag₂ sig₂ ]}
+        {X = mkPortEntry ℓTag₁ Tag₁ sig₁ ∷⁺ [ mkPortEntry ℓTag₂ Tag₂ sig₂ ]}
         (drop last)
       ≡
         forgetProductRight

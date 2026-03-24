@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Apps.ZFC.Metamath.SetMM.Vars where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Apps.ZFC.Metamath.Core as Core using
@@ -73,4 +74,3 @@ varsFromHyps S hs = go hs (record { wffVars = [] ; setVars = [] })
     ... | nothing = nothing
     ... | just xs = go rest (record { wffVars = wffVars V ; setVars = xs })
     go ((tc ∷ v ∷ []) ∷ rest) V | varNoVar = nothing
-

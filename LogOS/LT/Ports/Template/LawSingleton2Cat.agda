@@ -29,7 +29,6 @@ lawPortSig
   : ∀ {ℓObj ℓHomCon ℓHomRel ℓTag ℓUnit ℓLaw : Level}
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
     {Tag : Set ℓTag}
-  → (label : PortSig.PortLabel)
   → (Unit : Set ℓUnit)
   → (Law : ∀ {A B} → Con (Thin2Cat.Hom C A B) → Set ℓLaw)
   → (idLaw : ∀ {A} → Law (Thin2Cat.id C {A}))
@@ -40,8 +39,8 @@ lawPortSig
       → Law f
       → Law g
       → Law (Thin2Cat._∘_ C g f))
-  → PortSig.PortSig C label Tag
-lawPortSig {ℓUnit = ℓUnit} {ℓLaw = ℓLaw} {C = C} label Unit Law idLaw compLaw =
+  → PortSig.PortSig C Tag
+lawPortSig {ℓUnit = ℓUnit} {ℓLaw = ℓLaw} {C = C} Unit Law idLaw compLaw =
   record
     { ℓDObj = ℓUnit
     ; ℓDHom = ℓLaw
@@ -52,7 +51,6 @@ lawSingleton2Cat
   : ∀ {ℓObj ℓHomCon ℓHomRel ℓTag ℓUnit ℓLaw : Level}
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
     {Tag : Set ℓTag}
-  → (label : PortSig.PortLabel)
   → (Unit : Set ℓUnit)
   → (Law : ∀ {A B} → Con (Thin2Cat.Hom C A B) → Set ℓLaw)
   → (idLaw : ∀ {A} → Law (Thin2Cat.id C {A}))
@@ -63,15 +61,14 @@ lawSingleton2Cat
       → Law f
       → Law g
       → Law (Thin2Cat._∘_ C g f))
-  → Template.Singleton2Cat C label Tag
-lawSingleton2Cat label Unit Law idLaw compLaw =
-  Template.mkSingleton2Cat (lawPortSig label Unit Law idLaw compLaw)
+  → Template.Singleton2Cat C Tag
+lawSingleton2Cat Unit Law idLaw compLaw =
+  Template.mkSingleton2Cat (lawPortSig Unit Law idLaw compLaw)
 
 module LawExports
   {ℓObj ℓHomCon ℓHomRel ℓTag ℓUnit ℓLaw : Level}
   {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
   {Tag : Set ℓTag}
-  (label : PortSig.PortLabel)
   (Unit : Set ℓUnit)
   (Law : ∀ {A B} → Con (Thin2Cat.Hom C A B) → Set ℓLaw)
   (idLaw : ∀ {A} → Law (Thin2Cat.id C {A}))
@@ -84,8 +81,8 @@ module LawExports
       → Law (Thin2Cat._∘_ C g f))
   where
 
-  port2Cat : Template.Singleton2Cat C label Tag
-  port2Cat = lawSingleton2Cat label Unit Law idLaw compLaw
+  port2Cat : Template.Singleton2Cat C Tag
+  port2Cat = lawSingleton2Cat Unit Law idLaw compLaw
 
   open Template.Singleton2Cat port2Cat public using
     ( singleton

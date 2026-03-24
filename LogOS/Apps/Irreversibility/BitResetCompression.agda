@@ -10,6 +10,7 @@ module LogOS.Apps.Irreversibility.BitResetCompression where
 -- Bit reset as finite loss under a coarser process-induced public observation.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (zero; suc)
 open import LogOS.Prelude.Fin using (fzero; fsuc; _≢_)
 open import LogOS.Prelude.FiniteFamily using (FiniteFamily)
 open import LogOS.Prelude.Nat.Order using (_≤ℕ_)

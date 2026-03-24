@@ -17,7 +17,6 @@ module LogOS.LT.LOG.ImplementationLawStack2Cat where
 -- totalisation over kernel morphisms.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con)
 open import LogOS.LT.DisplayedThin2Cat using
   ( DisplayedThin2Cat
@@ -53,7 +52,6 @@ import LogOS.LT.Ports.Template.Singleton2Cat as Template
 module Build
   {ℓ ℓRel ℓCode ℓLawObjᴳ ℓLawHomᴳ ℓLawObj ℓLawHom : Level}
   (LawTag : Set)
-  (lawTagId : ℕ)
   (LawDisplayedᴳ : DisplayedThin2Cat (LOGᴳ {ℓ} {ℓRel} {ℓCode}) ℓLawObjᴳ ℓLawHomᴳ)
   (LawDisplayed : DisplayedThin2Cat (Kernel2Cat.LOG {ℓ} {ℓRel} {ℓCode}) ℓLawObj ℓLawHom)
   (mapLawObj : ∀ {K : Kernel ℓ ℓRel ℓCode} → Ob LawDisplayedᴳ K → Ob LawDisplayed K)
@@ -74,12 +72,11 @@ module Build
   private
     module LawPort =
       Template.SingletonLayer
-        lawTagId
         {Tag = LawTag}
         LawDisplayedᴳ
 
   lawSig
-    : PortSig.PortSig (LOGᴳ {ℓ} {ℓRel} {ℓCode}) lawTagId LawTag
+    : PortSig.PortSig (LOGᴳ {ℓ} {ℓRel} {ℓCode}) LawTag
   lawSig =
     LawPort.portSig
 

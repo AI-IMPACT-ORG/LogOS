@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Apps.ZFC.Models.IterativeSetTree.Rank where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 
 import LogOS.Apps.ZFC.Models.IterativeSetTree as IST
 

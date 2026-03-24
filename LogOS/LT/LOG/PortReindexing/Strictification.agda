@@ -46,10 +46,9 @@ private
 
 pullbackPortSigAlongToLOG
   : ∀ {ℓ ℓRel ℓCode : Level}
-    {label : PortSig.PortLabel}
     {ℓTag : Level} {Tag : Set ℓTag}
-  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) label Tag
-  → PortSig.PortSig (LOGᴳʳ {ℓ} {ℓRel} {ℓCode}) label Tag
+  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) Tag
+  → PortSig.PortSig (LOGᴳʳ {ℓ} {ℓRel} {ℓCode}) Tag
 pullbackPortSigAlongToLOG {ℓ} {ℓRel} {ℓCode} =
   PortSigStrictification.pullbackPortSig (toLOGStrict {ℓ} {ℓRel} {ℓCode})
 
@@ -69,9 +68,8 @@ pullbackPortStackAlongToLOG {ℓ} {ℓRel} {ℓCode} =
 
 module PullbackSingletonExportsAlongToLOG
   {ℓ ℓRel ℓCode : Level}
-  {label : PortSig.PortLabel}
   {ℓTag : Level} {Tag : Set ℓTag}
-  (sig : PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) label Tag)
+  (sig : PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) Tag)
   =
   Template.SingletonExports
     (pullbackPortSigAlongToLOG sig)

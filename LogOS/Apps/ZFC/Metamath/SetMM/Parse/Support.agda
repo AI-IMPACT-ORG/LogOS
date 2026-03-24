@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Apps.ZFC.Metamath.SetMM.Parse.Support where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Apps.ZFC.Metamath.Core as Core using
@@ -229,4 +230,3 @@ headCase S t with cmpNat t (tokNot S) | cmpNat t (tokAll S) | cmpNat t (tokEx S)
 ... | Core.greater | Core.less | Core.greater = hOther
 ... | Core.greater | Core.greater | Core.less = hOther
 ... | Core.greater | Core.greater | Core.greater = hOther
-

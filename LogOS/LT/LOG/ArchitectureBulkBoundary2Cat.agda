@@ -12,7 +12,6 @@ module LogOS.LT.LOG.ArchitectureBulkBoundary2Cat where
 -- Bulk-boundary law over the architectural boundary basis `LOGᴳ`.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; refl⊑)
 open import LogOS.LT.Kernel using (Kernel; bnd)
 open import LogOS.LT.Theorems.AbstractGaloisConnection as Galois using (GaloisConnection)
@@ -29,9 +28,6 @@ import LogOS.LT.Ports.Template.Singleton2Cat as Template
 
 data BulkBoundaryTag : Set where
   bulkBoundaryTag : BulkBoundaryTag
-
-bulkBoundaryTagId : ℕ
-bulkBoundaryTagId = 24
 
 record BulkBoundaryEconomy
   {ℓ ℓRel ℓCode : Level}
@@ -83,13 +79,12 @@ BulkBoundaryDisplayedᴳ {ℓ} {ℓRel} {ℓCode} =
 
 module Port {ℓ ℓRel ℓCode : Level} =
   Template.SingletonLayer
-    bulkBoundaryTagId
     {Tag = BulkBoundaryTag}
     (BulkBoundaryDisplayedᴳ {ℓ} {ℓRel} {ℓCode})
 
 bulkBoundarySigᴳ
   : ∀ {ℓ ℓRel ℓCode : Level}
-  → PortSig.PortSig (LOGᴳ {ℓ} {ℓRel} {ℓCode}) bulkBoundaryTagId BulkBoundaryTag
+  → PortSig.PortSig (LOGᴳ {ℓ} {ℓRel} {ℓCode}) BulkBoundaryTag
 bulkBoundarySigᴳ {ℓ} {ℓRel} {ℓCode} =
   Port.portSig {ℓ} {ℓRel} {ℓCode}
 

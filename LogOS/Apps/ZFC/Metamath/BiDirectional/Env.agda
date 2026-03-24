@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Apps.ZFC.Metamath.BiDirectional.Env where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Apps.ZFC.Metamath.Core as Core using
@@ -53,4 +54,3 @@ termToToken env (unionT t) = termToToken env t >>= λ u → just (unionT u)
 termToToken env (powerT t) = termToToken env t >>= λ u → just (powerT u)
 termToToken env (succT t) = termToToken env t >>= λ u → just (succT u)
 termToToken env omegaT = just omegaT
-

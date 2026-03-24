@@ -17,13 +17,13 @@ module LogOS.LT.Sup.AbstractGeneratedClosure where
 -- - and recover a guarded closure / effectivity doctrine from the generated μ.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (zero; suc)
 open import LogOS.Prelude.List using (List; []; _∷_)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; MonoOn; refl⊑)
 open import LogOS.LT.Flow using (GuardedClosure)
 open import LogOS.LT.Effectivity using (Effectivity)
 open import LogOS.LT.Sup.FinSup using (FinSup; hasBottomFromFinSup)
 open import LogOS.LT.Sup.AbstractSigmaDCPO using (SigmaDCPO; SigmaContinuous)
+open import LogOS.LT.Stage.SuccessorChain using (zero; suc)
 import LogOS.LT.Sup.AbstractKleene as Kleene
 
 record Component {ℓCon ℓRel : Level} (CP : ConPreorder ℓCon ℓRel)

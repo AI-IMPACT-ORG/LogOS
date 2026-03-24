@@ -16,11 +16,11 @@ module LogOS.LT.Sup.AbstractKleene where
 -- σ-supremum yields a least fixed point up to mutual refinement (`≈`).
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; _≈_; refl⊑)
 open import LogOS.LT.Sup.FinSup using (HasBottom; PrefixPoint; PostfixPoint; FixedPoint≈)
 open import LogOS.LT.Sup.AbstractSigmaDCPO using
   ( SigmaDCPO; Directedω; Chainω; chainDirectedω; mapDirectedω; SigmaContinuous )
+open import LogOS.LT.Stage.SuccessorChain using (Stageω; zero; suc)
 
 module KleeneLocal
   {ℓCon ℓRel : Level}
@@ -36,7 +36,7 @@ module KleeneLocal
   module R = LogOS.Prelude.RefinementKit.Reasoning CP
   open R
   -- Iteration from bottom.
-  iter⊥ : ℕ → Con CP
+  iter⊥ : Stageω → Con CP
   iter⊥ zero    = ⊥ᵇ
   iter⊥ (suc n) = f (iter⊥ n)
 
@@ -51,14 +51,14 @@ module KleeneLocal
   μ = supσ iter⊥ iter⊥-dir
 
   -- Supremum of the tail of a chain is equivalent to the supremum of the chain.
-  tail : (ℕ → Con CP) → ℕ → Con CP
+  tail : (Stageω → Con CP) → Stageω → Con CP
   tail s n = s (suc n)
 
   tail-chain : ∀ {s} → Chainω {CP = CP} s → Chainω {CP = CP} (tail s)
   tail-chain step n = step (suc n)
 
   sup-tail≈
-    : ∀ (s : ℕ → Con CP) (step : Chainω {CP = CP} s)
+    : ∀ (s : Stageω → Con CP) (step : Chainω {CP = CP} s)
     → _≈_ CP
         (supσ s (chainDirectedω {CP = CP} s step))
         (supσ (tail s) (chainDirectedω {CP = CP} (tail s) (tail-chain step)))
@@ -91,7 +91,7 @@ module KleeneLocal
           ubTail n = ubσ s (chainDirectedω {CP = CP} s step) (suc n)
 
   supσ-unique≈
-    : ∀ (s : ℕ → Con CP) (dir₁ dir₂ : Directedω CP s)
+    : ∀ (s : Stageω → Con CP) (dir₁ dir₂ : Directedω CP s)
     → _≈_ CP (supσ s dir₁) (supσ s dir₂)
   supσ-unique≈ s dir₁ dir₂ =
     ( leastσ s dir₁ (supσ s dir₂) (λ n → ubσ s dir₂ n)

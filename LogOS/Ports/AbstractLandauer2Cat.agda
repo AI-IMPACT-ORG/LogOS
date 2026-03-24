@@ -19,7 +19,6 @@ module LogOS.Ports.AbstractLandauer2Cat where
 -- as an explicit fibre preorder (`CostBoundPreorder`).
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_)
 private
   module ≤-Reasoning = LogOS.Prelude.RefinementKit.Reasoning
@@ -30,6 +29,7 @@ open import LogOS.Ports.Valuation.AbstractJoinPrequantale using (JoinPrequantale
 open import LogOS.Ports.AbstractLandauer.Ledger using (LandauerAssumptions)
 
 import LogOS.Ports.LawSlice2Cat as LawSlice
+import LogOS.LT.Ports.PortSig as PortSig
 
 -- η-unit payload for the Landauer law-port (avoids Topℓ/⊤ footguns).
 record LandauerOb : Set where
@@ -178,9 +178,6 @@ composeCostBound {C = C} {Scale = Scale} {JP = JP} L {f = f} {g = g} cf cg =
 data LandauerTag : Set where
   landauerTag : LandauerTag
 
-landauerTagId : ℕ
-landauerTagId = 14
-
 module Port
   {ℓObj ℓHomCon ℓHomRel ℓScaleCon ℓScaleRel : Level}
   {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
@@ -190,7 +187,6 @@ module Port
   = LawSlice.Exports
       {C = C}
       {Tag = LandauerTag}
-      landauerTagId
       LandauerOb
       (CostBound L)
       (idCostBound L)
@@ -202,7 +198,7 @@ port2Cat
     {Scale : ConPreorder ℓScaleCon ℓScaleRel}
     {JP : JoinPrequantale Scale}
   → (L : LandauerAssumptions C Scale JP)
-  → LawSlice.Singleton2Cat C landauerTagId LandauerTag
+  → LawSlice.Singleton2Cat C LandauerTag
 port2Cat {C = C} L =
   Port.port2Cat {C = C} L
 

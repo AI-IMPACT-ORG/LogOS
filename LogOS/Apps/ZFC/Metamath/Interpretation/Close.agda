@@ -20,6 +20,7 @@ module LogOS.Apps.ZFC.Metamath.Interpretation.Close where
 -- quantified in the object language). We normalize those away later.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Apps.ZFC.Metamath.Core as Core using

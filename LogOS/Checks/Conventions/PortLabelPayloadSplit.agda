@@ -11,19 +11,19 @@ open import LogOS.Prelude
 open import LogOS.LT.ConPreorder using (ConPreorder)
 open import LogOS.LT.Thin2Cat using (Thin2Cat)
 open import LogOS.LT.DisplayedThin2Cat using (LawDisplayedOn)
-open import LogOS.LT.Ports.PortSig using (PortEntry; PortLabel; PortSig; mkEntry)
+open import LogOS.LT.Ports.PortSig using (PortEntry; PortSig; mkEntry)
 open import LogOS.LT.Ports.PortStack.Raw using
-  ( NoDupStack
-  ; [_]
-  ; _∷⁺_
+  ( Listω
   ; []
   ; _∷_
-  ; Member
+  ; NoDupStack
+  ; [_]
+  ; _∷⁺_
   ; EntryMember
   ; hereEntry
-  ; there
   ; thereEntry
   ; entryMember⇒member
+  ; Member
   )
 open import LogOS.LT.Ports.PortStack.Unique using (noDupSingleton; noDupCons)
 
@@ -53,13 +53,7 @@ oneThin2Cat =
 data SharedTag : Set where
   sharedTag : SharedTag
 
-leftLabel : PortLabel
-leftLabel = 2001
-
-rightLabel : PortLabel
-rightLabel = 2002
-
-sharedPortSig₁ : PortSig oneThin2Cat leftLabel SharedTag
+sharedPortSig₁ : PortSig oneThin2Cat SharedTag
 sharedPortSig₁ =
   record
     { ℓDObj = lzero
@@ -73,7 +67,7 @@ sharedPortSig₁ =
           (λ _ _ → tt)
     }
 
-sharedPortSig₂ : PortSig oneThin2Cat rightLabel SharedTag
+sharedPortSig₂ : PortSig oneThin2Cat SharedTag
 sharedPortSig₂ =
   record
     { ℓDObj = lzero
@@ -93,27 +87,16 @@ leftEntry = mkEntry sharedPortSig₁
 rightEntry : PortEntry oneThin2Cat
 rightEntry = mkEntry sharedPortSig₂
 
-leftLabel≠rightLabel
-  : Member leftLabel (rightEntry ∷ [])
-  → ⊥ {lzero}
-leftLabel≠rightLabel (there m) = impossible m
-  where
-    impossible : Member leftLabel [] → ⊥ {lzero}
-    impossible ()
-
--- Same payload type, different first-order labels: uniqueness still holds.
+-- Same payload type, different concrete entries: uniqueness still holds.
 _ : NoDupStack (leftEntry ∷⁺ [ rightEntry ])
 _ =
   noDupCons
-    {p = leftEntry}
-    {ps = [ rightEntry ]}
-    leftLabel≠rightLabel
-    noDupSingleton
+    (noDupSingleton {p = rightEntry})
 
 -- Exact typed membership keeps track of the concrete entry.
 _ : EntryMember rightEntry (leftEntry ∷ rightEntry ∷ [])
 _ = thereEntry hereEntry
 
--- Raw membership only sees the first-order label extracted from that entry.
-_ : Member rightLabel (leftEntry ∷ rightEntry ∷ [])
+-- Raw membership follows the concrete entry itself.
+_ : Member rightEntry (leftEntry ∷ rightEntry ∷ [])
 _ = entryMember⇒member (thereEntry hereEntry)

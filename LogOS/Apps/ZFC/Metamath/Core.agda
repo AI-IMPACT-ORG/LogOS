@@ -11,6 +11,7 @@ module LogOS.Apps.ZFC.Metamath.Core where
 -- (Keeps the stage modules small and transformer-aligned.)
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.Prelude.List using (List; []; _∷_)
 import LogOS.Prelude.List.Ops as ListOps
 

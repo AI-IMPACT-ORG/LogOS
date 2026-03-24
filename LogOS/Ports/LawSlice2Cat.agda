@@ -30,7 +30,6 @@ module Exports
   {ℓObj ℓHomCon ℓHomRel ℓTag ℓUnit ℓLaw : Level}
   {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
   {Tag : Set ℓTag}
-  (label : PortSig.PortLabel)
   (Unit : Set ℓUnit)
   (Law : ∀ {A B} → Con (Thin2Cat.Hom C A B) → Set ℓLaw)
   (idLaw : ∀ {A} → Law (Thin2Cat.id C {A}))
@@ -46,7 +45,6 @@ module Exports
   open Template.LawExports
     {C = C}
     {Tag = Tag}
-    label
     Unit
     Law
     idLaw

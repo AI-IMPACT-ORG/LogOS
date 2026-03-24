@@ -11,6 +11,7 @@ module LogOS.Apps.Irreversibility.MeasurementCoarseGrainCompression where
 -- `{fine, coarse}` collapses to `{coarse}` without appealing to partiality.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (zero; suc)
 open import LogOS.Prelude.Fin using (fzero; fsuc; _≢_)
 open import LogOS.Prelude.FiniteFamily using (FiniteFamily)
 open import LogOS.LT.ConPreorder using (_≈_; ≈-sym)

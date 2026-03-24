@@ -16,7 +16,6 @@ module LogOS.Ports.AbstractCausal2Cat where
 -- equipped only with an explicit flow-preservation certificate.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con)
 open import LogOS.LT.HomFlow using (KernelHomFlow; idKernelHomFlow; composeKernelHomFlow)
 open import LogOS.LT.Thin2Cat using (Thin2Cat)
@@ -33,6 +32,7 @@ open import LogOS.Ports.PhysicalSemantics.Core using (DependentLocalSemantics)
 
 import LogOS.Ports.AbstractDeutsch2Cat.Locality as Locality
 import LogOS.Ports.LawSlice2Cat as LawSlice
+import LogOS.LT.Ports.PortSig as PortSig
 
 module Causal2CatLocal {ℓI ℓOCon ℓORel ℓCode : Level}
   (PS : DependentLocalSemantics {ℓI} {ℓOCon} {ℓORel})
@@ -52,9 +52,6 @@ module Causal2CatLocal {ℓI ℓOCon ℓORel ℓCode : Level}
   data CausalTag : Set where
     causalTag : CausalTag
 
-  causalTagId : ℕ
-  causalTagId = 13
-
   record CausalOb : Set where
     constructor ttCausal
 
@@ -62,14 +59,13 @@ module Causal2CatLocal {ℓI ℓOCon ℓORel ℓCode : Level}
     LawSlice.Exports
       {C = LOGᵏ}
       {Tag = CausalTag}
-      causalTagId
       CausalOb
       (λ {A} {B} (h : Con (Thin2Cat.Hom LOGᵏ A B))
         → KernelHomFlow GC GC h)
       (idKernelHomFlow GC)
       (λ ff gg → composeKernelHomFlow ff gg)
 
-  port2Cat : LawSlice.Singleton2Cat LOGᵏ causalTagId CausalTag
+  port2Cat : LawSlice.Singleton2Cat LOGᵏ CausalTag
   port2Cat = Port.port2Cat
 
   open Port public using

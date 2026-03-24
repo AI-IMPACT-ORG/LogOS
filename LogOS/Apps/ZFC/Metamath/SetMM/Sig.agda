@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Apps.ZFC.Metamath.SetMM.Sig where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 
 -- Token signature for the Set.MM first-order fragment (by symbol index).
 record Sig : Set where
@@ -33,4 +34,3 @@ record Sig : Set where
     tokIn tokEq : ℕ
 
 open Sig public
-

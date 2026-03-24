@@ -17,23 +17,15 @@ module LogOS.LT.Ports.PortStack.Unique where
 
 open import LogOS.Prelude
 open import LogOS.LT.Thin2Cat using (Thin2Cat)
-open import LogOS.LT.Ports.PortSig using (PortEntry; LabelOf)
+open import LogOS.LT.Ports.PortSig using (PortEntry)
 open import LogOS.LT.Ports.PortStack.Raw using
   ( PortStack
   ; [_]
   ; _∷⁺_
-  ; ⊤ω
-  ; ttω
-  ; ⊥-elimω
-  ; Listω
-  ; []
   ; Member
-  ; here
-  ; there
-  ; NoDupTags
-  ; NoDupTagsStep
-  ; mkNoDupTagsStep
   ; NoDupStack
+  ; noDupSingletonR
+  ; noDupStepR
   ; MemberStack
   ; HasPort
   ; memberStack
@@ -81,21 +73,12 @@ uniqueMember
   → MemberStack p S
 uniqueMember up = memberStack (hasPort up)
 
-noDupNil
-  : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
-    {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-  → NoDupTags ([] {A = PortEntry C})
-noDupNil = ttω
-
 noDupSingleton
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
     {p : PortEntry C}
   → NoDupStack [ p ]
-noDupSingleton {C = C} =
-  mkNoDupTagsStep
-    (λ ())
-    (noDupNil {C = C})
+noDupSingleton = noDupSingletonR
 
 singletonUniqueStack
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
@@ -110,13 +93,9 @@ noDupCons
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
     {p : PortEntry C}
     {ps : PortStack C}
-  → (Member (LabelOf p) (LogOS.LT.Ports.PortStack.Raw.toList ps) → ⊥ {lzero})
   → NoDupStack ps
   → NoDupStack (p ∷⁺ ps)
-noDupCons notInRest noDupPs =
-  mkNoDupTagsStep
-    (λ m → notInRest m)
-    noDupPs
+noDupCons = noDupStepR
 
 module UniqueInstances where
 

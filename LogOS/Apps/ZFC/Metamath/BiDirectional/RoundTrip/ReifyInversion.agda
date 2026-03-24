@@ -8,6 +8,7 @@
 module LogOS.Apps.ZFC.Metamath.BiDirectional.RoundTrip.ReifyInversion where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Apps.ZFC.Metamath.Core as Core using

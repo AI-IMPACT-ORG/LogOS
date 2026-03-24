@@ -18,7 +18,6 @@ module LogOS.LT.LOG.Implementation2Cat.Core where
 -- - law: additional displayed doctrine layers may be stacked afterwards
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con; _≈_; ≈-refl)
 open import LogOS.LT.DisplayedThin2Cat using
   ( DisplayedThin2Cat
@@ -273,19 +272,15 @@ toFacadeLOG = toLOG
 data ImplementationTag : Set where
   implementation : ImplementationTag
 
-implementationTagId : ℕ
-implementationTagId = 22
-
 private
   module ImplementationPort {m : CohMode} {ℓ ℓRel ℓCode : Level} =
     Template.SingletonLayer
-      implementationTagId
       {Tag = ImplementationTag}
       (ImplementationDisplayedLike {m = m} {ℓ} {ℓRel} {ℓCode})
 
 implementationSigLike
   : ∀ {m : CohMode} {ℓ ℓRel ℓCode : Level}
-  → PortSig.PortSig (LOGᴳ {ℓ} {ℓRel} {ℓCode}) implementationTagId ImplementationTag
+  → PortSig.PortSig (LOGᴳ {ℓ} {ℓRel} {ℓCode}) ImplementationTag
 implementationSigLike {m} {ℓ} {ℓRel} {ℓCode} =
   ImplementationPort.portSig {m = m} {ℓ} {ℓRel} {ℓCode}
 
@@ -297,7 +292,7 @@ implementationSingletonLike {m} {ℓ} {ℓRel} {ℓCode} =
 
 implementationSig
   : ∀ {ℓ ℓRel ℓCode : Level}
-  → PortSig.PortSig (LOGᴳ {ℓ} {ℓRel} {ℓCode}) implementationTagId ImplementationTag
+  → PortSig.PortSig (LOGᴳ {ℓ} {ℓRel} {ℓCode}) ImplementationTag
 implementationSig = implementationSigLike {m = approx}
 
 implementationSingleton

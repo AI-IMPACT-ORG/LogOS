@@ -11,8 +11,8 @@ open import LogOS.Prelude
 open import LogOS.LT.ConPreorder using (ConPreorder)
 open import LogOS.LT.Thin2Cat using (Thin2Cat)
 open import LogOS.LT.DisplayedThin2Cat using (LawDisplayedOn)
-open import LogOS.LT.Ports.PortSig using (PortEntry; PortLabel; PortSig; mkEntry)
-open import LogOS.LT.Ports.PortStack.Raw using (NoDupStack; [_]; _∷⁺_; []; _∷_; Member; there)
+open import LogOS.LT.Ports.PortSig using (PortEntry; PortSig; mkEntry)
+open import LogOS.LT.Ports.PortStack.Raw using (NoDupStack; [_]; _∷⁺_)
 open import LogOS.LT.Ports.PortStack.Unique using (noDupSingleton; noDupCons)
 
 data ⋆ : Set where
@@ -44,13 +44,7 @@ data HeadTag : Set where
 data TailTag : Set where
   tailTag : TailTag
 
-headLabel : PortLabel
-headLabel = 1001
-
-tailLabel : PortLabel
-tailLabel = 1002
-
-headPortSig : PortSig oneThin2Cat headLabel HeadTag
+headPortSig : PortSig oneThin2Cat HeadTag
 headPortSig =
   record
     { ℓDObj = lzero
@@ -64,7 +58,7 @@ headPortSig =
           (λ _ _ → tt)
     }
 
-tailPortSig : PortSig oneThin2Cat tailLabel TailTag
+tailPortSig : PortSig oneThin2Cat TailTag
 tailPortSig =
   record
     { ℓDObj = lzero
@@ -84,18 +78,7 @@ headEntry = mkEntry headPortSig
 tailEntry : PortEntry oneThin2Cat
 tailEntry = mkEntry tailPortSig
 
-headLabel≠tailLabel
-  : Member headLabel (tailEntry ∷ [])
-  → ⊥ {lzero}
-headLabel≠tailLabel (there m) = impossible m
-  where
-    impossible : Member headLabel [] → ⊥ {lzero}
-    impossible ()
-
 _ : NoDupStack (headEntry ∷⁺ [ tailEntry ])
 _ =
   noDupCons
-    {p = headEntry}
-    {ps = [ tailEntry ]}
-    headLabel≠tailLabel
-    noDupSingleton
+    (noDupSingleton {p = tailEntry})

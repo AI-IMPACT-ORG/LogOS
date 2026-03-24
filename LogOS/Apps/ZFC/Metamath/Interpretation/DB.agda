@@ -14,6 +14,7 @@ module LogOS.Apps.ZFC.Metamath.Interpretation.DB where
 -- syntactic inverse of `BiDirectional.mkTokenDB`.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Ports.Metamath as MM using (Database)

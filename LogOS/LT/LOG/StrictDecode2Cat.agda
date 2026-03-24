@@ -16,13 +16,13 @@ module LogOS.LT.LOG.StrictDecode2Cat where
 -- decoding on-the-nose (`≡`, S-tier), rather than only up to `≈`.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Kernel using (Kernel; decode)
 open import LogOS.LT.Hom.Core as Hom using (KernelHom; mapCode; map∂; idKernelHom; _∘_)
 open import LogOS.LT.LOG.Kernel2Cat using (LOG)
 
 import LogOS.LT.Ports.Template.Singleton2Cat as Template
 import LogOS.LT.Ports.Template.LawSingleton2Cat as LawTemplate
+import LogOS.LT.Ports.PortSig as PortSig
 
 StrictDecodeLaw
   : ∀ {ℓ ℓRel ℓCode : Level}
@@ -55,9 +55,6 @@ composeStrictDecodeLaw {f = f} {g = g} sf sg γ =
 data StrictDecodeTag : Set where
   strictDecodeTag : StrictDecodeTag
 
-strictDecodeTagId : ℕ
-strictDecodeTagId = 25
-
 -- Use an explicit unit type for the (trivial) object payload.
 -- This avoids `⊤`/`tt` footguns when composing multiple law ports.
 data StrictDecodeUnit : Set where
@@ -67,7 +64,6 @@ module Port {ℓ ℓRel ℓCode : Level} =
   LawTemplate.LawExports
     {C = LOG {ℓ} {ℓRel} {ℓCode}}
     {Tag = StrictDecodeTag}
-    strictDecodeTagId
     StrictDecodeUnit
     StrictDecodeLaw
     (λ {A} → idStrictDecodeLaw {K = A})

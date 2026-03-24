@@ -61,7 +61,6 @@ ContractDisplayedᴳ {ℓ} {ℓRel} {ℓCode} =
 module Base {ℓ ℓRel ℓCode : Level} =
   ImplementationLaw.Build
     ContractLOG.ContractTag
-    ContractLOG.contractTagId
     (ContractDisplayedᴳ {ℓ} {ℓRel} {ℓCode})
     (ContractLOG.ContractDisplayed {ℓ} {ℓRel} {ℓCode})
     (λ c → c)

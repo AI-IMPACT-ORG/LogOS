@@ -21,6 +21,7 @@ module LogOS.Apps.ZFC.Stack.ProfileTowerFO where
 -- boundary preorder.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.Syntax.Prop using (_↔_)
 open import LogOS.LT.View using (View; μ)
 

@@ -7,7 +7,8 @@ SPDX-License-Identifier: GPL-3.0-only
 {-# OPTIONS --safe #-}
 module LogOS.Apps.ZFC.Proof.Syntax where
 
-open import LogOS.Prelude using (ℕ; zero; suc)
+open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 
 -- First-order term language for the ZF constructor surface.
 
@@ -38,6 +39,19 @@ data Formula : Set where
   _↔F_  : Formula → Formula → Formula
   ∀F    : Formula → Formula
   ∃F    : Formula → Formula
+
+-- Small de Bruijn aliases for presentation-facing formulas.
+v0 : Term
+v0 = var zero
+
+v1 : Term
+v1 = var (suc zero)
+
+v2 : Term
+v2 = var (suc (suc zero))
+
+v3 : Term
+v3 = var (suc (suc (suc zero)))
 
 ¬F : Formula → Formula
 ¬F φ = φ ⇒ ⊥F

@@ -66,7 +66,6 @@ FlowDisplayedᴳ {ℓ} {ℓRel} {ℓCode} =
 module Base {ℓ ℓRel ℓCode : Level} =
   ImplementationLaw.Build
     FlowLOG.FlowTag
-    FlowLOG.flowTagId
     (FlowDisplayedᴳ {ℓ} {ℓRel} {ℓCode})
     (FlowLOG.FlowDisplayed {ℓ} {ℓRel} {ℓCode})
     (λ GC → GC)

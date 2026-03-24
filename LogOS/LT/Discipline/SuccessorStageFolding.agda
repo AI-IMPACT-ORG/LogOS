@@ -36,9 +36,8 @@ private
   singletonDisplayed-def
     : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
       {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-      {label : PortSig.PortLabel}
       {ℓTag : Level} {Tag : Set ℓTag}
-      (sig : PortSig C label Tag)
+      (sig : PortSig C Tag)
     → Singleton.Displayed (Singleton.mkSingleton2Cat sig)
       ≡ PortSig.Displayed sig
   singletonDisplayed-def _ = refl
@@ -46,9 +45,8 @@ private
   singletonWithPort-def
     : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
       {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-      {label : PortSig.PortLabel}
       {ℓTag : Level} {Tag : Set ℓTag}
-      (sig : PortSig C label Tag)
+      (sig : PortSig C Tag)
     → Singleton.WithPort (Singleton.mkSingleton2Cat sig)
       ≡ DecoratedThin2Cat (PortSig.Displayed sig)
   singletonWithPort-def _ = refl
@@ -56,9 +54,8 @@ private
   singletonForget-def
     : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
       {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-      {label : PortSig.PortLabel}
       {ℓTag : Level} {Tag : Set ℓTag}
-      (sig : PortSig C label Tag)
+      (sig : PortSig C Tag)
     → Singleton.forget (Singleton.mkSingleton2Cat sig)
       ≡ forgetDecorated (PortSig.Displayed sig)
   singletonForget-def _ = refl
@@ -90,16 +87,15 @@ private
   singletonForget-head-def
     : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
       {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-      {label₁ label₂ : PortSig.PortLabel}
       {ℓTag₁ : Level} {Tag₁ : Set ℓTag₁}
       {ℓTag₂ : Level} {Tag₂ : Set ℓTag₂}
-      (sig₁ : PortSig C label₁ Tag₁)
-      (sig₂ : PortSig C label₂ Tag₂)
+      (sig₁ : PortSig C Tag₁)
+      (sig₂ : PortSig C Tag₂)
     → PortStack.forgetToPort
         {S =
           PortStack._∷⁺_
-            (mkPortEntry label₁ ℓTag₁ Tag₁ sig₁)
-            (PortStack.[ mkPortEntry label₂ ℓTag₂ Tag₂ sig₂ ])}
+            (mkPortEntry ℓTag₁ Tag₁ sig₁)
+            (PortStack.[ mkPortEntry ℓTag₂ Tag₂ sig₂ ])}
         (PortStack.mkMemberStack PortStack.hereEntry)
       ≡
         forgetProductLeft
@@ -110,17 +106,16 @@ private
   stackForget-right2-def
     : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
       {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-      {label₁ label₂ : PortSig.PortLabel}
       {ℓTag₁ : Level} {Tag₁ : Set ℓTag₁}
       {ℓTag₂ : Level} {Tag₂ : Set ℓTag₂}
-      (sig₁ : PortSig C label₁ Tag₁)
-      (sig₂ : PortSig C label₂ Tag₂)
+      (sig₁ : PortSig C Tag₁)
+      (sig₂ : PortSig C Tag₂)
     → PortStack.forgetSubstack
-        {Y = PortStack.[ mkPortEntry label₂ ℓTag₂ Tag₂ sig₂ ]}
+        {Y = PortStack.[ mkPortEntry ℓTag₂ Tag₂ sig₂ ]}
         {X =
           PortStack._∷⁺_
-            (mkPortEntry label₁ ℓTag₁ Tag₁ sig₁)
-            (PortStack.[ mkPortEntry label₂ ℓTag₂ Tag₂ sig₂ ])}
+            (mkPortEntry ℓTag₁ Tag₁ sig₁)
+            (PortStack.[ mkPortEntry ℓTag₂ Tag₂ sig₂ ])}
         (PortStack.drop PortStack.last)
       ≡
         forgetProductRight

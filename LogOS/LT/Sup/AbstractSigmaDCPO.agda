@@ -18,28 +18,29 @@ module LogOS.LT.Sup.AbstractSigmaDCPO where
 -- and the Kleene μ/ν fixed-point spines.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using
   ( ConPreorder; Con; _⊑_; _≈_; refl⊑; MonoOn; Opp )
+open import LogOS.LT.Stage.SuccessorChain using
+  ( Stageω; zero; suc; _≤ω_; z≤ω; s≤ω; ≤ω-maxL; ≤ω-maxR; maxω )
 
 Directedω
   : ∀ {ℓCon ℓRel : Level}
   → (CP : ConPreorder ℓCon ℓRel)
-  → (ℕ → Con CP)
+  → (Stageω → Con CP)
   → Set ℓRel
 Directedω CP s =
-  ∀ i j → Σ ℕ (λ k → (_⊑_ CP (s i) (s k)) × (_⊑_ CP (s j) (s k)))
+  ∀ i j → Σ Stageω (λ k → (_⊑_ CP (s i) (s k)) × (_⊑_ CP (s j) (s k)))
 
 record SigmaDCPO {ℓCon ℓRel : Level} (CP : ConPreorder ℓCon ℓRel) : Set (lsuc (ℓCon ⊔ ℓRel)) where
   field
-    supσ : (s : ℕ → Con CP) → Directedω CP s → Con CP
+    supσ : (s : Stageω → Con CP) → Directedω CP s → Con CP
 
     ubσ
-      : ∀ (s : ℕ → Con CP) (dir : Directedω CP s) (n : ℕ)
+      : ∀ (s : Stageω → Con CP) (dir : Directedω CP s) (n : Stageω)
       → _⊑_ CP (s n) (supσ s dir)
 
     leastσ
-      : ∀ (s : ℕ → Con CP) (dir : Directedω CP s) (x : Con CP)
+      : ∀ (s : Stageω → Con CP) (dir : Directedω CP s) (x : Con CP)
       → (∀ n → _⊑_ CP (s n) x)
       → _⊑_ CP (supσ s dir) x
 
@@ -48,7 +49,7 @@ mapDirectedω
   : ∀ {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel}
     {f : Con CP → Con CP}
   → MonoOn CP f
-  → ∀ {s : ℕ → Con CP}
+  → ∀ {s : Stageω → Con CP}
   → Directedω CP s
   → Directedω CP (λ n → f (s n))
 mapDirectedω {CP = CP} monoF dir i j with dir i j
@@ -68,7 +69,7 @@ record SigmaContinuous
   field
     mono : MonoOn CP f
     cont
-      : ∀ (s : ℕ → Con CP) (dir : Directedω CP s)
+      : ∀ (s : Stageω → Con CP) (dir : Directedω CP s)
       → _≈_ CP
           (f (SigmaDCPO.supσ SD s dir))
           (SigmaDCPO.supσ SD (λ n → f (s n)) (mapDirectedω {CP = CP} mono dir))
@@ -76,63 +77,38 @@ record SigmaContinuous
 -- --------------------------------------------------------------------------
 -- ω-chains and a constructive “chain implies directed” lemma.
 
-private
-  -- A small Nat order for “max index” arguments.
-  data _≤_ : ℕ → ℕ → Set lzero where
-    z≤n : ∀ {n} → zero ≤ n
-    s≤s : ∀ {m n} → m ≤ n → suc m ≤ suc n
-
-  ≤-refl : ∀ {n} → n ≤ n
-  ≤-refl {zero} = z≤n
-  ≤-refl {suc n} = s≤s ≤-refl
-
-  max : ℕ → ℕ → ℕ
-  max zero    n       = n
-  max (suc m) zero    = suc m
-  max (suc m) (suc n) = suc (max m n)
-
-  ≤-maxL : ∀ m n → m ≤ max m n
-  ≤-maxL zero    _       = z≤n
-  ≤-maxL (suc m) zero    = ≤-refl
-  ≤-maxL (suc m) (suc n) = s≤s (≤-maxL m n)
-
-  ≤-maxR : ∀ m n → n ≤ max m n
-  ≤-maxR zero    n       = ≤-refl
-  ≤-maxR (suc m) zero    = z≤n
-  ≤-maxR (suc m) (suc n) = s≤s (≤-maxR m n)
-
 -- ω-chains (successor monotone sequences).
-Chainω : ∀ {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel} → (ℕ → Con CP) → Set ℓRel
+Chainω : ∀ {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel} → (Stageω → Con CP) → Set ℓRel
 Chainω {CP = CP} s = ∀ n → _⊑_ CP (s n) (s (suc n))
 
 private
   chain-mono
     : ∀ {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel}
-    → (s : ℕ → Con CP)
+    → (s : Stageω → Con CP)
     → Chainω {CP = CP} s
-    → ∀ {m n} → _≤_ m n → _⊑_ CP (s m) (s n)
-  chain-mono {CP = CP} s step {n = n} z≤n = go n
+    → ∀ {m n} → m ≤ω n → _⊑_ CP (s m) (s n)
+  chain-mono {CP = CP} s step {n = n} z≤ω = go n
     where
       module R = LogOS.Prelude.RefinementKit.Reasoning CP
       open R
-      go : ∀ n → _⊑_ CP (s zero) (s n)
+      go : ∀ n -> _⊑_ CP (s zero) (s n)
       go zero    = refl⊑ CP
       go (suc n) =
         begin⊑
           s zero ⊑⟨ go n ⟩
           s n ⊑⟨ step n ⟩
           s (suc n) ∎⊑
-  chain-mono {CP = CP} s step (s≤s mn) =
+  chain-mono {CP = CP} s step {m = suc m} {n = suc n} (s≤ω mn) =
     chain-mono {CP = CP} (λ k → s (suc k)) (λ k → step (suc k)) mn
 
 -- ω-chains are directed (constructively: use `max` as a join on indices).
 chainDirectedω
   : ∀ {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel}
-  → (s : ℕ → Con CP)
+  → (s : Stageω → Con CP)
   → Chainω {CP = CP} s
   → Directedω CP s
 chainDirectedω {CP = CP} s step i j =
-  let k = max i j in
-  k , ( chain-mono {CP = CP} s step (≤-maxL i j)
-      , chain-mono {CP = CP} s step (≤-maxR i j)
+  let k = maxω i j in
+  k , ( chain-mono {CP = CP} s step (≤ω-maxL i j)
+      , chain-mono {CP = CP} s step (≤ω-maxR i j)
       )

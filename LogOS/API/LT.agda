@@ -41,3 +41,15 @@ open Architecture.Discipline public using
   ( mkTotalObjR
   ; mkTotalHomR
   )
+
+module SuccessorIndex where
+  open import LogOS.LT.Stage.SuccessorChain public using
+    ( SuccessorChain
+    ; next
+    ; StageOf
+    ; levelChain
+    ; Stageω
+    ; zero
+    ; suc
+    ; iterω
+    )

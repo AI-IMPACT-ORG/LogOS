@@ -10,6 +10,7 @@ module LogOS.Apps.ZFC.Metamath.Interpretation.Normalize where
 -- Normalisation: drop vacuous quantifiers (a useful post-transformer for closure).
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 
 open import LogOS.Apps.ZFC.Metamath.Core as Core using
   ( Maybe

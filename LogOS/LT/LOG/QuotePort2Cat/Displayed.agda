@@ -10,7 +10,6 @@ module LogOS.LT.LOG.QuotePort2Cat.Displayed where
 -- SpecRef: v5.8 (synchronized with docs/Core/Spec/LogicalTransformers.lagda.md)
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.Kernel using (Kernel)
 open import LogOS.LT.Hom.Core using (KernelHom; idKernelHom; _∘_)
 open import LogOS.LT.HomFlow using (KernelHomFlow; idKernelHomFlow; composeKernelHomFlow)
@@ -32,9 +31,6 @@ import LogOS.LT.Ports.Template.Singleton2Cat as Template
 
 data QuoteTag : Set where
   quoteTag : QuoteTag
-
-quoteTagId : ℕ
-quoteTagId = 23
 
 private
   flowPort
@@ -108,13 +104,12 @@ QuoteDisplayed {ℓ} {ℓRel} {ℓCode} =
 
 module Quote2Cat {ℓ ℓRel ℓCode : Level} =
   Template.SingletonLayer
-    quoteTagId
     {Tag = QuoteTag}
     (QuoteDisplayed {ℓ} {ℓRel} {ℓCode})
 
 QuoteLayer
   : ∀ {ℓ ℓRel ℓCode : Level}
-  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) quoteTagId QuoteTag
+  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) QuoteTag
 QuoteLayer {ℓ} {ℓRel} {ℓCode} =
   Quote2Cat.portSig {ℓ} {ℓRel} {ℓCode}
 

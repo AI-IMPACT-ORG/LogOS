@@ -47,7 +47,6 @@ open PortSig using
   ; PortEntry
   ; sig
   ; TagTy
-  ; LabelOf
   )
 
 -- --------------------------------------------------------------------------
@@ -62,7 +61,7 @@ data Listω (A : Setω) : Setω where
 record ⊤ω : Setω where
   constructor ttω
 
--- Setω-level propositional equality (needed because `Member` lives in `Setω`).
+-- Setω-level propositional equality (needed because raw bookkeeping lives in `Setω`).
 infix 4 _≡ω_
 data _≡ω_ {A : Setω} (x : A) : A → Setω where
   reflω : x ≡ω x
@@ -185,39 +184,32 @@ baseHom {C = C} {S = S} = baseHomᴰ {C = C} {D = StackDisplayed {C = C} S}
 -- --------------------------------------------------------------------------
 -- Leftmost selection on raw entry lists.
 --
--- This is the small generic core behind the raw first-order-name/dependent-
--- payload split: choose a key extractor, then resolve duplicates leftmost.
+-- This is the small generic core behind exact-entry stack access: choose a key
+-- extractor, then resolve duplicates leftmost.
 --
--- - `Member` instantiates `Select` with the first-order port label.
--- - `EntryMember` instantiates `Select` with the identity key, giving exact
---   typed access to a concrete port entry.
+-- Both `Member` and `EntryMember` use the concrete port entry itself as the
+-- lookup key.
 data Select
   {A Key : Setω}
   (keyOf : A → Key)
   : Key
   → Listω A
   → Setω where
-  here
+  selectHere
     : ∀ {a : A} {rest}
     → Select keyOf (keyOf a) (a ∷ rest)
-  there
+  selectThere
     : ∀ {k : Key} {e rest}
     → Select keyOf k rest
     → Select keyOf k (e ∷ rest)
 
-record LabelKey : Setω where
-  constructor labelKey
-  field
-    lowerLabel : PortSig.PortLabel
-
 Member
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-  → PortSig.PortLabel
+  → PortEntry C
   → Listω (PortEntry C)
   → Setω
-Member {C = C} label =
-  Select {A = PortEntry C} (λ p → labelKey (LabelOf p)) (labelKey label)
+Member {C = C} = Select {A = PortEntry C} (λ p → p)
 
 EntryMember
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
@@ -225,14 +217,29 @@ EntryMember
   → PortEntry C
   → Listω (PortEntry C)
   → Setω
-EntryMember {C = C} = Select {A = PortEntry C} (λ p → p)
+EntryMember = Member
+
+here
+  : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
+    {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
+    {p : PortEntry C} {rest}
+  → Member p (p ∷ rest)
+here = selectHere
+
+there
+  : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
+    {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
+    {p e : PortEntry C} {rest}
+  → Member p rest
+  → Member p (e ∷ rest)
+there = selectThere
 
 hereEntry
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
     {p : PortEntry C} {rest}
   → EntryMember p (p ∷ rest)
-hereEntry = here
+hereEntry = selectHere
 
 thereEntry
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
@@ -240,7 +247,7 @@ thereEntry
     {p e : PortEntry C} {rest}
   → EntryMember p rest
   → EntryMember p (e ∷ rest)
-thereEntry = there
+thereEntry = selectThere
 
 entryMember⇒member
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
@@ -248,43 +255,31 @@ entryMember⇒member
     {p : PortEntry C}
     {es : Listω (PortEntry C)}
   → EntryMember p es
-  → Member (LabelOf p) es
-entryMember⇒member here = here
-entryMember⇒member (there m) = there (entryMember⇒member m)
+  → Member p es
+entryMember⇒member m = m
 
--- Optional discipline: tag uniqueness in a stack.
+-- Public uniqueness certification for structural stacks.
 --
--- If you enable instance search for membership (`module Instances` below),
--- consider carrying a `NoDupStack` proof to avoid ambiguous resolution.
-
-mutual
-
-  NoDupTags
-    : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
-      {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-    → Listω (PortEntry C)
-    → Setω
-  NoDupTags [] = ⊤ω
-  NoDupTags (e ∷ es) = NoDupTagsStep e es
-
-  record NoDupTagsStep
-    {ℓObj ℓHomCon ℓHomRel : Level}
-    {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-    (e : PortEntry C)
-    (es : Listω (PortEntry C))
-    : Setω where
-    inductive
-    constructor mkNoDupTagsStep
-    field
-      notInRest : Member (LabelOf e) es → ⊥ {lzero}
-      rest : NoDupTags es
-
-NoDupStack
+-- Exact-entry capabilities already determine how clients access a stack. The
+-- `NoDupStack` witness is therefore a public certification token attached to
+-- stacks that are exported in the uniqueness-first lane.
+data NoDupStack
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
   → PortStack C
-  → Setω
-NoDupStack S = NoDupTags (toList S)
+  → Setω where
+  noDupSingletonR
+    : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
+      {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
+      {p : PortEntry C}
+    → NoDupStack [ p ]
+  noDupStepR
+    : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
+      {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
+      {p : PortEntry C}
+      {ps : PortStack C}
+    → NoDupStack ps
+    → NoDupStack (p ∷⁺ ps)
 
 record MemberStack
   {ℓObj ℓHomCon ℓHomRel : Level}
@@ -352,8 +347,7 @@ record SingletonPort
   (Tag : Set ℓTag)
   : Setω where
   field
-    {label} : PortSig.PortLabel
-    portSig : PortSig C label Tag
+    portSig : PortSig C Tag
 
   entry : PortEntry C
   entry = PortSig.mkEntry portSig
@@ -367,11 +361,10 @@ record SingletonPort
 singletonPort
   : ∀ {ℓObj ℓHomCon ℓHomRel : Level}
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-    {label : PortSig.PortLabel}
     {ℓTag : Level} {Tag : Set ℓTag}
-  → PortSig C label Tag
+  → PortSig C Tag
   → SingletonPort C Tag
-singletonPort {label = label} sig =
+singletonPort sig =
   record
     { portSig = sig }
 
@@ -417,7 +410,7 @@ sigAtList
     {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
     {p : PortEntry C} {es : Listω (PortEntry C)}
   → EntryMember p es
-  → PortSig C (LabelOf p) (TagTy p)
+  → PortSig C (TagTy p)
 sigAtList {p = p} _ = sig p
 
 sigAt
@@ -426,7 +419,7 @@ sigAt
     {p : PortEntry C}
     {S : PortStack C}
   → MemberStack p S
-  → PortSig C (LabelOf p) (TagTy p)
+  → PortSig C (TagTy p)
 sigAt m = sigAtList (member m)
 
 getObjPort
@@ -437,11 +430,11 @@ getObjPort
   → (m : MemberStack p S)
   → (X : DecoratedObj (StackDisplayed S))
   → Ob (PortSig.Displayed (sigAt m)) (base {D = StackDisplayed S} X)
-getObjPort {S = [ p ]} (mkMemberStack here) X =
+getObjPort {S = [ p ]} (mkMemberStack selectHere) X =
   disp {D = StackDisplayed [ p ]} X
-getObjPort {S = q ∷⁺ ps} (mkMemberStack here) X =
+getObjPort {S = q ∷⁺ ps} (mkMemberStack selectHere) X =
   fst (disp {D = StackDisplayed (q ∷⁺ ps)} X)
-getObjPort {S = q ∷⁺ ps} (mkMemberStack (there m)) X =
+getObjPort {S = q ∷⁺ ps} (mkMemberStack (selectThere m)) X =
   getObjPort {S = ps} (mkMemberStack m)
     (mkTotalObjR
       (base {D = StackDisplayed (q ∷⁺ ps)} X)
@@ -460,11 +453,11 @@ getHomPort
       (baseHomᴰ {D = StackDisplayed S} f)
       (getObjPort m X)
       (getObjPort m Y)
-getHomPort {S = [ p ]} (mkMemberStack here) f =
+getHomPort {S = [ p ]} (mkMemberStack selectHere) f =
   dispHom {D = StackDisplayed [ p ]} f
-getHomPort {S = q ∷⁺ ps} (mkMemberStack here) f =
+getHomPort {S = q ∷⁺ ps} (mkMemberStack selectHere) f =
   fst (dispHom {D = StackDisplayed (q ∷⁺ ps)} f)
-getHomPort {S = q ∷⁺ ps} (mkMemberStack (there m)) {X = X} {Y = Y} f =
+getHomPort {S = q ∷⁺ ps} (mkMemberStack (selectThere m)) {X = X} {Y = Y} f =
   getHomPort {S = ps} (mkMemberStack m)
     {X =
       mkTotalObjR
@@ -510,21 +503,21 @@ forgetToPort
     {S : PortStack C}
   → (m : MemberStack p S)
   → Thin2Functor (StackCat S) (DecoratedThin2Cat (PortSig.Displayed (sigAt m)))
-forgetToPort {S = [ p ]} (mkMemberStack here) =
+forgetToPort {S = [ p ]} (mkMemberStack selectHere) =
   idThin2Functor (DecoratedThin2Cat (StackDisplayed [ p ]))
-forgetToPort {S = q ∷⁺ ps} (mkMemberStack here) =
+forgetToPort {S = q ∷⁺ ps} (mkMemberStack selectHere) =
   let
     D₁ = PortSig.Displayed (sig q)
     D₂ = StackDisplayed ps
   in
   forgetProductLeft D₁ D₂
-forgetToPort {S = q ∷⁺ [ p ]} (mkMemberStack (there here)) =
+forgetToPort {S = q ∷⁺ [ p ]} (mkMemberStack (selectThere selectHere)) =
   let
     D₁ = PortSig.Displayed (sig q)
     D₂ = StackDisplayed [ p ]
   in
   forgetProductRight D₁ D₂
-forgetToPort {S = q ∷⁺ (r ∷⁺ rs)} (mkMemberStack (there m)) =
+forgetToPort {S = q ∷⁺ (r ∷⁺ rs)} (mkMemberStack (selectThere m)) =
   let
     D₁ = PortSig.Displayed (sig q)
     D₂ = StackDisplayed (r ∷⁺ rs)
@@ -600,20 +593,20 @@ module Instances where
     memberHere
       : ∀ {ℓObj ℓHomCon ℓHomRel}
         {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-        {label : PortSig.PortLabel}
-        {ℓTag : Level} {Tag : Set ℓTag} {sig : PortSig C label Tag} {rest}
-      → Member label (PortSig.mkPortEntry label ℓTag Tag sig ∷ rest)
-    memberHere = here
+        {p : PortEntry C}
+        {rest}
+      → Member p (p ∷ rest)
+    memberHere = selectHere
 
   instance
     memberThere
       : ∀ {ℓObj ℓHomCon ℓHomRel}
         {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-        {label : PortSig.PortLabel} {rest}
+        {p : PortEntry C} {rest}
         {e : PortEntry C}
-      → {{Member label rest}}
-      → Member label (e ∷ rest)
-    memberThere {{m}} = there m
+      → {{Member p rest}}
+      → Member p (e ∷ rest)
+    memberThere {{m}} = selectThere m
 
   instance
     entryMemberHere

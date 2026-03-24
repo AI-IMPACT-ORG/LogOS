@@ -39,10 +39,9 @@ mkPortSig
     {ℓTag : Level}
     {Tag : Set ℓTag}
     {ℓDObj ℓDHom : Level}
-  → (label : PortSig.PortLabel)
   → DisplayedThin2Cat C ℓDObj ℓDHom
-  → PortSig.PortSig C label Tag
-mkPortSig {ℓDObj = ℓDObj} {ℓDHom = ℓDHom} label Displayed =
+  → PortSig.PortSig C Tag
+mkPortSig {ℓDObj = ℓDObj} {ℓDHom = ℓDHom} Displayed =
   record
     { ℓDObj = ℓDObj
     ; ℓDHom = ℓDHom
@@ -52,13 +51,12 @@ mkPortSig {ℓDObj = ℓDObj} {ℓDHom = ℓDHom} label Displayed =
 record Singleton2Cat
   {ℓObj ℓHomCon ℓHomRel : Level}
   (C : Thin2Cat ℓObj ℓHomCon ℓHomRel)
-  (label : PortSig.PortLabel)
   {ℓTag : Level}
   (Tag : Set ℓTag)
   : Setω where
   constructor mkSingleton2Cat
   field
-    portSig : PortSig.PortSig C label Tag
+    portSig : PortSig.PortSig C Tag
 
   singleton : PortStack.SingletonPort C Tag
   singleton = PortStack.singletonPort portSig
@@ -113,13 +111,12 @@ open Singleton2Cat public using
 module SingletonExports
   {ℓObj ℓHomCon ℓHomRel : Level}
   {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-  {label : PortSig.PortLabel}
   {ℓTag : Level}
   {Tag : Set ℓTag}
-  (sig : PortSig.PortSig C label Tag)
+  (sig : PortSig.PortSig C Tag)
   where
 
-  port2Cat : Singleton2Cat C label Tag
+  port2Cat : Singleton2Cat C Tag
   port2Cat = mkSingleton2Cat sig
 
   open Singleton2Cat port2Cat public using
@@ -136,14 +133,13 @@ module SingletonExports
 module SingletonLayer
   {ℓObj ℓHomCon ℓHomRel : Level}
   {C : Thin2Cat ℓObj ℓHomCon ℓHomRel}
-  (label : PortSig.PortLabel)
   {ℓTag : Level}
   {Tag : Set ℓTag}
   {ℓDObj ℓDHom : Level}
   (Displayed : DisplayedThin2Cat C ℓDObj ℓDHom)
   where
 
-  portSig : PortSig.PortSig C label Tag
-  portSig = mkPortSig {Tag = Tag} label Displayed
+  portSig : PortSig.PortSig C Tag
+  portSig = mkPortSig {Tag = Tag} Displayed
 
   open SingletonExports portSig public

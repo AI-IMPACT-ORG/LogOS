@@ -14,6 +14,7 @@ module LogOS.Apps.Opacity.TagOpacity where
 -- discipline, not a standalone app-local architecture.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (zero; suc)
 open import LogOS.Prelude.Fin using (fzero; fsuc; _≢_)
 open import LogOS.LT.ConPreorder using (ConPreorder; refl⊑)
 open import LogOS.LT.ConPreorder.Discrete using (DiscretePreorder)

@@ -27,10 +27,8 @@ open import LogOS.Prelude using
   ; subst
   ; ⊥-elim
   ; _≡_
-  ; ℕ
-  ; zero
-  ; suc
   )
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.Syntax.Prop using (_↔_; intro; to; from)
 open import LogOS.LT.Presentation using
   ( Presentation

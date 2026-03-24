@@ -22,7 +22,6 @@ module LogOS.Ports.PreQuantum.Discard2Cat where
 -- but this category also supports non-canonical (per-object) discard choices.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con; _⊑_; _≈_)
 private
   module ≤-Reasoning = LogOS.Prelude.RefinementKit.Reasoning
@@ -36,9 +35,6 @@ import LogOS.LT.Ports.Template.Singleton2Cat as Template
 
 data DiscardTag : Set where
   discardTag : DiscardTag
-
-discardTagId : ℕ
-discardTagId = 16
 
 module Discard2CatLocal
   {ℓObj ℓHomCon ℓHomRel : Level}
@@ -127,12 +123,11 @@ module Discard2CatLocal
       }
 
   module Port
-    = Template.SingletonLayer
-        discardTagId
-        {Tag = DiscardTag}
-        DiscardDisplayed
+  = Template.SingletonLayer
+      {Tag = DiscardTag}
+      DiscardDisplayed
 
-  discardSig : PortSig.PortSig C discardTagId DiscardTag
+  discardSig : PortSig.PortSig C DiscardTag
   discardSig = Port.portSig
 
   open Port public using

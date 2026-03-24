@@ -58,7 +58,7 @@ import LogOS.Apps.ZFC.Stack.ZFCore as ZFCore
 -- Formula-driven definable Separation/Replacement over `ZFCStackFO`.
 open import LogOS.Apps.ZFC.SetTheory.Definable
 
-open import LogOS.Apps.ZFC.Proof.Syntax using (Formula; var; _∈F_; _≈F_)
+open import LogOS.Apps.ZFC.Proof.Syntax using (Formula; _∈F_; _≈F_; v0; v1; v2)
 ```
 
 From a reification ledger to a first-order ZFC model
@@ -214,7 +214,7 @@ module DefinableSeparation {ℓ : Level}
 
   -- Example: "z ∈ param0" (with `param0` at de Bruijn index 2 under Separation).
   P∈param0 : Formula
-  P∈param0 = (var zero) ∈F (var (suc (suc zero)))
+  P∈param0 = v0 ∈F v2
 
   module _ (x y : SetU) where
     defaultVal : Def.Valuation
@@ -255,7 +255,7 @@ module DefinableReplacement {ℓ : Level}
 
   -- Example relation: "z ≈ u" (u at 0, z at 1).
   R-id : Formula
-  R-id = (var (suc zero)) ≈F (var zero)
+  R-id = v1 ≈F v0
 
   module _ (x : SetU) where
     defaultVal : Def.Valuation

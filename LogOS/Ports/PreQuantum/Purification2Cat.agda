@@ -17,7 +17,6 @@ module LogOS.Ports.PreQuantum.Purification2Cat where
 -- discard witness bookkeeping.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (Con)
 open import LogOS.LT.Thin2Cat using (Thin2Cat)
 
@@ -31,6 +30,7 @@ open import LogOS.Ports.PreQuantum.Purification using
   )
 
 import LogOS.Ports.LawSlice2Cat as LawSlice
+import LogOS.LT.Ports.PortSig as PortSig
 
 -- η-unit payload for the purification law-port (avoids Topℓ/⊤ footguns).
 record PurificationOb : Set where
@@ -38,9 +38,6 @@ record PurificationOb : Set where
 
 data PurificationTag : Set where
   purificationTag : PurificationTag
-
-purificationTagId : ℕ
-purificationTagId = 15
 
 module Purification2CatLocal
   {ℓObj ℓHomCon ℓHomRel : Level}
@@ -62,7 +59,6 @@ module Purification2CatLocal
     LawSlice.Exports
       {C = C}
       {Tag = PurificationTag}
-      purificationTagId
       PurificationOb
       PurificationLaw
       (purify-id P)

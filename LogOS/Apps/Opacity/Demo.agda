@@ -11,6 +11,7 @@ module LogOS.Apps.Opacity.Demo where
 -- code carries an intensional tag that is *not observable* at the boundary.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero)
 open import LogOS.LT.ConPreorder using (ConPreorder; _⊑_; refl⊑)
 open import LogOS.LT.Kernel using (Kernel; bnd; Code; decode; CodePreorder)
 open import LogOS.LT.Hom using (KernelHom; mkKernelHomParts; _⇒_)

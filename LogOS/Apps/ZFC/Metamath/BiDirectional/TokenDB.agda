@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Apps.ZFC.Metamath.BiDirectional.TokenDB where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 import LogOS.Ports.Metamath as MM

@@ -18,7 +18,6 @@ module LogOS.Ports.Universality.BudgetBus2Cat where
 -- choosing the budget boundary to be its scale preorder (see `LogOS.Ports.Valuation.QAdapterBus`).
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; refl⊑)
 open import LogOS.LT.Kernel using (Kernel; Code)
 open import LogOS.LT.Hom.Core using (KernelHom; idKernelHom; _∘_; mapCode)
@@ -33,9 +32,6 @@ import LogOS.LT.Ports.Template.Singleton2Cat as Template
 
 data BudgetTag : Set where
   budgetTag : BudgetTag
-
-budgetTagId : ℕ
-budgetTagId = 18
 
 idBudgetTransport
   : ∀ {ℓ ℓRel ℓCode ℓBudgetCon ℓBudgetRel : Level}
@@ -92,14 +88,13 @@ BudgetDisplayed {ℓ} {ℓRel} {ℓCode} Budget =
 module Port {ℓ ℓRel ℓCode ℓBudgetCon ℓBudgetRel : Level}
   (Budget : ConPreorder ℓBudgetCon ℓBudgetRel)
   = Template.SingletonLayer
-      budgetTagId
       {Tag = BudgetTag}
       (BudgetDisplayed {ℓ} {ℓRel} {ℓCode} Budget)
 
 budgetSig
   : ∀ {ℓ ℓRel ℓCode ℓBudgetCon ℓBudgetRel : Level}
   → (Budget : ConPreorder ℓBudgetCon ℓBudgetRel)
-  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) budgetTagId BudgetTag
+  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) BudgetTag
 budgetSig {ℓ} {ℓRel} {ℓCode} {ℓBudgetCon} {ℓBudgetRel} Budget =
   Port.portSig {ℓ} {ℓRel} {ℓCode} {ℓBudgetCon} {ℓBudgetRel} Budget
 

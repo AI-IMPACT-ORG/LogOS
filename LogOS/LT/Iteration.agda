@@ -19,24 +19,23 @@ module LogOS.LT.Iteration where
 -- computation to boundary dynamics.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; _≈_; MonoOn; refl⊑; monoMap-≈)
 open import LogOS.LT.Kernel using (Kernel; bnd; Code; decode)
 open import LogOS.LT.Hom.Core using (KernelHom; map∂; map∂-mono; mapCode; decode-mapCode)
 open import LogOS.LT.Flow using (GuardedClosure)
 open import LogOS.LT.Sup.FinSup using (FinSup)
 open import LogOS.LT.Sup.AbstractSigmaDCPO using (SigmaDCPO)
+open import LogOS.LT.Stage.SuccessorChain using (Stageω; zero; suc; iterω)
 import LogOS.LT.Sup.SupOmega
 -- Function iteration (apply `f` n times).
-iter : ∀ {ℓ} {A : Set ℓ} → (A → A) → ℕ → A → A
-iter f zero    x = x
-iter f (suc n) x = iter f n (f x)
+iter : ∀ {ℓ} {A : Set ℓ} → (A → A) → Stageω → A → A
+iter = iterω
 
 -- Code-level trace under a step transformer.
 traceCode
   : ∀ {ℓ ℓRel ℓCode} {K : Kernel ℓ ℓRel ℓCode}
   → (f : KernelHom K K)
-  → (n : ℕ)
+  → (n : Stageω)
   → Code K → Code K
 traceCode f n γ = iter (mapCode f) n γ
 
@@ -44,7 +43,7 @@ traceCode f n γ = iter (mapCode f) n γ
 traceBnd
   : ∀ {ℓ ℓRel ℓCode} {K : Kernel ℓ ℓRel ℓCode}
   → (f : KernelHom K K)
-  → (n : ℕ)
+  → (n : Stageω)
   → Code K → Con (bnd K)
 traceBnd {K = K} f n γ = decode K (traceCode f n γ)
 
@@ -65,7 +64,7 @@ private
   iter-monoᵉ
     : ∀ {ℓCon ℓRel} {CP : ConPreorder ℓCon ℓRel}
       {f : Con CP → Con CP}
-    → (n : ℕ)
+    → (n : Stageω)
     → MonoOnᵉ CP f
     → MonoOnᵉ CP (iter f n)
   iter-monoᵉ zero    mono x y xy = xy
@@ -75,7 +74,7 @@ private
   iter-mono
     : ∀ {ℓCon ℓRel} {CP : ConPreorder ℓCon ℓRel}
       {f : Con CP → Con CP}
-    → (n : ℕ)
+    → (n : Stageω)
     → MonoOn CP f
     → MonoOnᵉ CP (iter f n)
   iter-mono {CP = CP} {f = f} n mono =
@@ -84,7 +83,7 @@ private
 decode-iter-mapCode⊑
   : ∀ {ℓ ℓRel ℓCode} {K : Kernel ℓ ℓRel ℓCode}
   → (f : KernelHom K K)
-  → (n : ℕ)
+  → (n : Stageω)
   → (γ : Code K)
   → _⊑_ (bnd K)
       (decode K (iter (mapCode f) n γ))
@@ -108,7 +107,7 @@ decode-iter-mapCode⊑ {K = K} f (suc n) γ =
 decode-iter-mapCode⊒
   : ∀ {ℓ ℓRel ℓCode} {K : Kernel ℓ ℓRel ℓCode}
   → (f : KernelHom K K)
-  → (n : ℕ)
+  → (n : Stageω)
   → (γ : Code K)
   → _⊑_ (bnd K)
       (iter (map∂ f) n (decode K γ))
@@ -132,7 +131,7 @@ decode-iter-mapCode⊒ {K = K} f (suc n) γ =
 decode-iter-mapCode
   : ∀ {ℓ ℓRel ℓCode} {K : Kernel ℓ ℓRel ℓCode}
   → (f : KernelHom K K)
-  → (n : ℕ)
+  → (n : Stageω)
   → (γ : Code K)
   → _≈_ (bnd K)
       (decode K (iter (mapCode f) n γ))
@@ -143,7 +142,7 @@ decode-iter-mapCode f n γ =
 traceBnd-reduce
   : ∀ {ℓ ℓRel ℓCode} {K : Kernel ℓ ℓRel ℓCode}
   → (f : KernelHom K K)
-  → (n : ℕ)
+  → (n : Stageω)
   → (γ : Code K)
   → _≈_ (bnd K) (traceBnd f n γ) (iter (map∂ f) n (decode K γ))
 traceBnd-reduce f n γ = decode-iter-mapCode f n γ
@@ -164,7 +163,7 @@ normTrace
   : ∀ {ℓ ℓRel ℓCode} {K : Kernel ℓ ℓRel ℓCode}
   → (GC : GuardedClosure (bnd K))
   → (f : KernelHom K K)
-  → (n : ℕ)
+  → (n : Stageω)
   → Code K → Con (bnd K)
 normTrace {K = K} GC f n γ = GuardedClosure.Flow GC (traceBnd {K = K} f n γ)
 
@@ -172,7 +171,7 @@ normTrace-reduce
   : ∀ {ℓ ℓRel ℓCode} {K : Kernel ℓ ℓRel ℓCode}
   → (GC : GuardedClosure (bnd K))
   → (f : KernelHom K K)
-  → (n : ℕ)
+  → (n : Stageω)
   → (γ : Code K)
   → _≈_ (bnd K)
       (normTrace {K = K} GC f n γ)

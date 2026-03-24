@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Ports.AbstractDeutsch2Cat.Locality where
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using
   ( Con
   ; MonoMap
@@ -49,6 +48,7 @@ open import LogOS.Ports.PhysicalTransformers using
   ; mkKernelHomPointwise
   )
 import LogOS.Ports.LawSlice2Cat as LawSlice
+import LogOS.LT.Ports.PortSig as PortSig
 
 private
   module ≤-Reasoning = LogOS.Prelude.RefinementKit.Reasoning
@@ -163,21 +163,17 @@ module Deutsch2CatLocal {ℓI ℓOCon ℓORel ℓCode : Level} (PS : DependentLo
   data LocalityTag : Set where
     localityTag : LocalityTag
 
-  localityTagId : ℕ
-  localityTagId = 10
-
   module Port =
     LawSlice.Exports
       {C = LOGᵏ}
       {Tag = LocalityTag}
-      localityTagId
       LocalityOb
       LocalityAction
       idLocalityAction
       compLocalityAction
 
   port2Cat
-    : LawSlice.Singleton2Cat LOGᵏ localityTagId LocalityTag
+    : LawSlice.Singleton2Cat LOGᵏ LocalityTag
   port2Cat =
     Port.port2Cat
 

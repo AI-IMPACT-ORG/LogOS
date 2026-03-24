@@ -18,7 +18,6 @@ module LogOS.LT.LOG.Contract2Cat where
 -- 2-cells: inherited boundary-driven observational refinements (`_⇒∂_`) on the underlying kernel morphisms
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con)
 private
   module ≤-Reasoning = LogOS.Prelude.RefinementKit.Reasoning
@@ -34,9 +33,6 @@ import LogOS.LT.Ports.Template.Singleton2Cat as Template
 
 data ContractTag : Set where
   contractTag : ContractTag
-
-contractTagId : ℕ
-contractTagId = 21
 
 -- Displayed contracts over kernels.
 ContractDisplayed
@@ -61,13 +57,12 @@ ContractDisplayed {ℓ} {ℓRel} {ℓCode} =
 
 module Port {ℓ ℓRel ℓCode : Level} =
   Template.SingletonLayer
-    contractTagId
     {Tag = ContractTag}
     (ContractDisplayed {ℓ} {ℓRel} {ℓCode})
 
 contractSig
   : ∀ {ℓ ℓRel ℓCode : Level}
-  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) contractTagId ContractTag
+  → PortSig.PortSig (LOG {ℓ} {ℓRel} {ℓCode}) ContractTag
 contractSig {ℓ} {ℓRel} {ℓCode} =
   Port.portSig {ℓ} {ℓRel} {ℓCode}
 

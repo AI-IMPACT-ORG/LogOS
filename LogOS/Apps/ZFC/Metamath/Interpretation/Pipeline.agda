@@ -10,6 +10,7 @@ module LogOS.Apps.ZFC.Metamath.Interpretation.Pipeline where
 -- Pipeline record (debuggable intermediate stages) + bulk parser.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.List using (List; []; _∷_)
 
 open import LogOS.Apps.ZFC.Metamath.Core as Core using

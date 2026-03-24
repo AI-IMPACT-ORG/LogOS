@@ -29,7 +29,6 @@ open Unique public using
   ; mkUniquePortStack
   ; uniqueHasPort
   ; uniqueMember
-  ; noDupNil
   ; noDupSingleton
   ; singletonUniqueStack
   ; noDupCons

@@ -24,7 +24,6 @@ module LogOS.Prelude where
 
 open import LogOS.Host.Level public
 open import LogOS.Host.Relation.Binary.PropositionalEquality public
-open import LogOS.Host.Nat public
 open import LogOS.Host.Sum public
 open import LogOS.Host.Product public
 open import LogOS.Host.Empty public

@@ -15,6 +15,7 @@ module LogOS.Apps.ZFC.Stack.FoundationUpgradeFO where
 -- - assumptions are factored into independent upgrades (choice vs wf).
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (zero; suc)
 open import LogOS.Syntax.Prop using (_↔_; intro)
 open import LogOS.LT.View using (μ)
 

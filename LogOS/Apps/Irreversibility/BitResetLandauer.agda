@@ -15,6 +15,7 @@ module LogOS.Apps.Irreversibility.BitResetLandauer where
 -- derived corollary.
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (_⊑_)
 
 open import LogOS.Ports.AbstractLandauer.Ledger using (LandauerAssumptions)

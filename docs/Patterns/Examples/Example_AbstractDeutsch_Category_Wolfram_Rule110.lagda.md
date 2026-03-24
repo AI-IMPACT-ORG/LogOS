@@ -45,6 +45,10 @@ module docs.Patterns.Examples.Example_AbstractDeutsch_Category_Wolfram_Rule110 w
 open import LogOS.API.LT
 open import LogOS.API.Ports.PhysicalOptional.Deutsch using (module DeutschSlice)
 open ImplementationView using (_⇒_)
+open SuccessorIndex using (Stageω; zero; suc)
+
+ℕ : Set
+ℕ = Stageω
 
 -- --------------------------------------------------------------------------
 -- A minimal Bit type and Wolfram rule 110.
@@ -98,8 +102,19 @@ bitAt n (suc k) = bitAt (half n) k
 wolframRule : ℕ → Bit → Bit → Bit → Bit
 wolframRule n l c r = bitAt n (neighVal l c r)
 
+n110 : ℕ
+n110 =
+  bitVal off +ℕ doubleℕ
+    ( bitVal on +ℕ doubleℕ
+        ( bitVal on +ℕ doubleℕ
+            ( bitVal on +ℕ doubleℕ
+                ( bitVal off +ℕ doubleℕ
+                    ( bitVal on +ℕ doubleℕ
+                        ( bitVal on +ℕ doubleℕ
+                            ( bitVal off ) ) ) ) ) ) )
+
 rule110 : Bit → Bit → Bit → Bit
-rule110 = wolframRule 110
+rule110 = wolframRule n110
 
 -- Derived transition table (Wolfram order 111,110,101,100,011,010,001,000):
 --
@@ -135,8 +150,19 @@ rule110-000 = refl
 -- Sanity check: another rule number is handled the same way.
 -- (If you intended “the 101 clause of Rule 110”, that is `rule110-101` above.)
 
+n101 : ℕ
+n101 =
+  bitVal on +ℕ doubleℕ
+    ( bitVal off +ℕ doubleℕ
+        ( bitVal on +ℕ doubleℕ
+            ( bitVal off +ℕ doubleℕ
+                ( bitVal off +ℕ doubleℕ
+                    ( bitVal on +ℕ doubleℕ
+                        ( bitVal on +ℕ doubleℕ
+                            ( bitVal off ) ) ) ) ) ) )
+
 rule101 : Bit → Bit → Bit → Bit
-rule101 = wolframRule 101
+rule101 = wolframRule n101
 
 -- Wolfram order 111,110,101,100,011,010,001,000:
 --
@@ -233,14 +259,14 @@ wolframNumber-wolframRule : ∀ n → wolframNumber (wolframRule n) ≡ low8 n
 wolframNumber-wolframRule _ = refl
 
 -- These compute by definitional reduction once the eight clauses are rewritten.
-wolframNumber-rule110 : wolframNumber rule110 ≡ 110
+wolframNumber-rule110 : wolframNumber rule110 ≡ n110
 wolframNumber-rule110
   rewrite
     rule110-111 | rule110-110 | rule110-101 | rule110-100
   | rule110-011 | rule110-010 | rule110-001 | rule110-000
   = refl
 
-wolframNumber-rule101 : wolframNumber rule101 ≡ 101
+wolframNumber-rule101 : wolframNumber rule101 ≡ n101
 wolframNumber-rule101
   rewrite
     rule101-111 | rule101-110 | rule101-101 | rule101-100

@@ -8,19 +8,9 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Apps.ZFC.Proof.Axioms where
 
 open import LogOS.Prelude
+open import LogOS.Host.Nat using (zero; suc)
 import LogOS.Apps.ZFC.Proof.Syntax as Syntax
 open Syntax
-v0 : Term
-v0 = var zero
-
-v1 : Term
-v1 = var (suc zero)
-
-v2 : Term
-v2 = var (suc (suc zero))
-
-v3 : Term
-v3 = var (suc (suc (suc zero)))
 
 K : Formula → Formula → Formula
 K φ ψ = φ ⇒ (ψ ⇒ φ)

@@ -11,7 +11,7 @@ module LogOS.Ports.Universality.Fuel where
 -- This keeps "step-indexed recursion over fuel" abstract while preserving a
 -- concrete default by inheriting from `ℕ` through `LogOS.Prelude`.
 
-open import LogOS.Prelude as Prelude hiding (zero; suc)
+open import LogOS.Prelude as Prelude
 open import LogOS.Host.Nat renaming (zero to zeroℕ; suc to sucℕ)
 
 -- Universe note: `iter` is polymorphic in `A`, so the profile lives in `Setω`.

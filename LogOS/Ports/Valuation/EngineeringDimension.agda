@@ -24,13 +24,13 @@ module LogOS.Ports.Valuation.EngineeringDimension where
 -- via `μ`.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using
   ( ConPreorder; Con; _⊑_; refl⊑; _≈_
   )
 private
   module ≤-Reasoning = LogOS.Prelude.RefinementKit.Reasoning
 open import LogOS.LT.Iteration using (iter)
+open import LogOS.LT.Stage.SuccessorChain using (Stageω; zero; suc)
 
 open import LogOS.Ports.Valuation.AbstractJoinPrequantale using (JoinPrequantale)
 
@@ -38,7 +38,7 @@ open import LogOS.Ports.Valuation.AbstractJoinPrequantale using (JoinPrequantale
 pow
   : ∀ {ℓCon ℓRel : Level} {CP : ConPreorder ℓCon ℓRel}
   → (JP : JoinPrequantale CP)
-  → Con CP → ℕ → Con CP
+  → Con CP → Stageω → Con CP
 pow {CP = CP} JP g zero =
   let open JoinPrequantale JP in
   e
@@ -132,7 +132,7 @@ iterBound
   → {obs : A → Con CP}
   → {f : A → A}
   → (Tf : GradedTransport JP obs obs f)
-  → (n : ℕ)
+  → (n : Stageω)
   → (x : A)
   → _⊑_ CP (obs (iter f n x))
       (JoinPrequantale._·_ JP (obs x) (pow JP (grade Tf) n))

@@ -30,11 +30,11 @@ module LogOS.Ports.Valuation.QAdapterBudgetTransport where
 -- boundary refinement elsewhere in the library.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ; zero; suc; _+_)
 open import LogOS.LT.ConPreorder using (_≈_; ≡→≈)
 open import LogOS.LT.Kernel using (Kernel; Code)
 open import LogOS.LT.Hom.Core using (KernelHom; idKernelHom; _∘_; mapCode)
 open import LogOS.LT.Iteration using (traceCode)
+open import LogOS.LT.Stage.SuccessorChain using (Stageω; zero; suc)
 open import LogOS.Ports.CriticalParameter using (CriticalCut; SharpCut; principalCut; principalSharpCut)
 open import LogOS.Ports.Universality.Budget using (BudgetPort; budgetReadout)
 open import LogOS.Ports.Valuation.QAdapter using (QAdapter; QClock)
@@ -324,7 +324,7 @@ composeQTimeBudgetTransport Q T tf tg =
 timeIter-prepend
   : ∀ {ℓQ : Level} {Q : QAdapter ℓQ}
   → (T : QClock Q)
-  → QClock.Time T → ℕ → QClock.Time T
+  → QClock.Time T → Stageω → QClock.Time T
 timeIter-prepend {Q = Q} T t zero = QClock.zero T
 timeIter-prepend {Q = Q} T t (suc n) =
   QClock._+_ T t (timeIter-prepend {Q = Q} T t n)
@@ -332,14 +332,14 @@ timeIter-prepend {Q = Q} T t (suc n) =
 timeIter
   : ∀ {ℓQ : Level} {Q : QAdapter ℓQ}
   → (T : QClock Q)
-  → QClock.Time T → ℕ → QClock.Time T
+  → QClock.Time T → Stageω → QClock.Time T
 timeIter = timeIter-prepend
 
 pow-τ-timeIter
   : ∀ {ℓQ : Level} {Q : QAdapter ℓQ}
   → (T : QClock Q)
   → (t : QClock.Time T)
-  → (n : ℕ)
+  → (n : Stageω)
   → pow (ScaleJoinPrequantale Q) (QClock.τ T t) n
     ≡ QClock.τ T (timeIter-prepend {Q = Q} T t n)
 pow-τ-timeIter {Q = Q} T t zero =
@@ -357,7 +357,7 @@ traceBudget≤
     {BK : BudgetPort (Code K) (ScaleBoundary Q)}
     (f : KernelHom K K)
   → (Tf : QTimeBudgetTransport Q T BK BK f)
-  → (n : ℕ)
+  → (n : Stageω)
   → (γ : Code K)
   → QAdapter._≤s_ Q
       (budgetμ {Q = Q} BK (traceCode f n γ))

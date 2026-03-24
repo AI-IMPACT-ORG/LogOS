@@ -12,11 +12,11 @@ module LogOS.LT.Sup.AbstractCoKleene where
 -- Dual Kleene fixed-point spine (ν) via σ-directed completeness on `Opp`.
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ; zero; suc)
 open import LogOS.LT.ConPreorder using (ConPreorder; Con; _⊑_; _≈_; Opp)
 open import LogOS.LT.Sup.FinSup using (HasTop; HasBottom; hasBottomOppFromHasTop; FixedPoint≈; PrefixPoint; PostfixPoint)
 open import LogOS.LT.Sup.AbstractSigmaDCPO using (SigmaDCPO; SigmaContinuous)
 import LogOS.LT.Sup.AbstractKleene as Kleene
+open import LogOS.LT.Stage.SuccessorChain using (Stageω)
 
 SigmaCoContinuous
   : ∀ {ℓCon ℓRel : Level}
@@ -42,7 +42,7 @@ module CoKleeneLocal
   module K = Kleene.KleeneLocal {CP = Opp CP} HBᵒᵖ SDᵒᵖ f fc
 
   -- Iteration from top (in `CP`) is Kleene iteration from bottom in `Opp CP`.
-  iter⊤ : ℕ → Con CP
+  iter⊤ : Stageω → Con CP
   iter⊤ = K.iter⊥
 
   -- Greatest fixed point (ν) of `f` under σ-co-continuity.

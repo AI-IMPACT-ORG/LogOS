@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-3.0-only
 module LogOS.Ports.AbstractDeutsch2Cat.Reversibility where
 
 open import LogOS.Prelude
-open import LogOS.Host.Nat using (ℕ)
 open import LogOS.Prelude.FiniteFamily using (at)
 open import LogOS.LT.ConPreorder using (Con; _≈_; ≈-sym; ≡→≈; refl⊑)
 open import LogOS.LT.Thin2Functor using (mapHom)
@@ -39,6 +38,7 @@ open import LogOS.Ports.PhysicalSemantics.Core using (DependentLocalSemantics)
 import LogOS.Ports.AbstractDeutsch2Cat.Causality as Causality
 import LogOS.Ports.AbstractDeutsch2Cat.Locality as Locality
 import LogOS.Ports.LawSlice2Cat as LawSlice
+import LogOS.LT.Ports.PortSig as PortSig
 
 module Deutsch2CatLocal {ℓI ℓOCon ℓORel ℓCode : Level} (PS : DependentLocalSemantics {ℓI} {ℓOCon} {ℓORel}) where
   open DependentLocalSemantics PS
@@ -47,9 +47,6 @@ module Deutsch2CatLocal {ℓI ℓOCon ℓORel ℓCode : Level} (PS : DependentLo
 
   data ReversibleTag : Set where
     reversibleTag : ReversibleTag
-
-  reversibleTagId : ℕ
-  reversibleTagId = 12
 
   -- Explicit unit payload (avoids `⊤`/`tt` footguns in composed stacks).
   record ReversibleOb : Set where
@@ -247,13 +244,12 @@ module Deutsch2CatLocal {ℓI ℓOCon ℓORel ℓCode : Level} (PS : DependentLo
     LawSlice.Exports
       {C = Cau.WithPort}
       {Tag = ReversibleTag}
-      reversibleTagId
       ReversibleOb
       (λ {A} {B} (h : Con (Thin2Cat.Hom Cau.WithPort A B)) → LocalReversible h)
       idLocalReversible
       compLocalReversible
 
-  port2Cat : LawSlice.Singleton2Cat Cau.WithPort reversibleTagId ReversibleTag
+  port2Cat : LawSlice.Singleton2Cat Cau.WithPort ReversibleTag
   port2Cat =
     Port.port2Cat
 

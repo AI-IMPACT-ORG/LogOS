@@ -20,12 +20,10 @@ open import LogOS.Prelude using
   ; cong
   ; cong₂
   ; sym
-  ; ℕ
-  ; zero
-  ; suc
   ; inj₁
   ; inj₂
   )
+open import LogOS.Host.Nat using (ℕ; zero; suc)
 
 open import LogOS.Syntax.Prop using (_↔_; intro; to; from)
 open import LogOS.LT.View using (μ)
